@@ -81,14 +81,20 @@ approval → push remain OpenAlice/UTA authority.
 
 - [x] Audit the current factor, target, execution, RL, and handoff contracts.
 - [x] Verify the OpenAlice Workspace/Inbox/UTA authority and order vocabulary.
-- [ ] Define the breaking DecisionPlan, order lifecycle, and evidence schemas.
-- [ ] Implement the standalone deterministic bar-order kernel and fixtures.
-- [ ] Integrate target-weight realization into the mechanical Portfolio lane.
-- [ ] Integrate the shared kernel into governed RL and its baselines.
-- [ ] Add current portfolio context and decision-support delivery surfaces.
-- [ ] Add execution/trade/risk metrics expected by a working quant researcher.
-- [ ] Verify Studio/CLI/Report/Dossier parity, complete regression, commit, and
-  push.
+- [ ] Define the breaking DecisionPlan, order lifecycle, and evidence
+  schemas — [[plans/order-native-decision-plan-schema]].
+- [ ] Implement the standalone deterministic bar-order kernel and fixtures —
+  [[plans/order-native-bar-execution-kernel]].
+- [ ] Integrate target-weight realization into the mechanical Portfolio lane
+  — [[plans/order-native-mechanical-portfolio-integration]].
+- [ ] Integrate the shared kernel into governed RL and its baselines —
+  [[plans/order-native-governed-rl-integration]].
+- [ ] Add current portfolio context and decision-support delivery surfaces —
+  [[plans/order-native-decision-support-surfaces]].
+- [ ] Add execution/trade/risk metrics expected by a working quant
+  researcher — [[plans/order-native-execution-risk-metrics]].
+- [ ] Verify Studio/CLI/Report/Dossier parity, complete regression, commit,
+  and push — [[plans/order-native-studio-cli-parity-regression]].
 
 ## Findings and decisions
 
@@ -128,6 +134,18 @@ Pending.
   this plan proceeds is settled. No further blocker recorded against this
   plan. Beginning with the first unchecked Work item: the breaking
   `DecisionPlan`, order lifecycle, and evidence schemas.
+
+- 2026-08-19 — Split the seven remaining Work items into dedicated
+  sub-plans so each is independently implementable and verifiable:
+  [[plans/order-native-decision-plan-schema]],
+  [[plans/order-native-bar-execution-kernel]],
+  [[plans/order-native-mechanical-portfolio-integration]],
+  [[plans/order-native-governed-rl-integration]],
+  [[plans/order-native-decision-support-surfaces]],
+  [[plans/order-native-execution-risk-metrics]], and
+  [[plans/order-native-studio-cli-parity-regression]]. This plan now
+  tracks the overall outcome and closes only when the closing sub-plan
+  reports every acceptance item satisfied.
 
 ## Completion
 

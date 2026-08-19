@@ -24,7 +24,15 @@ invariants live in `docs/design/`.
 
 ## Proposed plans
 
-None.
+| Plan | Outcome | Updated |
+| --- | --- | --- |
+| [[plans/order-native-decision-plan-schema]] | Define the breaking DecisionPlan/OrderIntent/evidence schema as a standalone tested module before any kernel or lane integration. | 2026-08-19 |
+| [[plans/order-native-bar-execution-kernel]] | Build a standalone deterministic bar-by-bar order/TPSL execution kernel with fixture coverage, no lane dependency yet. | 2026-08-19 |
+| [[plans/order-native-mechanical-portfolio-integration]] | Replace `simulate_targets`'s implicit close-target execution with kernel-backed order realization in the mechanical Portfolio lane. | 2026-08-19 |
+| [[plans/order-native-governed-rl-integration]] | Route governed RL and its baselines through the same fixed execution kernel as the mechanical lane. | 2026-08-19 |
+| [[plans/order-native-decision-support-surfaces]] | Add caller-portfolio-context intake and the durable DecisionPlan/Report/Dossier delivery contract, with `tradingAuthority: none`. | 2026-08-19 |
+| [[plans/order-native-execution-risk-metrics]] | Add trade/protection and extended portfolio-risk metrics, plus RL evidence extensions, from fill-based evidence. | 2026-08-19 |
+| [[plans/order-native-studio-cli-parity-regression]] | Bring Studio/CLI/Report/Dossier to parity, prove standalone and host-delegated scenarios end to end, and close the series. | 2026-08-19 |
 
 ## Paused plans
 
