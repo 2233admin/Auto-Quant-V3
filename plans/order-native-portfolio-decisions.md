@@ -1,7 +1,7 @@
 # Order-native portfolio decisions
 
-- Status: `paused`
-- Updated: `2026-07-27`
+- Status: `active`
+- Updated: `2026-08-19`
 - Related design: [[docs/design/order-native-portfolio-decisions]],
   [[docs/design/quant-research-lifecycle]],
   [[docs/design/portfolio-construction-lab]], and
@@ -121,6 +121,13 @@ Pending.
   Agent-native workbench and optional OpenAlice desk relationship canonical.
   The order-native design remains active system direction and is not
   superseded.
+
+- 2026-08-19 — Resumed. [[plans/agent-native-workbench-documentation]] is
+  `completed` (see PLANS.md), so the standalone Agent-native workbench and
+  optional OpenAlice desk relationship it needed to make canonical before
+  this plan proceeds is settled. No further blocker recorded against this
+  plan. Beginning with the first unchecked Work item: the breaking
+  `DecisionPlan`, order lifecycle, and evidence schemas.
 
 ## Completion
 

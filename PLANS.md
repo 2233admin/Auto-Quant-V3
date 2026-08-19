@@ -18,7 +18,9 @@ invariants live in `docs/design/`.
 
 ## Active plans
 
-None.
+| Plan | Outcome | Updated |
+| --- | --- | --- |
+| [[plans/order-native-portfolio-decisions]] | Return evidence-backed target weights together with bounded Order/TPSL realization plans shared by mechanical and RL research. | 2026-08-19 |
 
 ## Proposed plans
 
@@ -26,9 +28,7 @@ None.
 
 ## Paused plans
 
-| Plan | Outcome | Updated |
-| --- | --- | --- |
-| [[plans/order-native-portfolio-decisions]] | Return evidence-backed target weights together with bounded Order/TPSL realization plans shared by mechanical and RL research. Paused until the workbench product model is canonical. | 2026-07-27 |
+None.
 
 ## Completed plans
 
