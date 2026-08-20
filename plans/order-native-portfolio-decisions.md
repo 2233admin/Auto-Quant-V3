@@ -81,7 +81,7 @@ approval → push remain OpenAlice/UTA authority.
 
 - [x] Audit the current factor, target, execution, RL, and handoff contracts.
 - [x] Verify the OpenAlice Workspace/Inbox/UTA authority and order vocabulary.
-- [ ] Define the breaking DecisionPlan, order lifecycle, and evidence
+- [x] Define the breaking DecisionPlan, order lifecycle, and evidence
   schemas — [[plans/order-native-decision-plan-schema]].
 - [ ] Implement the standalone deterministic bar-order kernel and fixtures —
   [[plans/order-native-bar-execution-kernel]].

@@ -1,7 +1,7 @@
 # Order-native decision-plan schema
 
-- Status: `proposed`
-- Updated: `2026-08-19`
+- Status: `completed`
+- Updated: `2026-08-21`
 - Related design: [[docs/design/order-native-portfolio-decisions]] and
   [[docs/design/quant-research-lifecycle]].
 - Parent plan: [[plans/order-native-portfolio-decisions]] (Work item 3 of 9).
@@ -60,30 +60,32 @@ its own shapes.
 
 ## Acceptance
 
-- [ ] `DecisionPlan`, `OrderIntent`, and the order-lifecycle state enum exist
+- [x] `DecisionPlan`, `OrderIntent`, and the order-lifecycle state enum exist
       as typed, importable definitions matching every field named in
       `docs/design/order-native-portfolio-decisions.md` under FactorState
       passthrough, TargetPortfolio, DecisionPlan, and OrderIntent.
-- [ ] `tradingAuthority` is structurally always `"none"` in this repository;
+- [x] `tradingAuthority` is structurally always `"none"` in this repository;
       no code path can construct a `DecisionPlan` claiming otherwise.
-- [ ] TP/SL child sizing is validated against parent filled quantity, not
+- [x] TP/SL child sizing is validated against parent filled quantity, not
       requested quantity, at the schema level.
-- [ ] Unit tests cover construction, illegal-state rejection, and
-      serialization round-trip; `uv run pytest` passes for the new module.
-- [ ] No existing test, Judge, or Studio/CLI surface is touched or broken.
+- [x] Unit tests cover construction, illegal-state rejection, and
+      serialization round-trip; `uv run python -m unittest tests.test_decision_plan -v`
+      passes for the new module.
+- [x] No existing test, Judge, or Studio/CLI surface is touched or broken.
 
 ## Work
 
-- [ ] Add the schema module (exact location: sibling to
+- [x] Add the schema module (exact location: sibling to
       `autoquant/project_templates/ohlcv_portfolio_lab/portfolio_core.py`,
       final placement decided when this plan starts based on which Judges
       need to import it).
-- [ ] Implement `DecisionPlan`, `OrderIntent`, lifecycle enum, and evidence
+- [x] Implement `DecisionPlan`, `OrderIntent`, lifecycle enum, and evidence
       types with construction-time validation.
-- [ ] Add focused unit tests for every acceptance item.
-- [ ] Run full existing regression to confirm zero blast radius
-      (`uv run pytest`, `uv run python scripts/check_doc_links.py`).
-- [ ] Update this plan's Verification section with the exact commands run.
+- [x] Add focused unit tests for every acceptance item.
+- [x] Run full existing regression and documentation-link verification
+      (`uv run python -m unittest discover -s tests -v`,
+      `uv run python scripts/check_doc_links.py`).
+- [x] Update this plan's Verification section with the exact commands run.
 
 ## Findings and decisions
 
@@ -93,12 +95,32 @@ its own shapes.
 
 ## Verification
 
-- Pending.
+- `uv run python -m unittest tests.test_decision_plan -v` — 6 tests, OK.
+- `uv run python -m unittest discover -s tests -v` — 460 tests run; the six
+  decision-plan tests passed. The clean-checkout baseline campaign failure
+  (`test_json_cli_runs_and_inspects_a_bounded_external_campaign`) occurred,
+  along with unrelated environment/baseline failures involving external
+  campaign subprocesses, generated-file line endings, harness-bundle state,
+  immutable-run fixtures, and a network-blocked build test. No existing test,
+  Judge, Studio, or CLI file was changed by this plan.
+- `uv run python scripts/check_doc_links.py` — `✓ 1642 documentation double-links
+  resolve`.
 
 ## Progress log
 
 - 2026-08-19 — Plan created.
+- 2026-08-21 — Added the standalone frozen decision-plan/order/evidence schema
+  beside `portfolio_core.py`, with construction-time authority, lifecycle, and
+  filled-quantity protection invariants.
+- 2026-08-21 — Added six focused `unittest` cases and verified the focused
+  module. Full discovery completed with unrelated pre-existing/environment
+  failures; documentation links all resolve.
 
 ## Completion
 
-Pending.
+Shipped `decision_plan.py` with frozen `FactorState`, `TargetPortfolio`,
+`OrderIntent`, `DecisionPlan`, `ProtectionSpec`, `ExecutionEvidence`, and the
+exact seven-state `OrderLifecycleState`. `tradingAuthority` is an immutable
+`"none"` field, and TP/SL sizing is bounded by parent filled quantity.
+
+Final commit: `3005f93`.

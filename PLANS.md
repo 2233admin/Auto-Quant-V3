@@ -26,7 +26,6 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
-| [[plans/order-native-decision-plan-schema]] | Define the breaking DecisionPlan/OrderIntent/evidence schema as a standalone tested module before any kernel or lane integration. | 2026-08-19 |
 | [[plans/order-native-bar-execution-kernel]] | Build a standalone deterministic bar-by-bar order/TPSL execution kernel with fixture coverage, no lane dependency yet. | 2026-08-19 |
 | [[plans/order-native-mechanical-portfolio-integration]] | Replace `simulate_targets`'s implicit close-target execution with kernel-backed order realization in the mechanical Portfolio lane. | 2026-08-19 |
 | [[plans/order-native-governed-rl-integration]] | Route governed RL and its baselines through the same fixed execution kernel as the mechanical lane. | 2026-08-19 |
@@ -42,6 +41,7 @@ None.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/order-native-decision-plan-schema]] | Define the breaking DecisionPlan/OrderIntent/evidence schema as a standalone tested module before any kernel or lane integration. | 2026-08-21 |
 | [[plans/factor-evidence-report-handoff]] | Made temporal Factor protocol applicability, material train/validation tension, and safe evidence-bound Report drafting explicit to fresh Agents. | 2026-08-02 |
 | [[plans/caller-owned-factor-population]] | Separated caller-owned Factor evaluation population from Portfolio position authority across standalone Factor, Portfolio, and governed-RL research. | 2026-08-02 |
 | [[plans/concise-documentation-front-door]] | Make README a bounded product entrance and route Agents to one operator guide plus the existing authoritative release documents. | 2026-08-02 |
