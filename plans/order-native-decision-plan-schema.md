@@ -115,6 +115,11 @@ its own shapes.
 - 2026-08-21 — Added six focused `unittest` cases and verified the focused
   module. Full discovery completed with unrelated pre-existing/environment
   failures; documentation links all resolve.
+- 2026-08-21 — Reviewed the diff and found `decision_plan.py` had redefined
+  `PortfolioFailure(ValueError)` instead of importing the existing one from
+  `portfolio_core.py`; no circular-import obstruction exists. Removed the
+  duplicate and imported the original instead. Re-verified: focused module
+  (6 OK) and `check_doc_links.py` (1642 resolved).
 
 ## Completion
 
@@ -123,4 +128,5 @@ Shipped `decision_plan.py` with frozen `FactorState`, `TargetPortfolio`,
 exact seven-state `OrderLifecycleState`. `tradingAuthority` is an immutable
 `"none"` field, and TP/SL sizing is bounded by parent filled quantity.
 
-Implementation commit: `dd095c6`.
+Implementation commit: `dd095c6`. Final commit (post-review dedup fix):
+`e35eb2b`.
