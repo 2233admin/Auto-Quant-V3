@@ -123,4 +123,4 @@ Shipped `decision_plan.py` with frozen `FactorState`, `TargetPortfolio`,
 exact seven-state `OrderLifecycleState`. `tradingAuthority` is an immutable
 `"none"` field, and TP/SL sizing is bounded by parent filled quantity.
 
-Final commit: `3005f93`.
+Implementation commit: `dd095c6`.
