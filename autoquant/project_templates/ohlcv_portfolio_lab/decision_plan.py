@@ -8,13 +8,9 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Any, Literal, Mapping
 
-
-class PortfolioFailure(ValueError):
-    """Raised when a portfolio decision schema violates a fixed invariant."""
-
-    def __init__(self, code: str, message: str):
-        self.code = code
-        super().__init__(message)
+from autoquant.project_templates.ohlcv_portfolio_lab.portfolio_core import (
+    PortfolioFailure,
+)
 
 
 class OrderLifecycleState(str, Enum):
