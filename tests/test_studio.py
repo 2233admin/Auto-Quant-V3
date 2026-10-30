@@ -333,7 +333,7 @@ class StudioObservationTests(unittest.TestCase):
                     self.assertEqual(snapshot["kind"], "autoquant-studio-snapshot")
                     self.assertEqual(response.headers["Cache-Control"], "no-store")
 
-                with urlopen(f"{base}/", timeout=3) as response:
+                with urlopen(f"{base}/legacy", timeout=3) as response:
                     html = response.read().decode()
                     self.assertIn("Quant research desk", html)
                     self.assertIn("Research cockpit", html)
@@ -631,6 +631,96 @@ class StudioObservationTests(unittest.TestCase):
                 server.shutdown()
                 server.server_close()
                 thread.join(timeout=3)
+
+    def test_workspace_project_routes_and_app_shell_stay_read_only(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, project, _ = self._setup(directory)
+            server = create_studio_server(workspace.root_dir, port=0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            base = f"http://127.0.0.1:{server.server_port}"
+            try:
+                with urlopen(f"{base}/api/v1/workspace", timeout=10) as response:
+                    summary = json.loads(response.read())
+                    self.assertEqual(response.headers["Cache-Control"], "no-store")
+                    self.assertEqual(response.headers["X-Frame-Options"], "DENY")
+                self.assertEqual(
+                    summary["kind"], "autoquant-studio-workspace-summary"
+                )
+                row = next(
+                    item
+                    for item in summary["projects"]
+                    if item["id"] == project.manifest.id
+                )
+                self.assertEqual(row["valid"], True)
+                self.assertGreaterEqual(row["counts"]["sessions"], 1)
+                self.assertIn("externalHoldout", row)
+                self.assertNotIn("rootDir", row)
+
+                with urlopen(
+                    f"{base}/api/v1/project?id={project.manifest.id}",
+                    timeout=10,
+                ) as response:
+                    one = json.loads(response.read())
+                self.assertEqual(one["kind"], "autoquant-studio-snapshot")
+                self.assertEqual(len(one["projects"]), 1)
+                self.assertEqual(one["projects"][0]["id"], project.manifest.id)
+
+                for query in ("?id=no-such-project", "", "?id=a&id=b"):
+                    with self.assertRaises(HTTPError) as raised:
+                        urlopen(f"{base}/api/v1/project{query}", timeout=10)
+                    self.assertEqual(raised.exception.code, 422)
+                    self.assertFalse(json.loads(raised.exception.read())["ok"])
+
+                # The shell route never crashes, built or not, and unknown
+                # file-like paths still 404.
+                for route in ("/", "/projects/anything"):
+                    try:
+                        with urlopen(f"{base}{route}", timeout=3) as response:
+                            html = response.read().decode()
+                            status = response.status
+                    except HTTPError as error:
+                        html = error.read().decode()
+                        status = error.code
+                    self.assertIn(status, (200, 503))
+                    self.assertIn("<html", html)
+                with self.assertRaises(HTTPError) as raised:
+                    urlopen(f"{base}/studio-app/..%2Findex.py", timeout=3)
+                self.assertEqual(raised.exception.code, 404)
+                with self.assertRaises(HTTPError) as raised:
+                    urlopen(f"{base}/studio-app/missing.js", timeout=3)
+                self.assertEqual(raised.exception.code, 404)
+                with urlopen(f"{base}/legacy", timeout=3) as response:
+                    self.assertIn("Research cockpit", response.read().decode())
+                with urlopen(f"{base}/assets/studio.js", timeout=3) as response:
+                    self.assertEqual(response.status, 200)
+
+                for method in ("POST", "PUT"):
+                    request = Request(
+                        f"{base}/api/v1/workspace", method=method, data=b"{}"
+                    )
+                    with self.assertRaises(HTTPError) as raised:
+                        urlopen(request, timeout=3)
+                    self.assertEqual(raised.exception.code, 405)
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=3)
+
+    def test_project_route_respects_restricted_project_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, project, _ = self._setup(directory)
+            other = project.manifest.id
+            from autoquant.studio import build_project_snapshot
+
+            ok = build_project_snapshot(
+                workspace.root_dir, other, project_id=other
+            )
+            self.assertEqual([item["id"] for item in ok["projects"]], [other])
+            with self.assertRaisesRegex(AutoQuantValidationError, "restricted"):
+                build_project_snapshot(
+                    workspace.root_dir, "someone-else", project_id=other
+                )
 
     def test_invalid_port_and_workspace_manifest_remain_core_errors(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

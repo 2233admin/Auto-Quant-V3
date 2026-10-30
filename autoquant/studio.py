@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shlex
 import threading
 import webbrowser
@@ -12,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
 from pathlib import Path
 from typing import Any, Callable
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 from .allocation_explorer import (
     DEFAULT_ALLOCATION_POINTS,
@@ -68,11 +69,32 @@ from .workspace import (
 
 STUDIO_KIND = "autoquant-studio-snapshot"
 STUDIO_ASSETS = {
-    "/": ("index.html", "text/html; charset=utf-8"),
-    "/index.html": ("index.html", "text/html; charset=utf-8"),
+    "/legacy": ("index.html", "text/html; charset=utf-8"),
+    "/legacy/": ("index.html", "text/html; charset=utf-8"),
     "/assets/studio.css": ("studio.css", "text/css; charset=utf-8"),
     "/assets/studio.js": ("studio.js", "text/javascript; charset=utf-8"),
 }
+STUDIO_APP_PREFIX = "/studio-app/"
+STUDIO_APP_TYPES = {
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".map": "application/json; charset=utf-8",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".ico": "image/x-icon",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+}
+STUDIO_APP_NAME = re.compile(r"^[A-Za-z0-9._-]+$")
+STUDIO_APP_MISSING = (
+    '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+    "<title>AutoQuant Studio</title></head><body>"
+    "<h1>Frontend not built</h1>"
+    "<p>The Studio frontend bundle is missing from this checkout. "
+    "Run <code>pnpm install --frozen-lockfile &amp;&amp; pnpm build</code> "
+    "in <code>studio-app/</code>, or open the "
+    '<a href="/legacy">legacy Studio</a>.</p></body></html>\n'
+)
 SECURITY_HEADERS = {
     "Content-Security-Policy": (
         "default-src 'none'; script-src 'self'; style-src 'self'; "
@@ -1745,6 +1767,108 @@ def build_studio_snapshot(
     }
 
 
+def _project_summary(project: dict[str, Any]) -> dict[str, Any]:
+    studies = project.get("studies") or []
+    runs = project.get("runs") or []
+    started = [run["startedAt"] for run in runs if run.get("startedAt")]
+    brief = project.get("agentWorkBrief") or {}
+    focus = brief.get("focus") or {}
+    action = brief.get("primaryAction") or {}
+    holdout = project.get("externalHoldout")
+    return {
+        "id": project["id"],
+        "name": project["name"],
+        "description": project.get("description"),
+        "valid": project["valid"],
+        "diagnostics": len(project.get("diagnostics") or []),
+        "counts": project.get("counts") or {},
+        "studies": [
+            {
+                "id": study.get("id"),
+                "name": study.get("name"),
+                "subjectKind": study.get("subjectKind"),
+            }
+            for study in studies
+        ],
+        "runCount": len(runs),
+        "latestRunAt": max(started) if started else None,
+        "brief": {
+            "headline": action.get("description"),
+            "lane": focus.get("laneName"),
+            "stage": focus.get("scientificStage"),
+            "mode": focus.get("operatingMode"),
+        },
+        "externalHoldout": {
+            "present": isinstance(holdout, dict),
+            "status": (
+                holdout.get("status") or holdout.get("state")
+                if isinstance(holdout, dict)
+                else None
+            ),
+        },
+    }
+
+
+def build_workspace_summary(
+    directory: str | Path,
+    *,
+    project_id: str | None = None,
+) -> dict[str, Any]:
+    snapshot = build_studio_snapshot(directory, project_id=project_id)
+    return {
+        "schemaVersion": SCHEMA_VERSION,
+        "kind": "autoquant-studio-workspace-summary",
+        "generatedAt": snapshot["generatedAt"],
+        "harness": snapshot["harness"],
+        "source": snapshot["source"],
+        "valid": snapshot["valid"],
+        "diagnostics": snapshot["diagnostics"],
+        "projects": [_project_summary(item) for item in snapshot["projects"]],
+    }
+
+
+def build_project_snapshot(
+    directory: str | Path,
+    requested_id: str | None,
+    *,
+    project_id: str | None = None,
+) -> dict[str, Any]:
+    if not requested_id:
+        raise AutoQuantValidationError(
+            [_issue("id", "project.id-required", "Query parameter id is required")]
+        )
+    if project_id is not None and requested_id != project_id:
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    requested_id,
+                    "project.unknown",
+                    f"Studio is restricted to Project {project_id}",
+                )
+            ]
+        )
+    root = Path(directory).expanduser().absolute()
+    direct = (root / PROJECT_MANIFEST).is_file()
+    snapshot = build_studio_snapshot(
+        directory,
+        project_id=None if direct else (project_id or requested_id),
+    )
+    for project in snapshot["projects"]:
+        if project["id"] == requested_id:
+            return {**snapshot, "projects": [project]}
+    raise AutoQuantValidationError(
+        [_issue(requested_id, "project.unknown", f"Unknown Project: {requested_id}")]
+    )
+
+
+def _studio_app_bytes(relative: str) -> bytes | None:
+    resource = files("autoquant").joinpath("studio_app", *relative.split("/"))
+    try:
+        return resource.read_bytes() if resource.is_file() else None
+    except OSError:
+        return None
+
+
 def _asset_bytes(name: str) -> bytes:
     return files("autoquant").joinpath("studio_assets", name).read_bytes()
 
@@ -1818,6 +1942,18 @@ def _handler(
             if not head_only:
                 self.wfile.write(body)
 
+        def _json(self, payload: dict[str, Any], head_only: bool) -> None:
+            self._send(
+                HTTPStatus.OK,
+                "application/json; charset=utf-8",
+                json.dumps(
+                    payload,
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ).encode(),
+                head_only=head_only,
+            )
+
         def _route(self, *, head_only: bool = False) -> None:
             path = urlsplit(self.path).path
             try:
@@ -1854,6 +1990,44 @@ def _handler(
                         head_only=head_only,
                     )
                     return
+                if path == "/api/v1/workspace":
+                    self._json(
+                        build_workspace_summary(
+                            directory,
+                            project_id=project_id,
+                        ),
+                        head_only,
+                    )
+                    return
+                if path == "/api/v1/project":
+                    ids = parse_qs(urlsplit(self.path).query).get("id") or []
+                    self._json(
+                        build_project_snapshot(
+                            directory,
+                            ids[0] if len(ids) == 1 else None,
+                            project_id=project_id,
+                        ),
+                        head_only,
+                    )
+                    return
+                if path.startswith(STUDIO_APP_PREFIX):
+                    name = path[len(STUDIO_APP_PREFIX):]
+                    suffix = Path(name).suffix
+                    data = (
+                        _studio_app_bytes(f"assets/{name}")
+                        if STUDIO_APP_NAME.match(name)
+                        and suffix in STUDIO_APP_TYPES
+                        else None
+                    )
+                    if data is not None:
+                        self._send(
+                            HTTPStatus.OK,
+                            STUDIO_APP_TYPES[suffix],
+                            data,
+                            cache_control="no-cache",
+                            head_only=head_only,
+                        )
+                        return
                 asset = STUDIO_ASSETS.get(path)
                 if asset is not None:
                     name, content_type = asset
@@ -1865,6 +2039,27 @@ def _handler(
                         cache_control="no-cache",
                         head_only=head_only,
                     )
+                    return
+                if (
+                    not path.startswith(("/api/", STUDIO_APP_PREFIX, "/assets/"))
+                    and "." not in path.rsplit("/", 1)[-1]
+                ):
+                    index = _studio_app_bytes("index.html")
+                    if index is None:
+                        self._send(
+                            HTTPStatus.SERVICE_UNAVAILABLE,
+                            "text/html; charset=utf-8",
+                            STUDIO_APP_MISSING.encode(),
+                            head_only=head_only,
+                        )
+                    else:
+                        self._send(
+                            HTTPStatus.OK,
+                            "text/html; charset=utf-8",
+                            index,
+                            cache_control="no-cache",
+                            head_only=head_only,
+                        )
                     return
                 self._send(
                     HTTPStatus.NOT_FOUND,
