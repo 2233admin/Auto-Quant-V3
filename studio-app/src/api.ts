@@ -90,7 +90,7 @@ export type ProjectSnapshot = {
   portfolioExplorer: object | null
   rlExplorer: object | null
   bookRiskExplorer: object | null
-  eventStudyExplorer: object | null
+  eventStudyExplorer: EventStudyDiagnostics | null
   bookPathStressExplorer: object | null
   allocationExplorer: object | null
 }
@@ -107,4 +107,72 @@ export async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> 
     throw new ApiError(message)
   }
   return body as T
+}
+
+/** One rate: N and successes always present; estimate and ci95 are null when the guard withholds them. */
+export type EnvelopeRate = {
+  n: number
+  successes: number
+  guard: 'ok' | 'small-sample' | 'withheld'
+  estimate: number | null
+  ci95: [number, number] | null
+}
+
+export type EnvelopeStability = { firstHalf: EnvelopeRate; secondHalf: EnvelopeRate; agree: boolean | null }
+
+export type EnvelopeOutcome = EnvelopeRate & { stability: EnvelopeStability; perYear: (EnvelopeRate & { year: number })[] }
+
+export type EnvelopeDistribution = {
+  n: number
+  mean: number | null
+  minimum: number | null
+  maximum: number | null
+  quantiles: Record<'p10' | 'p25' | 'p50' | 'p75' | 'p90', number | null>
+}
+
+export type EventStudyEvent = {
+  eventIndex: number
+  eventTimestamp: string
+  entryTimestamp: string | null
+  exitTimestamp: string | null
+  gapReturn: number
+  outcomeStatus: 'complete' | 'right-censored'
+  primaryEligible: boolean
+  overlapReason: string
+  assetReturn: number | null
+  referenceReturn: number | null
+  excessReturn: number | null
+}
+
+export type EventStudyDiagnostics = {
+  run: { id: string; status: string }
+  dataset: { asset: string; referenceAsset: string; alignedObservations: number; timeRange: { start?: string; end?: string } | null }
+  policy: {
+    event: { asset: string; comparator: string; thresholdReturn: number }
+    timing: { waitBars: number; holdingBars: number }
+    references: { matchedAsset: string }
+    population: { minimumEvents: number }
+  }
+  populations: {
+    qualifyingEvents: number
+    completeEvents: number
+    rightCensoredEvents: number
+    primaryEvents: number
+    overlapExcludedEvents: number
+    unconditionalObservations: number
+  }
+  conclusion: { status: string; minimumEvents: number; observedPrimaryEvents: number; tradingAuthority: string }
+  envelope: {
+    method: string
+    confidenceLevel: number
+    population: string
+    guards: { warnBelow: number; withholdBelow: number }
+    outcomes: { primaryPositiveReturn: EnvelopeOutcome; primaryPositiveExcess: EnvelopeOutcome }
+    unconditionalPositiveReturn: { n: number; successes: number; estimate: number | null; ci95: null; intervalWithheldReason: string }
+    returnDistribution: EnvelopeDistribution
+    excessDistribution: EnvelopeDistribution
+    disclaimer: string
+  }
+  events: EventStudyEvent[]
+  warning: string
 }

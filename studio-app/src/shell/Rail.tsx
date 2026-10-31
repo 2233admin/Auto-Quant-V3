@@ -1,5 +1,5 @@
 import { Glyph, Icon, Mark } from '../design/icons'
-import { routeHref, type Route } from '../route'
+import { routeHref, routeProjectId, type Route } from '../route'
 import type { ShellData } from '../useShellData'
 
 type RailProps = { route: Route; data: ShellData; narrow: boolean; onSearch: () => void }
@@ -13,7 +13,7 @@ export function verification(valid: boolean) {
 
 export function Rail({ route, data, narrow, onSearch }: RailProps) {
   const projects = data.workspace?.projects ?? []
-  const open = route.view === 'project' ? route.id : null
+  const open = routeProjectId(route)
   const harness = data.workspace?.harness
   return (
     <aside className={narrow ? 'rail is-narrow' : 'rail'}>

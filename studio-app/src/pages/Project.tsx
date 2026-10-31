@@ -3,6 +3,7 @@ import { ApiError, getJson, type ProjectResponse, type ProjectSnapshot, type Run
 import { Glyph } from '../design/icons'
 import { num, plural, when } from '../format'
 import { Notice } from '../Notice'
+import { routeHref } from '../route'
 import { verification } from '../shell/Rail'
 
 type Load = { state: 'loading' } | { state: 'error'; message: string } | { state: 'ready'; project: ProjectSnapshot }
@@ -244,12 +245,18 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
       </Section>
 
       <Section title="Other lanes" id="sec-lanes">
-        <p className="muted small">These lanes are not migrated yet; the legacy Studio draws them from the same verified snapshot.</p>
+        <p className="muted small">Lanes still marked legacy are drawn by the fallback Studio from the same verified snapshot.</p>
         <ul className="plain">
           {OTHER_LANES.map((lane) => (
             <li key={lane.key} className="lane">
               <span>{lane.name}</span>
-              {project[lane.key] ? <a href="/legacy">Open in legacy Studio</a> : <span className="faint">No evidence in this Project</span>}
+              {lane.key === 'eventStudyExplorer' && project.eventStudyExplorer ? (
+                <a href={routeHref({ view: 'event-study', id: project.id })}>Open event study</a>
+              ) : project[lane.key] ? (
+                <a href="/legacy">Open in legacy Studio</a>
+              ) : (
+                <span className="faint">No evidence in this Project</span>
+              )}
             </li>
           ))}
         </ul>

@@ -3,8 +3,9 @@ import { useTheme } from './design/theme'
 import { useWidth } from './design/useWidth'
 import { Notice } from './Notice'
 import { Projects } from './pages/Projects'
+import { EventStudyPage } from './pages/EventStudy'
 import { ProjectPage, useProject } from './pages/Project'
-import { routeHref } from './route'
+import { routeHref, routeProjectId } from './route'
 import { Palette } from './shell/Palette'
 import { Rail, TabBar } from './shell/Rail'
 import { TopBar, Updated, type Crumb } from './shell/TopBar'
@@ -18,7 +19,7 @@ export default function App() {
   const [palette, setPalette] = useState(false)
   const [ref, width] = useWidth<HTMLDivElement>()
   const compact = width > 0 && width < 1024
-  const projectId = route.view === 'project' ? route.id : null
+  const projectId = routeProjectId(route)
   const project = useProject(projectId ?? '', projectId ? data.updated : null)
 
   useEffect(() => {
@@ -33,11 +34,21 @@ export default function App() {
   }, [])
 
   const known = data.workspace?.projects.find((p) => p.id === projectId)
+  const projectCrumb = (id: string) => ({ label: known?.name ?? id, data: true })
   const crumbs: Crumb[] =
     route.view === 'project'
-      ? [{ label: 'Projects', href: routeHref({ view: 'projects' }) }, { label: known?.name ?? route.id, data: true }]
-      : [{ label: 'Projects' }]
-  document.title = route.view === 'project' ? `${known?.name ?? route.id} · AutoQuant Studio` : 'AutoQuant Studio'
+      ? [{ label: 'Projects', href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
+      : route.view === 'event-study'
+        ? [
+            { label: 'Projects', href: routeHref({ view: 'projects' }) },
+            { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
+            { label: 'Price event study' },
+          ]
+        : [{ label: 'Projects' }]
+  document.title =
+    route.view === 'projects'
+      ? 'AutoQuant Studio'
+      : `${route.view === 'event-study' ? 'Price event study · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
 
   let page
   if (route.view === 'projects') {
@@ -47,7 +58,8 @@ export default function App() {
       <div className="pg">{data.error ? <Notice kind="error" label="Error" title="Could not load the Workspace." subtitle={data.error} /> : <p className="muted">Loading…</p>}</div>
     )
   } else if (project.state === 'ready') {
-    page = <ProjectPage project={project.project} />
+    page =
+      route.view === 'event-study' ? <EventStudyPage project={project.project} /> : <ProjectPage project={project.project} />
   } else if (project.state === 'error') {
     page = (
       <div className="pg">

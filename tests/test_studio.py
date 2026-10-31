@@ -676,7 +676,7 @@ class StudioObservationTests(unittest.TestCase):
 
                 # The shell route never crashes, built or not, and unknown
                 # file-like paths still 404.
-                for route in ("/", "/projects/anything"):
+                for route in ("/", "/projects/anything", "/projects/anything/event-study"):
                     try:
                         with urlopen(f"{base}{route}", timeout=3) as response:
                             html = response.read().decode()
