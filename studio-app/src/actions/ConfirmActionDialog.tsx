@@ -45,6 +45,7 @@ export function ConfirmActionDialog({
   action,
   sessions,
   preferred,
+  fixedHypothesis,
   onClose,
   onLaunched,
 }: {
@@ -53,12 +54,14 @@ export function ConfirmActionDialog({
   action: CatalogAction
   sessions: CatalogSession[]
   preferred: string | undefined
+  /** The Factor page owns the hypothesis field; the dialog then shows it read-only. */
+  fixedHypothesis?: string
   onClose: () => void
   onLaunched: (jobId: string) => void
 }) {
   const { minLength, maxLength } = action.params.hypothesis
   const [session, setSession] = useState(preferred ?? sessions[0]?.session ?? '')
-  const [hypothesis, setHypothesis] = useState('')
+  const [hypothesis, setHypothesis] = useState(fixedHypothesis ?? '')
   const [touched, setTouched] = useState(false)
   const [preview, setPreview] = useState<PreviewState>({ state: 'idle' })
   const [second, setSecond] = useState(false)
@@ -184,30 +187,36 @@ export function ConfirmActionDialog({
           {selected?.available === false && <p className="small sig">{selected.blockedBy}</p>}
         </div>
 
-        <div className="afield">
-          <label htmlFor={ids.hyp}>
-            Hypothesis <span className="faint small">what this candidate is meant to test, {minLength} to {maxLength} characters</span>
-          </label>
-          <textarea
-            id={ids.hyp}
-            ref={hypothesisRef}
-            rows={2}
-            value={hypothesis}
-            maxLength={maxLength + 50}
-            aria-invalid={showProblem || hypothesisIssue ? true : undefined}
-            aria-describedby={ids.hypErr}
-            onChange={(e) => setHypothesis(e.target.value)}
-            onBlur={() => setTouched(true)}
-            onKeyDown={(e) => {
-              // Enter inside the field must not submit the form; the confirm button is the only way to run.
-              if (e.key === 'Enter' && !e.shiftKey) e.preventDefault()
-            }}
-          />
-          <p id={ids.hypErr} className={`small ${showProblem || hypothesisIssue ? 'sig' : 'faint'}`} aria-live="polite">
-            {hypothesisIssue?.message ?? (showProblem ? problem : `${hypothesis.length} / ${maxLength}`)}
-          </p>
-        </div>
-
+        {fixedHypothesis !== undefined ? (
+          <div className="afield">
+            <span id={ids.hyp} className="afield-label">Hypothesis</span>
+            <p className="small" aria-labelledby={ids.hyp}>{fixedHypothesis}</p>
+          </div>
+        ) : (
+          <div className="afield">
+            <label htmlFor={ids.hyp}>
+              Hypothesis <span className="faint small">what this candidate is meant to test, {minLength} to {maxLength} characters</span>
+            </label>
+            <textarea
+              id={ids.hyp}
+              ref={hypothesisRef}
+              rows={2}
+              value={hypothesis}
+              maxLength={maxLength + 50}
+              aria-invalid={showProblem || hypothesisIssue ? true : undefined}
+              aria-describedby={ids.hypErr}
+              onChange={(e) => setHypothesis(e.target.value)}
+              onBlur={() => setTouched(true)}
+              onKeyDown={(e) => {
+                // Enter inside the field must not submit the form; the confirm button is the only way to run.
+                if (e.key === 'Enter' && !e.shiftKey) e.preventDefault()
+              }}
+            />
+            <p id={ids.hypErr} className={`small ${showProblem || hypothesisIssue ? 'sig' : 'faint'}`} aria-live="polite">
+              {hypothesisIssue?.message ?? (showProblem ? problem : `${hypothesis.length} / ${maxLength}`)}
+            </p>
+          </div>
+        )}
 
         <section className="apreview" aria-live="polite" aria-busy={preview.state === 'loading'}>
           <h3>The exact command</h3>

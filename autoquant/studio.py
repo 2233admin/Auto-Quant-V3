@@ -66,6 +66,8 @@ from .studio_actions import (
     TOKEN_HEADER,
     ActionError,
     ActionService,
+    SAVE_ID,
+    candidate_view,
     default_spawn,
     failure,
     is_loopback_host,
@@ -2269,6 +2271,45 @@ def _handler(
                 self._json(status, payload, head_only=head_only)
             return True
 
+        def _candidate_get(self, path: str, head_only: bool) -> bool:
+            """Serve GET /api/v1/candidate with or without actions."""
+            if path != "/api/v1/candidate":
+                return False
+            query = parse_qs(urlsplit(self.path).query)
+            try:
+                projects_q = query.get("project") or []
+                sessions_q = query.get("session") or []
+                project_ref = projects_q[0] if len(projects_q) == 1 else None
+                session_ref = sessions_q[0] if len(sessions_q) == 1 else None
+                if actions is not None:
+                    data = actions.candidate(project_ref, session_ref)
+                else:
+                    source = _resolve_source(directory, project_id)
+                    found = {
+                        project.manifest.id: project for project in source[3]
+                    }.get(project_ref) if isinstance(project_ref, str) else None
+                    if found is None:
+                        raise ActionError(
+                            422,
+                            "validation.failed",
+                            f"Unknown Project: {project_ref}",
+                            [
+                                ValidationIssue(
+                                    "project",
+                                    "project.unknown",
+                                    f"Unknown Project: {project_ref}",
+                                )
+                            ],
+                        )
+                    data = candidate_view(found, session_ref, source[1], None)
+                self._json(HTTPStatus.OK, success(data), head_only=head_only)
+            except ActionError as error:
+                self._json(error.status, failure(error), head_only=head_only)
+            except AutoQuantValidationError as error:
+                status, payload = _error_payload(error)
+                self._json(status, payload, head_only=head_only)
+            return True
+
         def _action_post(self, path: str) -> bool:
             """Serve POST action/job routes; False when path is not one."""
             assert actions is not None
@@ -2303,7 +2344,13 @@ def _handler(
                 elif path == "/api/v1/actions/preview":
                     self._json(HTTPStatus.OK, success(actions.preview(body)))
                 else:
-                    self._json(HTTPStatus.ACCEPTED, success(actions.create(body)))
+                    saved = (
+                        isinstance(body, dict) and body.get("actionId") == SAVE_ID
+                    )
+                    self._json(
+                        HTTPStatus.OK if saved else HTTPStatus.ACCEPTED,
+                        success(actions.create(body)),
+                    )
             except ActionError as error:
                 self._json(error.status, failure(error))
             except AutoQuantValidationError as error:
@@ -2323,6 +2370,8 @@ def _handler(
                     return
                 if self._action_get(path, head_only):
                     return
+            if self._candidate_get(path, head_only):
+                return
             try:
                 if path == "/api/v1/health":
                     body = json.dumps(

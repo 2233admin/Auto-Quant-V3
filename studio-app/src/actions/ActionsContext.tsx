@@ -22,6 +22,8 @@ export type ActionsApi = {
   version: number
   jobFinished: () => void
   go: (href: string) => void
+  /** A page that shows job progress inline (the Factor workbench) asks for the floating job dock to stay hidden. */
+  hideDock: (hide: boolean) => void
 }
 
 const Context = createContext<ActionsApi | null>(null)
@@ -51,6 +53,8 @@ export function ActionsProvider({
 }) {
   const [activeJobId, setActive] = useState<string | null>(() => readJobHash())
   const [version, setVersion] = useState(0)
+  const [dockHidden, setDockHidden] = useState(0)
+  const hideDock = useCallback((hide: boolean) => setDockHidden((n) => Math.max(0, n + (hide ? 1 : -1))), [])
 
   const state = useMemo<ActionsState>(() => {
     if (!workspace) return { mode: 'loading' }
@@ -80,14 +84,14 @@ export function ActionsProvider({
   }, [refresh])
 
   const api = useMemo<ActionsApi>(
-    () => ({ state, activeJobId, setActiveJobId, version, jobFinished, go }),
-    [state, activeJobId, setActiveJobId, version, jobFinished, go],
+    () => ({ state, activeJobId, setActiveJobId, version, jobFinished, go, hideDock }),
+    [state, activeJobId, setActiveJobId, version, jobFinished, go, hideDock],
   )
 
   return (
     <Context.Provider value={api}>
       {children}
-      {state.mode === 'on' && activeJobId && <JobPanel key={activeJobId} jobId={activeJobId} bootstrap={state.bootstrap} />}
+      {state.mode === 'on' && activeJobId && dockHidden === 0 && <JobPanel key={activeJobId} jobId={activeJobId} bootstrap={state.bootstrap} />}
     </Context.Provider>
   )
 }

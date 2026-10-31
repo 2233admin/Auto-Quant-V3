@@ -15,10 +15,10 @@ export const POLL_SLOW_MS = 5_000
 export const SLOW_AFTER_MS = 60_000
 const RETRY_MS = 3_000
 
-type Poll = { job: Job | null; error: ActionHttpError | null; failures: number }
+export type Poll = { job: Job | null; error: ActionHttpError | null; failures: number }
 
 /** Polls GET jobs/<id>: every second, every 5 seconds after a minute, and retries through a lost connection. */
-function useJob(jobId: string, bootstrap: ActionsBootstrap, onTerminal: () => void): Poll {
+export function useJob(jobId: string, bootstrap: ActionsBootstrap, onTerminal: () => void): Poll {
   const [poll, setPoll] = useState<Poll>({ job: null, error: null, failures: 0 })
   const finished = useRef(onTerminal)
   finished.current = onTerminal
@@ -70,7 +70,7 @@ const STATUS_LOOK: Record<JobStatus, { glyph: GlyphKind; word: string; signal: b
   'timed-out': { glyph: 'error', word: 'Timed out', signal: true },
 }
 
-function elapsed(job: Job, now: number): string {
+export function elapsed(job: Job, now: number): string {
   if (!job.startedAt) return '—'
   const start = Date.parse(job.startedAt)
   const end = job.endedAt ? Date.parse(job.endedAt) : now

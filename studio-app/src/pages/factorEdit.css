@@ -1,0 +1,49 @@
+/* Factor editor pane: locked Study facts, candidate source, hypothesis, one primary action. Tokens only. */
+.wb--edit { grid-template-columns: minmax(340px, 400px) minmax(0, 1fr); }
+.wb--edit .wb-side { max-height: calc(100vh - 72px); }
+.fe { display: grid; gap: var(--space-4); min-width: 0; }
+.fe-sec { display: grid; gap: var(--space-2); min-width: 0; }
+.fe-h { display: flex; align-items: center; gap: 6px; margin: 0; }
+.fe-lock { flex: none; color: var(--muted); }
+.fe-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px var(--space-3); padding: var(--space-2) var(--space-3); border: 1px dashed var(--line-strong); border-radius: var(--radius-control); }
+.fe-cand-head { display: flex; align-items: center; gap: var(--space-2); min-height: 28px; }
+.fe-chip { margin-left: auto; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: 500 11px/18px var(--font-mono); color: var(--muted); }
+.fe-chip.is-dirty { color: var(--text); border-color: var(--text); }
+.fe-reset { flex: none; }
+.fe-meta { margin: 0; overflow-wrap: anywhere; }
+.fe-note { margin: 0; }
+div.fe-note { display: grid; gap: var(--space-2); }
+.fe-note .cmd { margin: 0; }
+.fe-input { width: 100%; box-sizing: border-box; min-height: 34px; padding: 0 var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--bg); color: var(--text); font: var(--type-body); }
+.fe-input:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.fe-input[aria-invalid='true'] { border-color: var(--signal); }
+.fe-sec p, .fe-actions p { margin: 0; }
+.fe-actions { display: grid; gap: var(--space-2); }
+.fe-primary { width: 100%; min-height: 38px; }
+.fe-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.fe-reason { overflow-wrap: anywhere; }
+.fe-trial { padding-top: var(--space-2); border-top: 1px solid var(--line); }
+.fe-conflict { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--signal); border-left-width: 4px; border-radius: var(--radius-control); }
+.fe-msg { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.wb--edit .wb-main > .lp, .wb--edit .wb-main > .lr { margin-top: 0; }
+.fe-facts .fact:nth-child(n+3) { grid-column: 1 / -1; }
+.fe-facts .fact dd { font: var(--type-small); }
+.fe-facts .fact { grid-template-columns: 78px minmax(0, 1fr); gap: var(--space-2); align-items: baseline; }
+.fe-facts .fact:nth-child(-n+2) { grid-template-columns: minmax(0, 1fr); }
+
+/* Narrower desktop (the editor pane takes more room than the old facts column): stack hero parts so nothing is squeezed. */
+@media (max-width: 1279px) and (min-width: 1100px) {
+  .wb--edit { grid-template-columns: minmax(300px, 340px) minmax(0, 1fr); }
+}
+@media (max-width: 1279px) {
+  .wb--edit .wb-hero--tiles { grid-template-columns: minmax(0, 1fr); }
+  .wb--edit .wb-spread .ctg { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .wb--edit .verdict-top { flex-wrap: wrap; row-gap: var(--space-2); }
+  .wb--edit .verdict-word { order: 1; }
+  .wb--edit .verdict-top > .info { order: 2; margin-left: auto; }
+  .wb--edit .verdict-sentence { order: 3; flex: 1 1 100%; }
+  .wb--edit .wb-rh-act { gap: var(--space-1) var(--space-3); }
+  .wb--edit .wb-rh-links { margin-left: 0; gap: var(--space-1) var(--space-3); }
+  .wb--edit .fe-facts { grid-template-columns: minmax(0, 1fr); }
+  .wb--edit .fe-facts .fact:nth-child(-n+2) { grid-template-columns: 78px minmax(0, 1fr); }
+}

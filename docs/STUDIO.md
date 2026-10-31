@@ -32,13 +32,24 @@ aq studio serve . --allow-actions
 
 `--allow-actions` is off by default, so the default server is byte-for-byte
 the read-only server described elsewhere in this guide. When set, the startup
-banner prints `Mode: local actions enabled` and the server accepts exactly one
-action in this release: `experiment.evaluate`, which runs the existing
-`aq experiment evaluate --session S --hypothesis TEXT` command as a child
-process. Studio never imports a Core mutator and writes no Project file; the
-child `aq` process writes exactly what it would write from a terminal. The
-only file Studio itself writes is its append-only audit log
-`.autoquant/studio-actions.jsonl` under the served directory. The design,
+banner prints `Mode: local actions enabled` and the server accepts four
+actions: `experiment.evaluate`, `session.start` and `session.check`, which run
+the existing `aq experiment evaluate`, `aq session start` and `aq session check`
+commands as child processes, and `candidate.save`, a controlled in-process
+write. Studio never imports a Core mutator; the child `aq` process writes
+exactly what it would write from a terminal. The only files Studio itself
+writes are its append-only audit log `.autoquant/studio-actions.jsonl` under
+the served directory and, through `candidate.save`, the single file
+`factors/candidate.py` inside an active Session worktree. `session.start` and
+`experiment.evaluate` need a second confirmation because they open or extend a
+trial family; `session.check` and `candidate.save` spend no trial.
+
+`candidate.save` replaces the candidate source only when the SHA-256 the editor
+loaded still matches the file on disk, writes atomically, keeps the bytes
+exactly as given, and records only hashes and byte counts in the audit log. The
+read route `GET /api/v1/candidate?project=P&session=S` returns the candidate
+source, its SHA-256, and whether it is editable; it also works without
+`--allow-actions`, where it is always read-only. The design, exact contract,
 threat model, and later slices are owned by
 [[docs/design/studio-local-actions]].
 

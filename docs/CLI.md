@@ -1341,12 +1341,14 @@ one terminal envelope. Loopback is the default; non-loopback binding is an
 explicit operator choice and, without `--allow-actions`, has no authentication.
 
 `--allow-actions` (default off) adds the opt-in local action layer: a
-per-process token, Host/Origin/content-type checks, and the single allowlisted
-action `experiment.evaluate`, which runs `aq experiment evaluate` as a child
-process with an append-only audit log at `.autoquant/studio-actions.jsonl`. It
-is refused with a non-loopback `--host`, and the banner prints
-`Mode: local actions enabled`. Without the flag the routes do not exist and the
-server stays read-only. See [[docs/STUDIO]] and
+per-process token, Host/Origin/content-type checks, and the allowlisted actions
+`experiment.evaluate`, `session.start` and `session.check` (each runs the
+matching `aq` command as a child process) plus `candidate.save` (an in-process,
+hash-guarded write of the Session candidate file), with an append-only audit log
+at `.autoquant/studio-actions.jsonl`. The read route `GET /api/v1/candidate` is
+available with or without the flag. The flag is refused with a non-loopback
+`--host`, and the banner prints `Mode: local actions enabled`. Without the flag
+the action and job routes do not exist and the server stays read-only. See [[docs/STUDIO]] and
 [[docs/design/studio-local-actions]].
 
 ## Success envelope

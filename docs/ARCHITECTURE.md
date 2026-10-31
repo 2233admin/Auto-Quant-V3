@@ -123,7 +123,8 @@ The V2 foundation now implements:
   deliverable without re-evaluating raw Runs or recomputing later mechanical
   decisions.
 - one packaged local Studio, read-only by default (an opt-in `--allow-actions`
-  layer can start the allowlisted `aq experiment evaluate` command; see
+  layer can start the allowlisted `aq experiment evaluate`, `aq session start`
+  and `aq session check` commands and write the Session candidate file; see
   [[docs/design/studio-local-actions]]), with a shared versioned snapshot,
   Workspace/Project overview, request → lane Reports → Dossier delivery,
   effective Projects/configuration disclosure, exact copyable CLI commands,
@@ -589,8 +590,9 @@ These commands must not start autonomous research or a long backtest.
 - Network ingestion, corporate-action computation, exchange-holiday
   verification, and point-in-time universe contracts are not implemented.
 - Studio is read-only unless started with `--allow-actions`, which provides one
-  confirmed Core operation (`experiment.evaluate`); the browser action UI and
-  further actions are later slices of [[docs/design/studio-local-actions]].
+  confirmed Core operations (`experiment.evaluate`, `session.start`,
+  `session.check`) and the hash-guarded `candidate.save` write; the browser
+  action UI and further actions are later slices of [[docs/design/studio-local-actions]].
 - ML is a supported architectural direction but has no execution contract yet.
 - Optional host-side automatic Project creation, coworker assignment, and
   delivery are not implemented here; AutoQuant emits exact report artifacts

@@ -9,7 +9,7 @@ export type CatalogLoad =
   | { state: 'off' }
   | { state: 'loading' }
   | { state: 'error'; title: string; detail: string }
-  | { state: 'ready'; action: CatalogAction; target: CatalogTarget }
+  | { state: 'ready'; action: CatalogAction; target: CatalogTarget; start: CatalogTarget | null }
 
 /** GET /api/v1/actions?project=<id>, reloaded whenever a job finishes. Preconditions come from the server, never from the browser. */
 export function useCatalog(projectId: string): CatalogLoad & { reload: () => void } {
@@ -34,7 +34,8 @@ export function useCatalog(projectId: string): CatalogLoad & { reload: () => voi
       .then((catalog) => {
         const action = catalog.actions.find((a) => a.id === EVALUATE_ID)
         const target = action?.targets.find((t) => t.project === projectId)
-        setLoad(action && target ? { state: 'ready', action, target } : { state: 'error', title: 'This Project is not in the action catalog.', detail: 'Studio did not list Run analysis for it.' })
+        const start = catalog.actions.find((a) => a.id === 'session.start')?.targets.find((t) => t.project === projectId) ?? null
+        setLoad(action && target ? { state: 'ready', action, target, start } : { state: 'error', title: 'This Project is not in the action catalog.', detail: 'Studio did not list Run analysis for it.' })
       })
       .catch((reason: unknown) => {
         if (controller.signal.aborted) return

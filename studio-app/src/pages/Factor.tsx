@@ -10,8 +10,10 @@ import { IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
 import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictHero, VerdictReasons } from './FactorEvidence'
-import { adjustmentOf, CoreTiles, TestedFacts, Tabs, useHashTab, type TabDef } from './FactorWorkbench'
-import { RunAnalysisButton } from '../actions/RunAnalysisButton'
+import { adjustmentOf, CoreTiles, Tabs, useHashTab, type TabDef } from './FactorWorkbench'
+import { useActions } from '../actions/ActionsContext'
+import { LoopProgress, LoopResult, type LoopOutcome } from '../actions/LoopProgress'
+import { FactorEditor } from './FactorEditor'
 import { ResultHeader } from './ResultHeader'
 import { otherLaneOf } from './run/runTypes'
 import { Info } from '../components/Info'
@@ -268,7 +270,18 @@ const ANCHOR_TAB: Record<string, TabId> = {
 }
 const TAB_IDS = ['evidence', 'checks', 'stability', 'provenance'] as const
 
-function Content({ study, project, loadingRun, go }: { study: FactorDiagnostics; project: ProjectSnapshot; loadingRun?: boolean; go: (href: string) => void }) {
+type Loop = { outcome: LoopOutcome | null; onFinished: (o: LoopOutcome) => void; dismiss: () => void }
+
+function LoopStatus({ loop, project }: { loop: Loop; project: ProjectSnapshot }) {
+  return (
+    <>
+      <LoopProgress onFinished={loop.onFinished} />
+      {loop.outcome && <LoopResult outcome={loop.outcome} project={project} onDismiss={loop.dismiss} />}
+    </>
+  )
+}
+
+function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagnostics; project: ProjectSnapshot; loadingRun?: boolean; go: (href: string) => void; loop: Loop }) {
   const runRow: RunRow | undefined = project.runs.find((r) => r.id === study.run.id)
   const adjustment = adjustmentOf(project)
   const frontier = noiseFrontier(project.sessions, project.runs)
@@ -294,22 +307,19 @@ function Content({ study, project, loadingRun, go }: { study: FactorDiagnostics;
     { id: 'provenance', label: 'Provenance', badge: failing ? 'run error' : undefined },
   ]
   return (
-    <div className="wb">
-      <aside className="wb-side" aria-label="What was tested">
+    <div className="wb wb--edit">
+      <aside className="wb-side" aria-label="Candidate editor">
         <div className="wb-head">
           <h1 className="wb-title">Factor evidence</h1>
           <span className="wb-sub mono" translate="no">{study.run.id}</span>
         </div>
-        <section aria-labelledby="wb-tested">
-          <h2 className="wb-h" id="wb-tested">What was tested</h2>
-          <TestedFacts study={study} />
-        </section>
+        <FactorEditor project={project} study={study} />
       </aside>
 
       <div className="wb-main">
         <ResultHeader
           select={<RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />}
-          action={<RunAnalysisButton project={project} preferStudyId={study.run.studyId} />}
+          action={null}
           links={
             <>
               <a href={routeHref({ view: 'compare', id: project.id, a: study.run.id })}>Compare</a>
@@ -318,6 +328,7 @@ function Content({ study, project, loadingRun, go }: { study: FactorDiagnostics;
             </>
           }
         />
+        <LoopStatus loop={loop} project={project} />
         <VerdictHero study={study} adjustment={adjustment} />
         <FactorHero study={study} />
         <CoreTiles study={study} project={project} validation={validation} testAudit={study.summary.testAudit} testVisible={testVisible} defs={study.protocol.semantics} />
@@ -431,6 +442,25 @@ export function FactorPage({ project, study, run, go }: { project: ProjectSnapsh
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otherHref])
   const [loaded, setLoaded] = useState<Loaded | null>(null)
+  const { hideDock } = useActions()
+  const [outcome, setOutcome] = useState<LoopOutcome | null>(null)
+  useEffect(() => {
+    // Progress is drawn inline on this page, so the floating job dock stays hidden while it is open.
+    hideDock(true)
+    return () => hideDock(false)
+  }, [hideDock])
+  const loop: Loop = {
+    outcome,
+    dismiss: () => setOutcome(null),
+    onFinished: (done) => {
+      setOutcome(done)
+      // A finished evaluation wrote a new Run (KEEP, REVERT or CRASH alike): show it, from the top, without a reload.
+      if (done.status === 'succeeded' && done.actionId === 'experiment.evaluate' && done.runId) {
+        navigate(routeHref({ view: 'factor', id: project.id, run: done.runId }))
+        window.scrollTo(0, 0)
+      }
+    },
+  }
   const key = wanted ? `${project.id}/${wanted}` : ''
 
   useEffect(() => {
@@ -454,13 +484,14 @@ export function FactorPage({ project, study, run, go }: { project: ProjectSnapsh
   return (
     <div className="pg">
       {explorer && !mismatch ? (
-        <Content study={explorer} project={project} loadingRun={pending} go={navigate} />
+        <Content study={explorer} project={project} loadingRun={pending} go={navigate} loop={loop} />
       ) : (
         <>
           <header className="pg-head">
             <h1>Factor evidence</h1>
           </header>
           <RunSelector project={project} shown={wanted ?? inline?.run.id ?? ''} loading={pending} go={navigate} />
+          <LoopStatus loop={loop} project={project} />
           {other && otherHref ? (
             <p className="muted">
               This Run belongs to the {other.lane} lane. <a href={otherHref}>Open {other.lane}</a>

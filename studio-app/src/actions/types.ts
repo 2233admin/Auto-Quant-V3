@@ -3,7 +3,8 @@
 export type ActionsBootstrap = { enabled: boolean; token: string; tokenHeader: string; catalog: string }
 
 export type CatalogSession = { session: string; available: boolean; blockedBy: string | null }
-export type CatalogTarget = { project: string; activeJob: string | null; sessions: CatalogSession[] }
+export type CatalogStudy = { study: string; available: boolean; blockedBy: string | null }
+export type CatalogTarget = { project: string; activeJob: string | null; sessions: CatalogSession[]; studies?: CatalogStudy[] }
 export type CatalogAction = {
   id: string
   label: string

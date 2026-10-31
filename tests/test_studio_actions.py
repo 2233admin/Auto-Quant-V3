@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import http.client
 import io
 import json
@@ -109,8 +110,8 @@ class StudioActionsTests(unittest.TestCase):
         create_study(project, study_definition())
         session = start_session(project, "factor-quality")
         if change:
-            (session.worktree_project.root_dir / "factors/candidate.py").write_text(
-                "SCORE = 2.0\n"
+            (session.worktree_project.root_dir / "factors/candidate.py").write_bytes(
+                b"SCORE = 2.0\n"
             )
         return workspace, project, session
 
@@ -401,7 +402,7 @@ class StudioActionsTests(unittest.TestCase):
                 server, "POST", url, {**self._params(session), "actionId": "holdout.run"}
             )
             self.assertEqual((status, payload["error"]["code"]), (404, "studio.unknown-action"))
-            for action_id in ("session.start", "report.publish", "project.create", "", None):
+            for action_id in ("report.publish", "project.create", "session.complete", "candidate.delete", "", None):
                 status, payload = self._request(
                     server, "POST", url, {**self._params(session), "actionId": action_id}
                 )
@@ -831,6 +832,478 @@ class StudioActionsTests(unittest.TestCase):
             log = workspace.root_dir.resolve() / ".autoquant" / "studio-actions.jsonl"
             finished = [json.loads(l) for l in log.read_text().splitlines()][-1]
             self.assertEqual(finished["createdRefs"]["runId"], refs["runId"])
+
+
+    # session.start / session.check / candidate.save / GET candidate -----------
+
+    def _post(self, server, action_id, params, *, path="/api/v1/actions/preview", **extra):
+        body = {"actionId": action_id, "project": "factor-project", "params": params, **extra}
+        return self._request(server, "POST", path, body)
+
+    def _sid(self, session) -> str:
+        return session.manifest["id"]
+
+    def _candidate_path(self, session) -> Path:
+        return session.worktree_project.root_dir / "factors" / "candidate.py"
+
+    def _save(self, server, session, source, base, **extra):
+        return self._post(
+            server, "candidate.save",
+            {"session": self._sid(session), "source": source, "baseSha256": base},
+            path="/api/v1/actions", confirm=True, **extra,
+        )
+
+    def _get_candidate(self, session, server, **kw):
+        return self._request(
+            server, "GET",
+            f"/api/v1/candidate?project=factor-project&session={self._sid(session)}",
+            json_type=False, **kw,
+        )
+
+    def test_session_start_preview_second_confirm_and_trial_count(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, project = make_project(directory)
+            create_study(project, study_definition())
+            start_json = json.dumps(
+                {"ok": True, "data": {"session": {"id": "session-x", "baseline": {"runId": "run-b"}}}}
+            ).encode()
+            spawn = FakeSpawn(out=start_json)
+            server = self._serve(workspace, spawn=spawn)
+            params = {"study": "factor-quality"}
+            status, preview = self._post(server, "session.start", params)
+            self.assertEqual(status, 200, preview)
+            data = preview["data"]
+            self.assertEqual(
+                data["argv"],
+                [
+                    sys.executable, "-m", "autoquant", "session", "start",
+                    str(workspace.root_dir.resolve()), "--project", "factor-project",
+                    "--study", "factor-quality", "--json",
+                ],
+            )
+            self.assertTrue(data["requiresSecondConfirm"])
+            self.assertEqual(data["trial"]["currentFamilyTrials"], 0)
+            self.assertIsNone(data["trial"]["familyId"])
+            self.assertIn("opens a trial family", data["trial"]["notice"])
+            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
+            ids = [item["id"] for item in catalog["data"]["actions"]]
+            self.assertEqual(ids, ["experiment.evaluate", "session.start", "session.check", "candidate.save"])
+            start = catalog["data"]["actions"][1]
+            self.assertEqual(
+                start["targets"][0]["studies"],
+                [{"study": "factor-quality", "available": True, "blockedBy": None}],
+            )
+            self.assertTrue(start["requiresSecondConfirm"])
+            base = {"confirm": True, "commandHash": data["commandHash"]}
+            status, payload = self._post(server, "session.start", params, path="/api/v1/actions", **base)
+            self.assertEqual((status, payload["error"]["code"]), (400, "studio.second-confirm-required"))
+            status, payload = self._post(
+                server, "session.start", params, path="/api/v1/actions", secondConfirm=True, **base
+            )
+            self.assertEqual(status, 202, payload)
+            job = self._wait(server, payload["data"]["jobId"])
+            self.assertEqual(job["createdRefs"], {"sessionId": "session-x", "runId": "run-b"})
+            self.assertEqual([stage["id"] for stage in job["stages"]], ["preflight", "baseline-run", "session-created"])
+            self.assertEqual(len(spawn.calls), 1)
+
+    def test_session_start_blocked_and_trial_count_after_baseline(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, project, session = self._setup(directory, change=False)
+            spawn = FakeSpawn()
+            server = self._serve(workspace, spawn=spawn)
+            status, payload = self._post(server, "session.start", {"study": "factor-quality"})
+            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"))
+            self.assertEqual(
+                payload["error"]["message"],
+                f"Blocked: Study factor-quality already has active Session {self._sid(session)}",
+            )
+            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
+            entry = catalog["data"]["actions"][1]["targets"][0]["studies"][0]
+            self.assertFalse(entry["available"])
+            self.assertIn("already has active Session", entry["blockedBy"])
+            trial = server.actions._start_trial(project, "factor-quality")
+            self.assertEqual(trial["currentFamilyTrials"], 1)
+            self.assertTrue(trial["familyId"].startswith("family-"))
+            self.assertEqual(spawn.calls, [])
+
+    def test_session_start_parameter_schema_and_request_confinement(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, project = make_project(directory)
+            create_study(project, study_definition())
+            spawn = FakeSpawn()
+            server = self._serve(workspace, spawn=spawn)
+            for params in (
+                {}, {"study": ""}, {"study": 5}, {"study": "../x"}, {"study": "Factor"},
+                {"study": "a" * 65}, {"study": "--help"}, {"study": "factor-quality", "extra": 1},
+                {"study": "factor-quality", "request": ""},
+                {"study": "factor-quality", "request": 3},
+                {"study": "factor-quality", "request": "a\nb"},
+                "string",
+            ):
+                status, payload = self._post(server, "session.start", params)
+                self.assertEqual((status, payload["error"]["code"]), (422, "validation.failed"), params)
+            status, payload = self._post(server, "session.start", {"study": "ghost"})
+            self.assertEqual(status, 422)
+            self.assertEqual(payload["error"]["issues"][0]["code"], "study.missing")
+            outside = Path(directory).resolve() / "outside.json"
+            outside.write_text("{}")
+            for evil in ("../outside.json", str(outside), "C:\\Windows\\win.ini", "missing.json"):
+                status, payload = self._post(
+                    server, "session.start", {"study": "factor-quality", "request": evil}
+                )
+                self.assertEqual(status, 422, evil)
+            inside = workspace.root_dir.resolve() / "staging" / "request.json"
+            inside.parent.mkdir(exist_ok=True)
+            inside.write_text("{}")
+            status, payload = self._post(
+                server, "session.start", {"study": "factor-quality", "request": "staging/request.json"}
+            )
+            self.assertEqual(status, 200, payload)
+            argv = payload["data"]["argv"]
+            self.assertEqual(argv[-3:], ["--request", str(inside), "--json"])
+            self.assertEqual(spawn.calls, [])
+
+    def test_session_check_preview_blocked_and_job(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory, change=False)
+            check_json = json.dumps({"ok": True, "data": {"id": "check-1", "status": "passed"}}).encode()
+            spawn = FakeSpawn(out=check_json)
+            server = self._serve(workspace, spawn=spawn)
+            params = {"session": self._sid(session)}
+            status, payload = self._post(server, "session.check", params)
+            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"))
+            self.assertIn("does not differ from the leader", payload["error"]["message"])
+            for params_bad in ({}, {"session": "../x"}, {"session": self._sid(session), "extra": 1}, {"session": 5}):
+                self.assertEqual(self._post(server, "session.check", params_bad)[0], 422, params_bad)
+            self._candidate_path(session).write_text("SCORE = 2.0\n")
+            status, preview = self._post(server, "session.check", params)
+            self.assertEqual(status, 200, preview)
+            data = preview["data"]
+            self.assertEqual(data["argv"][3:5], ["session", "check"])
+            self.assertEqual(data["argv"][-3:], ["--session", self._sid(session), "--json"])
+            self.assertIsNone(data["trial"])
+            self.assertFalse(data["requiresSecondConfirm"])
+            status, payload = self._post(
+                server, "session.check", params, path="/api/v1/actions",
+                confirm=True, commandHash=data["commandHash"],
+            )
+            self.assertEqual(status, 202, payload)
+            job = self._wait(server, payload["data"]["jobId"])
+            self.assertEqual(job["createdRefs"], {"checkId": "check-1"})
+            self.assertEqual(job["stages"][0]["id"], "candidate-check")
+
+    def test_get_candidate_with_actions_off_is_read_only(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            server = create_studio_server(workspace.root_dir, port=0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            self.addCleanup(server.server_close)
+            self.addCleanup(server.shutdown)
+            status, payload = self._get_candidate(session, server, token=False)
+            self.assertEqual(status, 200, payload)
+            data = payload["data"]
+            raw = self._candidate_path(session).read_bytes()
+            self.assertEqual(data["source"], "SCORE = 2.0\n")
+            self.assertEqual(data["sha256"], hashlib.sha256(raw).hexdigest())
+            self.assertEqual(data["bytes"], len(raw))
+            self.assertFalse(data["editable"])
+            self.assertIn("--allow-actions", data["blockedReason"])
+            self.assertTrue(data["blockedReason"].startswith("Blocked: "))
+            self.assertTrue(data["path"].endswith("worktree/factor-project/factors/candidate.py"), data["path"])
+            self.assertFalse(Path(data["path"]).is_absolute())
+            for query in (
+                "project=nope&session=" + self._sid(session),
+                "project=factor-project&session=ghost-1",
+                "project=factor-project&session=../x",
+                "project=factor-project",
+                "",
+            ):
+                status, payload = self._request(
+                    server, "GET", "/api/v1/candidate?" + query, json_type=False, token=False
+                )
+                self.assertEqual((status, payload["error"]["code"]), (422, "validation.failed"), query)
+            status, _ = self._request(
+                server, "POST", "/api/v1/actions",
+                {"actionId": "candidate.save"}, token=False,
+            )
+            self.assertEqual(status, 405)
+            self.assertFalse((workspace.root_dir / ".autoquant").exists())
+
+    def test_get_candidate_with_actions_on(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            server = self._serve(workspace, spawn=FakeSpawn(block=True))
+            status, payload = self._get_candidate(session, server, token=False)
+            self.assertEqual(status, 200, payload)
+            self.assertTrue(payload["data"]["editable"])
+            self.assertIsNone(payload["data"]["blockedReason"])
+            status, payload = self._get_candidate(session, server, token=False, headers={"Host": "evil.example"})
+            self.assertEqual((status, payload["error"]["code"]), (403, "studio.host"))
+            closed = SimpleNamespace(id=self._sid(session), status="completed")
+            with mock.patch.object(studio_actions, "list_sessions", return_value=[closed]):
+                status, payload = self._get_candidate(session, server, token=False)
+            self.assertEqual(status, 200)
+            self.assertFalse(payload["data"]["editable"])
+            self.assertEqual(
+                payload["data"]["blockedReason"],
+                f"Blocked: Session {self._sid(session)} is completed, not active",
+            )
+            self.assertEqual(payload["data"]["source"], "SCORE = 2.0\n")
+
+    def test_candidate_save_writes_exact_bytes_and_audits_hashes_only(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            server = self._serve(workspace)
+            sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
+            marker = "SECRET_MARKER_41"
+            source = f"# {marker}\r\nSCORE = 3.5\r\n# caf\u00e9"
+            status, preview = self._post(
+                server, "candidate.save",
+                {"session": self._sid(session), "source": source, "baseSha256": sha},
+            )
+            self.assertEqual(status, 200, preview)
+            self.assertFalse(preview["data"]["requiresSecondConfirm"])
+            self.assertTrue(preview["data"]["file"]["changed"])
+            self.assertNotIn(marker, json.dumps(preview))
+            self.assertEqual(self._candidate_path(session).read_bytes(), b"SCORE = 2.0\n")
+            status, payload = self._save(server, session, source, sha)
+            self.assertEqual(status, 200, payload)
+            data = payload["data"]
+            encoded = source.encode("utf-8")
+            self.assertEqual(self._candidate_path(session).read_bytes(), encoded)
+            self.assertEqual(data["sha256"], hashlib.sha256(encoded).hexdigest())
+            self.assertEqual(data["bytes"], len(encoded))
+            self.assertEqual(data["previousSha256"], sha)
+            self.assertTrue(data["changed"])
+            self.assertEqual(data["path"], self._get_candidate(session, server, token=False)[1]["data"]["path"])
+            self.assertEqual(list(self._candidate_path(session).parent.glob("*.tmp")), [])
+            # The saved file is still inside the editable closure: Session stays valid.
+            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
+            save_action = next(a for a in catalog["data"]["actions"] if a["id"] == "candidate.save")
+            self.assertEqual(save_action["targets"][0]["sessions"][0]["available"], True)
+            self.assertEqual(save_action["params"]["baseSha256"]["pattern"], "^[0-9a-f]{64}$")
+            self.assertFalse(save_action["requiresSecondConfirm"])
+            # Same bytes again: unchanged, nothing rewritten.
+            status, again = self._save(server, session, source, data["sha256"])
+            self.assertEqual(status, 200)
+            self.assertFalse(again["data"]["changed"])
+            log = (workspace.root_dir.resolve() / ".autoquant" / "studio-actions.jsonl").read_text(encoding="utf-8")
+            self.assertNotIn(marker, log)
+            self.assertNotIn("SCORE", log)
+            records = [json.loads(line) for line in log.splitlines()]
+            started = [r for r in records if r["event"] == "candidate-save-started"]
+            finished = [r for r in records if r["event"] == "candidate-save-finished"]
+            self.assertEqual(len(started), 2)
+            self.assertEqual([r["status"] for r in finished], ["saved", "unchanged"])
+            self.assertEqual(started[0]["beforeSha256"], sha)
+            self.assertEqual(started[0]["afterSha256"], data["sha256"])
+            self.assertEqual(started[0]["beforeBytes"], len(b"SCORE = 2.0\n"))
+            self.assertEqual(started[0]["afterBytes"], len(encoded))
+            self.assertEqual(started[0]["saveId"], finished[0]["saveId"])
+            self.assertNotIn(server.actions.token, log)
+
+    def test_candidate_save_conflict_on_stale_base_leaves_file_untouched(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            server = self._serve(workspace)
+            sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
+            self._candidate_path(session).write_text("SCORE = 9.0\n")
+            status, payload = self._save(server, session, "SCORE = 4.0\n", sha)
+            self.assertEqual((status, payload["error"]["code"]), (409, "studio.conflict"))
+            self.assertEqual(payload["error"]["issues"][0]["code"], "candidate.conflict")
+            self.assertIn("reload before saving", payload["error"]["message"])
+            self.assertEqual(self._candidate_path(session).read_text(), "SCORE = 9.0\n")
+            self.assertFalse((workspace.root_dir / ".autoquant" / "studio-actions.jsonl").exists())
+
+    def test_candidate_save_parameter_schema_rejections(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            server = self._serve(workspace)
+            sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
+            sid = self._sid(session)
+            good = {"session": sid, "source": "SCORE = 1.0\n", "baseSha256": sha}
+            cases = {
+                "no source": {"session": sid, "baseSha256": sha},
+                "no base": {"session": sid, "source": "x = 1"},
+                "empty source": {**good, "source": ""},
+                "non-string source": {**good, "source": 7},
+                "NUL": {**good, "source": "a\x00b"},
+                "surrogate": {**good, "source": "\ud800"},
+                "too big": {**good, "source": "x" * 200_001},
+                "too big utf8": {**good, "source": "\u00e9" * 100_001},
+                "short base": {**good, "baseSha256": "abc"},
+                "upper base": {**good, "baseSha256": sha.upper()},
+                "extra": {**good, "extra": 1},
+                "bad session": {**good, "session": "../x"},
+                "string params": "x",
+            }
+            for label, params in cases.items():
+                status, payload = self._post(server, "candidate.save", params, path="/api/v1/actions", confirm=True)
+                self.assertEqual((status, payload["error"]["code"]), (422, "validation.failed"), label)
+            status, payload = self._post(
+                server, "candidate.save", {**good, "session": "ghost-1"}, path="/api/v1/actions", confirm=True
+            )
+            self.assertEqual(status, 422)
+            self.assertEqual(payload["error"]["issues"][0]["code"], "session.missing")
+            for body in ({}, {"confirm": False}):
+                status, payload = self._post(server, "candidate.save", good, path="/api/v1/actions", **body)
+                self.assertEqual((status, payload["error"]["code"]), (400, "studio.confirm-required"))
+            exact = {**good, "source": "x" * 200_000}
+            status, _ = self._post(server, "candidate.save", exact, path="/api/v1/actions", confirm=True)
+            self.assertEqual(status, 200)
+            self.assertEqual(self._candidate_path(session).read_bytes(), b"x" * 200_000)
+
+    def test_candidate_save_blocked_reasons(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            spawn = FakeSpawn(block=True)
+            server = self._serve(workspace, spawn=spawn)
+            sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
+            sid = self._sid(session)
+            # Stale: a fixed file in the worktree changed.
+            judge = session.worktree_project.root_dir / "judges/evaluate.py"
+            judge.write_text(judge.read_text() + "\n# tampered\n")
+            status, payload = self._save(server, session, "x = 1\n", sha)
+            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"))
+            self.assertIn(f"Blocked: Session {sid} is stale; run aq session show to see why", payload["error"]["message"])
+            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
+            save_action = next(a for a in catalog["data"]["actions"] if a["id"] == "candidate.save")
+            entry = save_action["targets"][0]["sessions"][0]
+            self.assertFalse(entry["available"])
+            self.assertIn("is stale", entry["blockedBy"])
+            self.assertFalse(self._get_candidate(session, server, token=False)[1]["data"]["editable"])
+            judge.write_text(judge.read_text().replace("\n# tampered\n", ""))
+            # Closed Session.
+            closed = SimpleNamespace(id=sid, status="completed")
+            with mock.patch.object(studio_actions, "list_sessions", return_value=[closed]):
+                status, payload = self._save(server, session, "x = 1\n", sha)
+            self.assertEqual((status, payload["error"]["message"]), (409, f"Blocked: Session {sid} is completed, not active"))
+            # Outside the editable closure.
+            real_load = studio_actions.load_session
+
+            def narrowed(project, session_id):
+                loaded = real_load(project, session_id)
+                manifest = {**loaded.manifest, "editablePaths": ["strategies/**"]}
+                return SimpleNamespace(
+                    manifest=manifest, worktree_project=loaded.worktree_project
+                )
+
+            with mock.patch.object(studio_actions, "load_session", narrowed):
+                with mock.patch.object(
+                    studio_actions, "session_snapshot", return_value={"authority": {"valid": True, "issues": []}}
+                ):
+                    status, payload = self._save(server, session, "x = 1\n", sha)
+            self.assertEqual(status, 409)
+            self.assertEqual(
+                payload["error"]["message"],
+                f"Blocked: factors/candidate.py is not in the editable closure of Session {sid}",
+            )
+            # Active job for the Project.
+            preview = self._preview(server, session)
+            status, created = self._create(server, session, preview)
+            self.assertEqual(status, 202, created)
+            job_id = created["data"]["jobId"]
+            status, payload = self._save(server, session, "x = 1\n", sha)
+            self.assertEqual((status, payload["error"]["code"]), (409, "studio.busy"))
+            self.assertIn(job_id, payload["error"]["message"])
+            view = self._get_candidate(session, server, token=False)[1]["data"]
+            self.assertFalse(view["editable"])
+            self.assertIn(job_id, view["blockedReason"])
+            for handle in spawn.handles:
+                handle.release.set()
+            self._wait(server, job_id)
+            time.sleep(0.3)
+            self.assertEqual(self._candidate_path(session).read_text(), "SCORE = 2.0\n")
+
+    def test_candidate_save_holds_the_project_slot_while_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            server = self._serve(workspace, spawn=FakeSpawn())
+            sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
+            seen: list[str | None] = []
+            real_replace = os.replace
+
+            def spying_replace(src, dst):
+                seen.append(server.actions.runner.active_job("factor-project"))
+                real_replace(src, dst)
+
+            with mock.patch.object(studio_actions.os, "replace", spying_replace):
+                status, _ = self._save(server, session, "SCORE = 1.5\n", sha)
+            self.assertEqual(status, 200)
+            self.assertTrue(seen[0] and seen[0].startswith("hold-"))
+            self.assertIsNone(server.actions.runner.active_job("factor-project"))
+
+    def test_candidate_save_is_atomic_when_the_replace_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            server = self._serve(workspace)
+            sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
+            with mock.patch.object(studio_actions.os, "replace", side_effect=OSError("disk full")):
+                status, payload = self._save(server, session, "SCORE = 8.0\n", sha)
+            self.assertEqual((status, payload["error"]["code"]), (500, "studio.write-failed"))
+            self.assertEqual(self._candidate_path(session).read_bytes(), b"SCORE = 2.0\n")
+            self.assertEqual(list(self._candidate_path(session).parent.glob("*.tmp")), [])
+            log = (workspace.root_dir.resolve() / ".autoquant" / "studio-actions.jsonl").read_text()
+            self.assertEqual(json.loads(log.splitlines()[-1])["status"], "failed")
+            self.assertIsNone(server.actions.runner.active_job("factor-project"))
+            # The slot is free and a retry succeeds.
+            self.assertEqual(self._save(server, session, "SCORE = 8.0\n", sha)[0], 200)
+
+    def test_candidate_save_refuses_symlink_and_junction_candidates(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            server = self._serve(workspace)
+            path = self._candidate_path(session)
+            sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
+            outside = Path(directory).resolve() / "outside.py"
+            outside.write_text("SCORE = 0.0\n")
+            original = path.read_bytes()
+            path.unlink()
+            try:
+                path.symlink_to(outside)
+            except (OSError, NotImplementedError):
+                path.write_bytes(original)
+                self.skipTest("symlinks are not available")
+            status, payload = self._save(server, session, "SCORE = 7.0\n", sha)
+            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"), payload)
+            self.assertIn("symlink", payload["error"]["message"])
+            self.assertEqual(outside.read_text(), "SCORE = 0.0\n")
+            self.assertEqual(
+                self._get_candidate(session, server, token=False)[0], 404
+            )
+            path.unlink()
+            path.write_bytes(original)
+
+    def test_candidate_save_refuses_a_junctioned_factors_directory(self) -> None:
+        if os.name != "nt":
+            self.skipTest("junctions are Windows only")
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, session = self._setup(directory)
+            server = self._serve(workspace)
+            factors = self._candidate_path(session).parent
+            sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
+            outside = Path(directory).resolve() / "outside-factors"
+            outside.mkdir()
+            (outside / "candidate.py").write_text("SCORE = 0.0\n")
+            backup = factors.with_name("factors-real")
+            factors.rename(backup)
+            made = subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(factors), str(outside)],
+                capture_output=True,
+            )
+            try:
+                if made.returncode != 0:
+                    self.skipTest("cannot create a junction")
+                status, payload = self._save(server, session, "SCORE = 7.0\n", sha)
+                # Core rejects a junctioned directory before the candidate check.
+                self.assertIn(status, (409, 422), payload)
+                self.assertFalse(payload["ok"])
+                self.assertEqual((outside / "candidate.py").read_text(), "SCORE = 0.0\n")
+            finally:
+                if factors.exists():
+                    os.rmdir(factors)
+                backup.rename(factors)
 
 
 if __name__ == "__main__":

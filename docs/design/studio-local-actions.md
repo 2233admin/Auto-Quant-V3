@@ -1,7 +1,10 @@
 # Studio local actions
 
 Status: slice S1 implemented (server side: flag, security layer, JobRunner,
-audit log, the single `experiment.evaluate` action); S2 to S5 are proposed.
+audit log, the `experiment.evaluate` action); the S3 subset `session.start` and
+`session.check` plus the controlled write `candidate.save` and the read route
+`GET /api/v1/candidate` are implemented as specified in "Candidate editor and
+session actions"; the rest of S2 to S5 is proposed.
 Owner decision of 2026-11-01: Studio gets a local action layer that can start work, but only by
 invoking existing `aq` commands. This document owns that layer: the opt-in
 flag, the HTTP action and job surface, the security model, the action catalog,
@@ -146,13 +149,14 @@ means it is not offered in v1 and the reason is stated.
 | `idea.new` | `aq hypothesis add <ws> --idea TEXT --kind factor --project <id>` then `aq project create` | `idea`: 8 to 500 chars | `aq hypothesis` group exists | Hypothesis draft and its dedicated target Project (owner decision: one Hypothesis per dedicated Project) | Hypothesis draft card on the new Project | No | needs Hypothesis |
 | `session.start` | `aq session start <ws> --project <p> --study <study_id> [--request <file>] --json` | `study_id` from the verified snapshot's Study list; `request` optional, Workspace-confined | Project has a Study; no active Session on the Study; baseline can be established | Session, baseline Run, Session worktree | Session appears with leader and next command | Yes: starting a Session opens a trial family; the dialog shows the current family trial count | safe now |
 | `session.check` | `aq session check <ws> --project <p> --session <sid> --json` | `sid` from snapshot | Session `active`, candidate present, not stale | Nothing durable by design (fixed bounded preflight) | Preflight result on the candidate card | No | safe now |
+| `candidate.save` | none (in-process write) | see [[docs/design/studio-local-actions]] section Candidate editor and session actions | Session `active`, not stale, candidate inside the editable closure, no job active for the Project | Replaces `factors/candidate.py` in the Session worktree only | Factor page editor | No (spends no trial, creates no evidence) | implemented |
 | `experiment.evaluate` | `aq experiment evaluate <ws> --project <p> --session <sid> --hypothesis <text> --json` | `sid` from snapshot; `hypothesis`: 8 to 500 chars, no control characters, passed as one argv element | Session `active`; candidate differs from leader; preflight passed; Session not stale (Session worktree matches its recorded Study and source hashes); no job active for the Project | Immutable Experiment and Run; the Session verdict (KEEP, REVERT, CRASH) is applied by Core exactly as from a terminal | New Run card with verdict and trial counter; Run header updates | Yes: always. The dialog shows trial N of M and the adjustment effect | safe now (S1) |
 | `experiment.evaluate` with `--hypothesis HID` | same, with `--hypothesis HID` once the flag accepts ids | `HID` from `aq hypothesis list` | Hypothesis frozen | as above, bound to the frozen criteria | Run carries the Hypothesis verdict ledger | Yes | needs Hypothesis |
 | `report.publish` | `aq report publish <ws> --project <p> --session <sid> --analysis <file> --json` | `analysis`: a file under the Workspace that already exists (written by the Agent); Studio never authors analysis text | Session active and delegated; analysis file schema-valid | Immutable Research Report | Report appears in the Report lane; Core `report.publish` command already listed in `_session_commands` | Yes: Reports are immutable evidence | safe now (the Agent writes the file) |
 | `session.complete` | `aq session complete <ws> --project <p> --session <sid> --report <rid> --json` | `rid` from snapshot | Exactly the preconditions `_session_commands` already encodes: Session active, leader equals baseline, latest Report bound to the leader Run | Terminal close of the Session | Session shows closed | Yes: terminal and irreversible | safe now |
 | `session.promote` | `aq session promote ...` | | | Writes the KEEP into the owning Project source | | | excluded in v1: promotes code into the Project; stays an Agent or terminal step until the Hypothesis verdict gate exists |
 | `holdout.*` (`bind`, `run`, `assess`) | `aq holdout ...` | | | | | | excluded permanently from one-click: the frozen holdout is one-shot and consumes untouched evidence. Studio keeps showing holdout status read-only and the copyable command; it never offers a run button. Any future "open holdout" flow needs its own design with a separate typed confirmation, not an action in this table |
-| Candidate code edit, "AI optimize", apply-tuned-parameters | none | | | | | | excluded: no `aq` command edits candidate code, and the reference product's silent overwrite (section 5g of the reference notes) is the anti-pattern. Studio shows the candidate diff and offers a "hand to Agent" text box that produces copyable prompt text; it executes nothing |
+| "AI optimize", apply-tuned-parameters, any candidate edit other than `candidate.save` | none | | | | | | excluded: no `aq` command edits candidate code (the one controlled exception is `candidate.save`), and the reference product's silent overwrite (section 5g of the reference notes) is the anti-pattern. Studio shows the candidate diff and offers a "hand to Agent" text box that produces copyable prompt text; it executes nothing |
 | `strategy.build`, tuning sweeps, paper trading | none | | | | | | excluded: no existing `aq` command, would need new Core lanes or trading authority |
 
 Two catalog rules follow from the table:
@@ -407,6 +411,174 @@ Choices where the text above left room (the code is authoritative):
   invented.
 - Output buffers keep the last 256 KiB per stream. The audit log lives under
   the served directory (`<root>/.autoquant/`).
+
+## Candidate editor and session actions
+
+Owner decision of 2026-11-01: the Factor page becomes an editor and result
+workbench. The left pane edits the candidate factor source and a hypothesis;
+`Run analysis` runs the existing evaluate flow; the right pane shows the
+result. This section is the exact backend contract for that page. It extends
+the catalog above with three actions and one read route. Names here are stable;
+the code and tests follow this text.
+
+This amends the non-goal "No browser-side code editing" and the catalog row
+"Candidate code edit": a browser may now write exactly one file, the Session
+candidate, through `candidate.save`, and nothing else. There is still no AI
+rewrite, no apply-tuned-parameters, and no write to the canonical Project
+source. Promotion of a KEEP into the Project stays `session.promote`, which is
+not offered.
+
+### Which file is the candidate
+
+The candidate is `factors/candidate.py` inside the Session worktree:
+`<project>/sessions/<session id>/worktree/<project id>/factors/candidate.py`
+(`SessionContext.worktree_project.root_dir`). It is the file the checked-in
+Judges import (`from factors.candidate import ...`) and it lies inside the
+`factors/**` editable closure of the factor Studies. `candidate.save` and the
+read route report a Session whose editable closure does not contain that path
+as blocked. The Project's canonical `factors/candidate.py` is never touched.
+
+### Common conventions
+
+- Every route is under the existing Host allowlist. All `POST` routes and the
+  action catalog require the `X-Studio-Token` header and the CSRF checks of the
+  threat model. `GET /api/v1/candidate` is the exception described below.
+- Envelope: `{"schemaVersion":1,"ok":true,"data":...}` or
+  `{"schemaVersion":1,"ok":false,"error":{"code","message","issues":[{path,code,message}]}}`.
+- `blockedBy` and `blockedReason` texts always start with `Blocked: ` and come
+  from the server; the browser shows them verbatim.
+- Request bodies may now be up to 1 MiB (`MAX_BODY_BYTES`), because a 200 000
+  byte source can grow when JSON-escaped.
+- `GET /api/v1/actions` lists the actions in this order: `experiment.evaluate`,
+  `session.start`, `session.check`, `candidate.save`. Each entry keeps the S1
+  shape (`id`, `label`, `classification`, `writes`, `command`,
+  `timeoutSeconds`, `requiresSecondConfirm`, `params`, `targets`).
+  `experiment.evaluate`, `session.check` and `candidate.save` have
+  `targets[].sessions[] = {session, available, blockedBy}`;
+  `session.start` has `targets[].studies[] = {study, available, blockedBy}`.
+  `targets[].activeJob` is the active job id of the Project or `null`.
+
+### `session.start`
+
+| Field | Value |
+| --- | --- |
+| Label / classification | `Start Session` / `writes-immutable-evidence` |
+| argv | `[python, -m, autoquant, session, start, <ws>, (--project <p> when the scope is a Workspace), --study <study>, (--request <abs path>), --json]` |
+| params | `study`: string matching `^[a-z0-9]+(?:-[a-z0-9]+)*$`, at most 64 characters (a Study id listed by the Project); `request` optional string, a path to an existing regular file confined to the served directory (`confine_workspace_path`; relative paths resolve from it) |
+| Second confirmation | Yes (`requiresSecondConfirm: true`): starting a Session opens a trial family |
+| Timeout | 900 s |
+| Flow | exactly as `experiment.evaluate`: `POST /api/v1/actions/preview`, then `POST /api/v1/actions` with `confirm`, `commandHash`, `secondConfirm`; `202 {jobId, status, commandHash}` |
+| Preview extra | `trial: {studyId, familyId, currentFamilyTrials, notice}`. `currentFamilyTrials` is `researchFamily.uniqueSourceTrials` of the Study's newest Run (the baseline counts), `0` and `familyId: null` when the Study has no Run yet. `notice`: `starting a Session opens a trial family; the baseline Run counts as one source trial unless an identical successful one is reused` |
+| `createdRefs` | `sessionId`, `runId` (baseline), taken only from the child `--json` envelope |
+
+Blocked reasons (`409 studio.blocked`, also in the catalog `blockedBy`):
+
+- `Blocked: Study <study> already has active Session <sid>`
+- `Blocked: Study <study> has no editable research surface and does not support iterative Sessions`
+- unknown Study: `422 validation.failed`, issue `params/study` `study.missing`.
+
+The server does not predict whether the baseline can be established; Core
+refuses a failing first-candidate preflight and the job fails with the Core
+message in `stderrTail` and `result`.
+
+### `session.check`
+
+| Field | Value |
+| --- | --- |
+| Label / classification | `Check candidate` / `writes-immutable-evidence` (an immutable non-selection Candidate Check record; no trial, no selection, promotion or trading authority) |
+| argv | `[python, -m, autoquant, session, check, <ws>, (--project <p>), --session <sid>, --json]` |
+| params | `session`: Session id, `^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$` |
+| Second confirmation | No |
+| Timeout | 600 s |
+| Preview | same shape as evaluate without a trial: `trial: null`, `requiresSecondConfirm: false` |
+| `createdRefs` | `checkId` |
+
+Preconditions are identical to `experiment.evaluate` and produce the same
+texts: `Blocked: Session <sid> is <status>, not active`,
+`Blocked: Session <sid> is stale; run aq session show to see why (...)`,
+`Blocked: Session <sid> candidate does not differ from the leader`. Core
+requires an edited candidate before a Check, so the last text is the "edit the
+candidate first" state of the editor.
+
+### `candidate.save`
+
+In-process and synchronous. It spawns nothing, creates no Job, spends no trial
+and creates no evidence, so there is no second confirmation and no
+`commandHash`.
+
+| Field | Value |
+| --- | --- |
+| Label / classification | `Save candidate` / `writes-working-file` |
+| `writes` | `Replaces factors/candidate.py in the Session worktree. Spends no trial and creates no evidence; the next Check or Run analysis evaluates the saved bytes.` |
+| params | `session`: Session id; `source`: string, UTF-8 encodable, 1 to 200 000 bytes encoded, no NUL; `baseSha256`: 64 lowercase hex characters, the `sha256` the editor received from `GET /api/v1/candidate` (or from the previous save) |
+| Request | `POST /api/v1/actions` body `{actionId:"candidate.save", project, params:{session, source, baseSha256}, confirm:true}`. `confirm` must be `true` (`400 studio.confirm-required` otherwise); `commandHash` and `secondConfirm` are ignored |
+| Preview | `POST /api/v1/actions/preview` with the same body returns `{actionId, project, params:{session, baseSha256, sourceBytes, sourceSha256}, argv:null, display:"write <path>", commandHash:null, writes, requiresSecondConfirm:false, file:{path, currentSha256, currentBytes, newSha256, newBytes, changed}}` and writes nothing. The `source` text is not echoed |
+| Success | `200 {actionId, project, session, path, sha256, bytes, previousSha256, previousBytes, changed}` where `path` is relative to the served Workspace with forward slashes, `sha256` and `bytes` describe the file as written, and `changed` is `false` when the bytes were already identical (nothing is rewritten) |
+| Bytes | The source is encoded as UTF-8 and written exactly as given: no newline translation, no trailing newline added, no BOM added. `sha256` is the SHA-256 of those bytes |
+| Atomicity | A temporary file in the same directory is written, flushed and `os.replace`d over the target; the temporary file is removed on any failure. Only `factors/candidate.py` is ever written |
+| Conflict | If the SHA-256 of the file on disk differs from `baseSha256`: `409 studio.conflict`, message `The candidate on disk changed since it was loaded; reload before saving`, with `error.issues[0] = {path:"params/baseSha256", code:"candidate.conflict", message}`. The file is not touched. The browser must re-read with `GET /api/v1/candidate` |
+| Errors | `422 validation.failed` for schema problems: issue codes `schema.object`, `schema.unknown-field`, `schema.session-id`, `schema.source` (not a string, empty, NUL, not UTF-8 encodable), `schema.source-size` (over 200 000 bytes), `schema.base-sha256`; `session.missing` for an unknown Session; `candidate.path` only as defence in depth when the resolved path leaves the Session worktree. `409 studio.blocked` and `409 studio.busy` as below. `500 studio.audit` if the audit log cannot be written (nothing is written first); `500 studio.write-failed` if the replace fails |
+| Audit | Two lines in `.autoquant/studio-actions.jsonl`, joined by `saveId`: `{"event":"candidate-save-started","saveId","actionId":"candidate.save","project","session","path","beforeSha256","afterSha256","beforeBytes","afterBytes","tokenId","startedAt"}` before the replace, and `{"event":"candidate-save-finished","saveId","status":"saved"|"unchanged"|"failed","endedAt"}` after. The source text never appears in the log |
+
+Blocked reasons (`409 studio.blocked`, also `blockedBy` in the catalog):
+
+- `Blocked: Session <sid> is <status>, not active`
+- `Blocked: Session <sid> is stale; run aq session show to see why (...)`
+  (the authority check of `experiment.evaluate`; editing the candidate never
+  makes a Session stale because the candidate is inside the editable closure)
+- `Blocked: factors/candidate.py is not in the editable closure of Session <sid>`
+- `Blocked: factors/candidate.py in the Session worktree is missing, a symlink or junction, or not a regular file`
+  (when Core already reports the worktree as stale because of a symlink, the stale text above wins;
+  a junctioned parent directory is refused by Core itself with `422 validation.failed` `path.escape`.
+  In every case nothing is written)
+
+`409 studio.busy` (`Project <p> already has active job <id>`) when a Studio job
+is running for the Project. The slot is held while the write happens, so a job
+cannot start mid-write.
+
+### `GET /api/v1/candidate?project=<id>&session=<sid>`
+
+Works with or without `--allow-actions`. It needs no token (it is a read like
+`/api/v1/snapshot`); when actions are enabled the Host allowlist applies like
+for every other route.
+
+Success `200`:
+
+```json
+{"schemaVersion":1,"ok":true,"data":{
+  "project":"factor-project","session":"session-...",
+  "path":"projects/factor-project/sessions/session-.../worktree/factor-project/factors/candidate.py",
+  "source":"SCORE = 1.0\n","sha256":"<64 hex of the raw bytes>","bytes":12,
+  "editable":true,"blockedReason":null}}
+```
+
+- `path` is relative to the served Workspace, forward slashes (relative to the
+  Project when the Project lives outside the served directory).
+- `blockedReason` is a string exactly when `editable` is `false`, otherwise
+  absent or `null`. It is the first applicable of:
+  `Blocked: Studio is read-only; restart with --allow-actions to edit the candidate`,
+  the Session and file reasons listed under `candidate.save`,
+  `Blocked: candidate.py is larger than 200000 bytes`, and
+  `Blocked: Project <p> already has active job <id>`.
+- `source` is returned whenever the file is readable, also for closed
+  Sessions and when actions are off, so the editor can render read-only.
+- Errors: `422 validation.failed` (unknown Project, malformed or unknown
+  Session id), `404 studio.candidate-missing` (no such file, or it is a
+  symlink, junction or escapes the worktree), `422 candidate.not-utf8`,
+  `413 candidate.too-large` (over 1 MiB; no source returned).
+
+### Editor flow
+
+1. `GET /api/v1/candidate` -> show `source`, keep `sha256`.
+2. User edits. `POST candidate.save` with `baseSha256` = last known `sha256`;
+   on `200` store the returned `sha256` as the new base. On `409
+   studio.conflict` reload and ask the user.
+3. `session.check` (preview, create, poll the job) is optional.
+4. `experiment.evaluate` as in S1, with the hypothesis from the right pane.
+   Evaluate and Check read the file on disk, so unsaved editor text is never
+   evaluated. The UI must save first.
+5. `session.start` creates the Session when the Study has none; the page then
+   switches to it.
 
 ## Open questions
 

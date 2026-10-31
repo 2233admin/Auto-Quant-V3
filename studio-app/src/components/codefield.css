@@ -1,0 +1,9 @@
+/* Line-numbered code field. Tokens only. Gutter and textarea share font, size and line height so rows align. */
+.cf { display: grid; gap: 4px; min-width: 0; }
+.cf-box { position: relative; border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--bg); overflow: hidden; }
+.cf.is-focused .cf-box { outline: var(--focus-ring); outline-offset: 2px; }
+.cf-gutter, .cf-area { font-family: var(--font-mono); font-size: 12px; line-height: 18px; margin: 0; padding-top: 8px; padding-bottom: 8px; }
+.cf-gutter { position: absolute; top: 0; bottom: 0; left: 0; width: 42px; box-sizing: border-box; display: flex; flex-direction: column; align-items: flex-end; overflow: hidden; padding-left: 6px; padding-right: 8px; color: var(--faint); background: var(--rail); border-right: 1px solid var(--line); user-select: none; }
+.cf-area { display: block; width: 100%; min-width: 0; box-sizing: border-box; padding-left: 52px; padding-right: 8px; border: 0; outline: 0; resize: none; background: transparent; color: var(--text); white-space: pre; overflow: auto; tab-size: 4; }
+.cf.is-readonly .cf-area { color: var(--muted); }
+.cf-hint { margin: 0; }
