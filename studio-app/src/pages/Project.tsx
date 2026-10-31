@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ApiError, getJson, type ProjectResponse, type ProjectSnapshot, type RunRow, type StudyRow } from '../api'
 import { Glyph } from '../design/icons'
 import { num, plural, when } from '../format'
@@ -7,27 +7,50 @@ import { verification } from '../shell/Rail'
 
 type Load = { state: 'loading' } | { state: 'error'; message: string } | { state: 'ready'; project: ProjectSnapshot }
 
-/** One Project's verified snapshot. The page keeps the last data while a refresh is in flight. */
+/**
+ * One Project's verified snapshot. The page keeps the last data while a refresh is in flight.
+ * The shell's first workspace response is only a baseline: it must not re-request a Project the
+ * page is already loading, so only later ticks refresh. Repeat requests revalidate with the
+ * server's ETag, so an unchanged Project costs a 304.
+ */
 export function useProject(id: string, tick: Date | null): Load {
   const [load, setLoad] = useState<Load>({ state: 'loading' })
-  useEffect(() => {
-    setLoad({ state: 'loading' })
-  }, [id])
-  useEffect(() => {
-    if (!id) return
-    const controller = new AbortController()
-    getJson<ProjectResponse>(`/api/v1/project?id=${encodeURIComponent(id)}`, controller.signal)
+  const controller = useRef<AbortController | null>(null)
+  const lastTick = useRef<Date | null>(tick)
+
+  const fetchProject = useCallback((projectId: string) => {
+    controller.current?.abort()
+    const next = new AbortController()
+    controller.current = next
+    getJson<ProjectResponse>(`/api/v1/project?id=${encodeURIComponent(projectId)}`, next.signal)
       .then((body) => {
         const project = body.projects[0]
-        setLoad(project ? { state: 'ready', project } : { state: 'error', message: `Unknown Project: ${id}` })
+        setLoad(project ? { state: 'ready', project } : { state: 'error', message: `Unknown Project: ${projectId}` })
       })
       .catch((reason: unknown) => {
-        if (controller.signal.aborted) return
+        if (next.signal.aborted) return
         const message = reason instanceof ApiError || reason instanceof Error ? reason.message : String(reason)
         setLoad((prev) => (prev.state === 'ready' ? prev : { state: 'error', message }))
       })
-    return () => controller.abort()
-  }, [id, tick])
+  }, [])
+
+  useEffect(() => {
+    setLoad({ state: 'loading' })
+    if (!id) return
+    lastTick.current = tick
+    fetchProject(id)
+    return () => controller.current?.abort()
+    // tick is read only to seed the baseline for this Project id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, fetchProject])
+
+  useEffect(() => {
+    if (!id || tick === lastTick.current) return
+    const first = lastTick.current === null
+    lastTick.current = tick
+    if (!first) fetchProject(id)
+  }, [id, tick, fetchProject])
+
   return load
 }
 
