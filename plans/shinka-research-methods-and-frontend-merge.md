@@ -104,14 +104,14 @@ may only run as a separate external tool.
 
 ### edge-stats (conditional probability engine)
 
-- [ ] Wilson 95% CI on every binary rate, N always attached. In scope for
+- [x] Wilson 95% CI on every binary rate, N always attached. In scope for
   `0.10.0` (slice A): it is the honesty floor for Event Study and later
   hit-rate outputs.
-- [ ] Min-N guards: warn below 30, no estimate below 10. In scope `0.10.0`
+- [x] Min-N guards: warn below 30, no estimate below 10. In scope `0.10.0`
   (slice A).
-- [ ] First-half vs second-half stability split. In scope `0.10.0` (slice A).
-- [ ] Per-year counts. In scope `0.10.0` (slice A).
-- [ ] Value distribution (quantiles) for continuous outcomes. In scope
+- [x] First-half vs second-half stability split. In scope `0.10.0` (slice A).
+- [x] Per-year counts. In scope `0.10.0` (slice A).
+- [x] Value distribution (quantiles) for continuous outcomes. In scope
   `0.10.0` (slice A).
 - [ ] Recency view (last 250 sessions vs full history). Later (`0.10.x`): the
   sample Study has too few events for a recency split to mean anything; needs
@@ -119,7 +119,7 @@ may only run as a separate external tool.
 - [ ] Normalized query echo and URL-encoded query. Later: AQV2 Event Study
   has a fixed Study contract, not a free query DSL; revisit with the Studio
   query builder.
-- [ ] Drill-down to the matching sessions. In scope `0.10.0` (slice A, list of
+- [x] Drill-down to the matching sessions. In scope `0.10.0` (slice A, list of
   event sessions with dates and outcomes).
 - [ ] Session view with bars (price chart with levels drawn). Later: needs a
   chart library decision (Vela is Apache-2.0) and intraday bars the base
@@ -169,7 +169,7 @@ nav link to `/legacy` disappears, and `/legacy` is removed in `0.10.1`.
 | Research agenda | legacy | | |
 | Governed RL policy lab | legacy | | |
 | Book risk, path stress | legacy | | |
-| Price event study | in progress (slice A) | Event Study | honesty envelope, per-year, drill-down |
+| Price event study | migrated (slice A) | Event Study | `/projects/<id>/event-study`: Wilson envelope, stability, per-year, drill-down; see [[docs/design/event-study-honesty-envelope]] |
 | Strategic allocation | legacy | | |
 | Reports, Independent Reviews, Dossiers | legacy | | |
 | Selection-adjusted evidence (DSR family trials) | legacy | | noise-frontier chart planned |
@@ -262,3 +262,7 @@ nav link to `/legacy` disappears, and `/legacy` is removed in `0.10.1`.
   `Cache-Control: no-cache` plus `ETag` instead of `no-store`.
 - 2026-10-31 — Owner decisions 7-9 recorded; reference feature inventory
   added; slice A (Event Study honesty envelope) started.
+- 2026-10-31 — Slice A shipped on `feat/shinka-studio-frontend`: Event Study
+  honesty envelope (`autoquant/event_envelope.py`, read-side projection, no Run
+  or schema change to stored artifacts), `aq run event-study` prints every rate
+  with N and interval, Studio page at `/projects/<id>/event-study`.
