@@ -491,6 +491,8 @@ cannot own Workspace, Project, or evidence semantics.
 - Reported-position Book Risk: [[docs/design/reported-position-book-risk]]
 - OHLCV Price Event Study: [[docs/design/ohlcv-price-event-study]]
 - Event Study honesty envelope: [[docs/design/event-study-honesty-envelope]]
+- Reference absorption inventory:
+  [[docs/design/reference-absorption-inventory]]
 - Portfolio-native Allocation Lab:
   [[docs/design/portfolio-native-allocation-lab]]
 - Panel-native shared factor runtime:

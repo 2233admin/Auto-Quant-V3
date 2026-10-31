@@ -58,7 +58,8 @@ Owner decisions (2026-10-31):
    code is copied. See "Reference feature inventory".
 9. Slice order: A Event Study honesty envelope and UI; B Factor/Portfolio
    noise frontier, ledger and Portfolio bootstrap CI; C Hypothesis and PBO;
-   D remaining lanes; E Workspace library.
+   D remaining lanes; E Workspace library; then the reference slices F to K
+   defined in "Reference feature inventory".
 
 ## Concept mapping
 
@@ -92,6 +93,10 @@ Owner decisions (2026-10-31):
 
 ## Reference feature inventory
 
+The row-by-row inventory is [[docs/design/reference-absorption-inventory]]
+(308 rows: 131 absorb now, 127 absorb later, 28 adapt, 22 skip). This section
+keeps the licence rules and the per-slice checklist.
+
 Methods only. Both projects are MIT; the code is not copied and not
 redistributed, so no code licence text is shipped. Product text says
 "method referenced from", never "Edge Stats" or "LuxAlgo" as a product name,
@@ -102,51 +107,47 @@ attribution "Calendar data from Edge Stats by LuxAlgo
 line in `THIRD_PARTY_NOTICES`. PineTS is AGPL-3.0: never embed it in AQV2; it
 may only run as a separate external tool.
 
-### edge-stats (conditional probability engine)
+Slice order (decision 9, extended): A Event Study envelope (done); B Factor and
+Portfolio noise frontier, ledger, bootstrap intervals; C Hypothesis and PBO;
+D remaining lanes; E library; then the reference slices F (Session Statistics
+lab on daily-derivable fields), F-dsl, F-intraday, F-events, F-futures,
+G (rule-survival Monte Carlo), G-econ, H (reported trade intake), I (provider
+Skills), J (Watch), K (charting engine). Each reference slice needs its own
+design document before code.
 
-- [x] Wilson 95% CI on every binary rate, N always attached. In scope for
-  `0.10.0` (slice A): it is the honesty floor for Event Study and later
-  hit-rate outputs.
-- [x] Min-N guards: warn below 30, no estimate below 10. In scope `0.10.0`
-  (slice A).
-- [x] First-half vs second-half stability split. In scope `0.10.0` (slice A).
-- [x] Per-year counts. In scope `0.10.0` (slice A).
-- [x] Value distribution (quantiles) for continuous outcomes. In scope
-  `0.10.0` (slice A).
-- [ ] Recency view (last 250 sessions vs full history). Later (`0.10.x`): the
-  sample Study has too few events for a recency split to mean anything; needs
-  a longer fixture first.
-- [ ] Normalized query echo and URL-encoded query. Later: AQV2 Event Study
-  has a fixed Study contract, not a free query DSL; revisit with the Studio
-  query builder.
-- [x] Drill-down to the matching sessions. In scope `0.10.0` (slice A, list of
-  event sessions with dates and outcomes).
-- [ ] Session view with bars (price chart with levels drawn). Later: needs a
-  chart library decision (Vela is Apache-2.0) and intraday bars the base
-  package does not carry yet.
-- [ ] Versioned holiday/half-day calendars and macro event calendars
-  (FOMC, CPI, NFP, OPEX) with cited sources. Later: AQV2 already pins
-  `exchange-calendars`; macro event dates would be new conditioning data and
-  carry the CC BY 4.0 attribution above.
-- [ ] Preset report catalog (one versioned query file each). Later, after the
-  Hypothesis object exists, as Hypothesis templates.
-
-### prop-firm-sim (Monte Carlo of challenge journeys)
-
-- [ ] Seeded deterministic Monte Carlo (same seed, same bytes). In scope
-  `0.10.0` as the engine for slice B; AQV2 Runs are already deterministic.
-- [ ] Block bootstrap of returns / trade log. In scope `0.10.0` (slice B):
-  gives a Portfolio validation Sharpe and max-drawdown confidence interval.
-- [ ] Pass probability with CI and EV. Later: depends on a caller-owned rule
-  set (drawdown or target limits); AQV2 Mandates are the natural home, not
-  firm-specific rules fetched from a remote directory.
-- [ ] Sensitivity analysis and optimal risk sizing. Later (`0.10.x`) on top of
-  the bootstrap engine.
-- [ ] Trade-log import adapters (MetaTrader, broker JSON). Later: AQV2
-  Book Risk already takes reported positions; a trade-log intake is a
-  separate plan.
-- [ ] Not taken: the remote LuxAlgo prop-firm directory and firm rule
-  catalogue (external service, not research evidence).
+- [x] A: Wilson interval, min-N guards, stability split, per-year counts,
+  quantiles, drill-down, fixed disclaimer (8 rows done).
+- [ ] B: seeded stationary block bootstrap with a frozen RNG (conflict 7 in
+  the inventory), intervals on Portfolio validation Sharpe, annual return and
+  max drawdown, longest time under water, under-water chart, noise frontier
+  (7 rows).
+- [ ] D: Dataset panel (source, snapshot hash, coverage, calendar authority),
+  shared honesty components, return calendar, CSV export of Run artifacts.
+- [ ] F: session feature derivation module, strict query contract, registry
+  of 47 fields, 14 predicates, 17 outcomes, catalog of 26 daily presets,
+  `aq stats` commands, catalog and report pages, trial counter with adjusted
+  interval (103 rows now, 4 later, 15 adapt). Owner may move F to `0.10.x`.
+- [ ] F-dsl: query DSL that compiles to the JSON contract and echoes it back,
+  Studio builder (3 rows).
+- [ ] F-intraday: intraday session statistics (opening range, initial
+  balance, minutes-to-event, session chart); needs an intraday Study path
+  (36 rows).
+- [ ] F-events: versioned macro event calendars and event conditions with the
+  CC BY 4.0 note where vendored (11 rows).
+- [ ] F-futures: contract column, roll-day policy without back-adjustment, CME
+  calendar (3 rows).
+- [ ] G: rule-survival simulator over a caller-owned rule set, risk sweep,
+  sensitivity, compare (35 rows); G-econ: fees, payouts, EV (4 rows).
+- [ ] H: reported trade-log intake with the R ladder, trade tags, news filter,
+  overlap audit (23 rows).
+- [ ] I: provider Skills for keyless or keyed sources (14 rows).
+- [ ] J: `aq watch eval` with immutable Watch Evaluations, no daemon, no
+  network sinks (8 rows).
+- [ ] K: decide Vela (Apache-2.0) for session and path charts (3 rows).
+- Not taken, with reasons in the inventory: DuckDB store, hosted store,
+  webhook/chat/desktop sinks, broker pull, live firm directory, hosted
+  simulator, Vela workspace app and UI kit, PineTS (AGPL-3.0), Edge Score,
+  prop-firm accounting, AI reflection, mutable journal database.
 
 ## Parity matrix
 
@@ -266,3 +267,8 @@ nav link to `/legacy` disappears, and `/legacy` is removed in `0.10.1`.
   honesty envelope (`autoquant/event_envelope.py`, read-side projection, no Run
   or schema change to stored artifacts), `aq run event-study` prints every rate
   with N and interval, Studio page at `/projects/<id>/event-study`.
+- 2026-10-31 — Reference absorption inventory written
+  ([[docs/design/reference-absorption-inventory]]): 308 rows across
+  edge-stats, prop-firm-sim, Vela, PineTS and trade-journal; ten conflicts
+  with AQV2 principles and six proposed native shapes recorded; thin checklists
+  above replaced by per-slice lists.
