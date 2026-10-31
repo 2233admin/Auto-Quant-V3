@@ -51,7 +51,13 @@ from .research_program import load_research_program
 from .reports import list_reports
 from .run_reports import list_run_reports
 from .reviews import list_reviews
-from .runs import harness_identity, list_runs, load_run, run_failure_disposition
+from .runs import (
+    harness_identity,
+    list_runs,
+    load_run,
+    run_failure_disposition,
+    run_read_memo,
+)
 from .sessions import list_sessions, load_session, session_snapshot
 from .studies import hash_json, list_studies, load_study
 from .workspace import (
@@ -1747,7 +1753,8 @@ def build_studio_snapshot(
         directory,
         project_id,
     )
-    observations = [_project_snapshot(project) for project in projects]
+    with run_read_memo():
+        observations = [_project_snapshot(project) for project in projects]
     harness = harness_identity()
     return {
         "schemaVersion": SCHEMA_VERSION,

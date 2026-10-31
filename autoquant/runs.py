@@ -13,6 +13,8 @@ import sys
 import tempfile
 import time
 import uuid
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
@@ -1660,7 +1662,62 @@ def _runs_root(project: ProjectContext) -> Path:
     )
 
 
+# Studio-only read memo. One snapshot build verifies each immutable Run once
+# instead of once per consuming projection. The memo is scoped to a single
+# `run_read_memo()` block, so CLI verification and separate builds always
+# re-read disk.
+_READ_MEMO: ContextVar[dict[Any, Any] | None] = ContextVar(
+    "autoquant_run_read_memo", default=None
+)
+
+
+@contextmanager
+def run_read_memo():
+    if _READ_MEMO.get() is not None:
+        yield
+        return
+    token = _READ_MEMO.set({})
+    try:
+        yield
+    finally:
+        _READ_MEMO.reset(token)
+
+
+def _memoized(key: Any, compute: Any) -> Any:
+    memo = _READ_MEMO.get()
+    if memo is None:
+        return compute()
+    if key not in memo:
+        try:
+            memo[key] = (True, compute())
+        except AutoQuantValidationError as error:
+            memo[key] = (False, error)
+    ok, value = memo[key]
+    if not ok:
+        raise value
+    return value
+
+
 def load_run(project: ProjectContext, run_id: str) -> RunContext:
+    return _memoized(
+        ("run", str(project.root_dir), run_id),
+        lambda: _load_run_uncached(project, run_id),
+    )
+
+
+def list_runs(
+    project: ProjectContext, study_id: str | None = None
+) -> list[RunSummary]:
+    return list(
+        _memoized(
+            ("runs", str(project.root_dir), study_id),
+            lambda: _list_runs_uncached(project, study_id),
+        )
+    )
+
+
+
+def _load_run_uncached(project: ProjectContext, run_id: str) -> RunContext:
     if not run_id.startswith("run-") or "/" in run_id or "\\" in run_id or ".." in run_id:
         raise AutoQuantValidationError(
             [_issue(run_id, "run.id", "Invalid Run id")]
@@ -1807,7 +1864,9 @@ def load_run(project: ProjectContext, run_id: str) -> RunContext:
     return RunContext(root, manifest, result)
 
 
-def list_runs(project: ProjectContext, study_id: str | None = None) -> list[RunSummary]:
+def _list_runs_uncached(
+    project: ProjectContext, study_id: str | None = None
+) -> list[RunSummary]:
     summaries: list[RunSummary] = []
     for entry in sorted(_runs_root(project).iterdir(), key=lambda path: path.name):
         if entry.name.startswith("."):
