@@ -69,7 +69,7 @@ function Table({ a, b, project }: { a: RunDiagnostics; b: RunDiagnostics; projec
               </tbody>
             </table>
           </div>
-          {!rows.some((r) => r.group === 'test') && <p className="small muted">The test split is not drawn: at least one Run's protocol does not mark it as a visible diagnostic.</p>}
+          {!rows.some((r) => r.group === 'test') && <p className="small muted">Test split hidden until its audit exists (at least one Run has no visible test audit).</p>}
         </Section>
         <div className="vstack">
           <Section

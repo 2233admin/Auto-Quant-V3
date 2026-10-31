@@ -3,6 +3,7 @@ import type { FactorDiagnostics, FactorFold, FactorSplit, RankSummary, RunRow, S
 import { Glyph } from '../design/icons'
 import { num, plural, when } from '../format'
 import { SPLIT_LABEL, SPLITS } from './factorMath'
+import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { Empty } from './FactorCharts'
 import { Info } from '../components/Info'
 
@@ -12,7 +13,7 @@ const finite = (v: number | null | undefined): v is number => typeof v === 'numb
 const sign = (v: number) => (v > 0 ? '+' : v < 0 ? '−' : '0')
 
 /** The test split is drawn only when the Run publishes its visible audit; until then no test number appears. */
-export const visibleSplits = (study: FactorDiagnostics): FactorSplit[] => (study.summary.testAudit ? SPLITS : SPLITS.filter((s) => s !== 'test'))
+export const visibleSplits = (study: FactorDiagnostics): FactorSplit[] => gatedSplits(study, SPLITS)
 
 // ---------------------------------------------------------------------------------------------
 // Verdict strip
@@ -259,6 +260,7 @@ export function FoldTable({ study }: { study: FactorDiagnostics }) {
   if (folds.length === 0) return <Empty title="Chronological folds" reason="This Run publishes no chronological folds." />
   return (
     <div className="tablewrap tablewrap--tall">
+      {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
       <table className="tbl">
         <caption className="faint small">Each split cut into consecutive halves in time order. The weakest validation fold is {study.summary.weakestValidationFold?.id ?? 'not recorded'}.</caption>
         <thead>
@@ -319,7 +321,7 @@ export function QualificationBlock({ study }: { study: FactorDiagnostics }) {
   if (!q.available || !q.diagnosis) return <Empty title="Qualification diagnosis" reason="This Run has no Factor qualification." />
   const line = q.semantics?.diagnosticThresholds?.minimumPositiveHacTStatistic
   const parts: [FactorSplit, typeof q.validation][] = [['validation', q.validation]]
-  if (study.summary.testAudit) parts.push(['test', q.testAudit])
+  if (studyTestVisible(study)) parts.push(['test', q.testAudit])
   const d = q.diagnosis
   return (
     <>
@@ -349,6 +351,7 @@ export function QualificationBlock({ study }: { study: FactorDiagnostics }) {
         <dd>{d.explanation}</dd>
       </dl>
       <div className="tablewrap tablewrap--tall">
+        {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
         <table className="tbl">
           <caption className="faint small">
             Each variant against the HAC t line{finite(line) ? ` ${num(line, 2)}` : ''}.
@@ -423,6 +426,7 @@ export function HorizonTable({ study }: { study: FactorDiagnostics }) {
   if (study.horizonProfile.length === 0) return <Empty title="Horizon profile" reason="This Run publishes no horizon profile." />
   return (
     <div className="tablewrap tablewrap--tall">
+      {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
       <table className="tbl">
         <caption className="faint small">
           Candidate rank IC at each forward horizon; selection reads the {study.protocol.primaryHorizon}-bar one.
@@ -481,6 +485,7 @@ export function StabilityTables({ study }: { study: FactorDiagnostics }) {
   const styles = stability.styles.filter((r) => shown.includes(r.split)).sort((a, b) => foldOrder({ split: a.split, id: a.style }, { split: b.split, id: b.style }))
   return (
     <div className="stack">
+      {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
       <div>
         <h3 className="h-small">
           By market regime
@@ -679,6 +684,7 @@ export function ProtocolBox({ study }: { study: FactorDiagnostics }) {
         </dd>
       </dl>
       <div className="tablewrap">
+        {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
         <table className="tbl">
           <caption className="faint small">
             Split windows, fixed from the dataset before any candidate ran.
@@ -698,7 +704,7 @@ export function ProtocolBox({ study }: { study: FactorDiagnostics }) {
             </tr>
           </thead>
           <tbody>
-            {SPLITS.map((s) => (
+            {visibleSplits(study).map((s) => (
               <tr key={s}>
                 <th scope="row">
                   <span><SplitCell split={s} role={w[s].role} /></span>

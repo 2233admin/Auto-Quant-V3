@@ -15,6 +15,7 @@ import { QualificationBlock, VerdictHero, VerdictReasons } from '../FactorEviden
 import { adjustmentOf, CoreTiles, TestedFacts, Tabs, useHashTab, type TabDef } from '../FactorWorkbench'
 import { RunList } from './RunList'
 import { RunSelect } from './RunSelect'
+import { TEST_HIDDEN_NOTE } from '../testGate'
 import { otherLaneOf, short, testAuditVisible, type RunDiagnostics } from './runTypes'
 import { ResultHeader } from '../ResultHeader'
 import { useRun } from './useRun'
@@ -85,7 +86,7 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
         panels={{
           evidence: (
             <>
-              <Section title="By split" id="run-splits" caption={showTest ? undefined : 'The test split is not drawn: this Run does not mark it as a visible diagnostic.'}>
+              <Section title="By split" id="run-splits" caption={showTest ? undefined : TEST_HIDDEN_NOTE}>
                 <div className="tablewrap">
                   <table className="tbl">
                     <thead>

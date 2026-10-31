@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from 'react'
 import type { FactorDiagnostics, FactorQuantileRow, FactorSplit } from '../api'
 import { num, ret } from '../format'
 import { Info } from '../components/Info'
+import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import {
   expectedMaxZ,
   familywiseThreshold,
@@ -140,8 +141,8 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
   const pattern = useId()
   const [plotRef, W] = useChartWidth()
   /** Same rule as the page's tiles: test is drawn only when its audit exists and the protocol marks it a visible diagnostic. */
-  const testShown = !!study.summary.testAudit && study.protocol.testRole === 'visible-diagnostic'
-  const shownSplits = SPLITS.filter((sp) => sp !== 'test' || testShown)
+  const testShown = studyTestVisible(study)
+  const shownSplits = gatedSplits(study, SPLITS)
   const rows = [...study.horizonProfile].sort((a, b) => a.horizon - b.horizon)
   const primary = study.protocol.primaryHorizon
   type Bar = { horizon: number; split: FactorSplit; mean: number | null; se: number | null; n: number; t: number | null; sufficient: boolean }
@@ -177,7 +178,7 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
         <span className="legend">
           <Swatch kind="train" label="Train" />
           <Swatch kind="validation" label="Validation (selection)" />
-          {testShown ? <Swatch kind="test" label="Test (visible audit)" /> : <span className="faint">Test split hidden until its audit exists</span>}
+          {testShown ? <Swatch kind="test" label="Test (visible audit)" /> : <span className="faint">{TEST_HIDDEN_NOTE}</span>}
         </span>
       }
       note={
@@ -309,7 +310,9 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
   const [plotRef, W] = useChartWidth()
   const primary = study.protocol.primaryHorizon
   const [horizon, setHorizon] = useState(primary)
-  const points = samplePoints(study, horizon)
+  const testShown = studyTestVisible(study)
+  const shownSplits = gatedSplits(study, SPLITS)
+  const points = samplePoints(study, horizon).filter((p) => testShown || p.split !== 'test')
   const { icPath } = study
   if (points.length < WINDOW + 2) {
     return <Empty title="Rank IC over time" reason={`The Run publishes no per-timestamp IC path (${points.length} points), so the series cannot be drawn.`} />
@@ -325,7 +328,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
   const yMax = ticks[ticks.length - 1]
   const x = (t: number) => m.l + ((t - t0) / (t1 - t0)) * (W - m.l - m.r)
   const y = (v: number) => m.t + ((yMax - v) / (yMax - yMin)) * (H - m.t - m.b)
-  const windows = SPLITS.map((split) => ({
+  const windows = shownSplits.map((split) => ({
     split,
     start: Math.max(t0, Date.parse(study.protocol.splits.splits[split].start)),
     end: Math.min(t1, Date.parse(study.protocol.splits.splits[split].end)),
@@ -340,7 +343,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
       title={`Rank IC over time, ${horizon}-bar horizon`}
       plotRef={plotRef}
       short={`Sampled rank IC, trailing mean of ${WINDOW}; dashed lines are each split's mean.`}
-      desc={`Sampled per-timestamp rank IC (${icPath.sampledRows} of ${int(icPath.totalRows)} timestamps) with a trailing mean of ${WINDOW} samples. Dashed lines are each split's published mean IC over all of its timestamps.`}
+      desc={`Sampled per-timestamp rank IC (${testShown ? `${icPath.sampledRows} of ${int(icPath.totalRows)}` : points.length} timestamps) with a trailing mean of ${WINDOW} samples. Dashed lines are each split's published mean IC over all of its timestamps.`}
       controls={
         <div className="seg" role="group" aria-label="Forward horizon">
           {[...study.protocol.horizons]
@@ -357,6 +360,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
           <Swatch kind="dot" label="Sampled timestamp" />
           <Swatch kind="line" label={`Trailing mean of ${WINDOW} samples`} />
           <Swatch kind="dash" label="Split mean, all timestamps" />
+          {!testShown && <span className="faint">{TEST_HIDDEN_NOTE}</span>}
         </span>
       }
       note={
@@ -456,7 +460,8 @@ export function Quantiles({ study }: { study: FactorDiagnostics }) {
   const [plotRef, W] = useChartWidth()
   const evidence = study.quantileEvidence
   const primary = study.protocol.primaryHorizon
-  const rows: FactorQuantileRow[] = study.quantileSummary.filter((r) => r.horizon === primary)
+  const testShown = studyTestVisible(study)
+  const rows: FactorQuantileRow[] = study.quantileSummary.filter((r) => r.horizon === primary && (testShown || r.split !== 'test'))
   const drawable = evidence.status === 'available' && rows.some((r) => r.low !== null && r.middle !== null && r.high !== null)
   if (!drawable) {
     return (
@@ -489,6 +494,7 @@ export function Quantiles({ study }: { study: FactorDiagnostics }) {
       plotRef={plotRef}
       short="Low, middle and high factor groups per split; a useful factor rises from low to high."
       desc="Mean forward return of the low, middle and high factor groups in each split. A useful factor shows the bars rising from low to high."
+      legend={testShown ? undefined : <span className="legend"><span className="faint">{TEST_HIDDEN_NOTE}</span></span>}
       table={
         <table className="tbl">
           <caption className="small muted">Quantile mean forward return</caption>

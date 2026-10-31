@@ -1,4 +1,5 @@
 import type { FactorDiagnostics, ProjectSnapshot, RankSummary, RunRow } from '../../api'
+import { testVisible } from '../testGate'
 
 /** Fields the Run route sends that the shared FactorDiagnostics type does not name yet. Optional on purpose: older servers omit them. */
 export type RunDiagnostics = FactorDiagnostics & {
@@ -21,7 +22,7 @@ export const short = (hash: string | null | undefined, n = 10): string => (hash 
 
 /** The test number is drawn only when the protocol says it is a visible diagnostic; otherwise it stays hidden. */
 export function testAuditVisible(fe: RunDiagnostics): boolean {
-  return fe.protocol.testRole === 'visible-diagnostic' && !!fe.summary.testAudit
+  return testVisible(fe.protocol, fe.summary)
 }
 
 // ---------------------------------------------------------------------------------------------

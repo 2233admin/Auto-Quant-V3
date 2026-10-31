@@ -5,6 +5,7 @@ import { CompactTile, CompactTileGrid } from '../components/CompactTile'
 import { pickIntegrity } from '../components/TrialCounter'
 import { num, when } from '../format'
 import { SPLIT_LABEL, SPLITS } from './factorMath'
+import { gatedSplits, TEST_HIDDEN_NOTE } from './testGate'
 import './workbench.css'
 
 const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '—')
@@ -27,7 +28,7 @@ export function Fact({ label, children }: { label: string; children: ReactNode }
   )
 }
 
-type Tested = Pick<FactorDiagnostics, 'run' | 'dataset' | 'predictionUniverse' | 'protocol'>
+type Tested = Pick<FactorDiagnostics, 'run' | 'dataset' | 'predictionUniverse' | 'protocol' | 'summary'>
 
 export function TestedFacts({ study }: { study: Tested }) {
   const { protocol } = study
@@ -55,7 +56,7 @@ export function TestedFacts({ study }: { study: Tested }) {
       </Fact>
       <Fact label="Split windows">
         <span className="splitlist">
-          {SPLITS.map((s) => (
+          {gatedSplits(study, SPLITS).map((s) => (
             <span key={s}>
               <span className="faint">{SPLIT_LABEL[s]}</span> {day(windows[s].start)} to {day(windows[s].end)}
             </span>
@@ -122,6 +123,7 @@ export function CoreTiles({
           <CompactTile label="Trials counted" value={trials} note={trialNote} />
         </CompactTileGrid>
       </div>
+      {!(testVisible && testAudit) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
       {testVisible && testAudit && (
         <div className="core-group core-group--audit">
           <h3 className="core-h">Test · visible audit, not used for selection</h3>

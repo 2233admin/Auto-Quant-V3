@@ -17,13 +17,15 @@ function check(key: string, label: string, a: string | null | undefined, b: stri
   return { key, label, a: x, b: y, state: x === null || y === null ? 'missing' : x === y ? 'same' : 'different' }
 }
 
-const windowOf = (fe: RunDiagnostics) => {
+const windowOf = (fe: RunDiagnostics, withTest: boolean) => {
   const s = fe.protocol.splits.splits
-  return `train ${s.train.start.slice(0, 10)}..${s.train.end.slice(0, 10)} / validation ${s.validation.start.slice(0, 10)}..${s.validation.end.slice(0, 10)} / test ${s.test.start.slice(0, 10)}..${s.test.end.slice(0, 10)}`
+  const base = `train ${s.train.start.slice(0, 10)}..${s.train.end.slice(0, 10)} / validation ${s.validation.start.slice(0, 10)}..${s.validation.end.slice(0, 10)}`
+  return withTest ? `${base} / test ${s.test.start.slice(0, 10)}..${s.test.end.slice(0, 10)}` : base
 }
 
 /** Compares only fields the payload carries. Nothing is inferred when a hash is absent. */
 export function compareBasis(a: RunDiagnostics, b: RunDiagnostics): Basis {
+  const bothTest = testAuditVisible(a) && testAuditVisible(b)
   const dataset = check('dataset', 'Dataset hash', a.dataset.hash, b.dataset.hash)
   const horizon = check('horizon', 'Research horizon id', a.researchHorizon?.id, b.researchHorizon?.id)
   const candidate = check('candidate', 'Candidate source hash', a.run.sourceHash, b.run.sourceHash)
@@ -32,7 +34,7 @@ export function compareBasis(a: RunDiagnostics, b: RunDiagnostics): Basis {
     horizon,
     candidate,
     check('primary', 'Primary horizon (bars)', String(a.protocol.primaryHorizon), String(b.protocol.primaryHorizon)),
-    check('window', 'Train / validation / test windows', windowOf(a), windowOf(b)),
+    check('window', bothTest ? 'Train / validation / test windows' : 'Train / validation windows', windowOf(a, bothTest), windowOf(b, bothTest)),
     check('universe', 'Universe', a.dataset.universe.join(','), b.dataset.universe.join(',')),
     check('study', 'Study hash', a.run.studyHash, b.run.studyHash),
   ]
@@ -104,7 +106,7 @@ export function provenanceSentences(a: RunDiagnostics, b: RunDiagnostics, projec
   const wa = a.protocol.splits.splits
   const wb = b.protocol.splits.splits
   const sameWindows =
-    (['train', 'validation', 'test'] as const).every((k) => wa[k].start === wb[k].start && wa[k].end === wb[k].end)
+    (testAuditVisible(a) && testAuditVisible(b) ? (['train', 'validation', 'test'] as const) : (['train', 'validation'] as const)).every((k) => wa[k].start === wb[k].start && wa[k].end === wb[k].end)
   if (!sameWindows) {
     out.push('A different window: the train, validation or test dates differ between the two Runs, so a better number may come from the window and not from the candidate.')
   }

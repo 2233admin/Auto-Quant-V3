@@ -6,6 +6,7 @@ import { Section } from '../design/layout'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
 import { IcByHorizon, IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
+import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
 import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictHero, VerdictReasons } from './FactorEvidence'
 import { adjustmentOf, CoreTiles, TestedFacts, Tabs, useHashTab, type TabDef } from './FactorWorkbench'
@@ -32,7 +33,9 @@ function buildChecks(study: FactorDiagnostics, frontier: FrontierResult, project
   const ordered =
     Date.parse(windows.train.end) < Date.parse(windows.validation.start) && Date.parse(windows.validation.end) < Date.parse(windows.test.start)
   const profile = study.horizonProfile
-  const insufficient = profile.flatMap((row) => SPLITS.filter((s) => !row[s].sufficient).map((s) => `${row.horizon}-bar ${s}`))
+  const shown = gatedSplits(study, SPLITS)
+  const showTest = studyTestVisible(study)
+  const insufficient = profile.flatMap((row) => shown.filter((s) => !row[s].sufficient).map((s) => `${row.horizon}-bar ${s}`))
   const purged = Object.entries(protocol.splits.horizons)
     .map(([h, byHorizon]) => `${h}-bar: ${byHorizon.validation.purgedBoundaryRows}`)
     .join(', ')
@@ -53,7 +56,7 @@ function buildChecks(study: FactorDiagnostics, frontier: FrontierResult, project
       id: 'test-role',
       group: 'Research integrity',
       state: 'info',
-      label: 'Test split is a visible diagnostic',
+      label: showTest ? 'Test split is a visible diagnostic' : 'Test split is hidden until its audit exists',
       detail: `Test role ${protocol.testRole}. ${
         integrity?.externalHoldoutRequired
           ? 'The Session ledger requires a new external holdout before a fresh production-grade claim.'
@@ -72,7 +75,7 @@ function buildChecks(study: FactorDiagnostics, frontier: FrontierResult, project
       group: 'Split protocol',
       state: ordered ? 'pass' : 'fail',
       label: 'Train, validation and test are chronological and disjoint',
-      detail: `Train to ${day(windows.train.end)}, validation ${day(windows.validation.start)} to ${day(windows.validation.end)}, test from ${day(windows.test.start)}.`,
+      detail: `Train to ${day(windows.train.end)}, validation ${day(windows.validation.start)} to ${day(windows.validation.end)}${showTest ? `, test from ${day(windows.test.start)}` : ''}.${showTest ? '' : ` ${TEST_HIDDEN_NOTE}.`}`,
     },
     {
       id: 'purge',
@@ -86,7 +89,7 @@ function buildChecks(study: FactorDiagnostics, frontier: FrontierResult, project
       group: 'Split protocol',
       state: insufficient.length === 0 ? 'pass' : 'fail',
       label: 'Every horizon and split meets its minimum observation count',
-      detail: insufficient.length === 0 ? `${plural(profile.length * SPLITS.length, 'cell')} checked.` : `Below minimum: ${insufficient.join(', ')}.`,
+      detail: insufficient.length === 0 ? `${plural(profile.length * shown.length, 'cell')} checked.` : `Below minimum: ${insufficient.join(', ')}.`,
     },
     causality?.available
       ? {
@@ -271,10 +274,10 @@ function Content({ study, project, loadingRun, go }: { study: FactorDiagnostics;
   const checks = buildChecks(study, frontier, project.sessions)
   const primary = study.horizonProfile.find((row) => row.horizon === study.protocol.primaryHorizon)
   const validation = study.summary.validation ?? primary?.validation
-  const testVisible = !!study.summary.testAudit && study.protocol.testRole === 'visible-diagnostic'
+  const testVisible = studyTestVisible(study)
   const headlineSplits: HeadlineSplit[] = [
     ...(validation ? [{ name: 'Validation', role: 'selection split', summary: validation }] : []),
-    ...(study.summary.testAudit ? [{ name: 'Test', role: 'visible audit, not used for selection', summary: study.summary.testAudit }] : []),
+    ...(testVisible && study.summary.testAudit ? [{ name: 'Test', role: 'visible audit, not used for selection', summary: study.summary.testAudit }] : []),
   ]
   const failures = checks.filter((c) => c.state === 'fail').length
   const runIc = study.summary.validation?.meanRankIc ?? null
@@ -329,7 +332,7 @@ function Content({ study, project, loadingRun, go }: { study: FactorDiagnostics;
           panels={{
             evidence: (
               <>
-                <Section title="Information coefficient over time" id="sec-ic" caption="Per-timestamp rank IC; validation drives selection, test is a visible audit.">
+                <Section title="Information coefficient over time" id="sec-ic" caption={testVisible ? "Per-timestamp rank IC; validation drives selection, test is a visible audit." : "Per-timestamp rank IC; validation drives selection."}>
                   <IcOverTime study={study} />
                 </Section>
                 <Section title="Selection and noise" id="sec-noise">
