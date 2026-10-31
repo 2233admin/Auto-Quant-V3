@@ -91,6 +91,27 @@ Owner decisions (2026-10-31):
 - Write actions in the UI; Studio stays read-only, holdout never one click.
 - Phase 3 implementation before phases 1 and 2 are accepted.
 
+## v0.10.0 scope: the idea-to-verdict spine
+
+Owner north star (2026-10-31): *I propose a strategy, idea, or factor and we
+test whether it holds.* `v0.10.0` is re-scoped around that single path, per
+[[docs/design/hypothesis-and-idea-verdict]]. Reference-project features are
+taken in by how much they help judge an idea, not by count.
+
+Priority order for `v0.10.0`:
+
+1. Hypothesis object, frozen criteria, verdict rules v1, check ledger, verdict
+   page with the noise-frontier chart (design steps H1 to H9).
+2. PBO (slice C) and Portfolio bootstrap CI (slice B); they enter as verdict
+   rules `v2` without changing frozen `v1` Hypotheses.
+3. The daily-bar part of slice F (conditional-statistics lab): the registry
+   fields, predicates, and presets that run on daily OHLC.
+
+Deferred past `0.10.0`: slice F rows that need intraday bars or event-date
+data, slice G (rule-survival Monte Carlo), slice H (trade-log import), and
+slice E (knowledge library). The inventory keeps every row; only the target
+release moves.
+
 ## Reference feature inventory
 
 The row-by-row inventory is [[docs/design/reference-absorption-inventory]]
@@ -199,12 +220,13 @@ nav link to `/legacy` disappears, and `/legacy` is removed in `0.10.1`.
 ## Work
 
 - [ ] Phase 0: owner-approved plan; open questions below answered.
-- [ ] 1.1 Design doc `docs/design/pbo-and-hypothesis-governance.md`.
+- [x] 1.1 Design doc [[docs/design/hypothesis-and-idea-verdict]] (Hypothesis, frozen criteria, verdict rules, ledger, graveyard). PBO gets its own design when slice C starts.
 - [ ] 1.2 Run artifact: per-bar validation return matrix for top-K sources.
 - [ ] 1.3 PBO projection in `selection.py` + `aq` JSON + tests vs Bailey
   et al. reference values.
-- [ ] 1.4 Hypothesis schema, CLI (`aq hypothesis add|show|list`), freeze
-  rule, Session binding.
+- [ ] 1.4 Hypothesis implementation steps H1 to H9 from the design doc
+  (schema and freeze, routing, Session/Run binding, verdict rules v1, Verdict
+  Record, graveyard search, read model, Studio verdict page, Skill).
 - [ ] 1.5 Workspace library (`raw/`, `wiki/`, manifest, `aq library ...`);
   finding write-back after a Report; holdout numbers excluded until audit.
 - [x] 2.1 Frontend contract (slice 1): `/api/v1/workspace` and per-Project snapshot
@@ -248,6 +270,7 @@ nav link to `/legacy` disappears, and `/legacy` is removed in `0.10.1`.
 
 ## Progress log
 
+- 2026-10-31 — Design doc [[docs/design/hypothesis-and-idea-verdict]] written; v0.10.0 re-scoped as the idea-to-verdict spine.
 - 2026-10-31 — Plan created from the ShinkaEvolve survey and owner decisions.
 - 2026-10-31 — Slice 1 (branch `feat/shinka-studio-frontend`): server routes
   `/api/v1/workspace` and `/api/v1/project?id=`, legacy Studio at `/legacy`,

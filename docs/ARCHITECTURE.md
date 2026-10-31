@@ -493,6 +493,8 @@ cannot own Workspace, Project, or evidence semantics.
 - Event Study honesty envelope: [[docs/design/event-study-honesty-envelope]]
 - Reference absorption inventory:
   [[docs/design/reference-absorption-inventory]]
+- Hypothesis and idea verdict (proposed):
+  [[docs/design/hypothesis-and-idea-verdict]]
 - Portfolio-native Allocation Lab:
   [[docs/design/portfolio-native-allocation-lab]]
 - Panel-native shared factor runtime:
