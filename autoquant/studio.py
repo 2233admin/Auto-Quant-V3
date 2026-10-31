@@ -85,7 +85,7 @@ STUDIO_APP_TYPES = {
     ".woff": "font/woff",
     ".woff2": "font/woff2",
 }
-STUDIO_APP_NAME = re.compile(r"^[A-Za-z0-9._-]+$")
+STUDIO_APP_ASSET = re.compile(r"^assets/[A-Za-z0-9._-]+$")
 STUDIO_APP_MISSING = (
     '<!doctype html><html lang="en"><head><meta charset="utf-8">'
     "<title>AutoQuant Studio</title></head><body>"
@@ -2014,8 +2014,8 @@ def _handler(
                     name = path[len(STUDIO_APP_PREFIX):]
                     suffix = Path(name).suffix
                     data = (
-                        _studio_app_bytes(f"assets/{name}")
-                        if STUDIO_APP_NAME.match(name)
+                        _studio_app_bytes(name)
+                        if STUDIO_APP_ASSET.match(name)
                         and suffix in STUDIO_APP_TYPES
                         else None
                     )
