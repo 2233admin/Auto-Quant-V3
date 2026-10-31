@@ -66,7 +66,7 @@ export type ProjectSnapshot = {
   counts: Record<string, number | Record<string, number>>
   studies: StudyRow[]
   runs: RunRow[]
-  sessions: { id?: string; status?: string; studyId?: string }[]
+  sessions: { id?: string; status?: string; studyId?: string; selectionIntegrity?: SelectionIntegrity }[]
   timeline: TimelineRow[]
   externalHoldout: { status?: string; state?: string } | null
   agentWorkBrief: {
@@ -74,18 +74,7 @@ export type ProjectSnapshot = {
     primaryAction?: { description?: string; display?: string }
     authority?: { selectionSplit?: string; testRole?: string; testEntersSelection?: boolean; tradingAuthority?: string }
   } | null
-  factorExplorer: {
-    run?: { id: string; startedAt: string }
-    summary?: {
-      validation?: {
-        meanRankIc: number
-        rankIcir: number
-        hacNormalPValue: number
-        observations: number
-        sufficient: boolean
-      }
-    }
-  } | null
+  factorExplorer: FactorDiagnostics | null
   /** Lane explorers other than Factor: present means the legacy Studio can draw them. */
   portfolioExplorer: object | null
   rlExplorer: object | null
@@ -175,4 +164,104 @@ export type EventStudyDiagnostics = {
   }
   events: EventStudyEvent[]
   warning: string
+}
+
+export type FactorSplit = 'train' | 'validation' | 'test'
+
+/** One split's rank-IC summary. HAC t and p are null when the variance estimate is degenerate. */
+export type RankSummary = {
+  meanRankIc: number | null
+  rankIcStandardDeviation: number | null
+  rankIcir: number | null
+  rankHitRate: number | null
+  observations: number
+  minimumObservations: number
+  sufficient: boolean
+  hacTStatistic: number | null
+  hacNormalPValue: number | null
+}
+
+export type FactorHorizonRow = { horizon: number } & Record<FactorSplit, RankSummary & { role: string }>
+
+export type FactorSplitWindow = { start: string; end: string; rows: number; role: string }
+
+export type FactorIcPoint = {
+  timestamp: string
+  split: FactorSplit
+  role: string
+  regime: string
+} & Record<string, string | number | null>
+
+export type FactorQuantileRow = {
+  horizon: number
+  split: FactorSplit
+  role: string
+  low: number | null
+  middle: number | null
+  high: number | null
+  highMinusLow: number | null
+  monotonicity: number | null
+  observations: number
+}
+
+export type FactorDiagnostics = {
+  run: { id: string; studyId: string; startedAt: string; completedAt: string }
+  dataset: { id: string; version: string; universe: string[]; timeRange: { start?: string; end?: string } | null }
+  predictionUniverse: { evaluationMode?: string; predictionAssets?: string[] }
+  protocol: {
+    selectionSplit: string
+    testRole: string
+    testEntersSelection: boolean
+    horizons: number[]
+    primaryHorizon: number
+    semantics: { inference?: string; measure?: string }
+    splits: {
+      method: string
+      candidateDependent: boolean
+      targetCrossesBoundary: boolean
+      splits: Record<FactorSplit, FactorSplitWindow>
+      horizons: Record<string, Record<FactorSplit, { purgedBoundaryRows: number; eligibleSignalRows: number }>>
+    }
+    /** Added with the Factor evidence page; older servers do not send it. */
+    causality?: { available: boolean; reason: string | null; audit?: string; cuts?: string[]; crossAssetContext?: string | null }
+  }
+  summary: { validation?: RankSummary; testAudit?: RankSummary }
+  inputAvailability: { available: boolean; observationCoverage?: number; observedRows?: number; possibleRows?: number }
+  factorQualification: {
+    available: boolean
+    diagnosis?: { stage: string; explanation: string; qualifiesForPortfolio: boolean }
+  }
+  horizonProfile: FactorHorizonRow[]
+  quantileEvidence: { status: string; evaluationMode: string; reasonCode: string | null; reason: string | null; artifactRows: number }
+  quantileSummary: FactorQuantileRow[]
+  icPath: { totalRows: number; sampledRows: number; sampling: string; points: FactorIcPoint[] }
+  warning: string
+}
+
+export type SelectionIntegrity = {
+  selectionMetric?: string
+  selectionSplit?: string
+  testRole?: string
+  testEntersSelection?: boolean | null
+  testExposureState?: string
+  candidateTrials?: number
+  evaluatedRuns?: number
+  externalHoldoutRequired?: boolean | null
+  externalHoldoutReason?: string
+  warning?: string
+  researchFamily?: { id: string; uniqueSourceTrials: number; totalExecutions: number; trialCountAssumption: string; reproducible: boolean }
+  selectionAdjustment?: {
+    status: string
+    method: string | null
+    reason: string | null
+    passes: boolean | null
+    interpretation: string
+    confidenceLevel: number
+    statistics: {
+      observedMeanIc: number
+      rawHacPValue: number
+      familywiseAdjustedPValue: number
+      uniqueTrials: number
+    } | null
+  }
 }

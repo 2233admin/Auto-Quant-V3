@@ -3383,6 +3383,28 @@ def _factor_components_projection(
     }
 
 
+def _causality_projection(metrics: dict[str, Any]) -> dict[str, Any]:
+    """Read-only copy of the Run's causality audit; absent on older Runs."""
+
+    api = metrics.get("factor_api")
+    audit = api.get("causality_audit") if isinstance(api, dict) else None
+    cuts = api.get("causality_cuts") if isinstance(api, dict) else None
+    context = api.get("cross_asset_context") if isinstance(api, dict) else None
+    if (
+        not isinstance(audit, str)
+        or not isinstance(cuts, list)
+        or not all(isinstance(cut, str) for cut in cuts)
+    ):
+        return {"available": False, "reason": "run-without-causality-audit"}
+    return {
+        "available": True,
+        "reason": None,
+        "audit": audit,
+        "cuts": cuts,
+        "crossAssetContext": context if isinstance(context, str) else None,
+    }
+
+
 def _summary(metrics: dict[str, Any]) -> dict[str, Any]:
     validation = _ic_summary(metrics.get("validation"), "metrics/validation")
     test = _ic_summary(metrics.get("test"), "metrics/test")
@@ -4188,6 +4210,7 @@ def _load_factor_diagnostics_unlocked(
             "primaryHorizon": PRIMARY_HORIZON,
             "semantics": semantics,
             "splits": protocol,
+            "causality": _causality_projection(metrics),
         },
         "summary": _summary(metrics),
         "inputAvailability": input_availability,

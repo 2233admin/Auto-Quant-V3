@@ -4,6 +4,7 @@ import { useWidth } from './design/useWidth'
 import { Notice } from './Notice'
 import { Projects } from './pages/Projects'
 import { EventStudyPage } from './pages/EventStudy'
+import { FactorPage } from './pages/Factor'
 import { ProjectPage, useProject } from './pages/Project'
 import { routeHref, routeProjectId } from './route'
 import { Palette } from './shell/Palette'
@@ -44,11 +45,17 @@ export default function App() {
             { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
             { label: 'Price event study' },
           ]
-        : [{ label: 'Projects' }]
+        : route.view === 'factor'
+          ? [
+              { label: 'Projects', href: routeHref({ view: 'projects' }) },
+              { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
+              { label: 'Factor evidence' },
+            ]
+          : [{ label: 'Projects' }]
   document.title =
     route.view === 'projects'
       ? 'AutoQuant Studio'
-      : `${route.view === 'event-study' ? 'Price event study · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
+      : `${route.view === 'event-study' ? 'Price event study · ' : route.view === 'factor' ? 'Factor evidence · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
 
   let page
   if (route.view === 'projects') {
@@ -59,7 +66,13 @@ export default function App() {
     )
   } else if (project.state === 'ready') {
     page =
-      route.view === 'event-study' ? <EventStudyPage project={project.project} /> : <ProjectPage project={project.project} />
+      route.view === 'event-study' ? (
+        <EventStudyPage project={project.project} />
+      ) : route.view === 'factor' ? (
+        <FactorPage project={project.project} study={route.study} />
+      ) : (
+        <ProjectPage project={project.project} />
+      )
   } else if (project.state === 'error') {
     page = (
       <div className="pg">

@@ -207,6 +207,12 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         ) : (
           <p className="muted">No verified Factor Run yet.</p>
         )}
+        {project.factorExplorer && (
+          <p className="small">
+            <a href={routeHref({ view: 'factor', id: project.id, study: project.factorExplorer.run.studyId })}>Open Factor evidence</a>
+            <span className="muted"> · IC by horizon and split, IC over time, quantiles, noise frontier and the check ledger.</span>
+          </p>
+        )}
       </Section>
 
       <Section title="Sessions" id="sec-sessions">

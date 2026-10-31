@@ -1,0 +1,39 @@
+/* Factor evidence page: chart frames, SVG text classes, legends, horizon toggle, check ledger. */
+.chart { margin: 0 0 var(--space-6); max-width: 860px; display: grid; gap: var(--space-2); }
+.chart figcaption h3 { font: var(--type-section); margin: 0 0 2px; }
+.chart figcaption p { margin: 0; max-width: 80ch; }
+.chart-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
+.chart-note { margin: 0; max-width: 80ch; }
+.plot { width: 100%; height: auto; display: block; border: 1px solid var(--line); background: var(--raised); }
+.plot .ax { font: 400 11px var(--font-mono); fill: var(--muted); }
+.plot .ax.faint { fill: var(--faint); }
+.plot .val { font: 500 11px var(--font-mono); fill: var(--text); }
+.plot .grp { font: 500 12px var(--font-sans); fill: var(--text); }
+
+.legend { display: inline-flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font: var(--type-small); color: var(--muted); }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+
+.seg { display: inline-flex; border: 1px solid var(--line-strong); }
+.seg button { font: var(--type-small); padding: 3px 12px; background: none; color: var(--muted); border: 0; border-right: 1px solid var(--line-strong); cursor: pointer; }
+.seg button:last-child { border-right: 0; }
+.seg button:hover { background: var(--hover); color: var(--text); }
+.seg button[aria-pressed='true'] { background: var(--selected); color: var(--text); }
+.seg button:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+
+.datatable summary { cursor: pointer; font: var(--type-small); color: var(--muted); width: max-content; padding: 2px 0; }
+.datatable summary:hover { color: var(--text); }
+.datatable summary:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.datatable[open] .tablewrap { max-height: 320px; overflow: auto; margin-top: var(--space-2); }
+
+.empty { border: 1px dashed var(--line-strong); background: repeating-linear-gradient(135deg, transparent 0 8px, var(--hover) 8px 9px); padding: var(--space-5); display: grid; gap: var(--space-2); justify-items: start; }
+.empty p { margin: 0; font: var(--type-body); max-width: 70ch; }
+
+.ledger th[scope='row'] { font-weight: 500; }
+.ledger th[scope='row'] .faint { font-weight: 400; }
+.ledger .basis { color: var(--muted); max-width: 52ch; }
+.ledger td:nth-child(2) { white-space: nowrap; }
+
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--space-6); }
+.h-small { font: 500 11px/16px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 var(--space-2); }
+.bullets { list-style: disc; padding-left: 1.2em; display: grid; gap: var(--space-2); font: var(--type-body); }
+.plot .val { paint-order: stroke; stroke: var(--raised); stroke-width: 3px; stroke-linejoin: round; }

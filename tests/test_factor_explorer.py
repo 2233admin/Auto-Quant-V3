@@ -97,6 +97,10 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                 diagnostics["protocol"]["primaryHorizon"],
                 20,
             )
+            causality = diagnostics["protocol"]["causality"]
+            self.assertTrue(causality["available"])
+            self.assertEqual(causality["audit"], "whole-panel-timestamp-prefix")
+            self.assertTrue(causality["cuts"])
             daily_path = (
                 run.root_dir / "artifacts" / "daily-factor-evidence.csv"
             )
