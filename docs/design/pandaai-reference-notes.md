@@ -306,3 +306,14 @@ Observed through the owner's signed-in Chrome with Browser Bridge (own tab, no c
 - Factor detail page: parameter panel (analysis window, rebalance period 5 days, 5 groups, direction, universe CSI 300), code editor with a validation badge, history versions, save, and a "run analysis" button. Result area stays empty until a run.
 - Not observed: any result chart, because running an analysis spends the owner's compute credits. Result-page claims remain vendor documentation only.
 - Run history is split by Strategy and Factor, then by market (stock/futures).
+
+### 5d. First factor-analysis result page (2026-10-31, owner-approved run, cost 1 compute credit)
+
+Run: formula `close/delay(close,20)-1`, CSI 300, 2026-02-21..2026-08-20, rebalance 5 days, 5 groups, positive direction. Finished in 6 seconds, "9 stages complete".
+
+- Result page order: run selector (timestamp dropdown), action row (this run's parameters, AI optimize, save as version, build stock-selection strategy, export PDF), 9-stage progress bar, group cumulative-return line chart (5 groups plus two long-short spreads), core-metrics grid.
+- Metrics shown: factor return, Sharpe, annualized return, max drawdown, IC mean, Rank IC, IC std, IC_IR, IR, P(IC < -0.02), P(IC > 0.02), t statistic, p-value.
+- Observed numbers for this trivial momentum factor: IC mean 0.0026, Rank IC -0.0248, t 0.0432, yet the page still offers "build strategy" and prints Sharpe 0.22 and annualized 7.71% in colour. IC mean and Rank IC disagree in sign and nothing flags it.
+- No sign of: out-of-sample split, trial count, multiple-testing adjustment, noise baseline, verdict, or an "inconclusive" state. A p-value sits at the bottom of a metrics grid with no pass line.
+- Worth copying: one-click save as version, stage-by-stage progress, run selector, export PDF. Worth beating: an explicit verdict row that reads the t statistic and would say inconclusive here.
+- Screenshots (not committed): `D:/tmp/panda/factor-result.png`.
