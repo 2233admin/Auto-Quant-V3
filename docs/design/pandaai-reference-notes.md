@@ -296,3 +296,13 @@ compare page -> strategy library.
   tested against our data, with the trial-adjustment that they lack.
 - Anything from the login-gated product: we have not seen it, so we must not
   imply it works as the docs describe.
+
+## 5c. Logged-in observation (2026-10-31, read-only)
+
+Observed through the owner's signed-in Chrome with Browser Bridge (own tab, no clicks that create, save or run anything).
+
+- Account is empty: strategy library has 0 strategies, run history 0, tuning tasks 0, paper trading 0. Factor library has 2 untitled stock factors (formula/Python) with "no factor analysis yet".
+- Layout: left rail (chat workbench, session list, strategy library, factor library, run history, tuning tasks, paper trading, market data), compute-credit balance and notifications in the rail footer.
+- Factor detail page: parameter panel (analysis window, rebalance period 5 days, 5 groups, direction, universe CSI 300), code editor with a validation badge, history versions, save, and a "run analysis" button. Result area stays empty until a run.
+- Not observed: any result chart, because running an analysis spends the owner's compute credits. Result-page claims remain vendor documentation only.
+- Run history is split by Strategy and Factor, then by market (stock/futures).
