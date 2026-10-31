@@ -317,3 +317,10 @@ Run: formula `close/delay(close,20)-1`, CSI 300, 2026-02-21..2026-08-20, rebalan
 - No sign of: out-of-sample split, trial count, multiple-testing adjustment, noise baseline, verdict, or an "inconclusive" state. A p-value sits at the bottom of a metrics grid with no pass line.
 - Worth copying: one-click save as version, stage-by-stage progress, run selector, export PDF. Worth beating: an explicit verdict row that reads the t statistic and would say inconclusive here.
 - Screenshots (not committed): `D:/tmp/panda/factor-result.png`.
+
+### 5e. AI optimize and chat workbench (2026-10-31, owner-approved, cost about 4.4 compute credits)
+
+- The "AI optimize" button opens the chat workbench with the factor pinned as a context chip. Left: conversation with a collapsible action trail ("capability load, thinking, tool call, 23 actions"). Right: tabs for parameters, version history, analysis history. Bottom: model picker, thinking-effort picker, auto mode, "strategy rewrite" shortcut.
+- The agent read the baseline run itself and said the signal was not significant (t 0.043, Rank IC negative), then rewrote the formula, ran a new analysis, and reported a before/after table: IC 0.0026 to -0.0206, annualized 7.71% to -22.92%, Sharpe 0.22 to -1.11, monotonicity 0.30 to 0.83. It called the attempt a failure in plain words.
+- Good: the agent states the failure honestly and offers restore or continue. Bad: it overwrote the saved formula, and "version history" stayed empty, so the original was not recoverable from the product. No trial counter, no held-out data: one more attempt on the same window raises selection risk and nothing records it.
+- Copy: pinned-context chip, collapsible action trail, before/after table with delta column, honest failure statement. Beat: every rewrite gets a version and a trial number automatically, and the judge, not the agent, decides keep or revert.
