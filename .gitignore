@@ -16,3 +16,4 @@ __pycache__/
 .vscode/
 .idea/
 *.swp
+/studio-app/node_modules/

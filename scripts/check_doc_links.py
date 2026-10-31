@@ -16,6 +16,7 @@ IGNORED_PARTS = {
     ".venv",
     "__pycache__",
     "data",
+    "node_modules",
 }
 LINK_PATTERN = re.compile(
     r"\[\["
