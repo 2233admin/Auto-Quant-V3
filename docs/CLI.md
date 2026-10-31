@@ -310,7 +310,10 @@ The Study has no candidate source or Session. One direct immutable Run
 preserves qualifying, complete, right-censored, overlap-excluded, and primary
 event populations plus deterministic distributions and uncertainty. It does
 not infer earnings/news labels, search thresholds, create an Order, or grant
-trading authority. See [[docs/design/ohlcv-price-event-study]].
+trading authority. See [[docs/design/ohlcv-price-event-study]]. Every rate
+in the result carries its N, a Wilson interval, minimum-sample guards, a
+stability split, and per-year counts; see
+[[docs/design/event-study-honesty-envelope]].
 
 `ohlcv-allocation-lab` is the fixed Portfolio-native route for a caller who
 chooses equal risk contribution rather than return prediction. It requires

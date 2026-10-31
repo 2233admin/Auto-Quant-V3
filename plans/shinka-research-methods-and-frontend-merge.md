@@ -1,6 +1,6 @@
 # Merge Shinka Research methods and frontend into AutoQuant V2
 
-- Status: `in-progress`
+- Status: `active`
 - Updated: `2026-10-31`
 - Target release: `v0.10.0`
 - Related design: [[docs/design/selection-adjusted-research-evidence]],

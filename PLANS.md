@@ -20,6 +20,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/shinka-research-methods-and-frontend-merge]] | Merge the Shinka research methods and Studio frontend plus the reference honesty and Monte Carlo methods into AutoQuant for v0.10.0. | 2026-10-31 |
 | [[plans/order-native-portfolio-decisions]] | Return evidence-backed target weights together with bounded Order/TPSL realization plans shared by mechanical and RL research. | 2026-08-19 |
 
 ## Proposed plans

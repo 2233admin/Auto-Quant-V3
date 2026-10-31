@@ -125,6 +125,10 @@ result is `insufficient-events` below the frozen minimum. Otherwise it reports
 unconditional same-asset mean and the primary matched excess mean is positive;
 all other sufficient samples report `no-observed-advantage`.
 
+The honesty envelope that attaches N, Wilson intervals, guards, stability and
+per-year counts to every rate is owned by
+[[docs/design/event-study-honesty-envelope]].
+
 This conclusion is deliberately weaker than “the event caused returns” or
 “trade the next event.”
 
