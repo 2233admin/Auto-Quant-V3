@@ -8,6 +8,7 @@ import { buildVerdict, type Verdict } from '../pages/FactorEvidence'
 import { routeHref } from '../route'
 import { byNewest, laneOfRun, splitOf, studySeries, useAllProjects, type Loaded } from './data'
 import { DataTable, type Col } from './DataTable'
+import { EndOfList } from '../components/States'
 import { Empty, Field, LoadNote, PageHead, uniq, VerdictBadge } from './parts'
 
 type Row = {
@@ -63,6 +64,52 @@ function rowsOf(all: Loaded[]): Row[] {
   return out
 }
 
+/** One Factor Study as a card: verdict, primary value with its sparkline across Runs, and three key figures. */
+function FactorCard({ r, href, go }: { r: Row; href: string; go: (href: string) => void }) {
+  return (
+    <article
+      className="pc lib-fcard"
+      aria-label={r.study.name}
+      onClick={(e) => {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || (e.target as Element).closest('a, button')) return
+        go(href)
+      }}
+    >
+      <div className="pc-top">
+        <a className="pc-name" href={href} translate="no">{r.study.name}</a>
+        <span className="faint small mono" translate="no">{r.project.name} · {r.study.id}</span>
+      </div>
+      <div className="pc-badges">
+        <VerdictBadge verdict={r.verdict} none="Verdict not published" detail={r.stage ? `stage: ${r.stage}` : undefined} />
+      </div>
+      {r.metric ? (
+        <div className="pc-metric">
+          <div className="mt">
+            <span className="mt-label"><span className="mono" translate="no">{r.metric}</span></span>
+            <span className="mt-value mono">{num(r.value, 4)}</span>
+            <span className="faint small">{r.split ? `${r.split} split · ` : ''}{plural(r.values.length, 'valued Run')}</span>
+          </div>
+          {r.values.length > 0 ? (
+            <Sparkline values={r.values} label={`${r.metric} across ${plural(r.values.length, 'valued Run')}, oldest to newest; the last point is the latest Run.`} />
+          ) : (
+            <span className="faint small">No valued Run</span>
+          )}
+        </div>
+      ) : (
+        <p className="muted small">No Runs yet. There is no primary metric to show.</p>
+      )}
+      <dl className="pc-facts">
+        <dt>Trials counted</dt>
+        <dd className="mono">{r.trials ?? 'no ledger'}</dd>
+        <dt>Runs</dt>
+        <dd className="mono">{r.runs}</dd>
+        <dt>Last Run (UTC)</dt>
+        <dd className="mono">{when(r.last)}</dd>
+      </dl>
+    </article>
+  )
+}
+
 const ORDER: Record<Verdict, number> = { pass: 0, inconclusive: 1, fail: 2 }
 
 export function FactorLibrary({ workspace, go }: { workspace: WorkspaceSummary | null; go: (href: string) => void }) {
@@ -71,6 +118,7 @@ export function FactorLibrary({ workspace, go }: { workspace: WorkspaceSummary |
   const [q, setQ] = useState('')
   const [verdict, setVerdict] = useState('')
   const [project, setProject] = useState('')
+  const [view, setView] = useState<'cards' | 'table'>('cards')
   const shown = rows.filter(
     (r) =>
       (!project || r.project.id === project) &&
@@ -142,7 +190,7 @@ export function FactorLibrary({ workspace, go }: { workspace: WorkspaceSummary |
         </Field>
         <Field label="Verdict">
           <select value={verdict} onChange={(e) => setVerdict(e.target.value)}>
-            <option value="">All</option>
+            <option value="">All verdicts</option>
             <option value="pass">Pass</option>
             <option value="inconclusive">Inconclusive</option>
             <option value="fail">Fail</option>
@@ -157,10 +205,23 @@ export function FactorLibrary({ workspace, go }: { workspace: WorkspaceSummary |
             ))}
           </select>
         </Field>
-        <span className="faint small lib-count">{shown.length} of {rows.length}</span>
+        <span className="seg" role="group" aria-label="View">
+          <button type="button" aria-pressed={view === 'cards'} onClick={() => setView('cards')}>Cards</button>
+          <button type="button" aria-pressed={view === 'table'} onClick={() => setView('table')}>Table</button>
+        </span>
+        <span className="faint small lib-count" role="status">{shown.length} of {rows.length} Factor Studies</span>
       </div>
       {shown.length === 0 ? (
         <Empty>{rows.length === 0 ? 'No Factor Study was found in this Workspace.' : 'No Factor Study matches these filters.'}</Empty>
+      ) : view === 'cards' ? (
+        <>
+          <div className="lib-fcards">
+            {[...shown].sort((a, b) => (b.last ?? '').localeCompare(a.last ?? '')).map((r) => (
+              <FactorCard key={r.key} r={r} href={href(r)} go={go} />
+            ))}
+          </div>
+          <EndOfList label={`End of list · ${shown.length} ${shown.length === 1 ? 'card' : 'cards'}, newest Run first`} />
+        </>
       ) : (
         <DataTable rows={shown} cols={cols} rowKey={(r) => r.key} href={href} go={go} initial={{ id: 'last', dir: -1 }} caption="Factor Studies across all Projects" />
       )}

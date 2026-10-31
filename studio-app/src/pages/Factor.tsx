@@ -10,6 +10,8 @@ import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
 import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictHero, VerdictReasons } from './FactorEvidence'
 import { adjustmentOf, CoreTiles, TestedFacts, Tabs, useHashTab, type TabDef } from './FactorWorkbench'
 import { RunAnalysisButton } from '../actions/RunAnalysisButton'
+import { ResultHeader } from './ResultHeader'
+import { otherLaneOf } from './run/runTypes'
 import { Info } from '../components/Info'
 import { HeadlineMetrics, type HeadlineSplit } from '../components/HeadlineMetrics'
 import { NotPublished } from '../components/NotPublished'
@@ -217,31 +219,28 @@ function Limits({ study, frontier }: { study: FactorDiagnostics; frontier: Front
   )
 }
 
-/** Every Factor Run of the Project, newest first. Only the Run in `project.factorExplorer` is inlined; the rest load from /api/v1/run. */
-function RunSelector({ project, shown, loading }: { project: ProjectSnapshot; shown: string; loading: boolean }) {
-  const runs = project.runs.filter((r) => r.subject.kind === 'factor').sort((a, b) => b.startedAt.localeCompare(a.startedAt))
-  if (runs.length < 2) return null
+/** Every Factor Run of the Project, newest first, as one full-width select. Only the Run in `project.factorExplorer` is inlined; the rest load from /api/v1/run. */
+function RunSelector({ project, shown, loading, go }: { project: ProjectSnapshot; shown: string; loading: boolean; go: (href: string) => void }) {
+  const runs = project.runs.filter((r) => r.subject.kind === 'factor' && !otherLaneOf(project, r.id)).sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+  if (runs.length === 0) return null
   const latest = project.factorExplorer?.run.id
   return (
-    <nav aria-label="Factor Runs of this Project">
-      <h2 className="wb-h">Run</h2>
-      <ul className="runlinks">
+    <label className="runsel runsel--bar">
+      <span className="sr-only">Factor Run</span>
+      <select
+        value={runs.some((r) => r.id === shown) ? shown : ''}
+        onChange={(event) => go(routeHref({ view: 'factor', id: project.id, run: event.target.value }))}
+      >
+        {!runs.some((r) => r.id === shown) && <option value="">Choose a Run…</option>}
         {runs.map((r) => (
-          <li key={r.id}>
-            <a href={routeHref({ view: 'factor', id: project.id, run: r.id })} aria-current={r.id === shown ? 'true' : undefined}>
-              <span>
-                <span className="mono" translate="no">run-…{r.id.slice(-12)}</span>
-                {r.id === latest && <span className="faint"> · latest</span>}
-                {r.id === shown && loading && <span className="faint"> · loading</span>}
-              </span>
-              <span>
-                {when(r.startedAt)} UTC · {r.primaryMetric} <span className="mono">{num(r.primaryValue, 4)}</span> · {r.status}
-              </span>
-            </a>
-          </li>
+          <option key={r.id} value={r.id}>
+            {when(r.startedAt)} UTC · {r.primaryMetric} {num(r.primaryValue, 4)} · {r.status}
+            {r.id === latest ? ' · latest' : ''}
+            {r.id === shown && loading ? ' · loading' : ''}
+          </option>
         ))}
-      </ul>
-    </nav>
+      </select>
+    </label>
   )
 }
 
@@ -265,7 +264,7 @@ const ANCHOR_TAB: Record<string, TabId> = {
 }
 const TAB_IDS = ['evidence', 'checks', 'stability', 'provenance'] as const
 
-function Content({ study, project, loadingRun }: { study: FactorDiagnostics; project: ProjectSnapshot; loadingRun?: boolean }) {
+function Content({ study, project, loadingRun, go }: { study: FactorDiagnostics; project: ProjectSnapshot; loadingRun?: boolean; go: (href: string) => void }) {
   const runRow: RunRow | undefined = project.runs.find((r) => r.id === study.run.id)
   const adjustment = adjustmentOf(project)
   const frontier = noiseFrontier(project.sessions, project.runs)
@@ -293,26 +292,28 @@ function Content({ study, project, loadingRun }: { study: FactorDiagnostics; pro
   return (
     <div className="wb">
       <aside className="wb-side" aria-label="What was tested">
-        <div>
+        <div className="wb-head">
           <h1 className="wb-title">Factor evidence</h1>
-          <p className="wb-sub">
-            <span className="mono" translate="no">{study.run.id}</span>
-          </p>
+          <span className="wb-sub mono" translate="no">{study.run.id}</span>
         </div>
-        <RunAnalysisButton project={project} preferStudyId={study.run.studyId} />
         <section aria-labelledby="wb-tested">
           <h2 className="wb-h" id="wb-tested">What was tested</h2>
           <TestedFacts study={study} />
         </section>
-        <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} />
-        <nav className="wb-links" aria-label="Related pages">
-          <a href={routeHref({ view: 'compare', id: project.id, a: study.run.id })}>Compare with another Run</a>
-          <a href={routeHref({ view: 'run', id: project.id, run: study.run.id })}>Run summary</a>
-          <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
-        </nav>
       </aside>
 
       <div className="wb-main">
+        <ResultHeader
+          select={<RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />}
+          action={<RunAnalysisButton project={project} preferStudyId={study.run.studyId} />}
+          links={
+            <>
+              <a href={routeHref({ view: 'compare', id: project.id, a: study.run.id })}>Compare</a>
+              <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
+              <a href={routeHref({ view: 'run', id: project.id, run: study.run.id })}>Run summary</a>
+            </>
+          }
+        />
         <VerdictHero study={study} adjustment={adjustment} />
         <div className="wb-hero">
           <IcByHorizon study={study} hero />
@@ -415,17 +416,26 @@ function Content({ study, project, loadingRun }: { study: FactorDiagnostics; pro
 
 type Loaded = { key: string; study: FactorDiagnostics | null; error: string | null }
 
-export function FactorPage({ project, study, run }: { project: ProjectSnapshot; study?: string; run?: string }) {
+export function FactorPage({ project, study, run, go }: { project: ProjectSnapshot; study?: string; run?: string; go?: (href: string, options?: { replace?: boolean }) => void }) {
+  const navigate = go ?? ((href: string, options?: { replace?: boolean }) => (options?.replace ? window.location.replace(href) : window.location.assign(href)))
   const inline = project.factorExplorer
   const wanted = run && run !== inline?.run.id ? run : null
+  // /api/v1/run serves Factor Runs only; a Run of another lane belongs on that lane's page.
+  const other = wanted ? otherLaneOf(project, wanted) : null
+  const fetchId = other ? null : wanted
+  const otherHref = other ? routeHref({ view: other.view, id: project.id }) : null
+  useEffect(() => {
+    if (otherHref) navigate(otherHref, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otherHref])
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const key = wanted ? `${project.id}/${wanted}` : ''
 
   useEffect(() => {
-    if (!wanted) return
+    if (!fetchId) return
     const controller = new AbortController()
     getJson<{ factorExplorer: FactorDiagnostics | null }>(
-      `/api/v1/run?${new URLSearchParams({ project: project.id, id: wanted })}`,
+      `/api/v1/run?${new URLSearchParams({ project: project.id, id: fetchId })}`,
       controller.signal,
     )
       .then((body) => setLoaded({ key, study: body.factorExplorer, error: body.factorExplorer ? null : 'The server returned no Factor evidence for this Run.' }))
@@ -433,23 +443,27 @@ export function FactorPage({ project, study, run }: { project: ProjectSnapshot; 
         if (!controller.signal.aborted) setLoaded({ key, study: null, error: error instanceof Error ? error.message : String(error) })
       })
     return () => controller.abort()
-  }, [project.id, wanted, key])
+  }, [project.id, fetchId, key])
 
   const fetched = wanted && loaded?.key === key ? loaded : null
   const explorer = wanted ? fetched?.study ?? null : inline
   const mismatch = explorer && study && explorer.run.studyId !== study
-  const pending = !!wanted && !fetched
+  const pending = !!fetchId && !fetched
   return (
     <div className="pg">
       {explorer && !mismatch ? (
-        <Content study={explorer} project={project} loadingRun={pending} />
+        <Content study={explorer} project={project} loadingRun={pending} go={navigate} />
       ) : (
         <>
           <header className="pg-head">
             <h1>Factor evidence</h1>
           </header>
-          <RunSelector project={project} shown={wanted ?? inline?.run.id ?? ''} loading={pending} />
-          {pending ? (
+          <RunSelector project={project} shown={wanted ?? inline?.run.id ?? ''} loading={pending} go={navigate} />
+          {other && otherHref ? (
+            <p className="muted">
+              This Run belongs to the {other.lane} lane. <a href={otherHref}>Open {other.lane}</a>
+            </p>
+          ) : pending ? (
             <p className="muted">Loading Run…</p>
           ) : fetched?.error ? (
             <Notice kind="error" label="Error" title={`Could not load Run ${wanted}.`} subtitle={fetched.error} />

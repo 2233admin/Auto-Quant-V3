@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
+import { EndOfList } from '../components/States'
 
 export type Col<T> = {
   id: string
@@ -110,6 +111,7 @@ export function DataTable<T>({
         </tbody>
       </table>
       </div>
+      <EndOfList label={`End of list · ${rows.length} ${rows.length === 1 ? 'row' : 'rows'}`} />
     </>
   )
 }

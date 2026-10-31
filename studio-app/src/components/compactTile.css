@@ -1,0 +1,12 @@
+/* Compact one-row metric tile: label left, mono value right, ~34px. Grid draws 1px dividers via gap + background. */
+.ctg { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.ct { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: 34px; padding: 0 var(--space-3); background: var(--raised); min-width: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.ct-label { display: flex; align-items: center; gap: 4px; min-width: 0; margin: 0; font: 400 11px/16px var(--font-sans); color: var(--muted); }
+.ct-label-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-right { display: flex; align-items: baseline; justify-content: flex-end; gap: var(--space-2); margin: 0; min-width: 0; text-align: right; }
+.ct-value { font: 500 14px/20px var(--font-mono); color: var(--text); white-space: nowrap; }
+.ct-note, .ct-delta, .ct-tone { font: 400 11px/16px var(--font-sans); white-space: nowrap; }
+.ct-delta { color: var(--muted); font-family: var(--font-mono); }
+.ct-tone { display: inline-flex; align-items: center; gap: 4px; }
+.ct-note { overflow: hidden; text-overflow: ellipsis; max-width: 11ch; }
+.ct .info-body { z-index: 6; }

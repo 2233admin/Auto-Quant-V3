@@ -6,3 +6,11 @@ div.basis--open { border-left-color: var(--faint); }
 div.basis > .basis-title { font: 500 14px/20px var(--font-sans); }
 div.basis p { margin: var(--space-2) 0 0; }
 .cmp td, .cmp th { vertical-align: baseline; }
+.cmp-head { display: grid; gap: var(--space-2); }
+.cmp-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-3); }
+.cmp-title h1 { font-size: 20px; line-height: 28px; margin: 0; }
+.cmp-title p { margin: 0; }
+.cmp-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-3); }
+.cmp-pick .runsel { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: var(--space-2); margin: 0; max-width: none; }
+.cmp-pick .runsel .sr-only { position: static; width: auto; height: auto; clip: auto; overflow: visible; font: var(--type-small); color: var(--muted); white-space: nowrap; }
+.cmp-pick .runsel select { min-width: 0; width: 100%; }

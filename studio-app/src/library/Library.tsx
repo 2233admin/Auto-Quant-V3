@@ -4,6 +4,7 @@ import { FactorLibrary } from './FactorLibrary'
 import { RunHistory } from './RunHistory'
 import { StrategyLibrary } from './StrategyLibrary'
 import { TuningPage } from './Tuning'
+import { Loading } from '../components/States'
 
 export type LibraryRoute = Extract<Route, { view: 'factors' | 'runs' | 'strategies' | 'tuning' }>
 
@@ -14,7 +15,7 @@ export const LIBRARY_TITLE: Record<LibraryRoute['view'], string> = { factors: 'F
 
 /** The four read-only cross-Project pages: one list, filters on top, click a row to open detail. */
 export function LibraryPage({ route, workspace, go }: { route: LibraryRoute; workspace: WorkspaceSummary | null; go: (href: string) => void }) {
-  if (!workspace) return <div className="pg"><p className="muted">Loading…</p></div>
+  if (!workspace) return <div className="pg"><Loading label="Loading Workspace…" minHeight={240} /></div>
   if (route.view === 'factors') return <FactorLibrary workspace={workspace} go={go} />
   if (route.view === 'runs') return <RunHistory workspace={workspace} go={go} />
   if (route.view === 'strategies') return <StrategyLibrary workspace={workspace} go={go} />

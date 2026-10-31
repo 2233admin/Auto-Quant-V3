@@ -1,10 +1,10 @@
 import { Info } from '../../components/Info'
 import { useId } from 'react'
 import { niceTicks } from '../factorMath'
+import { useFitWidth } from '../../design/useFitWidth'
 import { finite, fn, sn, up } from '../portfolio/pfmt'
 import type { Baseline, ContextualBaseline, Freq, Trial, TrainingRow } from './rlTypes'
 
-const W = 980
 const label = (t: { fold: string; seed: number }) => `${t.fold.replace('fold-', 'F')} · s${t.seed}`
 export const baselineLabel = (v: string | undefined) => (v ?? '').replace('fixed:', '').replace('best-training-expert', 'training expert').replace('contextual-ridge', 'contextual ridge').replaceAll('_', ' ')
 
@@ -43,6 +43,7 @@ export function ActionSwatch({ index }: { index: number }) {
 
 export function TrialChart({ trials, baselines, folds, split }: { trials: Trial[]; baselines: Baseline[]; folds: string[]; split: 'validation' | 'test' }) {
   const id = useId()
+  const [figRef, W] = useFitWidth<HTMLElement>(420)
   const H = 280
   const m = { l: 56, r: 16, t: 24, b: 56 }
   const sharpe = (t: Trial) => t[split]?.netSharpe
@@ -57,7 +58,7 @@ export function TrialChart({ trials, baselines, folds, split }: { trials: Trial[
   const step = (W - m.l - m.r) / Math.max(1, trials.length)
   const x = (i: number) => m.l + step * (i + 0.5)
   return (
-    <figure className="chart rl-chart">
+    <figure ref={figRef} className="chart rl-chart">
       <figcaption>
         <h3 id={`${id}-t`} className="sr-only">Net Sharpe of every fold and seed against the selected baseline</h3>
         <p className="sr-only" id={`${id}-d`}>
@@ -121,6 +122,7 @@ export function TrialChart({ trials, baselines, folds, split }: { trials: Trial[
 const DASH = ['', '7 3', '2 3', '10 3 2 3', '', '7 3']
 export function TrainingChart({ rows, trials, episodes, contextual }: { rows: TrainingRow[]; trials: Trial[]; episodes: number; contextual: ContextualBaseline[] }) {
   const id = useId()
+  const [figRef, W] = useFitWidth<HTMLElement>(420)
   const H = 300
   const m = { l: 60, r: 120, t: 20, b: 36 }
   const vals = rows.map((r) => r.totalReward).filter(finite)
@@ -131,7 +133,7 @@ export function TrainingChart({ rows, trials, episodes, contextual }: { rows: Tr
   const y = (v: number) => m.t + ((hi - v) / (hi - lo || 1)) * (H - m.t - m.b)
   const x = (e: number) => m.l + ((e - 1) / Math.max(1, episodes - 1)) * (W - m.l - m.r)
   return (
-    <figure className="chart rl-chart">
+    <figure ref={figRef} className="chart rl-chart">
       <figcaption>
         <h3 id={`${id}-t`}>Training reward by episode</h3>
         <p className="muted small" id={`${id}-d`}>Exact fixed-budget history for all {trials.length} trials. Descriptive only: it is not a promotion metric and no seed is picked.</p>
@@ -202,13 +204,14 @@ export function TrainingChart({ rows, trials, episodes, contextual }: { rows: Tr
 
 export function ActionBars({ rows, actions }: { rows: { key: string; name: string; freq: Freq | undefined }[]; actions: string[] }) {
   const uid = useId()
+  const [figRef, W] = useFitWidth<HTMLElement>(420)
   const H = 330
   const m = { l: 56, r: 16, t: 20, b: 40 }
   const step = (W - m.l - m.r) / Math.max(1, rows.length)
   const bw = Math.min(110, step * 0.62)
   const ph = H - m.t - m.b
   return (
-    <figure className="chart rl-chart">
+    <figure ref={figRef} className="chart rl-chart">
       <figcaption>
         <h3 id={`${uid}-t`}>Action allocation by fold and seed</h3>
         <p className="muted small" id={`${uid}-desc`}>Share of decisions spent in each factor sleeve. Segments are told apart by texture and by the label inside; segments under 7% carry no label (see the table below).</p>

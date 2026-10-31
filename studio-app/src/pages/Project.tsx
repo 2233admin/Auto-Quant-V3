@@ -178,6 +178,20 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         </p>
       </header>
 
+      <SectionNav
+        items={[
+          { id: 'sec-next', label: 'Next move' },
+          { id: 'sec-question', label: 'Question' },
+          { id: 'sec-studies', label: 'Studies' },
+          { id: 'sec-selection', label: 'Selection-adjusted' },
+          { id: 'sec-experiments', label: 'Experiments' },
+          { id: 'sec-runs', label: 'Runs' },
+          { id: 'sec-sessions', label: 'Sessions' },
+          { id: 'sec-docs', label: 'Reports' },
+          { id: 'sec-lanes', label: 'Other lanes' },
+        ]}
+      />
+
       <div className="hero-stack">
         <HeroLine
           tone={headline.tone}
@@ -223,20 +237,6 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
           </div>
         </div>
       </Section>
-
-      <SectionNav
-        items={[
-          { id: 'sec-next', label: 'Next move' },
-          { id: 'sec-question', label: 'Question' },
-          { id: 'sec-studies', label: 'Studies' },
-          { id: 'sec-selection', label: 'Selection-adjusted' },
-          { id: 'sec-experiments', label: 'Experiments' },
-          { id: 'sec-runs', label: 'Runs' },
-          { id: 'sec-sessions', label: 'Sessions' },
-          { id: 'sec-docs', label: 'Reports' },
-          { id: 'sec-lanes', label: 'Other lanes' },
-        ]}
-      />
 
       <Section title="Question and claim" id="sec-question" fold className="sec--oneline" caption={questionLine(project)}>
         <QuestionBlock project={project} />

@@ -15,7 +15,8 @@ import { QualificationBlock, VerdictHero, VerdictReasons } from '../FactorEviden
 import { adjustmentOf, CoreTiles, TestedFacts, Tabs, useHashTab, type TabDef } from '../FactorWorkbench'
 import { RunList } from './RunList'
 import { RunSelect } from './RunSelect'
-import { short, testAuditVisible, type RunDiagnostics } from './runTypes'
+import { otherLaneOf, short, testAuditVisible, type RunDiagnostics } from './runTypes'
+import { ResultHeader } from '../ResultHeader'
 import { useRun } from './useRun'
 import './run.css'
 
@@ -194,39 +195,73 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
   )
 }
 
-/** One Run of a Project, loaded from the read-only /api/v1/run route. Works for any Run, not only the latest. */
-export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runId: string; go: (href: string) => void }) {
-  const load = useRun(project.id, runId)
+/** One Run of a Project. Factor Runs load from the read-only /api/v1/run route; a Run of any other lane is sent to that lane's page before any fetch. */
+export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runId: string; go: (href: string, options?: { replace?: boolean }) => void }) {
+  const other = otherLaneOf(project, runId)
+  const load = useRun(project.id, other ? undefined : runId)
   const study = project.runs.find((r) => r.id === runId)?.studyId
   const factorHref = routeHref({ view: 'factor', id: project.id, run: runId, ...(study ? { study } : {}) })
   const fe = load.state === 'ready' ? load.payload.factorExplorer : null
+  const laneHref = other ? routeHref({ view: other.view, id: project.id }) : null
+  useEffect(() => {
+    if (laneHref) go(laneHref, { replace: true })
+  }, [laneHref, go])
+  if (other && laneHref) {
+    return (
+      <div className="pg">
+        <p className="muted">Opening the {other.lane} page for this Run…</p>
+        <p>
+          <a href={laneHref}>Open {other.lane}</a>
+        </p>
+      </div>
+    )
+  }
   return (
     <div className="pg">
       <div className="wb">
         <aside className="wb-side" aria-label="What was tested">
-          <div>
+          <div className="wb-head">
             <h1 className="wb-title">Run <span className="mono" translate="no">{runId.replace(/^run-/, '')}</span></h1>
-            <p className="wb-sub">
+            <span className="wb-sub">
               {plural(project.runs.length, 'Run')} in this Project. <LaunchedLabel runId={runId} />
-            </p>
+            </span>
           </div>
-          <RunAnalysisButton project={project} preferStudyId={study} />
           {fe && (
             <section aria-labelledby="wb-tested">
               <h2 className="wb-h" id="wb-tested">What was tested</h2>
               <TestedFacts study={fe} />
             </section>
           )}
-          <RunSelect label="Run" runs={project.runs} value={runId} onChange={(id) => go(routeHref({ view: 'run', id: project.id, run: id }))} />
-          <nav className="wb-links" aria-label="Related pages">
-            <a href={factorHref}>Full Factor evidence</a>
-            <a href={routeHref({ view: 'compare', id: project.id, a: runId })}>Compare with another Run</a>
-            <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
-          </nav>
         </aside>
         <div className="wb-main">
+          <ResultHeader
+            select={<RunSelect bar label="Run" runs={project.runs} value={runId} onChange={(id) => go(routeHref({ view: 'run', id: project.id, run: id }))} />}
+            action={<RunAnalysisButton project={project} preferStudyId={study} />}
+            links={
+              <>
+                <a href={factorHref}>Full Factor evidence</a>
+                <a href={routeHref({ view: 'compare', id: project.id, a: runId })}>Compare</a>
+                <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
+              </>
+            }
+          />
           {load.state === 'loading' && <p className="muted">Loading Run…</p>}
-          {load.state === 'error' && <Notice kind="error" label="Error" title="Could not load this Run." subtitle={load.message} />}
+          {load.state === 'error' &&
+            (load.unsupported ? (
+              <Notice
+                kind="info"
+                label="Info"
+                title="This Run is not a Factor Run, so it has no Factor evidence page."
+                subtitle="The Run route serves Factor Runs only. Open the Project to find the page for this Run's lane."
+              />
+            ) : (
+              <Notice kind="error" label="Error" title="Could not load this Run." subtitle={load.message} />
+            ))}
+          {load.state === 'error' && load.unsupported && (
+            <p className="small">
+              <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a> · <a href={routeHref({ view: 'runs' })}>Run history</a>
+            </p>
+          )}
           {fe && <Body fe={fe} project={project} />}
           {!fe && (
             <Section title="All Runs of this Project" id="run-all">

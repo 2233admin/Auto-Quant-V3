@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../design/icons'
+import { CompactTile, CompactTileGrid } from '../components/CompactTile'
 import './hero.css'
 
 export type HeroTone = 'bad' | 'ok' | 'warn'
@@ -22,20 +23,24 @@ export function HeroLine({ tone, word, children, why }: { tone: HeroTone; word: 
   )
 }
 
-export type HeroTile = { label: string; value: ReactNode; note?: ReactNode }
+export type HeroTile = { label: string; value: string; note?: ReactNode }
 
-/** One row of at most six core numbers. Values arrive formatted; nothing is computed here. */
+/** Columns that fill the last row exactly (6 -> 3, 12 -> 4, 10 -> 5), else 4. */
+function columnsFor(n: number): number {
+  for (let c = 5; c >= 2; c--) if (n >= c && n % c === 0) return c
+  return 4
+}
+
+/** The core numbers as compact one-row tiles. Values arrive formatted; nothing is computed here. */
 export function HeroTiles({ items, label }: { items: HeroTile[]; label: string }) {
-  const shown = items.slice(0, 6)
+  const shown = items.slice(0, 12)
   return (
-    <dl className="hero-tiles" data-n={shown.length} aria-label={label}>
-      {shown.map((t) => (
-        <div key={t.label}>
-          <dt title={t.label}>{t.label}</dt>
-          <dd>{t.value}</dd>
-          {t.note && <span className="hero-note">{t.note}</span>}
-        </div>
-      ))}
-    </dl>
+    <div className="hero-tiles" style={{ ['--hc' as string]: columnsFor(shown.length), ['--hc2' as string]: shown.length % 3 === 0 ? 3 : shown.length % 2 === 0 ? 2 : 1 }}>
+      <CompactTileGrid label={label}>
+        {shown.map((t) => (
+          <CompactTile key={t.label} label={t.label} value={t.value} note={t.note} />
+        ))}
+      </CompactTileGrid>
+    </div>
   )
 }

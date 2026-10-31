@@ -8,8 +8,10 @@ import { BookBlock, EpisodesTable, NeighborhoodBlock, TransitionsTable, Viabilit
 import type { PerfSummary, PortfolioDiagnostics } from './portfolioTypes'
 import { Block, day, finite, fn, Kv, NA, SplitToggle, sp, up } from './pfmt'
 import { Info } from '../../components/Info'
-import { HeroLine, HeroTiles, type HeroTile } from '../hero'
+import { HeroLine } from '../hero'
+import { CompactTile, CompactTileGrid } from '../../components/CompactTile'
 import './portfolio.css'
+import { Empty } from '../../components/States'
 
 type Split = 'validation' | 'test'
 type Verdict = 'pass' | 'fail' | 'inconclusive'
@@ -42,57 +44,88 @@ const METRICS: Metric[] = [
   { key: 'informationRatio', label: 'Information ratio', kind: 'num', vsBench: false, gross: false },
 ]
 
-function Tile({ label, value, children }: { label: string; value: string; children?: ReactNode }) {
+const SHORT: Record<string, string> = {
+  totalReturn: 'Net total return',
+  annualReturn: 'Net annual return',
+  sharpe: 'Net Sharpe',
+  sortino: 'Net Sortino',
+  maximumDrawdown: 'Max drawdown',
+  annualVolatility: 'Volatility (ann.)',
+  expectedShortfall95: 'Exp. shortfall 95%',
+  positiveRate: 'Positive-day rate',
+  activeAnnualReturn: 'Active return',
+  informationRatio: 'Information ratio',
+}
+
+const fmtMetric = (m: Metric, x: number | null | undefined) => (m.kind === 'pct' ? (m.key === 'maximumDrawdown' || m.key.endsWith('Return') ? sp(x) : up(x, 1)) : fn(x))
+
+/** The twelve published headline metrics as compact one-row tiles; the benchmark value rides beside the net value. */
+function MetricGrid({ pf, split }: { pf: PortfolioDiagnostics; split: Split }) {
+  const v = pf.strategyViability?.[split]
+  if (!v?.net) return <p><NA why={`strategyViability.${split}.net is not in the payload`} /></p>
+  const f = v.friction
   return (
-    <div className="pf-tile">
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-      {children}
+    <div className="hero-tiles" style={{ ['--hc' as string]: 4, ['--hc2' as string]: 3 }}>
+      <CompactTileGrid label={`Core numbers, ${split} split`}>
+        {METRICS.map((m) => {
+          const bench = v.benchmark?.[m.key]
+          return (
+            <CompactTile
+              key={m.key}
+              label={SHORT[m.key] ?? m.label}
+              value={fmtMetric(m, v.net?.[m.key])}
+              note={m.vsBench && finite(bench) ? <span title="Benchmark value">bm {fmtMetric(m, bench)}</span> : undefined}
+              info={m.label}
+            />
+          )
+        })}
+        <CompactTile label="1-way turnover / yr" value={finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—'} info="Annualized one-way turnover: traded notional per year, one way." />
+        <CompactTile
+          label="Total cost drag"
+          value={up(f?.totalCostDrag, 2)}
+          info={`Total cost drag at ${finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade.`}
+        />
+      </CompactTileGrid>
     </div>
   )
 }
 
-function MetricTiles({ pf, split }: { pf: PortfolioDiagnostics; split: Split }) {
+/** Gross, net and benchmark side by side for every headline metric, behind a disclosure. */
+function MetricDetail({ pf, split }: { pf: PortfolioDiagnostics; split: Split }) {
   const v = pf.strategyViability?.[split]
   if (!v?.net) return <p><NA why={`strategyViability.${split}.net is not in the payload`} /></p>
-  const fmt = (m: Metric, x: number | null | undefined) => (m.kind === 'pct' ? (m.key === 'maximumDrawdown' || m.key.endsWith('Return') ? sp(x) : up(x, 1)) : fn(x))
-  const f = v.friction
   return (
-    <dl className="pf-tiles">
-      {METRICS.map((m) => {
-        const net = v.net?.[m.key]
-        const bench = v.benchmark?.[m.key]
-        const gross = v.gross?.[m.key]
-        const delta = finite(net) && finite(bench) ? net - bench : null
-        return (
-          <Tile key={m.key} label={m.label} value={fmt(m, net)}>
-            {m.vsBench ? (
-              finite(bench) ? (
-                <>
-                  <span className="pf-sub">benchmark {fmt(m, bench)}</span>
-                  {delta !== null && (
-                    <span className="pf-sub pf-delta">
-                      {delta >= 0 ? 'above' : 'below'} benchmark by {m.kind === 'pct' ? `${fn(Math.abs(delta) * 100, 2)} pts` : fn(Math.abs(delta), 2)}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="pf-sub"><NA why="no benchmark value is published" /></span>
-              )
-            ) : (
-              <span className="pf-sub">relative to the benchmark by definition</span>
-            )}
-            {m.gross && finite(gross) && <span className="pf-sub">gross (no cost) {fmt(m, gross)}</span>}
-          </Tile>
-        )
-      })}
-      <Tile label="Annualized one-way turnover" value={finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—'}>
-        <span className="pf-sub">traded notional per year, one way</span>
-      </Tile>
-      <Tile label="Total cost drag" value={up(f?.totalCostDrag, 2)}>
-        <span className="pf-sub">at {finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade</span>
-      </Tile>
-    </dl>
+    <div className="tablewrap">
+      <table className="tbl">
+        <caption className="small muted">Net against benchmark and gross, {split} split</caption>
+        <thead>
+          <tr>
+            <th scope="col">Metric</th>
+            <th scope="col" className="r">Net</th>
+            <th scope="col" className="r">Benchmark</th>
+            <th scope="col" className="r">Net minus benchmark</th>
+            <th scope="col" className="r">Gross (no cost)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {METRICS.map((m) => {
+            const net = v.net?.[m.key]
+            const bench = v.benchmark?.[m.key]
+            const gross = v.gross?.[m.key]
+            const delta = m.vsBench && finite(net) && finite(bench) ? net - bench : null
+            return (
+              <tr key={m.key}>
+                <th scope="row">{m.label}</th>
+                <td className="r mono">{fmtMetric(m, net)}</td>
+                <td className="r mono">{m.vsBench ? (finite(bench) ? fmtMetric(m, bench) : '—') : 'by definition'}</td>
+                <td className="r mono">{delta === null ? '—' : m.kind === 'pct' ? `${delta >= 0 ? '+' : '−'}${fn(Math.abs(delta) * 100, 2)} pts` : `${delta >= 0 ? '+' : '−'}${fn(Math.abs(delta), 2)}`}</td>
+                <td className="r mono">{m.gross && finite(gross) ? fmtMetric(m, gross) : '—'}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -173,13 +206,12 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
     return (
       <div className="pg pf">
         {head}
-        <div className="empty" role="status">
-          <span className="badge">No evidence in this Project</span>
+        <Empty title="No evidence in this Project">
           <p>This Project has no Portfolio Run, so there is no net-growth curve, viability diagnosis or parameter neighborhood to draw. Nothing is estimated in its place.</p>
           <p className="small">
             <a href={routeHref({ view: 'project', id: project.id })}>Back to the Project</a>
           </p>
-        </div>
+        </Empty>
       </div>
     )
   }
@@ -220,23 +252,6 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
   const vSharpe = vv?.net?.sharpe
   const vBench = vv?.benchmark?.sharpe
   const verdict = verdictOf(pf)
-  const cur = pf.strategyViability?.[effective]
-  const f = cur?.friction
-  const fmtTile = (key: keyof PerfSummary, kind: 'pct' | 'num', x: number | null | undefined) =>
-    kind === 'pct' ? (key === 'maximumDrawdown' || key.endsWith('Return') ? sp(x) : up(x, 1)) : fn(x)
-  const tileVal = (key: keyof PerfSummary, kind: 'pct' | 'num') => fmtTile(key, kind, cur?.net?.[key])
-  const tileBench = (key: keyof PerfSummary, kind: 'pct' | 'num') => {
-    const x = cur?.benchmark?.[key]
-    return finite(x) ? `benchmark ${fmtTile(key, kind, x)}` : undefined
-  }
-  const tiles: HeroTile[] = [
-    { label: 'Net total return', value: tileVal('totalReturn', 'pct'), note: tileBench('totalReturn', 'pct') },
-    { label: 'Net Sharpe', value: tileVal('sharpe', 'num'), note: tileBench('sharpe', 'num') },
-    { label: 'Max drawdown', value: tileVal('maximumDrawdown', 'pct'), note: tileBench('maximumDrawdown', 'pct') },
-    { label: 'Annualized volatility', value: tileVal('annualVolatility', 'pct'), note: tileBench('annualVolatility', 'pct') },
-    { label: 'One-way turnover / yr', value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—' },
-    { label: 'Total cost drag', value: up(f?.totalCostDrag, 2), note: finite(f?.baseCostBps) ? `at ${fn(f?.baseCostBps, 1)} bps` : undefined },
-  ]
   const d = pf.strategyViability?.diagnosis
 
   return (
@@ -257,7 +272,18 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
         </p>
       </header>
 
-      <div className="hero-stack">
+      <SectionNav
+        items={[
+          { id: 'pf-summary', label: 'Verdict and metrics' },
+          { id: 'pf-viability', label: 'Viability and cost' },
+          { id: 'pf-neighborhood', label: 'Neighborhood' },
+          { id: 'pf-book', label: 'Book and exposure' },
+          { id: 'pf-transitions', label: 'Transitions' },
+          { id: 'pf-episodes', label: 'Episodes' },
+        ]}
+      />
+
+      <div className="pf-sticky">
         <HeroLine
           tone={verdict === 'fail' ? 'bad' : 'warn'}
           word={WORD[verdict]}
@@ -274,11 +300,13 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
             ? `validation net Sharpe ${fn(vSharpe)}, ${vSharpe - vBench >= 0 ? 'above' : 'below'} benchmark by ${fn(Math.abs(vSharpe - vBench), 1)}`
             : 'no validation net Sharpe is published for this Run'}
         </HeroLine>
+        {toggle}
+      </div>
 
+      <div className="hero-stack">
         <section aria-labelledby="pf-curve" className="pf-hero-chart">
           <div className="pf-hero-head">
             <h2 id="pf-curve">Growth and drawdown</h2>
-            {toggle}
           </div>
           {points.length >= 2 ? (
             <PortfolioChart
@@ -290,26 +318,14 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
               note={hiddenNote}
             />
           ) : (
-            <div className="empty" role="status">
-              <span className="badge">Not available</span>
+            <Empty title="Not available">
               <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a curve.</p>
-            </div>
+            </Empty>
           )}
         </section>
 
-        <HeroTiles items={tiles} label={`Core numbers, ${effective} split`} />
+        <MetricGrid pf={pf} split={effective} />
       </div>
-
-      <SectionNav
-        items={[
-          { id: 'pf-summary', label: 'Verdict and metrics' },
-          { id: 'pf-viability', label: 'Viability and cost' },
-          { id: 'pf-neighborhood', label: 'Neighborhood' },
-          { id: 'pf-book', label: 'Book and exposure' },
-          { id: 'pf-transitions', label: 'Transitions' },
-          { id: 'pf-episodes', label: 'Episodes' },
-        ]}
-      />
 
       <div className="band">
         <Section title="Verdict and metrics" id="pf-summary" caption={`Universe ${pf.universe?.length ?? '—'} assets; ${pf.mandate?.family ?? '—'} mandate; benchmark ${pf.mandate?.benchmark?.kind ?? '—'}.`}>
@@ -324,8 +340,8 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
               </p>
             )}
             <details className="pf-allmetrics">
-              <summary>All {effective} metrics</summary>
-              <MetricTiles pf={pf} split={effective} />
+              <summary>Benchmark and gross detail, {effective} split</summary>
+              <MetricDetail pf={pf} split={effective} />
             </details>
             <Block title="Whole sampled path (all splits)">
               {sum && testVisible ? (

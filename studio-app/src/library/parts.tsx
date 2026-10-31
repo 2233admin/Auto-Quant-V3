@@ -3,7 +3,9 @@ import { Info } from '../components/Info'
 import { Glyph } from '../design/icons'
 import { plural } from '../format'
 import { Notice } from '../Notice'
+import { Empty as EmptyState } from '../components/States'
 import type { Verdict } from '../pages/FactorEvidence'
+import '../components/states.css'
 import { loadState, type Loaded } from './data'
 import './library.css'
 
@@ -44,14 +46,15 @@ export function LoadNote({ all }: { all: Loaded[] }) {
   return (
     <>
       {failed > 0 && <Notice kind="error" label="Error" title={`${plural(failed, 'Project')} could not be loaded.`} subtitle="Their rows are missing from this list." />}
-      {loading > 0 && <p className="muted small" role="status">Loading {plural(loading, 'Project')}…</p>}
+      {loading > 0 && <p className="muted small lib-loading" role="status"><span className="st-spin" aria-hidden="true" />Loading {plural(loading, 'Project')}…</p>}
     </>
   )
 }
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+/** One toolbar control. The label is read by screen readers and shown only when `visible` (the control's own first option says what it filters). */
+export function Field({ label, children, visible = false }: { label: string; children: ReactNode; visible?: boolean }) {
   return (
-    <label className="lib-field">
+    <label className={`lib-field${visible ? ' lib-field--shown' : ''}`}>
       <span>{label}</span>
       {children}
     </label>
@@ -59,7 +62,7 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <p className="muted lib-empty">{children}</p>
+  return <EmptyState title={String(children)} minHeight={96} />
 }
 
 export const uniq = (xs: string[]) => [...new Set(xs)].sort((a, b) => a.localeCompare(b))

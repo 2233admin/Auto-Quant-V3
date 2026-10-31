@@ -3,6 +3,7 @@ import type { WorkspaceSummary } from '../api'
 import { ProjectCard } from '../components/ProjectCard'
 import { plural } from '../format'
 import { Notice } from '../Notice'
+import { Empty, EndOfList } from '../components/States'
 import { HeroLine, HeroTiles } from './hero'
 
 export function Projects({ workspace, freshness, error }: { workspace: WorkspaceSummary; freshness: ReactNode; error: string | null }) {
@@ -45,13 +46,16 @@ export function Projects({ workspace, freshness, error }: { workspace: Workspace
         <Notice kind="error" label="Error" title="Workspace diagnostics." subtitle={workspace.diagnostics.map((d) => d.message ?? d.code ?? '').join('; ')} />
       )}
       {projects.length === 0 ? (
-        <p className="muted">No Projects were discovered in this Workspace.</p>
+        <Empty title="No Projects were discovered in this Workspace" />
       ) : (
-        <div className="pc-grid">
-          {projects.map((p) => (
-            <ProjectCard key={p.id} p={p} />
-          ))}
-        </div>
+        <>
+          <div className="pc-grid">
+            {projects.map((p) => (
+              <ProjectCard key={p.id} p={p} />
+            ))}
+          </div>
+          <EndOfList label={`End of list · ${plural(projects.length, 'Project')}`} />
+        </>
       )}
       <p className="muted small">
         Native pages: Factor, Portfolio, Book Risk, path stress, Allocation, Governed RL and Event Study.

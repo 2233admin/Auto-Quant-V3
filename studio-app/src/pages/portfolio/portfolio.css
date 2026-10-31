@@ -16,7 +16,7 @@
 .pf-toggle[aria-pressed='true'] { background: var(--selected); color: var(--text); border-color: var(--text); }
 .pf-toggle:disabled { opacity: .55; cursor: not-allowed; border-style: dashed; }
 .pf-toggle:focus-visible, .pf-sort:focus-visible, .pf-plot:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
-.pf-chart { max-width: 1000px; }
+.pf-chart { max-width: none; margin: 0; }
 .pf-plot { touch-action: pan-y; cursor: crosshair; }
 .pf-readout { margin: 0; min-height: 20px; font-variant-numeric: tabular-nums; }
 .pf-readout b { color: var(--text); }
@@ -48,3 +48,10 @@
 .pf-allmetrics > summary { cursor: pointer; font: var(--type-body); color: var(--muted); padding: var(--space-1) 0; }
 .pf-allmetrics > summary:hover { color: var(--text); }
 .pf-allmetrics[open] > summary { margin-bottom: var(--space-3); }
+
+/* Sticky result header: verdict line and split selector stay visible under the section bar while the page scrolls. */
+.pf-sticky { position: sticky; top: calc(52px + var(--secnav-h, 44px)); z-index: 4; display: flex; align-items: stretch; gap: var(--space-3); background: var(--bg); padding-block: 4px; margin-block: -4px; }
+.pf-sticky .hero-line { flex: 1; min-width: 0; }
+.pf-sticky .pf-split, .pf-sticky .pf-bar { align-self: center; flex: none; }
+.pf-hero-head { margin-bottom: 4px; }
+@media (max-width: 767px) { .pf-sticky { flex-wrap: wrap; } }

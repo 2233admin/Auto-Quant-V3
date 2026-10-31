@@ -4,8 +4,8 @@ import { niceTicks } from '../factorMath'
 import type { SplitWindow } from '../portfolio/PortfolioChart'
 import { finite, sp, up } from '../portfolio/pfmt'
 import type { AllocPoint } from './allocationTypes'
+import { useFitWidth } from '../../design/useFitWidth'
 
-const W = 980
 const m = { l: 64, r: 16, t: 28, b: 40 }
 const GAP = 22
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10)
@@ -32,15 +32,16 @@ export function AllocationChart({
   note?: string
 }) {
   const id = useId()
+  const [figRef, W] = useFitWidth<HTMLElement>(420)
   const svgRef = useRef<SVGSVGElement>(null)
   const [hover, setHover] = useState<number | null>(null)
   const t = points.map((p) => Date.parse(p.timestamp))
   const t0 = t[0]
   const t1 = t[t.length - 1]
 
-  const H1 = 150
-  const H2 = 80
-  const H3 = 70
+  const H1 = 190
+  const H2 = 76
+  const H3 = 66
   const top1 = m.t
   const bot1 = top1 + H1
   const top2 = bot1 + GAP
@@ -110,7 +111,7 @@ export function AllocationChart({
   for (let yr = new Date(t0).getUTCFullYear() + 1; yr <= new Date(t1).getUTCFullYear(); yr++) years.push(Date.UTC(yr, 0, 1))
 
   return (
-    <figure className="chart pf-chart">
+    <figure ref={figRef} className="chart pf-chart">
       <figcaption>
         <h3 id={`${id}-t`} className="sr-only">Daily net return, forecast volatility and exposure</h3>
         <p className="sr-only" id={`${id}-d`}>
@@ -172,8 +173,8 @@ export function AllocationChart({
           )
         })}
         {panel(r1.ticks, y1, (v) => sp(v, 1), 'daily net return', top1, bot1)}
-        {panel(r2.ticks, y2, (v) => up(v, 0), 'forecast vol', top2, bot2)}
-        {panel(r3.ticks, y3, (v) => up(v, 0), 'gross exposure', top3, bot3)}
+        {panel(r2.ticks, y2, (v) => up(v, 0), 'fcst vol', top2, bot2)}
+        {panel(r3.ticks, y3, (v) => up(v, 0), 'gross exp.', top3, bot3)}
         {years
           .filter((yr) => yr > t0 + 60 * 864e5 && yr < t1 - 60 * 864e5)
           .map((yr) => (

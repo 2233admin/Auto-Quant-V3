@@ -2,7 +2,7 @@ import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import { hashWithJob, sectionOfHash } from '../actions/jobHash'
 
 /** Distance from the viewport top at which a heading counts as "current": top bar (52) + section nav (~40) + air. */
-const SPY_LINE = 52 + 40 + 20
+const SPY_LINE = 52 + 44 + 24
 
 /**
  * One section of a page: heading, optional one-line caption, body. With `fold` the body sits behind a native

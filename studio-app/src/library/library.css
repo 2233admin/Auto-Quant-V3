@@ -1,14 +1,26 @@
 /* Library pages: Factors, Runs, Strategies, Tuning. Tokens only; table base styles come from pages.css (.tbl). */
-.lib-filters { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3) var(--space-4); }
-.lib-field { display: grid; gap: 4px; font: var(--type-small); color: var(--muted); }
-.lib-field input, .lib-field select { font: var(--type-body); padding: 5px 10px; height: 32px; box-sizing: border-box; background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); max-width: 100%; }
-.lib-field input[type='search'] { min-width: 16rem; }
+/* One 32px toolbar row: controls left, result count right. */
+.lib-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
+.lib-field { display: inline-flex; align-items: center; gap: 6px; font: var(--type-small); color: var(--muted); }
+.lib-field:not(.lib-field--shown) > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.lib-field input, .lib-field select { font: var(--type-small); padding: 0 10px; height: 32px; box-sizing: border-box; background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); max-width: 100%; }
+.lib-field input[type='search'] { min-width: 14rem; }
 .lib-field input:focus-visible, .lib-field select:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
-.lib-count { margin-left: auto; align-self: center; }
-.lib-bar { display: flex; align-items: center; gap: var(--space-3); min-height: 30px; }
-.lib-empty { padding: var(--space-6) 0; }
+.lib-filters .btn, .lib-filters .seg button { height: 32px; }
+.lib-filters .seg button { padding: 0 12px; }
+.lib-count { margin-left: auto; align-self: center; font-variant-numeric: tabular-nums; }
+.lib-more { position: relative; }
+.lib-more > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; cursor: pointer; font: var(--type-small); color: var(--muted); background: var(--raised); border: 1px solid var(--line-strong); border-radius: var(--radius-control); }
+.lib-more > summary::-webkit-details-marker { display: none; }
+.lib-more > summary:hover, .lib-more[open] > summary { color: var(--text); background: var(--hover); }
+.lib-more > summary:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
+.lib-more-panel { position: absolute; z-index: 8; left: 0; top: 36px; display: flex; gap: var(--space-3); padding: var(--space-3); background: var(--raised); border: 1px solid var(--line-strong); }
+.lib-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text); }
+.lib-loading { display: inline-flex; align-items: center; gap: var(--space-2); margin: 0; }
+.lib-bar { display: flex; align-items: center; gap: var(--space-3); min-height: 28px; }
 .lib-tbl th[scope='row'] { min-width: 12rem; }
 .lib-tbl td { vertical-align: middle; white-space: nowrap; }
+.lib-tbl th, .lib-tbl td { padding-block: 4px; }
 .lib-tbl th[scope='row'] { vertical-align: middle; display: table-cell; white-space: nowrap; }
 .lib-tbl th[scope='row'] > * { display: block; }
 .lib-tbl thead th { vertical-align: bottom; }
@@ -37,6 +49,7 @@
 @media (max-width: 767px) {
   .lib-counters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lib-field input[type='search'] { min-width: 0; width: 100%; }
+  .lib-field { flex: 1 1 100%; }
 }
 
 .lib-after { margin-top: var(--space-3) !important; }
@@ -52,5 +65,11 @@
 .lib-tbl thead th:first-child { z-index: 2; }
 .lib-tbl tbody tr:hover th[scope='row'] { background: var(--hover); }
 .lib-tbl tbody tr.is-picked th[scope='row'] { background: var(--selected); }
-.lib-scrollhint { margin: 0 0 var(--space-1); text-align: right; }
+.lib-scrollhint { margin: 0 0 calc(-1 * var(--space-2)); text-align: right; }
 .lib-wrap { display: block; white-space: normal; min-width: 11rem; max-width: 18rem; }
+
+/* Factor library card view: same card grid as Projects. */
+.lib-fcards { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .lib-fcards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .lib-fcards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.lib-fcard .pc-next { margin-top: 0; }

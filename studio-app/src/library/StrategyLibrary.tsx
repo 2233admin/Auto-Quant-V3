@@ -154,7 +154,7 @@ export function StrategyLibrary({ workspace, go }: { workspace: WorkspaceSummary
             {projects.map((id) => <option key={id} value={id}>{rows.find((r) => r.project.id === id)?.project.name ?? id}</option>)}
           </select>
         </Field>
-        <span className="faint small lib-count">{shown.length} of {rows.length}</span>
+        <span className="faint small lib-count" role="status">{shown.length} of {rows.length} rows</span>
       </div>
       {shown.length === 0 ? (
         <Empty>{rows.length === 0 ? 'No Portfolio, RL or Allocation evidence was found in this Workspace.' : 'No row matches these filters.'}</Empty>

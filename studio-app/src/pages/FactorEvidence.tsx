@@ -217,7 +217,14 @@ export function VerdictHero({ study, adjustment }: { study: FactorDiagnostics; a
           <p>Label read from the server stage and its qualifies-for-portfolio flag; the family-wise flag can only demote a pass.</p>
         </Info>
       </div>
-      <ReasonList reasons={topReasons(reasons)} />
+      {topReasons(reasons).length > 0 && (
+        <details className="verdict-more">
+          <summary>
+            {topReasons(reasons).length} {topReasons(reasons).length === 1 ? 'reason' : 'reasons'}
+          </summary>
+          <ReasonList reasons={topReasons(reasons)} />
+        </details>
+      )}
     </section>
   )
 }

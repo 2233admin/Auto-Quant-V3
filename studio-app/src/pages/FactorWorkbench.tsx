@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { FactorDiagnostics, ProjectSnapshot, RankSummary } from '../api'
 import { hashWithJob, sectionOfHash } from '../actions/jobHash'
-import { MetricTile } from '../components/MetricTile'
+import { CompactTile, CompactTileGrid } from '../components/CompactTile'
 import { pickIntegrity } from '../components/TrialCounter'
 import { num, when } from '../format'
 import { SPLIT_LABEL, SPLITS } from './factorMath'
@@ -71,7 +71,12 @@ export function TestedFacts({ study }: { study: Tested }) {
 
 export type CoreDefs = { inference?: string; measure?: string }
 
-/** Row of six published numbers for the validation split, plus a quieter test-audit row only when the protocol marks test as a visible diagnostic. */
+const defNode = (d?: string) => (d ? <p>{d}</p> : undefined)
+
+/**
+ * Compact grid of published numbers for the validation split, plus the test-audit group only when the protocol marks
+ * test as a visible diagnostic. One 34px row per metric, 3 to 4 columns on a wide screen.
+ */
 export function CoreTiles({
   study,
   project,
@@ -89,34 +94,45 @@ export function CoreTiles({
 }) {
   const fam = pickIntegrity(project)?.researchFamily
   const trials = fam ? int(fam.totalExecutions) : '—'
-  const trialNote = fam ? `${fam.uniqueSourceTrials} unique ${fam.uniqueSourceTrials === 1 ? 'source' : 'sources'}` : 'no trial ledger'
+  const trialNote = fam ? `${fam.uniqueSourceTrials} unique` : 'no ledger'
   const horizon = study.protocol.primaryHorizon
   if (!validation) return <p className="muted small">The Run published no validation summary.</p>
   const weak = validation.sufficient === false
+  const measure = defNode(defs?.measure)
+  const inference = defNode(defs?.inference)
   return (
     <div className="core">
-      <dl className="core-row" aria-label={`Validation split, ${horizon}-bar horizon`}>
-        <MetricTile label="Validation mean rank IC" value={num(validation.meanRankIc, 4)} note={`${horizon}-bar, selection split`} definition={defs?.measure} />
-        <MetricTile label="HAC t" value={num(validation.hacTStatistic, 2)} definition={defs?.inference} />
-        <MetricTile label="HAC p" value={num(validation.hacNormalPValue, 3)} note="two-sided" definition={defs?.inference} />
-        <MetricTile label="Hit rate" value={num(validation.rankHitRate, 3)} note="bars with rank IC > 0" />
-        <MetricTile
-          label="Observations"
-          value={int(validation.observations)}
-          note={`minimum ${int(validation.minimumObservations)}`}
-          tone={weak ? 'weak' : 'neutral'}
-          toneReason={weak ? 'below the minimum' : undefined}
-        />
-        <MetricTile label="Trials counted" value={trials} note={trialNote} />
-      </dl>
+      <div className="core-group">
+        <h3 className="core-h">Validation · selection split · {horizon}-bar horizon</h3>
+        <CompactTileGrid label={`Validation split, ${horizon}-bar horizon`}>
+          <CompactTile label="Mean rank IC" value={num(validation.meanRankIc, 4)} info={measure} />
+          <CompactTile label="HAC t" value={num(validation.hacTStatistic, 2)} info={inference} />
+          <CompactTile label="HAC p" value={num(validation.hacNormalPValue, 3)} note="two-sided" info={inference} />
+          <CompactTile label="Hit rate" value={num(validation.rankHitRate, 3)} info={<p>Share of bars with rank IC above 0.</p>} />
+          <CompactTile label="Rank IC IR" value={num(validation.rankIcir, 3)} />
+          <CompactTile label="Mean Pearson IC" value={num(validation.meanPearsonIc, 4)} />
+          <CompactTile label="Rank IC std" value={num(validation.rankIcStandardDeviation, 3)} />
+          <CompactTile
+            label="Observations"
+            value={int(validation.observations)}
+            note={`min ${int(validation.minimumObservations)}`}
+            tone={weak ? 'weak' : 'neutral'}
+            toneReason={weak ? 'below min' : undefined}
+          />
+          <CompactTile label="Trials counted" value={trials} note={trialNote} />
+        </CompactTileGrid>
+      </div>
       {testVisible && testAudit && (
-        <dl className="core-row core-row--audit" aria-label={`Test split visible audit, ${horizon}-bar horizon`}>
-          <MetricTile label="Test mean rank IC" value={num(testAudit.meanRankIc, 4)} note="visible audit, not selection" />
-          <MetricTile label="HAC t" value={num(testAudit.hacTStatistic, 2)} />
-          <MetricTile label="HAC p" value={num(testAudit.hacNormalPValue, 3)} />
-          <MetricTile label="Hit rate" value={num(testAudit.rankHitRate, 3)} />
-          <MetricTile label="Observations" value={int(testAudit.observations)} note={`minimum ${int(testAudit.minimumObservations)}`} />
-        </dl>
+        <div className="core-group core-group--audit">
+          <h3 className="core-h">Test · visible audit, not used for selection</h3>
+          <CompactTileGrid label={`Test split visible audit, ${horizon}-bar horizon`}>
+            <CompactTile label="Mean rank IC" value={num(testAudit.meanRankIc, 4)} />
+            <CompactTile label="HAC t" value={num(testAudit.hacTStatistic, 2)} />
+            <CompactTile label="HAC p" value={num(testAudit.hacNormalPValue, 3)} />
+            <CompactTile label="Hit rate" value={num(testAudit.rankHitRate, 3)} />
+            <CompactTile label="Observations" value={int(testAudit.observations)} note={`min ${int(testAudit.minimumObservations)}`} />
+          </CompactTileGrid>
+        </div>
       )}
     </div>
   )

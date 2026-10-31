@@ -5,6 +5,7 @@ import { routeHref } from '../../route'
 import { finite, up } from '../portfolio/pfmt'
 import type { ArtifactRef } from './laneTypes'
 import './lanes.css'
+import { Empty } from '../../components/States'
 
 /** Page title block shared by both lane pages. */
 export function LaneHead({ title, projectId, projectName, lines }: { title: string; projectId: string; projectName: string; lines: ReactNode[] }) {
@@ -30,13 +31,12 @@ export function LaneEmpty({ title, projectId, projectName, what }: { title: stri
   return (
     <div className="pg">
       <LaneHead title={title} projectId={projectId} projectName={projectName} lines={['Research diagnostics; no trading authority.']} />
-      <div className="empty" role="status">
-        <span className="badge">No evidence in this Project</span>
+      <Empty title="No evidence in this Project">
         <p>This Project has no {what} Run, so there is nothing to draw. Nothing is estimated in its place.</p>
         <p className="small">
           <a href={routeHref({ view: 'project', id: projectId })}>Back to the Project</a>
         </p>
-      </div>
+      </Empty>
     </div>
   )
 }
@@ -101,10 +101,9 @@ export function Na({ why }: { why: string }) {
 
 export function NaBox({ why }: { why: string }) {
   return (
-    <div className="empty" role="status">
-      <span className="badge">Not available</span>
+    <Empty title="Not available">
       <p>not available: {why}</p>
-    </div>
+    </Empty>
   )
 }
 

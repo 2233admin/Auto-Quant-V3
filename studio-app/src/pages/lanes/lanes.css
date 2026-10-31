@@ -1,16 +1,16 @@
 /* Book Risk and path stress lane pages. Tokens only; chart frames and legends come from factor.css. */
-.lane-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--space-4); margin: 0; }
-.lane-chart { max-width: 1000px; }
+.lane-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--space-3); margin: 0; }
+.lane-chart { max-width: none; margin: 0; }
 .lane-plot { touch-action: pan-y; cursor: crosshair; }
 .lane-plot:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .lane-readout { margin: 0; min-height: 20px; font-variant-numeric: tabular-nums; }
 .lane-readout b { color: var(--text); }
 .lane-block { display: grid; gap: var(--space-2); align-content: start; }
-.lane-narrow { max-width: 860px; }
+.lane-narrow { max-width: none; }
 .lane-note { max-width: 90ch; margin: 0; }
 
 /* Share bars: a published fraction drawn as bar length (scale only), with the number always printed beside. */
-.lane-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); max-width: 860px; }
+.lane-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); max-width: none; }
 .lane-bars li { display: grid; grid-template-columns: 90px 1fr 200px; gap: var(--space-3); align-items: center; font: var(--type-small); }
 .lane-bars .nm { font-family: var(--font-mono); overflow-wrap: anywhere; }
 .lane-bars .tr { position: relative; height: 14px; border: 1px solid var(--line); background: var(--bg); }

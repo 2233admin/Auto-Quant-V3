@@ -504,6 +504,20 @@ export function BookRiskPage({ project }: { project: ProjectSnapshot }) {
         ]}
       />
 
+      <SectionNav
+        items={[
+          { id: 'br-summary', label: 'Status and metrics' },
+          { id: 'br-table', label: 'Contribution table' },
+          { id: 'br-reduce', label: 'Reductions' },
+          { id: 'br-windows', label: 'Windows' },
+          { id: 'br-corr', label: 'Correlation' },
+          { id: 'br-scen', label: 'Scenarios' },
+          { id: 'br-sizing', label: 'Sizing' },
+          { id: 'br-path', label: 'Path' },
+          { id: 'br-audit', label: 'Authority' },
+        ]}
+      />
+
       <div className="hero-stack">
         <HeroLine
           tone={st.signal ? 'bad' : sizing && sizing.status !== 'not-requested' ? 'ok' : 'warn'}
@@ -527,20 +541,6 @@ export function BookRiskPage({ project }: { project: ProjectSnapshot }) {
 
         <HeroTiles items={coreTiles(x)} label="Core numbers" />
       </div>
-
-      <SectionNav
-        items={[
-          { id: 'br-summary', label: 'Status and metrics' },
-          { id: 'br-table', label: 'Contribution table' },
-          { id: 'br-reduce', label: 'Reductions' },
-          { id: 'br-windows', label: 'Windows' },
-          { id: 'br-corr', label: 'Correlation' },
-          { id: 'br-scen', label: 'Scenarios' },
-          { id: 'br-sizing', label: 'Sizing' },
-          { id: 'br-path', label: 'Path' },
-          { id: 'br-audit', label: 'Authority' },
-        ]}
-      />
 
       <div className="band">
         <Section title="Status and metrics" id="br-summary" caption={`${holdings} holdings, ${up(x.positionSnapshot.cashWeight, 1)} cash, ${x.positionSnapshot.baseCurrency ?? '—'}.`}>

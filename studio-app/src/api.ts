@@ -101,14 +101,18 @@ export type ProjectSnapshot = {
 
 export type ProjectResponse = { harness: Harness; projects: ProjectSnapshot[] }
 
-export class ApiError extends Error {}
+export class ApiError extends Error {
+  status?: number
+}
 
 export async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(url, { signal, headers: { Accept: 'application/json' } })
   const body = await response.json().catch(() => null)
   if (!response.ok) {
     const message = body?.error?.message ?? `${response.status} ${response.statusText}`
-    throw new ApiError(message)
+    const error = new ApiError(message)
+    error.status = response.status
+    throw error
   }
   return body as T
 }

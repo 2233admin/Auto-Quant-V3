@@ -1,8 +1,9 @@
 import { Info } from '../../components/Info'
 import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { niceTicks } from '../factorMath'
+import { useFitWidth } from '../../design/useFitWidth'
+import { Empty } from '../../components/States'
 
-const W = 980
 const H = 300
 const m = { l: 64, r: 80, t: 16, b: 40 }
 const finite = (v: number | null | undefined): v is number => typeof v === 'number' && Number.isFinite(v)
@@ -38,16 +39,16 @@ export function LaneChart({
   note?: string
 }) {
   const id = useId()
+  const [figRef, W] = useFitWidth<HTMLElement>(420)
   const svgRef = useRef<SVGSVGElement>(null)
   const [hover, setHover] = useState<number | null>(null)
   const xs = [...new Set(series.flatMap((s) => s.points.map((p) => p.x)))].sort((a, b) => a - b)
   const ys = series.flatMap((s) => s.points.map((p) => p.y)).filter(finite)
   if (xs.length < 2 || ys.length < 2) {
     return (
-      <div className="empty" role="status">
-        <span className="badge">Not available</span>
+      <Empty title="Not available">
         <p>not available: the Run publishes fewer than two points for “{title}”, too few to draw a line.</p>
-      </div>
+      </Empty>
     )
   }
   const x0 = xs[0]
@@ -102,7 +103,7 @@ export function LaneChart({
   const hx = hover === null ? null : xs[hover]
 
   return (
-    <figure className="chart lane-chart">
+    <figure ref={figRef} className="chart lane-chart">
       <figcaption className="lane-cap">
         <h3 id={`${id}-t`}>{title}</h3>
         <Info label={`About: ${title}`}>

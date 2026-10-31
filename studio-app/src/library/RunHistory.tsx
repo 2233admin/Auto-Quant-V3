@@ -104,14 +104,22 @@ export function RunHistory({ workspace, go }: { workspace: WorkspaceSummary | nu
             {uniq(rows.map((r) => r.project.id)).map((id) => <option key={id} value={id}>{rows.find((r) => r.project.id === id)?.project.name ?? id}</option>)}
           </select>
         </Field>
-        <Field label="From (UTC)">
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        </Field>
-        <Field label="To (UTC)">
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </Field>
+        <details className="lib-more">
+          <summary>
+            Dates
+            {(from || to) && <span className="lib-dot" aria-label="A date filter is set" />}
+          </summary>
+          <div className="lib-more-panel">
+            <Field label="From (UTC)" visible>
+              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            </Field>
+            <Field label="To (UTC)" visible>
+              <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            </Field>
+          </div>
+        </details>
         {filtered && <button type="button" className="btn" onClick={reset}>Clear filters</button>}
-        <span className="faint small lib-count">{shown.length} of {rows.length}</span>
+        <span className="faint small lib-count" role="status">{shown.length} of {rows.length} Runs</span>
       </div>
       <div className="lib-bar" role="status">
         {a && b ? (

@@ -1,5 +1,5 @@
 /* Project research blocks: ledger, trial matrix, trajectory, selection evidence, question, reports. */
-.pj-sub { font: var(--type-section); margin: var(--space-5) 0 var(--space-2); }
+.pj-sub { font: var(--type-section); margin: var(--space-4) 0 var(--space-2); }
 .pj-sub:first-child { margin-top: 0; }
 .pj-na { color: var(--faint); font: var(--type-body); }
 .chip { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border: 1px solid var(--line-strong); font: 500 11px/18px var(--font-mono); letter-spacing: .04em; white-space: nowrap; }
@@ -23,9 +23,9 @@
 .pj-key span { display: inline-flex; align-items: center; gap: 6px; }
 .pj-key i { width: 12px; height: 12px; border: 1px solid var(--stroke); display: inline-block; }
 
-.pj-fig { margin: var(--space-3) 0; max-width: 860px; }
-.pj-fig svg { width: 100%; max-width: 720px; height: auto; display: block; overflow: visible; }
-.pj-fig text { fill: var(--muted); font: 400 10px var(--font-mono); }
+.pj-fig { margin: var(--space-2) 0; max-width: none; }
+.pj-fig svg { width: 100%; height: auto; display: block; overflow: visible; }
+.pj-fig text { fill: var(--muted); font: 400 11px var(--font-mono); }
 .pj-fig .ax { stroke: var(--grid); stroke-width: 1; }
 .pj-fig .ref { stroke: var(--stroke); stroke-width: 1; stroke-dasharray: 4 3; }
 .pj-fig .ln { stroke: var(--stroke); stroke-width: 1.5; fill: none; }

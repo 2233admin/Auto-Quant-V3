@@ -4,6 +4,7 @@ import { num, when } from '../../format'
 import './project.css'
 import { routeHref } from '../../route'
 import { Info } from '../../components/Info'
+import { useFitWidth } from '../../design/useFitWidth'
 
 const NA = (text: string) => <p className="pj-na">Not available: {text}</p>
 
@@ -44,10 +45,10 @@ function ptClass(t: TrialRow): string {
 
 export function Trajectory({ trials, metric, show = 'both' }: { trials: TrialRow[]; metric: string; show?: 'line' | 'ranked' | 'both' }) {
   const id = useId()
+  const [figRef, W] = useFitWidth<HTMLElement>(360, 640)
   const pts = trials.filter((t) => typeof t.primaryValue === 'number')
   if (pts.length === 0) return NA('no trial has a primary value yet.')
-  const W = 640
-  const H = 220
+  const H = 300
   const L = 56
   const R = 16
   const T = 14
@@ -67,7 +68,7 @@ export function Trajectory({ trials, metric, show = 'both' }: { trials: TrialRow
   const sorted = [...pts].sort((a, b) => (b.primaryValue as number) - (a.primaryValue as number))
   const ordered = [...pts].sort((a, b) => a.sequence - b.sequence)
   const line = (
-      <figure className="pj-fig" aria-labelledby={`${id}-t`}>
+      <figure ref={show === 'ranked' ? undefined : figRef} className="pj-fig" aria-labelledby={`${id}-t`}>
         <h3 className="pj-sub" id={`${id}-t`}>
           Trajectory of the selection metric ({metric})
         </h3>
@@ -114,7 +115,7 @@ export function Trajectory({ trials, metric, show = 'both' }: { trials: TrialRow
       </figure>
   )
   const ranked = (
-      <figure className="pj-fig">
+      <figure ref={show === 'ranked' ? figRef : undefined} className="pj-fig">
         <h3 className="pj-sub">Trials ranked by {metric}</h3>
         <svg viewBox={`0 0 ${W} ${24 + sorted.length * 26}`} role="img" aria-label={`Ranked trial values, best first, ${sorted.length} trials`}>
           {sorted.map((t, i) => {

@@ -83,6 +83,15 @@ export function BookStressPage({ project }: { project: ProjectSnapshot }) {
         ]}
       />
 
+      <SectionNav
+        items={[
+          { id: 'bs-summary', label: 'Status' },
+          { id: 'bs-episodes', label: 'Episodes' },
+          { id: 'bs-contrib', label: 'Attribution' },
+          { id: 'bs-book', label: 'Book and rules' },
+        ]}
+      />
+
       <div className="hero-stack">
         <HeroLine
           tone="warn"
@@ -116,15 +125,6 @@ export function BookStressPage({ project }: { project: ProjectSnapshot }) {
 
         <HeroTiles items={tiles} label="Core numbers" />
       </div>
-
-      <SectionNav
-        items={[
-          { id: 'bs-summary', label: 'Status' },
-          { id: 'bs-episodes', label: 'Episodes' },
-          { id: 'bs-contrib', label: 'Attribution' },
-          { id: 'bs-book', label: 'Book and rules' },
-        ]}
-      />
 
       <div className="band">
         <Section title="Status" id="bs-summary" caption={`Fixed opening units held for ${n0(hold)} sessions, no rebalancing, cash flat.`}>

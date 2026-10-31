@@ -12,6 +12,7 @@ import { AllocationChart } from './AllocationChart'
 import type { AllocationDiagnostics, AllocPerf, FidelitySplit, Weights } from './allocationTypes'
 import '../portfolio/portfolio.css'
 import './allocation.css'
+import { Empty } from '../../components/States'
 
 type Split = 'validation' | 'test'
 
@@ -188,11 +189,10 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
           <h1>Strategic allocation</h1>
           <p className="muted small">Project <a href={back}>{project.name}</a>. Research diagnostics of a mechanical allocation; no trading authority.</p>
         </header>
-        <div className="empty" role="status">
-          <span className="badge">No evidence in this Project</span>
+        <Empty title="No evidence in this Project">
           <p>This Project has no Allocation Run, so there is no equal-risk-contribution comparison, construction-fidelity audit or current book to draw. Nothing is estimated in its place.</p>
           <p className="small"><a href={back}>Back to the Project</a></p>
-        </div>
+        </Empty>
       </div>
     )
   }
@@ -274,6 +274,17 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
         </p>
       </header>
 
+      <SectionNav
+        items={[
+          { id: 'al-summary', label: 'Verdict and metrics' },
+          { id: 'al-impl', label: 'Implementation' },
+          { id: 'al-book', label: 'Book and weights' },
+          { id: 'al-fidelity', label: 'Construction fidelity' },
+          { id: 'al-contract', label: 'Contract' },
+          { id: 'al-prov', label: 'Provenance' },
+        ]}
+      />
+
       <div className="hero-stack">
         <HeroLine
           tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'}
@@ -296,26 +307,14 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
           {points.length >= 2 ? (
             <AllocationChart points={points} windows={windows} ceiling={a.contract?.portfolioPolicy?.annualizedVolatilityCeiling} totalRows={a.dataset?.observations} sampledRows={allPoints.length} note={hiddenNote} />
           ) : (
-            <div className="empty" role="status">
-              <span className="badge">Not available</span>
+            <Empty title="Not available">
               <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a path.</p>
-            </div>
+            </Empty>
           )}
         </section>
 
         <HeroTiles items={tiles} label={`Core numbers, ${effective} split`} />
       </div>
-
-      <SectionNav
-        items={[
-          { id: 'al-summary', label: 'Verdict and metrics' },
-          { id: 'al-impl', label: 'Implementation' },
-          { id: 'al-book', label: 'Book and weights' },
-          { id: 'al-fidelity', label: 'Construction fidelity' },
-          { id: 'al-contract', label: 'Contract' },
-          { id: 'al-prov', label: 'Provenance' },
-        ]}
-      />
 
       <div className="band">
         <Section

@@ -5,7 +5,7 @@ import { Info } from '../../components/Info'
 import { Notice } from '../../Notice'
 import { routeHref } from '../../route'
 import { RunSelect } from '../run/RunSelect'
-import { short, type RunDiagnostics } from '../run/runTypes'
+import { otherLaneOf, short, type RunDiagnostics } from '../run/runTypes'
 import { useRun } from '../run/useRun'
 import { compareBasis, deltaWord, metricRows, provenanceSentences, type Basis } from './basis'
 import '../run/run.css'
@@ -128,22 +128,38 @@ function Table({ a, b, project }: { a: RunDiagnostics; b: RunDiagnostics; projec
 
 /** Two Runs of one Project side by side, with a delta column and an honest basis check. */
 export function ComparePage({ project, a, b, go }: { project: ProjectSnapshot; a?: string; b?: string; go: (href: string) => void }) {
-  const loadA = useRun(project.id, a)
-  const loadB = useRun(project.id, b)
+  const laneA = a ? otherLaneOf(project, a) : null
+  const laneB = b ? otherLaneOf(project, b) : null
+  const factorRuns = project.runs.filter((r) => !otherLaneOf(project, r.id))
+  // /api/v1/run serves Factor Runs only: a Run of another lane is never fetched.
+  const loadA = useRun(project.id, laneA ? undefined : a)
+  const loadB = useRun(project.id, laneB ? undefined : b)
   const set = (next: { a?: string; b?: string }) => go(routeHref({ view: 'compare', id: project.id, a: next.a ?? a, b: next.b ?? b }))
-  const error = loadA.state === 'error' ? loadA.message : loadB.state === 'error' ? loadB.message : null
+  const error = loadA.state === 'error' ? loadA : loadB.state === 'error' ? loadB : null
+  const other = laneA ?? laneB
   return (
     <div className="pg">
-      <header className="pg-head">
-        <h1>Compare two Runs</h1>
-        <p className="muted small">Read-only. Both Runs come from the same Project and are verified by the server before they are shown.</p>
+      <header className="pg-head cmp-head">
+        <div className="cmp-title">
+          <h1>Compare two Runs</h1>
+          <p className="muted small">Read-only. Both Runs come from the same Project and are verified by the server before they are shown.</p>
+        </div>
         <div className="cmp-pick">
-          <RunSelect label="Run A (before)" runs={project.runs} value={a} onChange={(id) => set({ a: id })} />
-          <RunSelect label="Run B (after)" runs={project.runs} value={b} onChange={(id) => set({ b: id })} />
+          <RunSelect bar label="Run A (before)" runs={factorRuns} value={a} onChange={(id) => set({ a: id })} />
+          <RunSelect bar label="Run B (after)" runs={factorRuns} value={b} onChange={(id) => set({ b: id })} />
         </div>
       </header>
       {!a || !b ? <p className="muted">Choose a Run A and a Run B to compare.</p> : null}
-      {error && <Notice kind="error" label="Error" title="Could not load a Run." subtitle={error} />}
+      {other && (
+        <Notice
+          kind="info"
+          label="Info"
+          title={`A ${other.lane} Run cannot be compared here.`}
+          subtitle="Compare reads Factor Runs only. Open that Run from its own lane page."
+        />
+      )}
+      {error && !error.unsupported && <Notice kind="error" label="Error" title="Could not load a Run." subtitle={error.message} />}
+      {error?.unsupported && <Notice kind="info" label="Info" title="One of these Runs is not a Factor Run." subtitle="Compare reads Factor Runs only." />}
       {(loadA.state === 'loading' || loadB.state === 'loading') && <p className="muted">Loading Runs…</p>}
       {loadA.state === 'ready' && loadB.state === 'ready' && <Table a={loadA.payload.factorExplorer} b={loadB.payload.factorExplorer} project={project} />}
     </div>

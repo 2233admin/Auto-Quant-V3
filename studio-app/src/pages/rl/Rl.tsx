@@ -12,6 +12,7 @@ import { RlBehavior, RlFusion, RlIncremental, RlOpportunity } from './RlBlocks'
 import type { RlDiagnostics } from './rlTypes'
 import '../portfolio/portfolio.css'
 import './rl.css'
+import { Empty } from '../../components/States'
 
 type Split = 'validation' | 'test'
 const words = (s: string | undefined | null) => (s ? s.replaceAll('-', ' ').replaceAll('_', ' ') : '—')
@@ -194,11 +195,10 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
           <h1>Governed RL policy</h1>
           <p className="muted small">Project <a href={back}>{project.name}</a>. A learned policy mixing fixed factor sleeves under a locked mandate; no trading authority.</p>
         </header>
-        <div className="empty" role="status">
-          <span className="badge">No evidence in this Project</span>
+        <Empty title="No evidence in this Project">
           <p>This Project has no Governed RL Run, so there are no fold and seed trials, baselines, training history or action audit to draw. Nothing is estimated in its place.</p>
           <p className="small"><a href={back}>Back to the Project</a></p>
-        </div>
+        </Empty>
       </div>
     )
   }
@@ -283,6 +283,20 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
         </p>
       </header>
 
+      <SectionNav
+        items={[
+          { id: 'rl-summary', label: 'Verdict and metrics' },
+          { id: 'rl-baselines', label: 'Baselines' },
+          { id: 'rl-training', label: 'Training' },
+          { id: 'rl-actions', label: 'Actions' },
+          { id: 'rl-fusion', label: 'Fusion diagnosis' },
+          { id: 'rl-incremental', label: 'Attribution' },
+          { id: 'rl-behavior', label: 'Behavior' },
+          { id: 'rl-opportunity', label: 'Opportunity' },
+          { id: 'rl-mandate', label: 'Mandate and protocol' },
+        ]}
+      />
+
       <div className="hero-stack">
         <HeroLine
           tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'}
@@ -306,20 +320,6 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
 
         <HeroTiles items={tiles} label={`Core numbers, ${eff} split`} />
       </div>
-
-      <SectionNav
-        items={[
-          { id: 'rl-summary', label: 'Verdict and metrics' },
-          { id: 'rl-baselines', label: 'Baselines' },
-          { id: 'rl-training', label: 'Training' },
-          { id: 'rl-actions', label: 'Actions' },
-          { id: 'rl-fusion', label: 'Fusion diagnosis' },
-          { id: 'rl-incremental', label: 'Attribution' },
-          { id: 'rl-behavior', label: 'Behavior' },
-          { id: 'rl-opportunity', label: 'Opportunity' },
-          { id: 'rl-mandate', label: 'Mandate and protocol' },
-        ]}
-      />
 
       <div className="band">
         <Section title="Verdict and metrics" id="rl-summary" caption={`${s?.trialCount ?? '—'} fold/seed trials over ${folds.length} folds; ${lc ? 'train-only frozen learner' : 'legacy learner'}.`}>

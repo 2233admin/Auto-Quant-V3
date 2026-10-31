@@ -11,6 +11,7 @@ import { routeHref } from '../route'
 import { sessionOf, useAllProjects, type Loaded } from './data'
 import { DataTable, type Col } from './DataTable'
 import { Empty, LoadNote, PageHead } from './parts'
+import { Loading } from '../components/States'
 
 /** Trial as the Session decision matrix publishes it; `metrics` is only read for display. */
 type Trial = TrialRow & { metrics?: Record<string, number | null> }
@@ -256,7 +257,7 @@ function Detail({ workspace, id, go }: { workspace: WorkspaceSummary | null; id:
   const all = useAllProjects(workspace)
   const item = all.find((l) => l.summary.id === id)
   const [chosen, setChosen] = useState('')
-  if (!workspace || (item && item.state === 'loading')) return <div className="pg"><p className="muted">Loading…</p></div>
+  if (!workspace || (item && item.state === 'loading')) return <div className="pg"><Loading label="Loading Workspace…" minHeight={240} /></div>
   if (!item) return <div className="pg"><Notice kind="error" label="Error" title="Unknown Project." subtitle={id} /><p><a href={routeHref({ view: 'tuning' })}>Back to tuning tasks</a></p></div>
   const project = item.project
   if (!project) return <div className="pg"><Notice kind="error" label="Error" title="Could not load this Project." subtitle={id} /></div>

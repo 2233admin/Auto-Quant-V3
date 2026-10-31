@@ -2,8 +2,8 @@ import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from '
 import { niceTicks } from '../factorMath'
 import { Info } from '../../components/Info'
 import type { PathPoint } from './portfolioTypes'
+import { useFitWidth } from '../../design/useFitWidth'
 
-const W = 980
 const m = { l: 60, r: 16, t: 28, b: 40 }
 const GAP = 22
 const finite = (v: number | null | undefined): v is number => typeof v === 'number' && Number.isFinite(v)
@@ -52,6 +52,7 @@ export function PortfolioChart({
   note?: string
 }) {
   const id = useId()
+  const [figRef, W] = useFitWidth<HTMLElement>(420)
   const svgRef = useRef<SVGSVGElement>(null)
   const [on, setOn] = useState<Record<SeriesKey, boolean>>({ net: true, gross: false, bench: true, ticks: true, exposure: false })
   const [hover, setHover] = useState<number | null>(null)
@@ -65,7 +66,7 @@ export function PortfolioChart({
   const hasExpo = points.some((p) => finite(p.grossExposure) || finite(p.netExposure))
   const showExpo = on.exposure && hasExpo
 
-  const heights = { growth: 210, dd: 90, expo: 90 }
+  const heights = { growth: 220, dd: 80, expo: 80 }
   const gTop = m.t
   const gBot = gTop + heights.growth
   const dTop = gBot + GAP
@@ -150,7 +151,7 @@ export function PortfolioChart({
   ]
 
   return (
-    <figure className="chart pf-chart">
+    <figure ref={figRef} className="chart pf-chart">
       <figcaption>
         <h3 id={`${id}-t`} className="sr-only">Net growth, benchmark and drawdown</h3>
         <p className="sr-only" id={`${id}-d`}>

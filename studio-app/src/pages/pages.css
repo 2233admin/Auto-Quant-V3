@@ -1,16 +1,17 @@
 /* Projects overview and Project page. Colours, type and spacing come from design/tokens.css. */
 .pg {
   --gutter: 28px; --page-max: 1360px;
-  display: grid; align-content: start; row-gap: var(--space-8); padding: 28px 0 64px;
+  display: grid; align-content: start; row-gap: var(--space-4); padding: 20px 0 48px;
   grid-template-columns: [full-start] minmax(var(--gutter), 1fr) [content-start] minmax(0, var(--page-max)) [content-end] minmax(var(--gutter), 1fr) [full-end];
 }
 .pg > * { grid-column: content; min-width: 0; }
-.pg-head h1 { font: var(--type-headline); margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
+.pg-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-3); }
+.pg-head h1 { font: 600 20px/28px var(--font-sans); margin: 0; overflow-wrap: anywhere; }
 .pg-head p { margin: 0; }
-.pg-head .lede { margin-top: var(--space-3); max-width: 80ch; font: var(--type-body); color: var(--muted); }
+.pg-head .lede { max-width: none; font: var(--type-small); color: var(--muted); }
 .state { display: inline-flex; align-items: center; gap: 6px; }
 
-.sec h2 { font: var(--type-section); margin: 0 0 var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
+.sec h2 { font: var(--type-section); margin: 0 0 var(--space-2); padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 .sec p { font: var(--type-body); margin: 0 0 var(--space-2); }
 .sec p.small, .pg p.small { font: var(--type-small); }
 .cmd { margin: var(--space-2) 0; padding: var(--space-3); border: 1px solid var(--line); background: var(--raised); overflow-x: auto; font-size: 12px; line-height: 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -40,7 +41,6 @@
 .shell .main { min-width: 0; }
 
 @media (max-width: 767px) {
-  .pg { --gutter: 16px; padding: 20px 0 32px; }
-  .pg-head h1 { font: var(--type-title); }
+  .pg { --gutter: 16px; padding: 16px 0 32px; }
   .timeline li { grid-template-columns: 1fr; gap: 2px; }
 }

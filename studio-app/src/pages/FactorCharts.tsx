@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import type { FactorDiagnostics, FactorQuantileRow, FactorSplit } from '../api'
 import { num, ret } from '../format'
 import { Info } from '../components/Info'
@@ -30,6 +30,7 @@ function Chart({
   children,
   table,
   note,
+  plotRef,
 }: {
   title: string
   /** Full explanation: read by screen readers and shown in the info disclosure. */
@@ -41,6 +42,7 @@ function Chart({
   children: (ids: { labelledBy: string }) => ReactNode
   table: ReactNode
   note?: ReactNode
+  plotRef?: (el: HTMLDivElement | null) => void
 }) {
   const id = useId()
   return (
@@ -74,7 +76,9 @@ function Chart({
           {legend}
         </div>
       )}
-      {children({ labelledBy: `${id}-t ${id}-d` })}
+      <div className="plot-wrap" ref={plotRef}>
+        {children({ labelledBy: `${id}-t ${id}-d` })}
+      </div>
       {note && !short && <p className="muted small chart-note">{note}</p>}
       <details className="datatable">
         <summary>Data table</summary>
@@ -111,22 +115,43 @@ function Swatch({ kind, label }: { kind: 'train' | 'validation' | 'test' | 'line
   )
 }
 
-const W = 760
+/** Width of the plot column in CSS px. The SVG viewBox uses it 1:1, so 11px text stays 11px at every viewport. */
+function useChartWidth(): [(el: HTMLDivElement | null) => void, number] {
+  const [el, setEl] = useState<HTMLDivElement | null>(null)
+  const [w, setW] = useState(760)
+  useEffect(() => {
+    if (!el) return
+    const measure = () => {
+      const next = Math.round(el.getBoundingClientRect().width)
+      if (next >= 280) setW((prev) => (Math.abs(prev - next) >= 2 ? next : prev))
+    }
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [el])
+  return [setEl, w]
+}
 
 /* ---------------------------------------------------------------- 1. IC by horizon x split */
 
 export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: boolean }) {
   const pattern = useId()
+  const [plotRef, W] = useChartWidth()
+  /** Same rule as the page's tiles: test is drawn only when its audit exists and the protocol marks it a visible diagnostic. */
+  const testShown = !!study.summary.testAudit && study.protocol.testRole === 'visible-diagnostic'
+  const shownSplits = SPLITS.filter((sp) => sp !== 'test' || testShown)
   const rows = [...study.horizonProfile].sort((a, b) => a.horizon - b.horizon)
   const primary = study.protocol.primaryHorizon
   type Bar = { horizon: number; split: FactorSplit; mean: number | null; se: number | null; n: number; t: number | null; sufficient: boolean }
   const bars: Bar[] = rows.flatMap((row) =>
-    SPLITS.map((split) => {
+    shownSplits.map((split) => {
       const s = row[split]
       return { horizon: row.horizon, split, mean: s.meanRankIc, se: hacStandardError(s), n: s.observations, t: s.hacTStatistic, sufficient: s.sufficient }
     }),
   )
-  const H = hero ? 292 : 360
+  const H = hero ? 330 : 360
   const m = { l: 60, r: 16, t: 24, b: 78 }
   const values = bars.flatMap((b) => (b.mean === null ? [] : b.se === null ? [b.mean] : [b.mean - 1.96 * b.se, b.mean + 1.96 * b.se]))
   const lo = Math.min(0, ...values)
@@ -137,20 +162,22 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
   const yMax = Math.max(hi + pad, ticks[ticks.length - 1])
   const y = (v: number) => m.t + ((yMax - v) / (yMax - yMin)) * (H - m.t - m.b)
   const gw = (W - m.l - m.r) / Math.max(1, rows.length)
-  const slot = Math.min(72, gw / 3.2)
-  const bw = Math.min(46, slot - 24)
+  const nSplit = shownSplits.length
+  const slot = Math.min(110, gw / (nSplit + 0.2))
+  const bw = Math.min(64, slot - 24)
   const baseline = y(0)
 
   return (
     <Chart
       title="Rank IC by horizon and split"
+      plotRef={plotRef}
       short="Mean rank IC with ±1.96 HAC whiskers; a whisker crossing zero means noise."
       desc="Mean rank IC of the factor against the forward return, with ±1.96 HAC standard-error whiskers. A whisker that crosses zero means the mean is not distinguishable from noise."
       legend={
         <span className="legend">
           <Swatch kind="train" label="Train" />
           <Swatch kind="validation" label="Validation (selection)" />
-          <Swatch kind="test" label="Test (visible audit)" />
+          {testShown ? <Swatch kind="test" label="Test (visible audit)" /> : <span className="faint">Test split hidden until its audit exists</span>}
         </span>
       }
       note={
@@ -213,9 +240,9 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
             return (
               <g key={row.horizon}>
                 {gi > 0 && <line x1={gx} x2={gx} y1={m.t} y2={H - m.b + 6} stroke="var(--line)" />}
-                {SPLITS.map((split, si) => {
+                {shownSplits.map((split, si) => {
                   const b = bars.find((x) => x.horizon === row.horizon && x.split === split)!
-                  const cx = gx + gw / 2 + (si - 1) * slot
+                  const cx = gx + gw / 2 + (si - (nSplit - 1) / 2) * slot
                   const above = (b.mean ?? 0) >= 0
                   const topY = b.mean === null ? baseline : y(Math.max(0, b.mean))
                   const hgt = b.mean === null ? 0 : Math.max(1, Math.abs(y(b.mean) - baseline))
@@ -253,9 +280,11 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
                       <text x={cx} y={H - m.b + 18} textAnchor="middle" className="ax">
                         {split === 'validation' ? 'val' : split}
                       </text>
-                      <text x={cx} y={H - m.b + 32} textAnchor="middle" className="ax faint">
-                        n={int(b.n)}
-                      </text>
+                      {slot >= 70 && (
+                        <text x={cx} y={H - m.b + 32} textAnchor="middle" className="ax faint">
+                          n={int(b.n)}
+                        </text>
+                      )}
                     </g>
                   )
                 })}
@@ -277,6 +306,7 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
 const WINDOW = 12
 
 export function IcOverTime({ study }: { study: FactorDiagnostics }) {
+  const [plotRef, W] = useChartWidth()
   const primary = study.protocol.primaryHorizon
   const [horizon, setHorizon] = useState(primary)
   const points = samplePoints(study, horizon)
@@ -308,6 +338,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
   return (
     <Chart
       title={`Rank IC over time, ${horizon}-bar horizon`}
+      plotRef={plotRef}
       short={`Sampled rank IC, trailing mean of ${WINDOW}; dashed lines are each split's mean.`}
       desc={`Sampled per-timestamp rank IC (${icPath.sampledRows} of ${int(icPath.totalRows)} timestamps) with a trailing mean of ${WINDOW} samples. Dashed lines are each split's published mean IC over all of its timestamps.`}
       controls={
@@ -422,6 +453,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
 /* ---------------------------------------------------------------- 3. Quantile returns */
 
 export function Quantiles({ study }: { study: FactorDiagnostics }) {
+  const [plotRef, W] = useChartWidth()
   const evidence = study.quantileEvidence
   const primary = study.protocol.primaryHorizon
   const rows: FactorQuantileRow[] = study.quantileSummary.filter((r) => r.horizon === primary)
@@ -454,6 +486,7 @@ export function Quantiles({ study }: { study: FactorDiagnostics }) {
   return (
     <Chart
       title={`Mean forward return by factor quantile, ${primary}-bar horizon`}
+      plotRef={plotRef}
       short="Low, middle and high factor groups per split; a useful factor rises from low to high."
       desc="Mean forward return of the low, middle and high factor groups in each split. A useful factor shows the bars rising from low to high."
       table={
@@ -560,6 +593,7 @@ export function Empty({ title, reason, code }: { title: string; reason: string; 
 /* ---------------------------------------------------------------- 4. Noise frontier */
 
 export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontier; runIc: number | null }) {
+  const [plotRef, W] = useChartWidth()
   const H = 340
   const m = { l: 64, r: 20, t: 24, b: 54 }
   const { standardError: se, trials: n, leaderIc } = frontier
@@ -583,6 +617,7 @@ export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontie
   return (
     <Chart
       title="Noise frontier: how large the best IC looks by luck alone"
+      plotRef={plotRef}
       short={`Best IC expected from ${n} trial${n === 1 ? '' : 's'} of pure noise, against the family-wise pass line.`}
       desc={`With ${n} independent trial${n === 1 ? '' : 's'} in the Project ledger, the best mean IC is expected to reach ${ic4(expected(n))} under pure noise. The solid curve is that expectation as trials grow; the dotted curve is the mean IC the published family-wise HAC rule demands.`}
       legend={

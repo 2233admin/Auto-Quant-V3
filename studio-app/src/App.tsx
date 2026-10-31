@@ -21,6 +21,7 @@ import { Rail, TabBar } from './shell/Rail'
 import { TopBar, Updated, type Crumb } from './shell/TopBar'
 import { useRouter } from './useRouter'
 import { useShellData } from './useShellData'
+import { Loading } from './components/States'
 
 export default function App() {
   const { route, go } = useRouter()
@@ -103,7 +104,7 @@ export default function App() {
     page = data.workspace ? (
       <Projects workspace={data.workspace} freshness={<Updated data={data} />} error={data.error} />
     ) : (
-      <div className="pg">{data.error ? <Notice kind="error" label="Error" title="Could not load the Workspace." subtitle={data.error} /> : <p className="muted">Loading…</p>}</div>
+      <div className="pg">{data.error ? <Notice kind="error" label="Error" title="Could not load the Workspace." subtitle={data.error} /> : <Loading label="Loading Workspace…" minHeight={240} />}</div>
     )
   } else if (project.state === 'ready') {
     page =
@@ -124,7 +125,7 @@ export default function App() {
       ) : route.view === 'rl' ? (
         <RlPage project={project.project} />
       ) : route.view === 'factor' ? (
-        <FactorPage project={project.project} study={route.study} run={route.run} />
+        <FactorPage project={project.project} study={route.study} run={route.run} go={go} />
       ) : (
         <ProjectPage project={project.project} />
       )
@@ -140,7 +141,7 @@ export default function App() {
   } else {
     page = (
       <div className="pg">
-        <p className="muted">Loading…</p>
+        <Loading label="Loading Project…" minHeight={240} />
       </div>
     )
   }
