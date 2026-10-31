@@ -270,6 +270,8 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
               <span>{lane.name}</span>
               {lane.key === 'eventStudyExplorer' && project.eventStudyExplorer ? (
                 <a href={routeHref({ view: 'event-study', id: project.id })}>Open event study</a>
+              ) : lane.key === 'portfolioExplorer' && project.portfolioExplorer ? (
+                <a href={routeHref({ view: 'portfolio', id: project.id })}>Open Portfolio</a>
               ) : project[lane.key] ? (
                 <a href="/legacy">Open in legacy Studio</a>
               ) : (

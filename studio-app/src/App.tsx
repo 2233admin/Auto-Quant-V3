@@ -7,6 +7,7 @@ import { EventStudyPage } from './pages/EventStudy'
 import { FactorPage } from './pages/Factor'
 import { ProjectPage, useProject } from './pages/Project'
 import { ComparePage } from './pages/compare/ComparePage'
+import { PortfolioPage } from './pages/portfolio/Portfolio'
 import { RunPage } from './pages/run/RunPage'
 import { routeHref, routeProjectId } from './route'
 import { Palette } from './shell/Palette'
@@ -53,6 +54,12 @@ export default function App() {
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'run' ? 'Run' : 'Compare Runs' },
             ]
+        : route.view === 'portfolio'
+          ? [
+              { label: 'Projects', href: routeHref({ view: 'projects' }) },
+              { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
+              { label: 'Portfolio' },
+            ]
         : route.view === 'factor'
           ? [
               { label: 'Projects', href: routeHref({ view: 'projects' }) },
@@ -63,7 +70,7 @@ export default function App() {
   document.title =
     route.view === 'projects'
       ? 'AutoQuant Studio'
-      : `${route.view === 'event-study' ? 'Price event study · ' : route.view === 'factor' ? 'Factor evidence · ' : route.view === 'run' ? 'Run · ' : route.view === 'compare' ? 'Compare Runs · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
+      : `${route.view === 'event-study' ? 'Price event study · ' : route.view === 'factor' ? 'Factor evidence · ' : route.view === 'portfolio' ? 'Portfolio · ' : route.view === 'run' ? 'Run · ' : route.view === 'compare' ? 'Compare Runs · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
 
   let page
   if (route.view === 'projects') {
@@ -80,6 +87,8 @@ export default function App() {
         <RunPage project={project.project} runId={route.run} go={go} />
       ) : route.view === 'compare' ? (
         <ComparePage project={project.project} a={route.a} b={route.b} go={go} />
+      ) : route.view === 'portfolio' ? (
+        <PortfolioPage project={project.project} />
       ) : route.view === 'factor' ? (
         <FactorPage project={project.project} study={route.study} run={route.run} />
       ) : (

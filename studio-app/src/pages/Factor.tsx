@@ -8,6 +8,9 @@ import { routeHref } from '../route'
 import { IcByHorizon, IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
 import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictStrip } from './FactorEvidence'
+import { HeadlineMetrics, type HeadlineSplit } from '../components/HeadlineMetrics'
+import { NotPublished } from '../components/NotPublished'
+import { TrialCounter } from '../components/TrialCounter'
 import './factor.css'
 
 type Check = { id: string; group: string; state: 'pass' | 'fail' | 'info'; label: string; detail: ReactNode }
@@ -244,7 +247,11 @@ function Content({ study, project, loadingRun }: { study: FactorDiagnostics; pro
   const frontier = noiseFrontier(project.sessions, project.runs)
   const checks = buildChecks(study, frontier, project.sessions)
   const primary = study.horizonProfile.find((row) => row.horizon === study.protocol.primaryHorizon)
-  const validation = primary?.validation
+  const validation = study.summary.validation ?? primary?.validation
+  const headlineSplits: HeadlineSplit[] = [
+    ...(validation ? [{ name: 'Validation', role: 'selection split', summary: validation }] : []),
+    ...(study.summary.testAudit ? [{ name: 'Test', role: 'visible audit, not used for selection', summary: study.summary.testAudit }] : []),
+  ]
   const failures = checks.filter((c) => c.state === 'fail').length
   const trialsLine = frontier.ok ? `${frontier.value.trials} trial${frontier.value.trials === 1 ? '' : 's'} in the ledger` : 'no trial ledger'
   const runIc = study.summary.validation?.meanRankIc ?? null
@@ -278,32 +285,14 @@ function Content({ study, project, loadingRun }: { study: FactorDiagnostics; pro
 
       <div className="band">
         <VerdictStrip study={study} adjustment={adjustment} />
-        <Section title="Headline (validation split)" id="sec-headline">
-          {validation ? (
-            <dl className="stats">
-              <div>
-                <dt>Mean rank IC, {study.protocol.primaryHorizon}-bar</dt>
-                <dd className="mono">{num(validation.meanRankIc, 4)}</dd>
-              </div>
-              <div>
-                <dt>HAC t statistic</dt>
-                <dd className="mono">{num(validation.hacTStatistic, 2)}</dd>
-              </div>
-              <div>
-                <dt>HAC normal p</dt>
-                <dd className="mono">{num(validation.hacNormalPValue, 3)}</dd>
-              </div>
-              <div>
-                <dt>Observations</dt>
-                <dd className="mono">
-                  {int(validation.observations)}
-                  {!validation.sufficient && <span className="sig"> · below minimum</span>}
-                </dd>
-              </div>
-            </dl>
+        <Section title="Headline" id="sec-headline" caption="Every figure below is in-sample until the selection adjustment passes.">
+          <TrialCounter project={project} />
+          {headlineSplits.length > 0 ? (
+            <HeadlineMetrics splits={headlineSplits} horizon={study.protocol.primaryHorizon} defs={study.protocol.semantics} />
           ) : (
             <p className="muted">The Run published no validation summary.</p>
           )}
+          <NotPublished />
         </Section>
       </div>
 

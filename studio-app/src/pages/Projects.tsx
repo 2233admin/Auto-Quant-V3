@@ -1,15 +1,8 @@
 import type { ReactNode } from 'react'
 import type { WorkspaceSummary } from '../api'
-import { Glyph } from '../design/icons'
-import { plural, when } from '../format'
-import { routeHref } from '../route'
+import { ProjectCard } from '../components/ProjectCard'
+import { plural } from '../format'
 import { Notice } from '../Notice'
-import { verification } from '../shell/Rail'
-
-function sessions(counts: Record<string, number | Record<string, number>>): { total: number; active: number } {
-  const n = (key: string) => (typeof counts[key] === 'number' ? (counts[key] as number) : 0)
-  return { total: n('sessions'), active: n('activeSessions') }
-}
 
 export function Projects({ workspace, freshness, error }: { workspace: WorkspaceSummary; freshness: ReactNode; error: string | null }) {
   const projects = workspace.projects
@@ -37,47 +30,10 @@ export function Projects({ workspace, freshness, error }: { workspace: Workspace
       {projects.length === 0 ? (
         <p className="muted">No Projects were discovered in this Workspace.</p>
       ) : (
-        <div className="tablewrap">
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th scope="col">Project</th>
-                <th scope="col">Verification</th>
-                <th scope="col" className="r">Studies</th>
-                <th scope="col" className="r">Runs</th>
-                <th scope="col" className="r">Sessions</th>
-                <th scope="col">External holdout</th>
-                <th scope="col">Latest Run (UTC)</th>
-                <th scope="col">Next move</th>
-              </tr>
-            </thead>
-            <tbody>
-              {projects.map((p) => {
-                const look = verification(p.valid)
-                const s = sessions(p.counts)
-                return (
-                  <tr key={p.id}>
-                    <th scope="row">
-                      <a href={routeHref({ view: 'project', id: p.id })} translate="no">{p.name}</a>
-                      <span className="faint small mono" translate="no">{p.id}</span>
-                    </th>
-                    <td>
-                      <span className="state">
-                        <Glyph kind={look.glyph} signal={look.signal} />
-                        <span className={look.signal ? 'sig' : undefined}>{look.word}</span>
-                      </span>
-                    </td>
-                    <td className="r num">{p.studies.length}</td>
-                    <td className="r num">{p.runCount}</td>
-                    <td className="r num">{s.active > 0 ? `${s.total} (${s.active} active)` : s.total}</td>
-                    <td>{p.externalHoldout.present ? (p.externalHoldout.status ?? 'Recorded') : 'Not run'}</td>
-                    <td className="mono">{when(p.latestRunAt)}</td>
-                    <td className="next">{p.brief.headline ?? '—'}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        <div className="pc-grid">
+          {projects.map((p) => (
+            <ProjectCard key={p.id} p={p} />
+          ))}
         </div>
       )}
       <p className="muted small">

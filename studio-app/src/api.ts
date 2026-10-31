@@ -1,3 +1,4 @@
+import type { PortfolioDiagnostics } from './pages/portfolio/portfolioTypes'
 /** Wire types for the Studio routes this app reads. Only fields the pages use are typed. */
 
 export type HoldoutState = { present: boolean; status: string | null }
@@ -87,7 +88,7 @@ export type ProjectSnapshot = {
   } | null
   factorExplorer: FactorDiagnostics | null
   /** Lane explorers other than Factor: present means the legacy Studio can draw them. */
-  portfolioExplorer: object | null
+  portfolioExplorer: PortfolioDiagnostics | null
   rlExplorer: object | null
   bookRiskExplorer: object | null
   eventStudyExplorer: EventStudyDiagnostics | null

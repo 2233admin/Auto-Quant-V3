@@ -6,6 +6,7 @@ export type Route =
   | { view: 'run'; id: string; run: string }
   | { view: 'compare'; id: string; a?: string; b?: string }
   | { view: 'factor'; id: string; study?: string; run?: string }
+  | { view: 'portfolio'; id: string }
 
 const EVENT_STUDY_PATH = /^\/projects\/([^/]+)\/event-study\/?$/
 
@@ -21,6 +22,7 @@ export function parseRoute(search: string, pathname = '/'): Route {
   const p = new URLSearchParams(search)
   const id = p.get('id')
   if (p.get('view') === 'project' && id) return { view: 'project', id }
+  if (p.get('view') === 'portfolio' && id) return { view: 'portfolio', id }
   const projectParam = p.get('project')
   if (p.get('view') === 'run' && projectParam && id) return { view: 'run', id: projectParam, run: id }
   if (p.get('view') === 'compare' && projectParam) {
@@ -38,6 +40,7 @@ export function parseRoute(search: string, pathname = '/'): Route {
 
 export function routeHref(route: Route): string {
   if (route.view === 'project') return `/?${new URLSearchParams({ view: 'project', id: route.id })}`
+  if (route.view === 'portfolio') return `/?${new URLSearchParams({ view: 'portfolio', id: route.id })}`
   if (route.view === 'factor') {
     const params = new URLSearchParams({ view: 'factor', id: route.id })
     if (route.study) params.set('study', route.study)

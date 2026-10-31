@@ -2,6 +2,9 @@ import type { ProjectSnapshot, RankSummary } from '../../api'
 import { num, plural, when } from '../../format'
 import { Section, SectionNav } from '../../design/layout'
 import { Notice } from '../../Notice'
+import { HeadlineMetrics, type HeadlineSplit } from '../../components/HeadlineMetrics'
+import { NotPublished } from '../../components/NotPublished'
+import { TrialCounter } from '../../components/TrialCounter'
 import { routeHref } from '../../route'
 import { RunList } from './RunList'
 import { RunSelect } from './RunSelect'
@@ -10,16 +13,6 @@ import { useRun } from './useRun'
 import './run.css'
 
 const day = (iso: string | undefined) => (iso ? iso.slice(0, 10) : '—')
-
-function Headline({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="headline">
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-      <span className="faint small">{note}</span>
-    </div>
-  )
-}
 
 function SplitRow({ name, role, s }: { name: string; role: string; s: RankSummary | undefined }) {
   return (
@@ -40,19 +33,20 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
   const showTest = testAuditVisible(fe)
   const windows = fe.protocol.splits.splits
   const row = project.runs.find((r) => r.id === fe.run.id)
+  const headlineSplits: HeadlineSplit[] = [
+    ...(v ? [{ name: 'Validation', role: 'selection split', summary: v }] : []),
+    ...(showTest && fe.summary.testAudit ? [{ name: 'Test', role: 'visible audit, not used for selection', summary: fe.summary.testAudit }] : []),
+  ]
   return (
     <>
       <div className="band">
-        <Section title="Headline" id="run-headline">
+        <Section title="Headline" id="run-headline" caption="Every figure below is in-sample until the selection adjustment passes.">
           <p className="small muted">
             Selection uses the validation split only. The primary horizon is {fe.protocol.primaryHorizon} bars. {fe.run.summary}
           </p>
-          <dl className="headlines">
-            <Headline label="Validation mean rank IC" value={num(v?.meanRankIc, 4)} note={`${fe.protocol.primaryHorizon}-bar horizon`} />
-            <Headline label="HAC t-statistic" value={num(v?.hacTStatistic, 2)} note={`p = ${num(v?.hacNormalPValue, 3)}`} />
-            <Headline label="IC information ratio" value={num(v?.rankIcir, 3)} note={`hit rate ${num(v?.rankHitRate, 3)}`} />
-            <Headline label="Observations" value={v ? v.observations.toLocaleString('en-US') : '—'} note={v?.sufficient === false ? 'below the minimum' : 'validation split'} />
-          </dl>
+          <TrialCounter project={project} />
+          <HeadlineMetrics splits={headlineSplits} horizon={fe.protocol.primaryHorizon} defs={fe.protocol.semantics} />
+          <NotPublished />
         </Section>
       </div>
 
