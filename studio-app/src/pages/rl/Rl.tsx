@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import type { ProjectSnapshot } from '../../api'
+import { Info } from '../../components/Info'
 import { MetricTile } from '../../components/MetricTile'
+import { HeroLine, HeroTiles, type HeroTile } from '../hero'
 import { VerdictBand, type Reason, type Verdict } from '../../components/VerdictBand'
 import { Section, SectionNav } from '../../design/layout'
 import { routeHref } from '../../route'
@@ -246,41 +248,68 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
   const execRisk = r.executedBookRisk?.available ? r.executedBookRisk[eff] : undefined
   const mand = r.portfolioMandate
 
+  const advV = s?.meanValidationAdvantageVsBestBaseline
+  const statE = eff === 'validation' ? s?.validation : s?.testAudit
+  const advE = eff === 'validation' ? advV : s?.meanTestAdvantageVsValidationSelectedBaseline
+  const fusionE = r.factorFusion
+  const advCandE = eff === 'validation' ? fusionE?.meanValidationAdvantageVsCandidateFactor : fusionE?.meanTestAdvantageVsCandidateFactor
+  const stabE = s?.withinFoldSeedStability
+  const tiles: HeroTile[] = [
+    { label: 'RL value-add', value: sn(advE, 2), note: finite(advE) && advE < 0 ? 'Weak: trails its baseline' : 'vs validation-selected baseline' },
+    { label: 'Versus candidate factor', value: fusionE?.available ? sn(advCandE, 2) : '—', note: fusionE?.available ? 'net Sharpe vs candidate sleeve' : 'fusion not published' },
+    { label: 'Net Sharpe, mean', value: fn(statE?.mean, 2), note: `${statE?.observations ?? s?.trialCount ?? '—'} trials · std ${fn(statE?.standardDeviation, 2)}` },
+    { label: 'Failure rate', value: up(s?.failureRate, 1), note: `${s?.trialCount ?? '—'} declared trials` },
+    { label: 'Mean cost drag', value: eff === 'validation' ? up(s?.meanValidationCostDrag, 2) : '—', note: eff === 'validation' ? `at ${fn(r.protocol?.configuration?.costBps, 1)} bps` : 'validation only' },
+    { label: 'Seed spread, max std', value: fn(stabE?.maximumStandardDeviation, 2), note: `${stabE?.exactConsensusFolds ?? '—'} of ${stabE?.folds ?? '—'} folds agree` },
+  ]
+  const headText = finite(advV)
+    ? `mean validation net Sharpe ${advV < 0 ? 'below' : 'above'} the best baseline by ${fn(Math.abs(advV), 2)} (objective asks for at least ${fn(r.run?.objective?.minimumImprovement, 2)})`
+    : 'no validation advantage over the baseline is published for this Run'
+
   return (
     <div className="pg rl">
       <header className="pg-head">
         <h1>Governed RL policy</h1>
         <p className="muted small">
-          Project <a href={back}>{project.name}</a>. Run <span className="mono">{r.run?.id?.replace(/^run-/, '') ?? '—'}</span> of study <span className="mono">{r.run?.studyId ?? '—'}</span>. A Q-learning policy that mixes fixed factor sleeves under a locked mandate. Research diagnostics; no trading authority.
-        </p>
-        <p className="muted small">
-          Selection uses the {r.protocol?.selectionSplit ?? 'validation'} split only. Test is <span className="mono">{r.protocol?.testRole ?? '—'}</span>
-          {r.protocol?.testEntersSelection === false ? ' and never enters selection' : ''}.
-          {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+          Project <a href={back}>{project.name}</a> · Run <span className="mono">{r.run?.id?.replace(/^run-/, '') ?? '—'}</span> · study <span className="mono">{r.run?.studyId ?? '—'}</span>
+          <Info label="About this page">
+            <p>
+              A Q-learning policy that mixes fixed factor sleeves under a locked mandate. Research diagnostics; no trading authority. Selection uses the {r.protocol?.selectionSplit ?? 'validation'} split only.
+              Test is <span className="mono">{r.protocol?.testRole ?? '—'}</span>
+              {r.protocol?.testEntersSelection === false ? ' and never enters selection' : ''}.
+              {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+            </p>
+          </Info>
         </p>
       </header>
 
-      <div className="band">
-        <Section title="Summary" id="rl-summary" caption={`${s?.trialCount ?? '—'} fold/seed trials over ${folds.length} folds; ${lc ? 'train-only frozen learner' : 'legacy learner'}; objective ${words(r.run?.objective?.metric)}.`}>
-          <div className="vstack">
-            <VerdictBand
-              id="rl-verdict-word"
-              kicker="Verdict · validation split · RL value-add"
-              verdict={verdict}
-              word={word}
-              detail={<>Read from <span className="mono">summary.rlAddedValidationValue</span> only. {r.run?.summary ? <>{r.run.summary.replace(/\.$/, '')}. </> : null}Test is a visible audit and never enters promotion.</>}
-              reasons={reasons}
-            />
-            <div className="rl-bar-row">{toggle}</div>
-            <Tiles r={r} split={eff} />
-            {testVisible && eff === 'test' && <p className="small muted">Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>}
+      <div className="hero-stack">
+        <HeroLine
+          tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'}
+          word={word}
+          why={
+            <Info label="Why this verdict">
+              <p>Read from <span className="mono">summary.rlAddedValidationValue</span> only. {r.run?.summary ? <>{r.run.summary.replace(/\.$/, '')}. </> : null}Test is a visible audit and never enters promotion.</p>
+            </Info>
+          }
+        >
+          {headText}
+        </HeroLine>
+
+        <section aria-labelledby="rl-trials" className="pf-hero-chart">
+          <div className="pf-hero-head">
+            <h2 id="rl-trials">RL against the selected baseline</h2>
+            {toggle}
           </div>
-        </Section>
+          {trials.length ? <TrialChart trials={trials} baselines={r.baselines ?? []} folds={folds} split={eff} /> : <NA why="trials is empty in the payload" />}
+        </section>
+
+        <HeroTiles items={tiles} label={`Core numbers, ${eff} split`} />
       </div>
 
       <SectionNav
         items={[
-          { id: 'rl-trials', label: 'Trials' },
+          { id: 'rl-summary', label: 'Verdict and metrics' },
           { id: 'rl-baselines', label: 'Baselines' },
           { id: 'rl-training', label: 'Training' },
           { id: 'rl-actions', label: 'Actions' },
@@ -292,26 +321,46 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
         ]}
       />
 
-      <Section title="RL against the selected baseline" id="rl-trials" caption="Every declared fold and seed, so no lucky seed can hide.">
-        <div className="vstack">
-          <div className="rl-bar-row">{toggle}</div>
-          {trials.length ? <TrialChart trials={trials} baselines={r.baselines ?? []} folds={folds} split={eff} /> : <NA why="trials is empty in the payload" />}
-          <TrialTable r={r} split={eff} />
-        </div>
-      </Section>
+      <div className="band">
+        <Section title="Verdict and metrics" id="rl-summary" caption={`${s?.trialCount ?? '—'} fold/seed trials over ${folds.length} folds; ${lc ? 'train-only frozen learner' : 'legacy learner'}.`}>
+          <div className="vstack">
+            <VerdictBand
+              id="rl-verdict-word"
+              kicker="Verdict · validation split · RL value-add"
+              verdict={verdict}
+              word={word}
+              detail={<>Objective {words(r.run?.objective?.metric)}.</>}
+              reasons={reasons}
+            />
+            <details className="pf-allmetrics">
+              <summary>All {eff} metrics</summary>
+              <Tiles r={r} split={eff} />
+            </details>
+            {testVisible && eff === 'test' && (
+              <p className="small muted">
+                Test is a visible audit.
+                <Info label="About the test split">
+                  <p>Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>
+                </Info>
+              </p>
+            )}
+            <TrialTable r={r} split={eff} />
+          </div>
+        </Section>
+      </div>
 
-      <Section title="Comparators" id="rl-baselines" caption="All fixed sleeves, the training expert and the contextual ridge, fold by fold.">
+      <Section title="Comparators" id="rl-baselines" caption="All fixed comparators, fold by fold.">
         <div className="vstack">
           <div className="rl-bar-row">{toggle}</div>
           <BaselineMatrix r={r} split={eff} />
         </div>
       </Section>
 
-      <Section title="Training behavior" id="rl-training" caption="Fixed-budget training history. Descriptive; not a promotion metric.">
+      <Section title="Training behavior" id="rl-training" caption="Fixed-budget training history; descriptive only.">
         <TrainingChart rows={r.training ?? []} trials={trials} episodes={r.protocol?.episodes ?? 0} contextual={r.contextualBaselines ?? []} />
       </Section>
 
-      <Section title="Factor-sleeve allocation" id="rl-actions" caption="How decisions split across the fixed sleeves, with implementation cost and execution risk.">
+      <Section title="Factor-sleeve allocation" id="rl-actions" caption="Decision split across the fixed sleeves.">
         <div className="vstack">
           <div className="rl-bar-row">{toggle}</div>
           {barRows.length ? <ActionBars rows={barRows} actions={actions} /> : <NA why={`actionSummaries has no ${eff} rows`} />}
@@ -331,15 +380,20 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
               </div>
             </details>
           ) : null}
-          <p className="small muted">Actions select the content-locked candidate factor, fixed reference factors or their governed blend. Final post-drift books are risk-checked before reward. All values are historical research evidence, not orders or account positions.</p>
+          <p className="small muted">
+            Actions select the candidate factor, reference factors or a governed blend.
+            <Info label="About actions">
+              <p>Actions select the content-locked candidate factor, fixed reference factors or their governed blend. Final post-drift books are risk-checked before reward. All values are historical research evidence, not orders or account positions.</p>
+            </Info>
+          </p>
         </div>
       </Section>
 
-      <Section title="Factor-fusion diagnosis" id="rl-fusion" caption="Where adaptive value stops, from the candidate sleeve through to stable net value. Validation sets the focus; test is a side audit.">
+      <Section title="Factor-fusion diagnosis" id="rl-fusion" caption="Where adaptive value stops.">
         <RlFusion r={r} testVisible={testVisible} />
       </Section>
 
-      <Section title="Incremental attribution" id="rl-incremental" caption="Independent full-path RL minus the validation-selected baseline: gross edge, cost and net, by regime, asset and action pair.">
+      <Section title="Incremental attribution" id="rl-incremental" caption="Full-path RL minus the selected baseline.">
         <div className="vstack">
           <div className="rl-bar-row">{toggle}</div>
           <RlIncremental r={r} split={eff} />

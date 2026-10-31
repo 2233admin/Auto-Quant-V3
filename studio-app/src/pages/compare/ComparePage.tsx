@@ -1,6 +1,7 @@
 import type { ProjectSnapshot } from '../../api'
 import { num, when } from '../../format'
 import { Section } from '../../design/layout'
+import { Info } from '../../components/Info'
 import { Notice } from '../../Notice'
 import { routeHref } from '../../route'
 import { RunSelect } from '../run/RunSelect'
@@ -71,8 +72,18 @@ function Table({ a, b, project }: { a: RunDiagnostics; b: RunDiagnostics; projec
           {!rows.some((r) => r.group === 'test') && <p className="small muted">The test split is not drawn: at least one Run's protocol does not mark it as a visible diagnostic.</p>}
         </Section>
         <div className="vstack">
-          <Section title={`Comparison mode: ${basis.mode.name}`} id="cmp-mode">
-            <p>{basis.mode.meaning}</p>
+          <Section
+            title={`Comparison mode: ${basis.mode.name}`}
+            id="cmp-mode"
+            caption={
+              <>
+                How the two Runs relate.{' '}
+                <Info label="What this comparison mode means">
+                  <p>{basis.mode.meaning}</p>
+                </Info>
+              </>
+            }
+          >
             <ul className="plain small">
               {provenanceSentences(a, b, project).map((s) => (
                 <li key={s}>{s}</li>

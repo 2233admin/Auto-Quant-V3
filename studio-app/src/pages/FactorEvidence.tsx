@@ -4,6 +4,7 @@ import { Glyph } from '../design/icons'
 import { num, plural, when } from '../format'
 import { SPLIT_LABEL, SPLITS } from './factorMath'
 import { Empty } from './FactorCharts'
+import { Info } from '../components/Info'
 
 const int = (v: number) => v.toLocaleString('en-US')
 const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '—')
@@ -126,47 +127,104 @@ export function buildVerdict(study: FactorDiagnostics, adjustment: Adjustment | 
 const VERDICT_WORD: Record<Verdict, string> = { pass: 'Pass', fail: 'Fail', inconclusive: 'Inconclusive' }
 const VERDICT_GLYPH = { pass: 'supported', fail: 'refuted', inconclusive: 'inconclusive' } as const
 
-export function VerdictStrip({ study, adjustment }: { study: FactorDiagnostics; adjustment: Adjustment | undefined }) {
+const ic4 = (v: number) => `${v < 0 ? '-' : ''}${Math.abs(v).toFixed(4)}`
+
+/**
+ * One plain sentence, built only from the server's qualification stage verdict (via buildVerdict) and the
+ * published validation numbers and pass line. No new statistic is computed.
+ */
+export function verdictSentence(study: FactorDiagnostics, adjustment: Adjustment | undefined, verdict: Verdict): string {
+  const v = study.summary.validation
+  const line = study.factorQualification.semantics?.diagnosticThresholds?.minimumPositiveHacTStatistic
+  const lead = verdict === 'fail' ? 'Does not hold' : verdict === 'pass' ? 'Holds on validation' : 'Not established'
+  if (!v || !finite(v.meanRankIc)) {
+    const d = study.factorQualification.diagnosis
+    return `${lead}: ${d ? d.explanation : 'this Run publishes no validation summary and no server verdict.'}`
+  }
+  const dir = v.meanRankIc > 0 ? 'positive' : v.meanRankIc < 0 ? 'negative' : 'zero'
+  const t = v.hacTStatistic
+  const parts = [ic4(v.meanRankIc)]
+  if (finite(t)) {
+    parts.push(`HAC t ${num(t, 2)}`)
+    if (finite(line)) parts.push(`${t >= line ? 'at or above' : 'below'} the ${num(line, 2)} line`)
+  } else {
+    parts.push('HAC t undefined')
+  }
+  let out = `${lead}: validation rank IC is ${dir} (${parts.join(', ')})`
+  if (verdict === 'inconclusive' && adjustment?.passes === false) {
+    const adj = adjustment.statistics?.familywiseAdjustedPValue
+    out += `; the family-wise rule is not met${finite(adj) ? ` (adjusted p ${num(adj, 3)})` : ''}`
+  }
+  return `${out}.`
+}
+
+const TONE_RANK = { bad: 0, info: 1, good: 2 } as const
+
+/** At most three bullets: the server's own explanation first, then failing reasons, then the rest. The full list lives in the Checks tab. */
+export function topReasons(reasons: Reason[]): Reason[] {
+  const [first, ...rest] = reasons
+  const ranked = rest.filter((r) => !r.field.startsWith('summary.validation.hacTStatistic')).sort((a, b) => TONE_RANK[a.tone] - TONE_RANK[b.tone])
+  return [first, ...ranked].filter(Boolean).slice(0, 3)
+}
+
+function ReasonList({ reasons }: { reasons: Reason[] }) {
+  return (
+    <ul className="verdict-reasons">
+      {reasons.map((r, i) => (
+        <li key={i}>
+          <Glyph kind={r.tone === 'good' ? 'supported' : r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
+          <span>
+            {r.text}{' '}
+            <Info label="Why: the field behind this reason">
+              <p className="mono verdict-field">{r.field}</p>
+            </Info>
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** The hero verdict: chip, one sentence, at most three reasons. Stage and label provenance sit behind the "?" button. */
+export function VerdictHero({ study, adjustment }: { study: FactorDiagnostics; adjustment: Adjustment | undefined }) {
   const { verdict, reasons } = buildVerdict(study, adjustment)
   const diagnosis = study.factorQualification.diagnosis
   return (
     <section className={`verdict verdict--${verdict}`} aria-labelledby="verdict-word">
-      <div className="verdict-main">
-        <p className="verdict-kicker">Verdict · validation split</p>
+      <div className="verdict-top">
         <h2 id="verdict-word" className="verdict-word">
           <Glyph kind={VERDICT_GLYPH[verdict]} signal={verdict === 'fail'} />
           <span>{VERDICT_WORD[verdict]}</span>
         </h2>
-        <p className="muted small">
-          {diagnosis ? (
-            <>
-              Stage <span className="mono">{diagnosis.stage}</span>
-              {diagnosis.iterationFocus && (
-                <>
-                  ; next focus <span className="mono">{diagnosis.iterationFocus}</span>
-                </>
-              )}
-              .
-            </>
-          ) : (
-            'No qualification stage.'
-          )}{' '}
-          Label read from the server stage and its qualifies-for-portfolio flag; the family-wise flag can only demote a pass.
-        </p>
+        <p className="verdict-sentence">{verdictSentence(study, adjustment, verdict)}</p>
+        <Info label="How this verdict is read" align="end">
+          <p>
+            Validation split only.{' '}
+            {diagnosis ? (
+              <>
+                Stage <span className="mono">{diagnosis.stage}</span>
+                {diagnosis.iterationFocus && (
+                  <>
+                    ; next focus <span className="mono">{diagnosis.iterationFocus}</span>
+                  </>
+                )}
+                .
+              </>
+            ) : (
+              'No qualification stage.'
+            )}
+          </p>
+          <p>Label read from the server stage and its qualifies-for-portfolio flag; the family-wise flag can only demote a pass.</p>
+        </Info>
       </div>
-      <ul className="verdict-reasons">
-        {reasons.map((r, i) => (
-          <li key={i}>
-            <Glyph kind={r.tone === 'good' ? 'supported' : r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
-            <span>
-              {r.text}
-              <span className="faint small mono verdict-field">{r.field}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
+      <ReasonList reasons={topReasons(reasons)} />
     </section>
   )
+}
+
+/** Every reason with its field-name provenance, for the Checks tab. */
+export function VerdictReasons({ study, adjustment }: { study: FactorDiagnostics; adjustment: Adjustment | undefined }) {
+  return <ReasonList reasons={buildVerdict(study, adjustment).reasons} />
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -286,13 +344,15 @@ export function QualificationBlock({ study }: { study: FactorDiagnostics }) {
       <div className="tablewrap tablewrap--tall">
         <table className="tbl">
           <caption className="faint small">
-            Each variant against the HAC t line{finite(line) ? ` ${num(line, 2)}` : ''} the server publishes. The funnel stops at the first variant that fails; later rows are context.
-            {q.selection?.dominantStyle && (
-              <>
-                {' '}
-                The dominant style, chosen on train only, is <span className="mono">{q.selection.dominantStyle}</span>.
-              </>
-            )}
+            Each variant against the HAC t line{finite(line) ? ` ${num(line, 2)}` : ''}.
+            <Info label="About the qualification funnel">
+              <p>The funnel stops at the first variant that fails; later rows are context.</p>
+              {q.selection?.dominantStyle && (
+                <p>
+                  The dominant style, chosen on train only, is <span className="mono">{q.selection.dominantStyle}</span>.
+                </p>
+              )}
+            </Info>
           </caption>
           <thead>
             <tr>
@@ -357,7 +417,12 @@ export function HorizonTable({ study }: { study: FactorDiagnostics }) {
   return (
     <div className="tablewrap tablewrap--tall">
       <table className="tbl">
-        <caption className="faint small">Candidate rank IC at each forward horizon. Selection reads only the {study.protocol.primaryHorizon}-bar horizon; the others are context.</caption>
+        <caption className="faint small">
+          Candidate rank IC at each forward horizon; selection reads the {study.protocol.primaryHorizon}-bar one.
+          <Info label="About the horizon profile">
+            <p>Selection reads only the {study.protocol.primaryHorizon}-bar horizon; the others are context.</p>
+          </Info>
+        </caption>
         <thead>
           <tr>
             <th scope="col">Horizon</th>
@@ -410,8 +475,12 @@ export function StabilityTables({ study }: { study: FactorDiagnostics }) {
   return (
     <div className="stack">
       <div>
-        <h3 className="h-small">By market regime</h3>
-        <p className="muted small">{study.protocol.semantics.regimes ?? 'Causal trailing market direction and volatility.'}</p>
+        <h3 className="h-small">
+          By market regime
+          <Info label="About market regimes">
+            <p>{study.protocol.semantics.regimes ?? 'Causal trailing market direction and volatility.'}</p>
+          </Info>
+        </h3>
         <div className="tablewrap tablewrap--tall">
           <table className="tbl">
             <thead>
@@ -604,7 +673,12 @@ export function ProtocolBox({ study }: { study: FactorDiagnostics }) {
       </dl>
       <div className="tablewrap">
         <table className="tbl">
-          <caption className="faint small">Split windows, fixed from the dataset before any candidate ran. Rows purged at the boundary keep forward targets from crossing it.</caption>
+          <caption className="faint small">
+            Split windows, fixed from the dataset before any candidate ran.
+            <Info label="About purged rows">
+              <p>Rows purged at the boundary keep forward targets from crossing it.</p>
+            </Info>
+          </caption>
           <thead>
             <tr>
               <th scope="col">Split</th>

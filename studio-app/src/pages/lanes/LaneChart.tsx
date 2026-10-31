@@ -1,3 +1,4 @@
+import { Info } from '../../components/Info'
 import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { niceTicks } from '../factorMath'
 
@@ -102,9 +103,12 @@ export function LaneChart({
 
   return (
     <figure className="chart lane-chart">
-      <figcaption>
+      <figcaption className="lane-cap">
         <h3 id={`${id}-t`}>{title}</h3>
-        <p className="muted small" id={`${id}-d`}>{desc} Hover the chart, or focus it and use the arrow keys, to read a point.</p>
+        <Info label={`About: ${title}`}>
+          <p>{desc} Hover the chart, or focus it and use the arrow keys, to read a point.</p>
+        </Info>
+        <p className="sr-only" id={`${id}-d`}>{desc} Hover the chart, or focus it and use the arrow keys, to read a point.</p>
       </figcaption>
       {series.length > 1 && (
         <span className="legend" role="list" aria-label="Series">

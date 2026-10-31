@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../../design/icons'
+import { Info } from '../../components/Info'
 import { routeHref } from '../../route'
 import { finite, up } from '../portfolio/pfmt'
 import type { ArtifactRef } from './laneTypes'
@@ -11,11 +12,15 @@ export function LaneHead({ title, projectId, projectName, lines }: { title: stri
     <header className="pg-head">
       <h1>{title}</h1>
       <p className="muted small">
-        Project <a href={routeHref({ view: 'project', id: projectId })}>{projectName}</a>. {lines[0]}
+        Project <a href={routeHref({ view: 'project', id: projectId })}>{projectName}</a> · {lines[0]}
+        {lines.length > 1 && (
+          <Info label="About this page">
+            {lines.slice(1).map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </Info>
+        )}
       </p>
-      {lines.slice(1).map((line, i) => (
-        <p className="muted small" key={i}>{line}</p>
-      ))}
     </header>
   )
 }
@@ -67,7 +72,11 @@ export function StatusBand({
           <Glyph kind={glyph} signal={signal} />
           <span>{word}</span>
         </h2>
-        <p className="muted small">{lead}</p>
+        <p className="muted small">
+          <Info label="About this status">
+            <p>{lead}</p>
+          </Info>
+        </p>
       </div>
       <ul className="verdict-reasons">
         {reasons.map((r, i) => (
@@ -75,7 +84,9 @@ export function StatusBand({
             <Glyph kind={r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
             <span>
               {r.text}
-              <span className="faint small mono verdict-field">{r.field}</span>
+              <Info label="Field behind this line">
+                <p className="mono verdict-field">{r.field}</p>
+              </Info>
             </span>
           </li>
         ))}

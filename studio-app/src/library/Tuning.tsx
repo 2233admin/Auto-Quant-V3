@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ProjectSnapshot, ProjectSummary, SessionSnapshot, TrialRow, WorkspaceSummary } from '../api'
+import { Info } from '../components/Info'
 import { MetricTile } from '../components/MetricTile'
 import { Section } from '../design/layout'
 import { Glyph, type GlyphKind } from '../design/icons'
@@ -90,7 +91,11 @@ function Index({ workspace, go }: { workspace: WorkspaceSummary | null; go: (hre
   ]
   return (
     <div className="pg">
-      <PageHead title="Tuning tasks" lede={`${plural(rows.length, 'Session')} across ${plural(new Set(rows.map((r) => r.project.id)).size, 'Project')}. A Session is the closest thing here to a tuning task: a baseline and its recorded candidate trials. Click a row to open it.`} />
+      <PageHead
+        title="Tuning tasks"
+        lede={`${plural(rows.length, 'Session')} across ${plural(new Set(rows.map((r) => r.project.id)).size, 'Project')}. Click a row to open it.`}
+        info={<p>A Session is the closest thing here to a tuning task: a baseline and its recorded candidate trials.</p>}
+      />
       <LoadNote all={all} />
       {rows.length === 0 ? (
         <Empty>No Session was found in this Workspace, so there are no trials to list.</Empty>
@@ -225,15 +230,20 @@ function SessionView({ project, session, go }: { project: ProjectSnapshot; sessi
           <Section title="Counters" id="tn-counters" caption="Counted from each trial's recorded status.">
             <Counters trials={trials} />
             <p className="muted small">
-              Trials are written when they finish, so Queued and Running stay at 0 unless the server publishes a live queue.
-              {m?.scope && m.scope.omittedCandidateTrials > 0 && <> {m.scope.omittedCandidateTrials} candidate trials are omitted from this view (limit {m.scope.trialLimit}).</>}
-              {fam && <> {fam.totalExecutions} executions are counted in this research family.</>}
+              Counted from finished trials.
+              <Info label="About the counters">
+                <p>
+                  Trials are written when they finish, so Queued and Running stay at 0 unless the server publishes a live queue.
+                  {m?.scope && m.scope.omittedCandidateTrials > 0 && <> {m.scope.omittedCandidateTrials} candidate trials are omitted from this view (limit {m.scope.trialLimit}).</>}
+                  {fam && <> {fam.totalExecutions} executions are counted in this research family.</>}
+                </p>
+              </Info>
             </p>
           </Section>
-          <Section title="Trial status" id="tn-matrix" caption="One cell per trial in sequence order; B is the baseline. A ringed cell is the current leader.">
+          <Section title="Trial status" id="tn-matrix" caption="One cell per trial; B is the baseline, a ringed cell the leader.">
             <StatusMatrix trials={trials} projectId={project.id} />
           </Section>
-          <Section title="Ranked values" id="tn-ranking" caption="Ordered by the Session objective on the selection split. Trials are in-sample for that split: the best of several is expected to look good.">
+          <Section title="Ranked values" id="tn-ranking" caption="Ordered by the Session objective; in-sample on the selection split.">
             <Ranking trials={trials} direction={m?.objective?.direction} projectId={project.id} go={go} />
           </Section>
         </>
@@ -254,7 +264,7 @@ function Detail({ workspace, id, go }: { workspace: WorkspaceSummary | null; id:
   const session = sessions.find((s) => sessionOf(s).id === chosen) ?? sessions[0]
   return (
     <div className="pg">
-      <PageHead title={`Tuning · ${project.name}`} lede={<>{plural(sessions.length, 'Session')}. The per-trial view reads the Session decision matrix; nothing is run or changed from here.</>} />
+      <PageHead title={`Tuning · ${project.name}`} lede={<>{plural(sessions.length, 'Session')}. Read-only.</>} info={<p>The per-trial view reads the Session decision matrix; nothing is run or changed from here.</p>} />
       {sessions.length > 1 && (
         <label className="lib-field">
           <span>Session</span>

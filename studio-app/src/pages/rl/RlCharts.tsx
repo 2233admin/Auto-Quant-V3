@@ -1,3 +1,4 @@
+import { Info } from '../../components/Info'
 import { useId } from 'react'
 import { niceTicks } from '../factorMath'
 import { finite, fn, sn, up } from '../portfolio/pfmt'
@@ -42,7 +43,7 @@ export function ActionSwatch({ index }: { index: number }) {
 
 export function TrialChart({ trials, baselines, folds, split }: { trials: Trial[]; baselines: Baseline[]; folds: string[]; split: 'validation' | 'test' }) {
   const id = useId()
-  const H = 330
+  const H = 280
   const m = { l: 56, r: 16, t: 24, b: 56 }
   const sharpe = (t: Trial) => t[split]?.netSharpe
   const adv = (t: Trial) => (split === 'test' ? t.testAdvantage : t.validationAdvantage)
@@ -58,9 +59,15 @@ export function TrialChart({ trials, baselines, folds, split }: { trials: Trial[
   return (
     <figure className="chart rl-chart">
       <figcaption>
-        <h3 id={`${id}-t`}>Net Sharpe of every fold and seed against the selected baseline</h3>
-        <p className="muted small" id={`${id}-d`}>
+        <h3 id={`${id}-t`} className="sr-only">Net Sharpe of every fold and seed against the selected baseline</h3>
+        <p className="sr-only" id={`${id}-d`}>
           Each mark is one RL trial ({split}); the dashed bar is the baseline the fixed Judge chose for that fold on validation. A filled circle means RL is at or above that baseline, an open square means it trails.
+        </p>
+        <p className="muted small">
+          Every declared fold and seed ({split}); a filled circle means RL is at or above the baseline, an open square means it trails.
+          <Info label="About this chart">
+            <p>Each mark is one RL trial ({split}); the dashed bar is the baseline the fixed Judge chose for that fold on validation.</p>
+          </Info>
         </p>
       </figcaption>
       <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={`${id}-t ${id}-d`}>

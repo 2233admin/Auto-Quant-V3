@@ -12,6 +12,8 @@ import { Glyph } from '../design/icons'
 import { pct, plural, ret } from '../format'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
+import { Info } from '../components/Info'
+import { HeroLine, HeroTiles } from './hero'
 import './eventStudy.css'
 
 const GUARD_LABEL: Record<EnvelopeRate['guard'], string> = {
@@ -203,35 +205,63 @@ function Content({ study, projectId }: { study: EventStudyDiagnostics; projectId
       <header className="pg-head">
         <h1>Price event study</h1>
         <p className="muted small">
-          <span className="state">
-            <Glyph kind={look.signal ? 'error' : 'supported'} signal={look.signal} />
-            <span className={look.signal ? 'sig' : undefined}>{look.word}</span>
-          </span>
-          {' · '}
-          {conclusion.observedPrimaryEvents}/{conclusion.minimumEvents} minimum primary events
+          <span translate="no" className="mono">{policy.event.asset}</span> gap ≤ {ret(policy.event.thresholdReturn)}, wait {policy.timing.waitBars}, hold {policy.timing.holdingBars} bars
           {' · '}
           <a href={routeHref({ view: 'project', id: projectId })}>Back to Project</a>
-        </p>
-        <p className="lede">
-          <span translate="no" className="mono">{policy.event.asset}</span> opening gap ≤ {ret(policy.event.thresholdReturn)}, wait{' '}
-          {policy.timing.waitBars} bars, hold {policy.timing.holdingBars} bars, matched against{' '}
-          <span translate="no" className="mono">{policy.references.matchedAsset}</span>. Rates use the{' '}
-          {plural(populations.primaryEvents, 'primary non-overlapping event')} of {populations.qualifyingEvents} qualifying.
+          <Info label="About this study">
+            <p>
+              <span translate="no" className="mono">{policy.event.asset}</span> opening gap ≤ {ret(policy.event.thresholdReturn)}, wait{' '}
+              {policy.timing.waitBars} bars, hold {policy.timing.holdingBars} bars, matched against{' '}
+              <span translate="no" className="mono">{policy.references.matchedAsset}</span>. Rates use the{' '}
+              {plural(populations.primaryEvents, 'primary non-overlapping event')} of {populations.qualifyingEvents} qualifying.
+            </p>
+          </Info>
         </p>
       </header>
 
-      <Notice kind="info" label="Info" title="Read every rate with its sample size." subtitle={envelope.disclaimer} />
+      <div className="hero-stack">
+        <HeroLine
+          tone={look.signal ? 'bad' : 'warn'}
+          word={look.word}
+          why={
+            <Info label="Read every rate with its sample size">
+              <p>{envelope.disclaimer}</p>
+            </Info>
+          }
+        >
+          {conclusion.observedPrimaryEvents} of {conclusion.minimumEvents} minimum primary events
+          {positive.estimate !== null ? `; asset return above zero in ${pct(positive.estimate)} (N=${positive.n})` : `; asset-return rate withheld (N=${positive.n})`}
+        </HeroLine>
 
-      <Section title="Outcome rates" id="sec-rates">
-        <div className="ocards">
-          <OutcomeCard title="Asset return above zero" outcome={positive} />
-          <OutcomeCard title="Beats the matched reference" outcome={excess} />
-        </div>
-        <p className="muted small">
-          Wilson {pct(envelope.confidenceLevel, 0)} intervals. An estimate is withheld below {envelope.guards.withholdBelow} events and
-          flagged below {envelope.guards.warnBelow}. Event returns still cluster in volatile regimes, so treat intervals as optimistic.
-        </p>
-      </Section>
+        <section className="sec" aria-labelledby="sec-rates">
+          <h2 id="sec-rates">Outcome rates</h2>
+          <div className="ocards">
+            <OutcomeCard title="Asset return above zero" outcome={positive} />
+            <OutcomeCard title="Beats the matched reference" outcome={excess} />
+          </div>
+          <p className="muted small">
+            Wilson {pct(envelope.confidenceLevel, 0)} intervals; read each with its N.
+            <Info label="About these intervals">
+              <p>
+                Wilson {pct(envelope.confidenceLevel, 0)} intervals. An estimate is withheld below {envelope.guards.withholdBelow} events and
+                flagged below {envelope.guards.warnBelow}. Event returns still cluster in volatile regimes, so treat intervals as optimistic.
+              </p>
+            </Info>
+          </p>
+        </section>
+
+        <HeroTiles
+          label="Core numbers"
+          items={[
+            { label: 'Primary events', value: String(populations.primaryEvents), note: `${populations.qualifyingEvents} qualifying` },
+            { label: 'Minimum events', value: String(conclusion.minimumEvents), note: `${conclusion.observedPrimaryEvents} observed` },
+            { label: 'Primary hit rate', value: pct(positive.estimate), note: `N=${positive.n}` },
+            { label: 'Unconditional hit rate', value: pct(unconditional.estimate), note: `N=${unconditional.n}` },
+            { label: 'Beats reference', value: pct(excess.estimate), note: `N=${excess.n}` },
+            { label: 'Right-censored', value: String(populations.rightCensoredEvents), note: `${populations.overlapExcludedEvents} overlap-excluded` },
+          ]}
+        />
+      </div>
 
       <Section title="Reference" id="sec-reference">
         <dl className="stats">
@@ -247,8 +277,10 @@ function Content({ study, projectId }: { study: EventStudyDiagnostics; projectId
           </div>
         </dl>
         <p className="muted small">
-          Unconditional observations overlap by construction (one per entry date across the holding window), so no interval is drawn
-          for them.
+          Unconditional rate has no interval.
+          <Info label="About the unconditional rate">
+            <p>Unconditional observations overlap by construction (one per entry date across the holding window), so no interval is drawn for them.</p>
+          </Info>
         </p>
       </Section>
 

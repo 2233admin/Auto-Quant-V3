@@ -20,7 +20,11 @@ export function Palette({ open, onClose, projects, go }: Props) {
   const items = useMemo<Item[]>(() => {
     const all: Item[] = [
       { group: 'Pages', label: 'Projects', detail: 'Overview', href: routeHref({ view: 'projects' }) },
-      { group: 'Pages', label: 'Legacy Studio', detail: 'Every lane', href: '/legacy' },
+      { group: 'Pages', label: 'Factor library', detail: 'Factors', href: routeHref({ view: 'factors' }) },
+      { group: 'Pages', label: 'Strategy library', detail: 'Portfolio, RL, Allocation', href: routeHref({ view: 'strategies' }) },
+      { group: 'Pages', label: 'Run history', detail: 'Runs', href: routeHref({ view: 'runs' }) },
+      { group: 'Pages', label: 'Tuning tasks', detail: 'Sessions and trials', href: routeHref({ view: 'tuning' }) },
+      { group: 'Pages', label: 'Legacy Studio', detail: 'Only for lanes without a native page', href: '/legacy' },
       ...projects.map((p) => ({ group: 'Projects', label: p.name, detail: p.id, href: routeHref({ view: 'project', id: p.id }) })),
     ]
     const needle = query.trim().toLowerCase()

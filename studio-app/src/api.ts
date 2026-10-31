@@ -90,7 +90,7 @@ export type ProjectSnapshot = {
     authority?: { selectionSplit?: string; testRole?: string; testEntersSelection?: boolean; tradingAuthority?: string }
   } | null
   factorExplorer: FactorDiagnostics | null
-  /** Lane explorers other than Factor: present means the legacy Studio can draw them. */
+  /** Lane explorers other than Factor: present means the lane has evidence; each has a native page here (Portfolio, RL, Book Risk, event study, path stress, Allocation). */
   portfolioExplorer: PortfolioDiagnostics | null
   rlExplorer: object | null
   bookRiskExplorer: object | null

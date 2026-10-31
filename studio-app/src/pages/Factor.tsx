@@ -2,12 +2,15 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RunRow } from '../api'
 import { Glyph } from '../design/icons'
 import { num, plural, when } from '../format'
-import { Section, SectionNav } from '../design/layout'
+import { Section } from '../design/layout'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
 import { IcByHorizon, IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
-import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictStrip } from './FactorEvidence'
+import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictHero, VerdictReasons } from './FactorEvidence'
+import { adjustmentOf, CoreTiles, TestedFacts, Tabs, useHashTab, type TabDef } from './FactorWorkbench'
+import { RunAnalysisButton } from '../actions/RunAnalysisButton'
+import { Info } from '../components/Info'
 import { HeadlineMetrics, type HeadlineSplit } from '../components/HeadlineMetrics'
 import { NotPublished } from '../components/NotPublished'
 import { TrialCounter } from '../components/TrialCounter'
@@ -221,7 +224,8 @@ function RunSelector({ project, shown, loading }: { project: ProjectSnapshot; sh
   const latest = project.factorExplorer?.run.id
   return (
     <nav aria-label="Factor Runs of this Project">
-      <ul className="runsel">
+      <h2 className="wb-h">Run</h2>
+      <ul className="runlinks">
         {runs.map((r) => (
           <li key={r.id}>
             <a href={routeHref({ view: 'factor', id: project.id, run: r.id })} aria-current={r.id === shown ? 'true' : undefined}>
@@ -241,157 +245,171 @@ function RunSelector({ project, shown, loading }: { project: ProjectSnapshot; sh
   )
 }
 
+type TabId = 'evidence' | 'checks' | 'stability' | 'provenance'
+/** Old section anchors (`#sec-ledger` ...) now live inside a tab. */
+const ANCHOR_TAB: Record<string, TabId> = {
+  'sec-ic': 'evidence',
+  'sec-noise': 'evidence',
+  'sec-quantiles': 'evidence',
+  'sec-limits': 'evidence',
+  'sec-headline': 'evidence',
+  'sec-reasons': 'checks',
+  'sec-ledger': 'checks',
+  'sec-qualification': 'checks',
+  'sec-folds': 'stability',
+  'sec-horizons': 'stability',
+  'sec-stability': 'stability',
+  'sec-protocol': 'provenance',
+  'sec-provenance': 'provenance',
+  'sec-errors': 'provenance',
+}
+const TAB_IDS = ['evidence', 'checks', 'stability', 'provenance'] as const
+
 function Content({ study, project, loadingRun }: { study: FactorDiagnostics; project: ProjectSnapshot; loadingRun?: boolean }) {
   const runRow: RunRow | undefined = project.runs.find((r) => r.id === study.run.id)
-  const adjustment = project.sessions.map((s) => s.selectionIntegrity).find((s) => s?.selectionMetric === 'validation_mean_ic')?.selectionAdjustment
+  const adjustment = adjustmentOf(project)
   const frontier = noiseFrontier(project.sessions, project.runs)
   const checks = buildChecks(study, frontier, project.sessions)
   const primary = study.horizonProfile.find((row) => row.horizon === study.protocol.primaryHorizon)
   const validation = study.summary.validation ?? primary?.validation
+  const testVisible = !!study.summary.testAudit && study.protocol.testRole === 'visible-diagnostic'
   const headlineSplits: HeadlineSplit[] = [
     ...(validation ? [{ name: 'Validation', role: 'selection split', summary: validation }] : []),
     ...(study.summary.testAudit ? [{ name: 'Test', role: 'visible audit, not used for selection', summary: study.summary.testAudit }] : []),
   ]
   const failures = checks.filter((c) => c.state === 'fail').length
-  const trialsLine = frontier.ok ? `${frontier.value.trials} trial${frontier.value.trials === 1 ? '' : 's'} in the ledger` : 'no trial ledger'
   const runIc = study.summary.validation?.meanRankIc ?? null
   const failing = !!runRow && ((runRow.errors ?? []).length > 0 || runRow.status !== 'succeeded')
+  const [tab, selectTab, anchor] = useHashTab<TabId>(TAB_IDS, 'evidence', ANCHOR_TAB)
+  useEffect(() => {
+    if (anchor) requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ block: 'start' }))
+  }, [anchor, tab])
+  const tabs: TabDef<TabId>[] = [
+    { id: 'evidence', label: 'Evidence' },
+    { id: 'checks', label: 'Checks', badge: failures > 0 ? `${failures} failing` : undefined },
+    { id: 'stability', label: 'Stability' },
+    { id: 'provenance', label: 'Provenance', badge: failing ? 'run error' : undefined },
+  ]
   return (
-    <>
-      <div className="cols cols--3-2 pg-top">
-        <header className="pg-head">
-          <h1>Factor evidence</h1>
-          <p className="muted small">
-            <span className="state">
-              <Glyph kind={failures > 0 ? 'error' : 'supported'} signal={failures > 0} />
-              <span className={failures > 0 ? 'sig' : undefined}>{failures > 0 ? `${plural(failures, 'check')} failing` : 'No failing check'}</span>
-            </span>
-            {' · '}
-            {trialsLine}
-            {' · '}
-            <a href={routeHref({ view: 'project', id: project.id })}>Back to Project</a>
+    <div className="wb">
+      <aside className="wb-side" aria-label="What was tested">
+        <div>
+          <h1 className="wb-title">Factor evidence</h1>
+          <p className="wb-sub">
+            <span className="mono" translate="no">{study.run.id}</span>
           </p>
-          <p className="lede">
-            Run <span className="mono" translate="no">{study.run.id}</span> of Study <span className="mono" translate="no">{study.run.studyId}</span>,
-            started {when(study.run.startedAt)} UTC, on dataset <span className="mono" translate="no">{study.dataset.id}</span> from{' '}
-            {day(study.dataset.timeRange?.start)} to {day(study.dataset.timeRange?.end)}. Scored asset{' '}
-            <span className="mono" translate="no">{(study.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}</span>, evaluation mode{' '}
-            <span className="mono">{study.predictionUniverse.evaluationMode ?? '—'}</span>.
-          </p>
-        </header>
-
+        </div>
+        <RunAnalysisButton project={project} preferStudyId={study.run.studyId} />
+        <section aria-labelledby="wb-tested">
+          <h2 className="wb-h" id="wb-tested">What was tested</h2>
+          <TestedFacts study={study} />
+        </section>
         <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} />
-      </div>
+        <nav className="wb-links" aria-label="Related pages">
+          <a href={routeHref({ view: 'compare', id: project.id, a: study.run.id })}>Compare with another Run</a>
+          <a href={routeHref({ view: 'run', id: project.id, run: study.run.id })}>Run summary</a>
+          <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
+        </nav>
+      </aside>
 
-      <div className="band">
-        <VerdictStrip study={study} adjustment={adjustment} />
-        <Section title="Headline" id="sec-headline" caption="Every figure below is in-sample until the selection adjustment passes.">
-          <TrialCounter project={project} />
-          {headlineSplits.length > 0 ? (
-            <HeadlineMetrics splits={headlineSplits} horizon={study.protocol.primaryHorizon} defs={study.protocol.semantics} />
-          ) : (
-            <p className="muted">The Run published no validation summary.</p>
-          )}
-          <NotPublished />
-        </Section>
-      </div>
-
-      <Notice
-        kind="info"
-        label="Info"
-        title="Validation drives selection; test is shown as a visible audit."
-        subtitle={`The test split never enters selection (${study.protocol.testRole}). Numbers from an external holdout are not drawn on this page.`}
-      />
-
-      <SectionNav
-        items={[
-          { id: 'verdict-word', label: 'Verdict' },
-          { id: 'sec-ic', label: 'IC' },
-          { id: 'sec-noise', label: 'Selection and noise' },
-          { id: 'sec-ledger', label: 'Check ledger' },
-          { id: 'sec-quantiles', label: 'Quantiles' },
-          { id: 'sec-qualification', label: 'Qualification' },
-          { id: 'sec-folds', label: 'Folds' },
-          { id: 'sec-horizons', label: 'Horizons' },
-          { id: 'sec-stability', label: 'Stability' },
-          { id: 'sec-protocol', label: 'Protocol' },
-          { id: 'sec-provenance', label: 'Provenance' },
-          { id: 'sec-errors', label: 'Run errors' },
-          { id: 'sec-limits', label: 'Limits' },
-        ]}
-      />
-
-      <Section title="Information coefficient" id="sec-ic" caption="Rank IC by horizon and split, and through time. Validation drives selection; test is a visible audit.">
-        <div className="cols">
-          <IcByHorizon study={study} />
-          <IcOverTime study={study} />
+      <div className="wb-main">
+        <VerdictHero study={study} adjustment={adjustment} />
+        <div className="wb-hero">
+          <IcByHorizon study={study} hero />
         </div>
-      </Section>
+        <CoreTiles study={study} project={project} validation={validation} testAudit={study.summary.testAudit} testVisible={testVisible} defs={study.protocol.semantics} />
+        <TrialCounter project={project} />
 
-      <div className="cols">
-        <div className="vstack">
-          <Section title="Selection and noise" id="sec-noise">
-            {frontier.ok ? (
-              <NoiseFrontierChart frontier={frontier.value} runIc={runIc} />
-            ) : (
-              <Empty title="Noise frontier" reason={frontier.reason} />
-            )}
-            {frontier.ok && (
-              <p className="muted small">
-                {frontier.value.leaderRunId ? (
-                  <>
-                    The selected value is Run <span className="mono" translate="no">{frontier.value.leaderRunId}</span>
-                    {frontier.value.leaderRunId === study.run.id ? ' (the Run shown here).' : '; the Run shown on this page is a later one that did not replace it.'}
-                  </>
-                ) : (
-                  'The selected value comes from the Session ledger; no single Run matches it exactly.'
-                )}
-              </p>
-            )}
-          </Section>
-          <Section title="Quantile returns" id="sec-quantiles">
-            <Quantiles study={study} />
-          </Section>
-        </div>
-        <Section title="Check ledger" id="sec-ledger">
-          <Ledger checks={checks} />
-        </Section>
+        <Tabs
+          label="Factor evidence sections"
+          tabs={tabs}
+          active={tab}
+          onSelect={selectTab}
+          panels={{
+            evidence: (
+              <>
+                <Section title="Information coefficient over time" id="sec-ic" caption="Per-timestamp rank IC; validation drives selection, test is a visible audit.">
+                  <IcOverTime study={study} />
+                </Section>
+                <Section title="Selection and noise" id="sec-noise">
+                  {frontier.ok ? <NoiseFrontierChart frontier={frontier.value} runIc={runIc} /> : <Empty title="Noise frontier" reason={frontier.reason} />}
+                  {frontier.ok && (
+                    <p className="muted small">
+                      {frontier.value.leaderRunId ? (
+                        <>
+                          Selected value: Run <span className="mono" translate="no">{frontier.value.leaderRunId}</span>
+                          {frontier.value.leaderRunId === study.run.id ? ' (this Run).' : '; this page shows a later Run that did not replace it.'}
+                        </>
+                      ) : (
+                        'The selected value comes from the Session ledger; no single Run matches it exactly.'
+                      )}
+                    </p>
+                  )}
+                </Section>
+                <Section title="Quantile returns" id="sec-quantiles">
+                  <Quantiles study={study} />
+                </Section>
+                <Section title="All headline figures" id="sec-headline" caption="Every published rank-IC figure for each shown split.">
+                  <HeadlineMetrics splits={headlineSplits} horizon={study.protocol.primaryHorizon} defs={study.protocol.semantics} />
+                </Section>
+                <Section title="What these numbers do and do not show" id="sec-limits" fold caption="Scope and limits of this Run's evidence.">
+                  <Limits study={study} frontier={frontier} />
+                </Section>
+              </>
+            ),
+            checks: (
+              <>
+                <Section title="Why this verdict" id="sec-reasons" caption="Every reason behind the verdict; the ? opens the field it reads.">
+                  <VerdictReasons study={study} adjustment={adjustment} />
+                </Section>
+                <Section title="Check ledger" id="sec-ledger">
+                  <Ledger checks={checks} />
+                </Section>
+                <Section title="Qualification diagnosis" id="sec-qualification">
+                  <QualificationBlock study={study} />
+                </Section>
+              </>
+            ),
+            stability: (
+              <>
+                <Section title="Chronological folds" id="sec-folds">
+                  <FoldTable study={study} />
+                </Section>
+                <Section title="Horizon profile" id="sec-horizons">
+                  <HorizonTable study={study} />
+                </Section>
+                <Section title="Stability: regime, asset, style" id="sec-stability" caption="Per-split tables: market regime, asset and overlap with known styles.">
+                  <StabilityTables study={study} />
+                </Section>
+              </>
+            ),
+            provenance: (
+              <>
+                <Section title="Protocol" id="sec-protocol" caption="Splits, horizons and the selection rules this Run was fixed under.">
+                  <ProtocolBox study={study} />
+                </Section>
+                <Section title="Provenance" id="sec-provenance" caption="Hashes, dataset and harness that produced this Run.">
+                  <ProvenanceBox study={study} row={runRow} />
+                </Section>
+                <Section title="Run errors" id="sec-errors" caption="Status and any errors the Run recorded.">
+                  <RunErrors row={runRow} />
+                </Section>
+                <NotPublished />
+              </>
+            ),
+          }}
+        />
+        <p className="muted small">
+          {study.warning}{' '}
+          <Info label="Why test is shown but not used for selection" align="start">
+            <p>
+              Validation drives selection; test is shown as a visible audit. The test split never enters selection ({study.protocol.testRole}). Numbers from an
+              external holdout are not drawn on this page.
+            </p>
+          </Info>
+        </p>
       </div>
-
-      <Section title="Qualification diagnosis" id="sec-qualification">
-        <QualificationBlock study={study} />
-      </Section>
-
-      <div className="cols cols--tables">
-        <Section title="Chronological folds" id="sec-folds">
-          <FoldTable study={study} />
-        </Section>
-        <Section title="Horizon profile" id="sec-horizons">
-          <HorizonTable study={study} />
-        </Section>
-      </div>
-
-      <Section title="Stability: regime, asset, style" id="sec-stability" fold caption="Per-split tables: market regime, asset and overlap with known styles.">
-        <StabilityTables study={study} />
-      </Section>
-
-      <Section title="Protocol" id="sec-protocol" fold caption="Splits, horizons and the selection rules this Run was fixed under.">
-        <ProtocolBox study={study} />
-      </Section>
-
-      <Section title="Provenance" id="sec-provenance" fold caption="Hashes, dataset and harness that produced this Run.">
-        <ProvenanceBox study={study} row={runRow} />
-      </Section>
-
-      <Section title="Run errors" id="sec-errors" fold defaultOpen={failing} caption="Status and any errors the Run recorded.">
-        <RunErrors row={runRow} />
-      </Section>
-
-      <Section title="What these numbers do and do not show" id="sec-limits">
-        <Limits study={study} frontier={frontier} />
-      </Section>
-      <p className="muted small">{study.warning}</p>
-    </>
+    </div>
   )
 }
 

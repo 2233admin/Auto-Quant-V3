@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Info } from '../components/Info'
 import { Glyph } from '../design/icons'
 import { plural } from '../format'
 import { Notice } from '../Notice'
@@ -24,11 +25,14 @@ export function VerdictBadge({ verdict, none, detail }: { verdict: Verdict | nul
   )
 }
 
-export function PageHead({ title, lede }: { title: string; lede: ReactNode }) {
+export function PageHead({ title, lede, info }: { title: string; lede: ReactNode; info?: ReactNode }) {
   return (
     <header className="pg-head">
       <h1>{title}</h1>
-      <p className="muted small">{lede}</p>
+      <p className="muted small">
+        {lede}
+        {info && <Info label={`About ${title}`}>{info}</Info>}
+      </p>
     </header>
   )
 }

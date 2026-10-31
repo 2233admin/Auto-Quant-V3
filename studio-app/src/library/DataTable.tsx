@@ -1,4 +1,4 @@
-import { useMemo, useState, type MouseEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 
 export type Col<T> = {
   id: string
@@ -38,6 +38,19 @@ export function DataTable<T>({
   selected?: (row: T) => boolean
 }) {
   const [sort, setSort] = useState<SortState | null>(initial ?? null)
+  const wrap = useRef<HTMLDivElement>(null)
+  const [overflow, setOverflow] = useState(false)
+  useEffect(() => {
+    const el = wrap.current
+    if (!el) return
+    const measure = () => setOverflow(el.scrollWidth > el.clientWidth + 1)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    const table = el.querySelector('table')
+    if (table) ro.observe(table)
+    return () => ro.disconnect()
+  }, [rows, cols])
   const sorted = useMemo(() => {
     const col = sort ? cols.find((c) => c.id === sort.id) : undefined
     if (!sort || !col?.sort) return rows
@@ -61,7 +74,9 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="tablewrap">
+    <>
+      {overflow && <p className="faint small lib-scrollhint" aria-hidden="true">Scroll sideways for more columns →</p>}
+      <div className="tablewrap lib-scroll" ref={wrap} tabIndex={0} role="region" aria-label={`${caption}, scrollable`}>
       <table className="tbl lib-tbl">
         <caption className="sr">{caption}</caption>
         <thead>
@@ -94,6 +109,7 @@ export function DataTable<T>({
           ))}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   )
 }

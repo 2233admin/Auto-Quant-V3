@@ -1,0 +1,45 @@
+/* First-screen hero pieces shared by the pages: headline line, core-number tiles, caption row. Tokens only. */
+.hero-line { display: flex; align-items: flex-start; gap: var(--space-3); margin: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-strong); border-left: 4px solid var(--line-strong); background: var(--raised); font: 500 15px/22px var(--font-sans); }
+.hero-line > .glyph { margin-top: 4px; flex: none; }
+.hero-line[data-tone='bad'] { border-left-color: var(--signal); }
+.hero-line[data-tone='ok'] { border-left-color: var(--text); }
+.hero-line[data-tone='warn'] { border-left-color: var(--stroke); border-left-style: dashed; }
+.hero-line .hero-word { font-weight: 650; }
+.hero-line[data-tone='bad'] .hero-word { color: var(--signal); }
+.hero-line .hero-text { min-width: 0; overflow-wrap: anywhere; }
+.hero-line .info { margin-left: var(--space-2); }
+
+.hero-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; margin: 0; border: 1px solid var(--line-strong); background: var(--raised); }
+.hero-tiles > div { padding: var(--space-3) var(--space-4); border-left: 1px solid var(--line); min-width: 0; }
+.hero-tiles > div:first-child { border-left: 0; }
+.hero-tiles dt { font: var(--type-small); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero-tiles dd { margin: 2px 0 0; font: 600 22px/30px var(--font-mono); overflow-wrap: anywhere; }
+.hero-tiles .hero-note { display: block; font: var(--type-small); color: var(--faint); margin-top: 2px; }
+.hero-tiles[data-n='4'] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.hero-tiles[data-n='5'] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.hero-tiles[data-n='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.hero-sub { margin: 0 0 var(--space-2); font: var(--type-small); color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.hero-sub a { color: var(--text); text-underline-offset: 3px; }
+.hero-more { display: flex; flex-wrap: wrap; gap: var(--space-4); font: var(--type-small); }
+.hero-more a { color: var(--text); text-underline-offset: 3px; }
+.pg .hero-stack { display: grid; gap: var(--space-4); }
+
+@media (max-width: 1100px) {
+  .hero-tiles, .hero-tiles[data-n] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-tiles > div { border-left: 0; border-top: 1px solid var(--line); }
+  .hero-tiles > div:nth-child(-n + 2) { border-top: 0; }
+  .hero-tiles > div:nth-child(even) { border-left: 1px solid var(--line); }
+}
+
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* A folded section whose summary shows one line of text, ellipsised. */
+.sec--oneline > details > summary { flex-wrap: nowrap; }
+.sec--oneline > details > summary h2 { flex: none; }
+.sec--oneline > details > summary .sec-cap { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: none; }
+.pj-next { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-6); align-items: start; }
+.pj-next-act { display: grid; gap: var(--space-2); justify-items: start; max-width: 320px; }
+.pj-next-act p { margin: 0; }
+.pj-next-act a { color: var(--text); text-underline-offset: 3px; }
+.pj-hero .pj-fig { margin: 0; }
+@media (max-width: 1100px) { .pj-next { grid-template-columns: minmax(0, 1fr); } }

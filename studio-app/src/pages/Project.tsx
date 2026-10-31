@@ -8,7 +8,20 @@ import { routeHref } from '../route'
 import { verification } from '../shell/Rail'
 import { RunAnalysisButton } from '../actions/RunAnalysisButton'
 import { RunList } from './run/RunList'
-import { EvidenceDocsBlock, ExperimentsBlock, NextMoveBlock, QuestionBlock, SelectionBlock, sessionMeta } from './project/ProjectResearch'
+import { Info } from '../components/Info'
+import { HeroLine, HeroTiles, type HeroTile } from './hero'
+import {
+  EvidenceDocsBlock,
+  ExperimentsBlock,
+  focusSessionIndex,
+  NextMoveBlock,
+  projectHeadline,
+  QuestionBlock,
+  questionLine,
+  SelectionBlock,
+  sessionMeta,
+  TrialHero,
+} from './project/ProjectResearch'
 
 type Load = { state: 'loading' } | { state: 'error'; message: string } | { state: 'ready'; project: ProjectSnapshot }
 
@@ -89,87 +102,24 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
   const n = (key: string) => (typeof counts[key] === 'number' ? (counts[key] as number) : 0)
   const latest = latestRunByStudy(project.runs)
   const validation = project.factorExplorer?.summary?.validation
-  return (
-    <div className="pg">
-      <header className="pg-head">
-        <h1 translate="no">{project.name}</h1>
-        <p className="muted small">
-          <span className="state">
-            <Glyph kind={look.glyph} signal={look.signal} />
-            <span className={look.signal ? 'sig' : undefined}>{look.word}</span>
-          </span>
-          {' · '}
-          {plural(project.studies.length, 'Study', 'Studies')} · {plural(project.runs.length, 'Run')} · {plural(n('sessions'), 'Session')} ·{' '}
-          {plural(n('reports'), 'Report')}
-        </p>
-        {project.description && <p className="lede">{project.description}</p>}
-      </header>
-
-      {project.diagnostics.length > 0 && (
-        <Notice kind="error" label="Error" title="Project diagnostics." subtitle={project.diagnostics.map((d) => d.message ?? '').join('; ')} />
-      )}
-
-      <div className="band">
-        <div className="cols cols--3-2">
-          <Section title="Next move" id="sec-next">
-            <NextMoveBlock project={project} />
-            <RunAnalysisButton project={project} />
-          </Section>
-          <Section title="Factor evidence (validation split)" id="sec-factor">
-            {validation ? (
-              <dl className="stats">
-                <div>
-                  <dt>Mean rank IC</dt>
-                  <dd className="mono">{num(validation.meanRankIc, 4)}</dd>
-                </div>
-                <div>
-                  <dt>Rank ICIR</dt>
-                  <dd className="mono">{num(validation.rankIcir, 3)}</dd>
-                </div>
-                <div>
-                  <dt>HAC normal p</dt>
-                  <dd className="mono">{num(validation.hacNormalPValue, 3)}</dd>
-                </div>
-                <div>
-                  <dt>Observations</dt>
-                  <dd className="mono">
-                    {validation.observations}
-                    {!validation.sufficient && <span className="sig"> · below minimum</span>}
-                  </dd>
-                </div>
-              </dl>
-            ) : (
-              <p className="muted">No verified Factor Run yet.</p>
-            )}
-            {project.factorExplorer && (
-              <p className="small">
-                <a href={routeHref({ view: 'factor', id: project.id, study: project.factorExplorer.run.studyId })}>Open Factor evidence</a>
-                <span className="muted"> · IC by horizon and split, IC over time, quantiles, noise frontier and the check ledger.</span>
-              </p>
-            )}
-          </Section>
-        </div>
-      </div>
-
-      <SectionNav
-        items={[
-          { id: 'sec-next', label: 'Next move' },
-          { id: 'sec-question', label: 'Question' },
-          { id: 'sec-studies', label: 'Studies' },
-          { id: 'sec-selection', label: 'Selection-adjusted' },
-          { id: 'sec-experiments', label: 'Experiments' },
-          { id: 'sec-runs', label: 'Runs' },
-          { id: 'sec-sessions', label: 'Sessions' },
-          { id: 'sec-docs', label: 'Reports' },
-          { id: 'sec-lanes', label: 'Other lanes' },
-        ]}
-      />
-
-      <Section title="Question and claim" id="sec-question" caption="What was asked, what it would support, and the limits it was asked under.">
-        <QuestionBlock project={project} />
-      </Section>
-
-      <Section title="Studies" id="sec-studies">
+  const headline = projectHeadline(project)
+  const focus = focusSessionIndex(project)
+  const dm = focus >= 0 ? project.sessions[focus].decisionMatrix : null
+  const candidates = (dm?.trials ?? []).filter((t) => t.role !== 'baseline')
+  const leader = (dm?.trials ?? []).find((t) => t.isCurrentLeader)
+  const tiles: HeroTile[] = [
+    { label: 'Candidate trials', value: String(candidates.length), note: `${candidates.filter((t) => t.verdict === 'KEEP').length} kept` },
+    { label: `Leader ${dm?.objective?.metric ?? 'metric'}`, value: leader ? num(leader.primaryValue, 4) : '—', note: leader ? (leader.role === 'baseline' ? 'baseline leads' : `trial ${leader.sequence}`) : undefined },
+    { label: 'Mean rank IC', value: validation ? num(validation.meanRankIc, 4) : '—', note: 'validation split' },
+    { label: 'HAC normal p', value: validation ? num(validation.hacNormalPValue, 3) : '—', note: validation ? `ICIR ${num(validation.rankIcir, 3)}` : undefined },
+    {
+      label: 'Observations',
+      value: validation ? String(validation.observations) : '—',
+      note: validation && !validation.sufficient ? 'below minimum' : undefined,
+    },
+    { label: 'Runs', value: String(project.runs.length), note: `${plural(project.studies.length, 'Study', 'Studies')} · ${plural(n('sessions'), 'Session')}` },
+  ]
+  const studiesTable = (
         <div className="tablewrap">
           <table className="tbl">
             <thead>
@@ -210,7 +160,96 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
             </tbody>
           </table>
         </div>
-        <p className="muted small">Primary values are the Study's selection-split metric. Test and holdout numbers are not drawn here.</p>
+  )
+  const hasTrials = focus >= 0 && (dm?.trials ?? []).length > 0
+
+  return (
+    <div className="pg">
+      <header className="pg-head">
+        <h1 translate="no">{project.name}</h1>
+        <p className="muted small">
+          <span className="state">
+            <Glyph kind={look.glyph} signal={look.signal} />
+            <span className={look.signal ? 'sig' : undefined}>{look.word}</span>
+          </span>
+          {' · '}
+          {plural(project.studies.length, 'Study', 'Studies')} · {plural(project.runs.length, 'Run')} · {plural(n('sessions'), 'Session')} ·{' '}
+          {plural(n('reports'), 'Report')}
+        </p>
+      </header>
+
+      <div className="hero-stack">
+        <HeroLine
+          tone={headline.tone}
+          word={headline.word}
+          why={
+            headline.why.length > 0 ? (
+              <Info label="Why this headline">
+                <p>{headline.why.join(' · ')}</p>
+                <p className="faint mono">agentWorkBrief.review, sessions[].experiments[].verdict</p>
+              </Info>
+            ) : undefined
+          }
+        >
+          {headline.text}
+        </HeroLine>
+
+        {project.diagnostics.length > 0 && (
+          <Notice kind="error" label="Error" title="Project diagnostics." subtitle={project.diagnostics.map((d) => d.message ?? '').join('; ')} />
+        )}
+
+        <section aria-labelledby="sec-trials">
+          <h2 id="sec-trials" className="sr-only">
+            {hasTrials ? 'Trials' : 'Studies'}
+          </h2>
+          {hasTrials ? <TrialHero project={project} /> : studiesTable}
+        </section>
+
+        <HeroTiles items={tiles} label="Core numbers" />
+      </div>
+
+      <Section title="Next move" id="sec-next">
+        <div className="pj-next">
+          <div>
+            <NextMoveBlock project={project} />
+          </div>
+          <div className="pj-next-act">
+            <RunAnalysisButton project={project} />
+            {project.factorExplorer && (
+              <p className="small">
+                <a href={routeHref({ view: 'factor', id: project.id, study: project.factorExplorer.run.studyId })}>Open Factor evidence</a>
+              </p>
+            )}
+          </div>
+        </div>
+      </Section>
+
+      <SectionNav
+        items={[
+          { id: 'sec-next', label: 'Next move' },
+          { id: 'sec-question', label: 'Question' },
+          { id: 'sec-studies', label: 'Studies' },
+          { id: 'sec-selection', label: 'Selection-adjusted' },
+          { id: 'sec-experiments', label: 'Experiments' },
+          { id: 'sec-runs', label: 'Runs' },
+          { id: 'sec-sessions', label: 'Sessions' },
+          { id: 'sec-docs', label: 'Reports' },
+          { id: 'sec-lanes', label: 'Other lanes' },
+        ]}
+      />
+
+      <Section title="Question and claim" id="sec-question" fold className="sec--oneline" caption={questionLine(project)}>
+        <QuestionBlock project={project} />
+      </Section>
+
+      <Section title="Studies" id="sec-studies">
+        {hasTrials ? studiesTable : <p className="muted small">The Studies table is shown at the top of this page, because no trial trajectory exists yet.</p>}
+        <p className="muted small">
+          Primary values are the selection-split metric.
+          <Info label="About primary values">
+            <p>Primary values are the Study's selection-split metric. Test and holdout numbers are not drawn here.</p>
+          </Info>
+        </p>
       </Section>
 
       <Section title="Selection-adjusted evidence" id="sec-selection">
@@ -264,8 +303,13 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         <EvidenceDocsBlock project={project} />
       </Section>
 
-      <Section title="Other lanes" id="sec-lanes" fold caption="Lanes the fallback Studio still draws.">
-        <p className="muted small">Lanes still marked legacy are drawn by the fallback Studio from the same verified snapshot.</p>
+      <Section title="Other lanes" id="sec-lanes" fold caption="Native lane pages for this Project.">
+        <p className="muted small">
+          Every lane below has a native page here.
+          <Info label="About the lanes">
+            <p>Lanes with evidence in this Project open their native page. A lane the Studio does not draw natively would open the legacy Studio instead.</p>
+          </Info>
+        </p>
         <ul className="plain">
           {OTHER_LANES.map((lane) => (
             <li key={lane.key} className="lane">

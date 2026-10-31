@@ -16,10 +16,9 @@
 .hm-title { margin: 0; font: 500 11px/16px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .hm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-4); margin: 0; }
 
-.trial { margin: var(--space-3) 0 var(--space-5); display: grid; gap: 2px; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-strong); border-left: 4px solid var(--warn); background: var(--raised); font: var(--type-body); }
+.trial { margin: 0; display: flex; align-items: center; gap: var(--space-2); padding: 4px var(--space-3); border: 1px solid var(--line-strong); border-left: 4px solid var(--warn); background: var(--raised); font: var(--type-small); }
 .trial.is-pass { border-left-color: var(--ok); }
-.trial p { margin: 0; }
-.trial-head { display: flex; align-items: center; gap: var(--space-2); font-weight: 500; }
+.trial > span:not(.info) { flex: 1; min-width: 0; }
 
 .np { font: var(--type-body); margin-top: var(--space-5); }
 .np summary { cursor: pointer; font: var(--type-small); color: var(--muted); width: max-content; padding: 2px 0; }

@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { niceTicks } from '../factorMath'
+import { Info } from '../../components/Info'
 import type { PathPoint } from './portfolioTypes'
 
 const W = 980
@@ -64,7 +65,7 @@ export function PortfolioChart({
   const hasExpo = points.some((p) => finite(p.grossExposure) || finite(p.netExposure))
   const showExpo = on.exposure && hasExpo
 
-  const heights = { growth: 250, dd: 110, expo: 110 }
+  const heights = { growth: 210, dd: 90, expo: 90 }
   const gTop = m.t
   const gBot = gTop + heights.growth
   const dTop = gBot + GAP
@@ -151,10 +152,22 @@ export function PortfolioChart({
   return (
     <figure className="chart pf-chart">
       <figcaption>
-        <h3 id={`${id}-t`}>Net growth, benchmark and drawdown</h3>
-        <p className="muted small" id={`${id}-d`}>
+        <h3 id={`${id}-t`} className="sr-only">Net growth, benchmark and drawdown</h3>
+        <p className="sr-only" id={`${id}-d`}>
           Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path).
           {totalRows !== undefined && sampledRows !== undefined && <> Sampled path: {sampledRows} of {totalRows.toLocaleString('en-US')} daily rows.</>} Hover the chart, or focus it and use the arrow keys, to read a date.
+        </p>
+        <p className="muted small">
+          Growth of 1.0 after costs
+          {totalRows !== undefined && sampledRows !== undefined && <> · {sampledRows} of {totalRows.toLocaleString('en-US')} daily rows</>}
+          <Info label="About this chart">
+            <p>Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path). Hover the chart, or focus it and use the arrow keys, to read a date.</p>
+            <p>
+              Transition ticks (bottom of the growth panel) mark only the dates of the server&apos;s recent signal transitions
+              {tickDates.length ? ` (${tickDates.length} distinct dates)` : ''}; earlier ones are not published, so a tick-free stretch does not mean no trading.
+              {note ? ` ${note}` : ''}
+            </p>
+          </Info>
         </p>
       </figcaption>
       <div className="chart-bar">
@@ -314,11 +327,6 @@ export function PortfolioChart({
         ) : (
           <span className="faint">Hover the chart to read a date.</span>
         )}
-      </p>
-      <p className="muted small chart-note">
-        Transition ticks (bottom of the growth panel) mark only the dates of the server&apos;s recent signal transitions
-        {tickDates.length ? ` (${tickDates.length} distinct dates)` : ''}; earlier ones are not published, so a tick-free stretch does not mean no trading.
-        {note ? ` ${note}` : ''}
       </p>
       <details className="datatable">
         <summary>Data table</summary>

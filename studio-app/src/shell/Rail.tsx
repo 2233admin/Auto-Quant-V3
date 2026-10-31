@@ -78,7 +78,7 @@ export function Rail({ route, data, narrow, onSearch }: RailProps) {
         </section>
       )}
       <div className="railfoot">
-        <a className="railgit" href="/legacy">Legacy Studio →</a>
+        <a className="railgit" href="/legacy" title="Only for lanes without a native page">Legacy Studio →</a>
         {harness && (
           <span className="mono" translate="no">
             AQ {harness.version}

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ProjectSnapshot, ProjectSummary, StudyRow, WorkspaceSummary } from '../api'
+import { Info } from '../components/Info'
 import { Sparkline } from '../components/ProjectCard'
 import { pickIntegrity } from '../components/TrialCounter'
 import { num, plural, when } from '../format'
@@ -90,7 +91,7 @@ export function FactorLibrary({ workspace, go }: { workspace: WorkspaceSummary |
         </>
       ),
     },
-    { id: 'project', label: 'Project', sort: (r) => r.project.name, render: (r) => <span translate="no">{r.project.name}</span> },
+    { id: 'project', label: 'Project', sort: (r) => r.project.name, render: (r) => <span className="lib-wrap" translate="no">{r.project.name}</span> },
     {
       id: 'verdict',
       label: 'Verdict',
@@ -164,8 +165,13 @@ export function FactorLibrary({ workspace, go }: { workspace: WorkspaceSummary |
         <DataTable rows={shown} cols={cols} rowKey={(r) => r.key} href={href} go={go} initial={{ id: 'last', dir: -1 }} caption="Factor Studies across all Projects" />
       )}
       <p className="muted small">
-        Verdicts come from the server&apos;s Factor qualification. The server publishes it for one Run per Project, so other Studies show &quot;Not published&quot; rather than a guess.
-        Trials are counted per Project research family, not per Study.
+        Verdicts are the server&apos;s Factor qualification.
+        <Info label="About verdicts and trials">
+          <p>
+            Verdicts come from the server&apos;s Factor qualification. The server publishes it for one Run per Project, so other Studies show &quot;Not published&quot; rather than a guess.
+            Trials are counted per Project research family, not per Study.
+          </p>
+        </Info>
       </p>
     </div>
   )

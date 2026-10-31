@@ -1,5 +1,7 @@
 import type { ProjectSnapshot } from '../../api'
+import { Info } from '../../components/Info'
 import { MetricTile } from '../../components/MetricTile'
+import { HeroLine, HeroTiles, type HeroTile } from '../hero'
 import { Section, SectionNav } from '../../design/layout'
 import { Block, day, finite, fn, Kv, sn, sp, up } from '../portfolio/pfmt'
 import { LaneChart, type ChartSeries } from './LaneChart'
@@ -15,6 +17,20 @@ function statusOf(sizing: Sizing | undefined): { word: string; glyph: 'supported
   if (!sizing || sizing.status === 'not-requested') return { word: 'Descriptive audit', glyph: 'empty', signal: false }
   const ok = sizing.result?.ceilingSatisfied === true
   return { word: words(sizing.status).replace(/^./, (c) => c.toUpperCase()), glyph: ok ? 'supported' : 'refuted', signal: !ok }
+}
+
+function coreTiles(x: BookRiskDiagnostics): HeroTile[] {
+  const c = x.current
+  const primary = x.lookbacks?.find((l) => Number(l.lookbackBars) === Number(c.lookbackBars))
+  const holdings = Object.keys(x.positionSnapshot.weights ?? {}).length
+  return [
+    { label: 'Annualized volatility', value: up(c.annualizedVolatility, 2), note: `${n0(c.observations)} aligned returns` },
+    { label: 'Effective risk bets', value: fn(c.effectiveRiskBets), note: `${holdings} reported holdings` },
+    { label: 'First principal component', value: up(c.firstPrincipalComponentVarianceShare, 1), note: 'correlation crowding' },
+    { label: 'Component-risk HHI', value: fn(c.componentRiskHhi, 3), note: 'lower is more diversified' },
+    { label: 'Largest contributor', value: primary?.largestAbsoluteRiskContributor ?? '—', note: `${up(c.largestAbsoluteRiskContributorShare, 1)} of absolute risk` },
+    { label: 'Max drawdown', value: sp(c.maximumDrawdown, 2), note: 'constant weights' },
+  ]
 }
 
 function Tiles({ x }: { x: BookRiskDiagnostics }) {
@@ -38,17 +54,20 @@ function Tiles({ x }: { x: BookRiskDiagnostics }) {
   )
 }
 
-function Contributions({ x }: { x: BookRiskDiagnostics }) {
+function Contributions({ x, part = 'both' }: { x: BookRiskDiagnostics; part?: 'bars' | 'table' | 'both' }) {
   const rows = x.riskContributions ?? []
   if (!rows.length) return <NaBox why="riskContributions is not in the payload" />
   return (
     <div className="vstack">
+      {part !== 'table' && (
       <ShareBars
         label="Absolute risk share by holding"
         fillLabel="Bar: absolute risk share"
         markLabel="Tick: reported weight"
         rows={rows.map((r) => ({ name: r.asset, share: r.absoluteRiskShare, mark: r.weight, text: `${up(r.absoluteRiskShare, 1)} risk · ${up(r.weight, 1)} weight` }))}
       />
+      )}
+      {part !== 'bars' && (
       <div className="tablewrap lane-narrow">
         <table className="tbl">
           <thead>
@@ -73,6 +92,7 @@ function Contributions({ x }: { x: BookRiskDiagnostics }) {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   )
 }
@@ -237,7 +257,12 @@ function Scenarios({ x }: { x: BookRiskDiagnostics }) {
   return (
     <div className="vstack">
       <p className="muted small lane-note">
-        Ranked by {words(cmp?.ranking?.metric)} ({cmp?.ranking?.direction ?? '—'} first). Selection authority: <span className="mono">{cmp?.ranking?.selectionAuthority ?? '—'}</span>. The ranking describes the supplied books only; it does not pick one.
+        Ranked by {words(cmp?.ranking?.metric)} ({cmp?.ranking?.direction ?? '—'} first).
+        <Info label="About this ranking">
+          <p>
+            Selection authority: <span className="mono">{cmp?.ranking?.selectionAuthority ?? '—'}</span>. The ranking describes the supplied books only; it does not pick one.
+          </p>
+        </Info>
       </p>
       <div className="tablewrap">
         <table className="tbl">
@@ -340,8 +365,12 @@ function SizingBlock({ sizing }: { sizing: Sizing | undefined }) {
         />
       </dl>
       <p className="muted small lane-note">
-        The weight bound is {finite(p?.minimumWeight) ? `a minimum of ${up(p?.minimumWeight, 1)}` : finite(p?.maximumWeight) ? `a maximum of ${up(p?.maximumWeight, 1)}` : 'not published'}. Historical covariance only; authority{' '}
-        <span className="mono">{p?.authority?.decisionPath ?? '—'}</span>, trading <span className="mono">{p?.authority?.tradingAuthority ?? '—'}</span>.
+        {finite(p?.minimumWeight) ? `Weight bound: minimum ${up(p?.minimumWeight, 1)}` : finite(p?.maximumWeight) ? `Weight bound: maximum ${up(p?.maximumWeight, 1)}` : 'Weight bound not published'}.
+        <Info label="About this sizing">
+          <p>
+            Historical covariance only; authority <span className="mono">{p?.authority?.decisionPath ?? '—'}</span>, trading <span className="mono">{p?.authority?.tradingAuthority ?? '—'}</span>.
+          </p>
+        </Info>
       </p>
       <div className="tablewrap">
         <table className="tbl">
@@ -456,6 +485,10 @@ export function BookRiskPage({ project }: { project: ProjectSnapshot }) {
   const rx = (p: { timestamp: string }) => ({ x: Date.parse(p.timestamp), xl: day(p.timestamp) })
   const rs = roll?.summary
 
+  const headText = `${holdings} holdings carry ${fn(x.current.effectiveRiskBets)} effective risk bets and ${up(x.current.annualizedVolatility, 2)} annualized volatility over ${n0(x.current.lookbackBars)} bars${
+    sizing && sizing.status !== 'not-requested' ? `; sizing ceiling ${sizing.result?.ceilingSatisfied ? 'satisfied' : 'not reachable within the weight bound'}` : '; no sizing question was asked'
+  }`
+
   return (
     <div className="pg">
       <LaneHead
@@ -464,32 +497,41 @@ export function BookRiskPage({ project }: { project: ProjectSnapshot }) {
         projectName={project.name}
         lines={[
           <>
-            Run <span className="mono">{run?.id?.replace(/^run-/, '') ?? '—'}</span>, {holdings} reported holdings as of {day(x.positionSnapshot.asOf)}, {n0(x.current.lookbackBars)}-bar primary window. Descriptive audit of an externally reported book; no trading authority.
+            Run <span className="mono">{run?.id?.replace(/^run-/, '') ?? '—'}</span> · {holdings} reported holdings as of {day(x.positionSnapshot.asOf)} · {n0(x.current.lookbackBars)}-bar window
           </>,
+          'Descriptive audit of an externally reported book; no trading authority.',
           'This lane has no train, validation or test split: every number comes from the content-locked closed OHLCV history, so no test number exists to hide.',
         ]}
       />
 
-      <div className="band">
-        <Section title="Summary" id="br-summary" caption={`${holdings} holdings, ${up(x.positionSnapshot.cashWeight, 1)} cash, ${x.positionSnapshot.baseCurrency ?? '—'}.`}>
-          <div className="vstack">
-            <StatusBand
-              id="br-status-word"
-              kicker="Server status · sizing question"
-              word={st.word}
-              glyph={st.glyph}
-              signal={st.signal}
-              lead="Read from the server's sizing status only. Without a sizing question this lane is a description, never a pass or fail."
-              reasons={reasons}
-            />
-            <Tiles x={x} />
+      <div className="hero-stack">
+        <HeroLine
+          tone={st.signal ? 'bad' : sizing && sizing.status !== 'not-requested' ? 'ok' : 'warn'}
+          word={st.word}
+          why={
+            <Info label="Why this status">
+              <p>Read from the server&apos;s sizing status only. Without a sizing question this lane is a description, never a pass or fail.</p>
+              <p className="faint mono">positionSizing.status = {sizing?.status ?? 'not-requested'}</p>
+            </Info>
+          }
+        >
+          {headText}
+        </HeroLine>
+
+        <section aria-labelledby="br-contrib">
+          <div className="lane-hero-head">
+            <h2 id="br-contrib">Risk contributions</h2>
           </div>
-        </Section>
+          <Contributions x={x} part="bars" />
+        </section>
+
+        <HeroTiles items={coreTiles(x)} label="Core numbers" />
       </div>
 
       <SectionNav
         items={[
-          { id: 'br-contrib', label: 'Risk contributions' },
+          { id: 'br-summary', label: 'Status and metrics' },
+          { id: 'br-table', label: 'Contribution table' },
           { id: 'br-reduce', label: 'Reductions' },
           { id: 'br-windows', label: 'Windows' },
           { id: 'br-corr', label: 'Correlation' },
@@ -500,11 +542,31 @@ export function BookRiskPage({ project }: { project: ProjectSnapshot }) {
         ]}
       />
 
-      <Section title="Risk contributions" id="br-contrib" caption="Who carries the book's variance, against what each holding weighs.">
-        <Contributions x={x} />
+      <div className="band">
+        <Section title="Status and metrics" id="br-summary" caption={`${holdings} holdings, ${up(x.positionSnapshot.cashWeight, 1)} cash, ${x.positionSnapshot.baseCurrency ?? '—'}.`}>
+          <div className="vstack">
+            <StatusBand
+              id="br-status-word"
+              kicker="Server status · sizing question"
+              word={st.word}
+              glyph={st.glyph}
+              signal={st.signal}
+              lead="Read from the server's sizing status only. Without a sizing question this lane is a description, never a pass or fail."
+              reasons={reasons}
+            />
+            <details className="pf-allmetrics">
+              <summary>All metrics</summary>
+              <Tiles x={x} />
+            </details>
+          </div>
+        </Section>
+      </div>
+
+      <Section title="Contribution table" id="br-table" fold caption="Weight, absolute and signed risk share, component variance.">
+        <Contributions x={x} part="table" />
       </Section>
 
-      <Section title="Reduction priority" id="br-reduce" caption="Standardized 1% cash-funded reductions, ranked by volatility removed per unit of weight. Historical sensitivity, not advice.">
+      <Section title="Reduction priority" id="br-reduce" caption="Standardized 1% cash-funded reductions, ranked.">
         <Reductions x={x} />
       </Section>
 
@@ -516,7 +578,7 @@ export function BookRiskPage({ project }: { project: ProjectSnapshot }) {
         <Correlations x={x} />
       </Section>
 
-      <Section title="Caller-supplied scenarios" id="br-scen" caption="Complete hypothetical books the caller named. Nothing is searched or optimized.">
+      <Section title="Caller-supplied scenarios" id="br-scen" caption="Caller-named hypothetical books; nothing is optimized.">
         <Scenarios x={x} />
       </Section>
 
@@ -524,7 +586,7 @@ export function BookRiskPage({ project }: { project: ProjectSnapshot }) {
         <SizingBlock sizing={sizing} />
       </Section>
 
-      <Section title="Path of the constant-weight book" id="br-path" caption="Close-to-close research path of the reported weights, then the rolling risk audit.">
+      <Section title="Path of the constant-weight book" id="br-path" caption="Constant-weight research path, then rolling risk.">
         <div className="vstack">
           {eq?.available === false || eqPts.length < 2 ? (
             <NaBox why={eq?.available === false ? 'the Run publishes no equity path' : `the Run publishes ${eqPts.length} equity points, too few to draw a path`} />

@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import type { ProjectSnapshot } from '../../api'
+import { Info } from '../../components/Info'
 import { MetricTile } from '../../components/MetricTile'
+import { HeroLine, HeroTiles, type HeroTile } from '../hero'
 import { VerdictBand, type Reason, type Verdict } from '../../components/VerdictBand'
 import { Section, SectionNav } from '../../design/layout'
 import { routeHref } from '../../route'
@@ -241,23 +243,83 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
   const bookDate = a.latestDecision?.asOf
   const bookHidden = !outsideTest(bookDate) || !outsideTest(cs?.asOf) ? `the book is dated ${day(cs?.asOf ?? bookDate)}, inside the test split, and no test audit is published for this Run` : null
 
+  const perf = a.splits?.[effective]
+  const pfmt = (m: Metric, v: number | null | undefined) =>
+    m.kind === 'pct' ? (m.key === 'positive_rate' || m.key === 'annual_volatility' || m.key === 'expected_shortfall_95' || m.key === 'tracking_error' ? up(v, 2) : sp(v)) : fn(v)
+  const coreKeys: Metric['key'][] = ['sharpe', 'total_return', 'maximum_drawdown', 'annual_volatility', 'calmar', 'active_annual_return']
+  const tiles: HeroTile[] = coreKeys.map((key) => {
+    const m = METRICS.find((x) => x.key === key)!
+    const r = perf?.reference?.[key]
+    return { label: m.label, value: pfmt(m, perf?.candidate?.[key]), note: finite(r) ? `reference ${pfmt(m, r)}` : undefined }
+  })
+  const adv = c?.validationNetSharpeAdvantage
+  const headText = c?.statement
+    ? `${c.statement.replace(/\.$/, '')}${finite(adv) ? ` (net Sharpe advantage ${sn(adv, 2)})` : ''}`
+    : 'no server conclusion is published for this Run'
+
   return (
     <div className="pg al">
       <header className="pg-head">
         <h1>Strategic allocation</h1>
         <p className="muted small">
-          Project <a href={back}>{project.name}</a>. Run <span className="mono">{a.run?.id?.replace(/^run-/, '') ?? '—'}</span>. Equal-risk-contribution construction against a fixed-weight reference. Research diagnostics; no trading authority.
-        </p>
-        <p className="muted small">
-          Selection uses the {a.splitProtocol?.selectionSplit ?? 'validation'} split only. Test is <span className="mono">{a.splitProtocol?.testRole ?? '—'}</span>
-          {c?.testUsedForSelection === false ? ' and is never used for selection' : ''}.
-          {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+          Project <a href={back}>{project.name}</a> · Run <span className="mono">{a.run?.id?.replace(/^run-/, '') ?? '—'}</span>
+          <Info label="About this page">
+            <p>
+              Equal-risk-contribution construction against a fixed-weight reference. Research diagnostics; no trading authority. Selection uses the {a.splitProtocol?.selectionSplit ?? 'validation'} split only.
+              Test is <span className="mono">{a.splitProtocol?.testRole ?? '—'}</span>
+              {c?.testUsedForSelection === false ? ' and is never used for selection' : ''}.
+              {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+            </p>
+          </Info>
         </p>
       </header>
 
+      <div className="hero-stack">
+        <HeroLine
+          tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'}
+          word={word}
+          why={
+            <Info label="Why this verdict">
+              <p>Read from the server conclusion enum only. {c?.selectionBasis ? <>Basis <span className="mono">{c.selectionBasis}</span>. </> : null}It says how the candidate compared with the reference, nothing about trading.</p>
+              <p className="faint mono">conclusion.status = {c?.status ?? '—'}</p>
+            </Info>
+          }
+        >
+          {headText}
+        </HeroLine>
+
+        <section aria-labelledby="al-path" className="pf-hero-chart">
+          <div className="pf-hero-head">
+            <h2 id="al-path">Daily path</h2>
+            {toggle}
+          </div>
+          {points.length >= 2 ? (
+            <AllocationChart points={points} windows={windows} ceiling={a.contract?.portfolioPolicy?.annualizedVolatilityCeiling} totalRows={a.dataset?.observations} sampledRows={allPoints.length} note={hiddenNote} />
+          ) : (
+            <div className="empty" role="status">
+              <span className="badge">Not available</span>
+              <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a path.</p>
+            </div>
+          )}
+        </section>
+
+        <HeroTiles items={tiles} label={`Core numbers, ${effective} split`} />
+      </div>
+
+      <SectionNav
+        items={[
+          { id: 'al-summary', label: 'Verdict and metrics' },
+          { id: 'al-impl', label: 'Implementation' },
+          { id: 'al-book', label: 'Book and weights' },
+          { id: 'al-fidelity', label: 'Construction fidelity' },
+          { id: 'al-contract', label: 'Contract' },
+          { id: 'al-prov', label: 'Provenance' },
+        ]}
+      />
+
       <div className="band">
         <Section
-          title="Summary"
+          title="Verdict and metrics"
           id="al-summary"
           caption={`${a.contract?.tradableAssets?.length ?? '—'} tradable assets; ${words(a.contract?.method?.kind)}; benchmark ${words(a.contract?.benchmark?.kind)}; ${a.dataset?.observations ?? '—'} daily rows.`}
         >
@@ -267,46 +329,33 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
               kicker="Verdict · validation split · relative performance only"
               verdict={verdict}
               word={word}
-              detail={<>Read from the server conclusion enum only. {c?.selectionBasis ? <>Basis <span className="mono">{c.selectionBasis}</span>. </> : null}It says how the candidate compared with the reference, nothing about trading.</>}
+              detail={<>{c?.selectionBasis ? <>Basis <span className="mono">{c.selectionBasis}</span>.</> : null}</>}
               reasons={reasons}
             />
-            <div className="al-bar-row">{toggle}</div>
-            <PerfTiles a={a} split={effective} />
-            {testVisible && effective === 'test' && <p className="small muted">Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>}
+            <details className="pf-allmetrics">
+              <summary>All {effective} metrics</summary>
+              <PerfTiles a={a} split={effective} />
+            </details>
+            {testVisible && effective === 'test' && (
+              <p className="small muted">
+                Test is a visible audit.
+                <Info label="About the test split">
+                  <p>Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>
+                </Info>
+              </p>
+            )}
           </div>
         </Section>
       </div>
 
-      <SectionNav
-        items={[
-          { id: 'al-path', label: 'Path' },
-          { id: 'al-impl', label: 'Implementation' },
-          { id: 'al-book', label: 'Book and weights' },
-          { id: 'al-fidelity', label: 'Construction fidelity' },
-          { id: 'al-contract', label: 'Contract' },
-          { id: 'al-prov', label: 'Provenance' },
-        ]}
-      />
-
-      <Section title="Daily path" id="al-path" caption="Sampled daily net returns of the candidate and the reference, with forecast volatility against its ceiling.">
-        {points.length >= 2 ? (
-          <AllocationChart points={points} windows={windows} ceiling={a.contract?.portfolioPolicy?.annualizedVolatilityCeiling} totalRows={a.dataset?.observations} sampledRows={allPoints.length} note={hiddenNote} />
-        ) : (
-          <div className="empty" role="status">
-            <span className="badge">Not available</span>
-            <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a path.</p>
-          </div>
-        )}
-      </Section>
-
-      <Section title="Implementation and cost" id="al-impl" caption="Turnover, cost and the volatility ceiling, as published for the selected split.">
+      <Section title="Implementation and cost" id="al-impl" caption="Turnover, cost and the volatility ceiling.">
         <div className="vstack">
           <div className="al-bar-row">{toggle}</div>
           <ImplementationTiles a={a} split={effective} />
         </div>
       </Section>
 
-      <Section title="Book and weights" id="al-book" caption="Last published decision, the drifted current book and the reference.">
+      <Section title="Book and weights" id="al-book" caption="Last decision, drifted current book and reference.">
         <div className="vstack">
           <Block title="Current state">
             {cs && !bookHidden ? (
@@ -331,7 +380,7 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
         </div>
       </Section>
 
-      <Section title="Construction fidelity" id="al-fidelity" caption="Equal risk contribution reached, by split. Separate from the performance conclusion.">
+      <Section title="Construction fidelity" id="al-fidelity" caption="Equal risk contribution reached, by split.">
         <div className="vstack">
           <FidelityTable a={a} testVisible={testVisible} />
           {a.solver && (
@@ -349,7 +398,7 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
         </div>
       </Section>
 
-      <Section title="Contract" id="al-contract" fold caption="Method, portfolio policy, benchmark and split protocol the Run was held to.">
+      <Section title="Contract" id="al-contract" fold caption="Method, policy, benchmark and splits.">
         <div className="cols">
           <Block title="Construction and policy">
             <Kv
@@ -382,7 +431,7 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
         </div>
       </Section>
 
-      <Section title="Provenance and verification" id="al-prov" fold caption="Run identity and what the server re-derived from the immutable artifacts.">
+      <Section title="Provenance and verification" id="al-prov" fold caption="Run identity and server re-derivation.">
         <div className="cols">
           <Block title="Run and dataset">
             <Kv

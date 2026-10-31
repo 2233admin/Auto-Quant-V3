@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import type { ProjectSnapshot, ProjectSummary, RunRow, WorkspaceSummary } from '../api'
 import { num, plural, when } from '../format'
 import type { Verdict } from '../pages/FactorEvidence'
+import { Info } from '../components/Info'
 import { routeHref } from '../route'
 import { byNewest, laneOfRun, splitOf, useAllProjects, type Loaded } from './data'
 import { DataTable, type Col } from './DataTable'
@@ -52,7 +53,8 @@ function rowsOf(all: Loaded[]): Row[] {
       const metric = latest?.primaryMetric ?? ex?.primaryMetric ?? null
       const stage = lane === 'Portfolio' ? ((project.portfolioExplorer?.strategyViability?.diagnosis?.stage as string | undefined) ?? null) : null
       const runId = latest?.id ?? ex?.id ?? null
-      const portfolio = lane === 'Portfolio' && !!project.portfolioExplorer
+      const page = lane === 'Portfolio' ? 'portfolio' : lane === 'RL policy' ? 'rl' : 'allocation'
+      const portfolio = !!explorer
       out.push({
         key: `${l.summary.id}/${lane}`,
         project: l.summary,
@@ -65,9 +67,9 @@ function rowsOf(all: Loaded[]): Row[] {
         runs: runs.length,
         last: latest?.startedAt ?? ex?.startedAt ?? null,
         runId,
-        // Portfolio has its own lane page; the other lanes open their latest Run until their pages land.
+        // Portfolio, RL and Allocation each have a native lane page; without an explorer the row opens its latest Run.
         hasPage: portfolio,
-        href: portfolio ? routeHref({ view: 'portfolio', id: l.summary.id }) : runId ? routeHref({ view: 'run', id: l.summary.id, run: runId }) : routeHref({ view: 'project', id: l.summary.id }),
+        href: portfolio ? routeHref({ view: page, id: l.summary.id }) : runId ? routeHref({ view: 'run', id: l.summary.id, run: runId }) : routeHref({ view: 'project', id: l.summary.id }),
       })
     }
   }
@@ -160,7 +162,10 @@ export function StrategyLibrary({ workspace, go }: { workspace: WorkspaceSummary
         <DataTable rows={shown} cols={cols} rowKey={(r) => r.key} href={(r) => r.href} go={go} initial={{ id: 'last', dir: -1 }} caption="Strategy-like lanes across all Projects" />
       )}
       <p className="muted small">
-        Evidence only, never a trading recommendation: every number is in-sample unless its page says otherwise. Lanes without their own page yet open their latest Run.
+        Evidence only, never a trading recommendation.
+        <Info label="About these rows">
+          <p>Every number is in-sample unless its page says otherwise. Portfolio, RL and Allocation rows open their native lane page; a row without lane evidence opens its latest Run.</p>
+        </Info>
       </p>
     </div>
   )

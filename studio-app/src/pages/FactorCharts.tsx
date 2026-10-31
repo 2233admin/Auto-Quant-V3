@@ -1,6 +1,7 @@
 import { useId, useState, type ReactNode } from 'react'
 import type { FactorDiagnostics, FactorQuantileRow, FactorSplit } from '../api'
 import { num, ret } from '../format'
+import { Info } from '../components/Info'
 import {
   expectedMaxZ,
   familywiseThreshold,
@@ -23,6 +24,7 @@ const day = (ms: number) => new Date(ms).toISOString().slice(0, 10)
 function Chart({
   title,
   desc,
+  short,
   controls,
   legend,
   children,
@@ -30,7 +32,10 @@ function Chart({
   note,
 }: {
   title: string
+  /** Full explanation: read by screen readers and shown in the info disclosure. */
   desc: string
+  /** One visible line under the title; the full `desc` and `note` move behind the "?" disclosure. */
+  short?: string
   controls?: ReactNode
   legend?: ReactNode
   children: (ids: { labelledBy: string }) => ReactNode
@@ -41,10 +46,27 @@ function Chart({
   return (
     <figure className="chart">
       <figcaption>
-        <h3 id={`${id}-t`}>{title}</h3>
-        <p className="muted small" id={`${id}-d`}>
-          {desc}
-        </p>
+        <div className="chart-title">
+          <h3 id={`${id}-t`}>{title}</h3>
+          {short && (
+            <Info label={`About ${title}`}>
+              <p>{desc}</p>
+              {note && <p>{note}</p>}
+            </Info>
+          )}
+        </div>
+        {short ? (
+          <>
+            <p className="muted small chart-cap">{short}</p>
+            <p className="sr-only" id={`${id}-d`}>
+              {desc}
+            </p>
+          </>
+        ) : (
+          <p className="muted small" id={`${id}-d`}>
+            {desc}
+          </p>
+        )}
       </figcaption>
       {(controls || legend) && (
         <div className="chart-bar">
@@ -53,7 +75,7 @@ function Chart({
         </div>
       )}
       {children({ labelledBy: `${id}-t ${id}-d` })}
-      {note && <p className="muted small chart-note">{note}</p>}
+      {note && !short && <p className="muted small chart-note">{note}</p>}
       <details className="datatable">
         <summary>Data table</summary>
         <div className="tablewrap">{table}</div>
@@ -93,7 +115,7 @@ const W = 760
 
 /* ---------------------------------------------------------------- 1. IC by horizon x split */
 
-export function IcByHorizon({ study }: { study: FactorDiagnostics }) {
+export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: boolean }) {
   const pattern = useId()
   const rows = [...study.horizonProfile].sort((a, b) => a.horizon - b.horizon)
   const primary = study.protocol.primaryHorizon
@@ -104,7 +126,7 @@ export function IcByHorizon({ study }: { study: FactorDiagnostics }) {
       return { horizon: row.horizon, split, mean: s.meanRankIc, se: hacStandardError(s), n: s.observations, t: s.hacTStatistic, sufficient: s.sufficient }
     }),
   )
-  const H = 360
+  const H = hero ? 292 : 360
   const m = { l: 60, r: 16, t: 24, b: 78 }
   const values = bars.flatMap((b) => (b.mean === null ? [] : b.se === null ? [b.mean] : [b.mean - 1.96 * b.se, b.mean + 1.96 * b.se]))
   const lo = Math.min(0, ...values)
@@ -122,6 +144,7 @@ export function IcByHorizon({ study }: { study: FactorDiagnostics }) {
   return (
     <Chart
       title="Rank IC by horizon and split"
+      short="Mean rank IC with ±1.96 HAC whiskers; a whisker crossing zero means noise."
       desc="Mean rank IC of the factor against the forward return, with ±1.96 HAC standard-error whiskers. A whisker that crosses zero means the mean is not distinguishable from noise."
       legend={
         <span className="legend">
@@ -285,6 +308,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
   return (
     <Chart
       title={`Rank IC over time, ${horizon}-bar horizon`}
+      short={`Sampled rank IC, trailing mean of ${WINDOW}; dashed lines are each split's mean.`}
       desc={`Sampled per-timestamp rank IC (${icPath.sampledRows} of ${int(icPath.totalRows)} timestamps) with a trailing mean of ${WINDOW} samples. Dashed lines are each split's published mean IC over all of its timestamps.`}
       controls={
         <div className="seg" role="group" aria-label="Forward horizon">
@@ -430,6 +454,7 @@ export function Quantiles({ study }: { study: FactorDiagnostics }) {
   return (
     <Chart
       title={`Mean forward return by factor quantile, ${primary}-bar horizon`}
+      short="Low, middle and high factor groups per split; a useful factor rises from low to high."
       desc="Mean forward return of the low, middle and high factor groups in each split. A useful factor shows the bars rising from low to high."
       table={
         <table className="tbl">
@@ -558,6 +583,7 @@ export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontie
   return (
     <Chart
       title="Noise frontier: how large the best IC looks by luck alone"
+      short={`Best IC expected from ${n} trial${n === 1 ? '' : 's'} of pure noise, against the family-wise pass line.`}
       desc={`With ${n} independent trial${n === 1 ? '' : 's'} in the Project ledger, the best mean IC is expected to reach ${ic4(expected(n))} under pure noise. The solid curve is that expectation as trials grow; the dotted curve is the mean IC the published family-wise HAC rule demands.`}
       legend={
         <span className="legend">

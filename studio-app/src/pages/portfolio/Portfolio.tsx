@@ -7,6 +7,8 @@ import { PortfolioChart, type SplitWindow } from './PortfolioChart'
 import { BookBlock, EpisodesTable, NeighborhoodBlock, TransitionsTable, ViabilityBlock } from './PortfolioBlocks'
 import type { PerfSummary, PortfolioDiagnostics } from './portfolioTypes'
 import { Block, day, finite, fn, Kv, NA, SplitToggle, sp, up } from './pfmt'
+import { Info } from '../../components/Info'
+import { HeroLine, HeroTiles, type HeroTile } from '../hero'
 import './portfolio.css'
 
 type Split = 'validation' | 'test'
@@ -124,10 +126,19 @@ function VerdictBand({ pf }: { pf: PortfolioDiagnostics }) {
         <p className="muted small">
           {d ? (
             <>
-              Stage <span className="mono">{d.stage}</span>; next focus <span className="mono">{d.iterationFocus}</span>.{' '}
+              Stage <span className="mono">{d.stage}</span>.
             </>
           ) : null}
-          Read from the server stage only. This lane never shows Pass: even the best stage still needs robustness checks and a fresh external holdout.
+          <Info label="About this verdict">
+            <p>
+              {d ? (
+                <>
+                  Stage <span className="mono">{d.stage}</span>; next focus <span className="mono">{d.iterationFocus}</span>.{' '}
+                </>
+              ) : null}
+              Read from the server stage only. This lane never shows Pass: even the best stage still needs robustness checks and a fresh external holdout.
+            </p>
+          </Info>
         </p>
       </div>
       <ul className="verdict-reasons">
@@ -136,7 +147,9 @@ function VerdictBand({ pf }: { pf: PortfolioDiagnostics }) {
             <Glyph kind={r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
             <span>
               {r.text}
-              <span className="faint small mono verdict-field">{r.field}</span>
+              <Info label="Field behind this line">
+                <p className="mono verdict-field">{r.field}</p>
+              </Info>
             </span>
           </li>
         ))}
@@ -203,30 +216,117 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
   const run = pf.run
   const toggle = <SplitToggle value={effective} onChange={setSplit} testVisible={testVisible} />
 
+  const vv = pf.strategyViability?.validation
+  const vSharpe = vv?.net?.sharpe
+  const vBench = vv?.benchmark?.sharpe
+  const verdict = verdictOf(pf)
+  const cur = pf.strategyViability?.[effective]
+  const f = cur?.friction
+  const fmtTile = (key: keyof PerfSummary, kind: 'pct' | 'num', x: number | null | undefined) =>
+    kind === 'pct' ? (key === 'maximumDrawdown' || key.endsWith('Return') ? sp(x) : up(x, 1)) : fn(x)
+  const tileVal = (key: keyof PerfSummary, kind: 'pct' | 'num') => fmtTile(key, kind, cur?.net?.[key])
+  const tileBench = (key: keyof PerfSummary, kind: 'pct' | 'num') => {
+    const x = cur?.benchmark?.[key]
+    return finite(x) ? `benchmark ${fmtTile(key, kind, x)}` : undefined
+  }
+  const tiles: HeroTile[] = [
+    { label: 'Net total return', value: tileVal('totalReturn', 'pct'), note: tileBench('totalReturn', 'pct') },
+    { label: 'Net Sharpe', value: tileVal('sharpe', 'num'), note: tileBench('sharpe', 'num') },
+    { label: 'Max drawdown', value: tileVal('maximumDrawdown', 'pct'), note: tileBench('maximumDrawdown', 'pct') },
+    { label: 'Annualized volatility', value: tileVal('annualVolatility', 'pct'), note: tileBench('annualVolatility', 'pct') },
+    { label: 'One-way turnover / yr', value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—' },
+    { label: 'Total cost drag', value: up(f?.totalCostDrag, 2), note: finite(f?.baseCostBps) ? `at ${fn(f?.baseCostBps, 1)} bps` : undefined },
+  ]
+  const d = pf.strategyViability?.diagnosis
+
   return (
     <div className="pg pf">
       <header className="pg-head">
         <h1>Portfolio</h1>
         <p className="muted small">
-          Project <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a>. Run <span className="mono">{run?.id?.replace(/^run-/, '') ?? '—'}</span> of study{' '}
-          <span className="mono">{run?.studyId ?? '—'}</span>. Research diagnostics of a mechanical strategy; no trading authority.
-        </p>
-        <p className="muted small">
-          Selection uses the {pf.selection?.selectionSplit ?? 'validation'} split only. Test is <span className="mono">{pf.selection?.testRole ?? '—'}</span>
-          {pf.selection?.testEntersSelection === false ? ' and never enters selection' : ''}.
-          {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+          Project <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a> · Run <span className="mono">{run?.id?.replace(/^run-/, '') ?? '—'}</span> · study{' '}
+          <span className="mono">{run?.studyId ?? '—'}</span>
+          <Info label="About this page">
+            <p>
+              Research diagnostics of a mechanical strategy; no trading authority. Selection uses the {pf.selection?.selectionSplit ?? 'validation'} split only. Test is{' '}
+              <span className="mono">{pf.selection?.testRole ?? '—'}</span>
+              {pf.selection?.testEntersSelection === false ? ' and never enters selection' : ''}.
+              {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+            </p>
+          </Info>
         </p>
       </header>
 
+      <div className="hero-stack">
+        <HeroLine
+          tone={verdict === 'fail' ? 'bad' : 'warn'}
+          word={WORD[verdict]}
+          why={
+            d ? (
+              <Info label="Why this verdict">
+                <p>{d.explanation}</p>
+                <p className="faint mono">strategyViability.diagnosis.stage = {d.stage}</p>
+              </Info>
+            ) : undefined
+          }
+        >
+          {finite(vSharpe) && finite(vBench)
+            ? `validation net Sharpe ${fn(vSharpe)}, ${vSharpe - vBench >= 0 ? 'above' : 'below'} benchmark by ${fn(Math.abs(vSharpe - vBench), 1)}`
+            : 'no validation net Sharpe is published for this Run'}
+        </HeroLine>
+
+        <section aria-labelledby="pf-curve" className="pf-hero-chart">
+          <div className="pf-hero-head">
+            <h2 id="pf-curve">Growth and drawdown</h2>
+            {toggle}
+          </div>
+          {points.length >= 2 ? (
+            <PortfolioChart
+              points={points}
+              windows={windows}
+              transitions={transitions.map((r) => r.timestamp)}
+              totalRows={pf.path?.totalRows}
+              sampledRows={pf.path?.sampledRows}
+              note={hiddenNote}
+            />
+          ) : (
+            <div className="empty" role="status">
+              <span className="badge">Not available</span>
+              <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a curve.</p>
+            </div>
+          )}
+        </section>
+
+        <HeroTiles items={tiles} label={`Core numbers, ${effective} split`} />
+      </div>
+
+      <SectionNav
+        items={[
+          { id: 'pf-summary', label: 'Verdict and metrics' },
+          { id: 'pf-viability', label: 'Viability and cost' },
+          { id: 'pf-neighborhood', label: 'Neighborhood' },
+          { id: 'pf-book', label: 'Book and exposure' },
+          { id: 'pf-transitions', label: 'Transitions' },
+          { id: 'pf-episodes', label: 'Episodes' },
+        ]}
+      />
+
       <div className="band">
-        <Section title="Summary" id="pf-summary" caption={`Universe ${pf.universe?.length ?? '—'} assets; ${pf.mandate?.family ?? '—'} mandate; benchmark ${pf.mandate?.benchmark?.kind ?? '—'}.`}>
+        <Section title="Verdict and metrics" id="pf-summary" caption={`Universe ${pf.universe?.length ?? '—'} assets; ${pf.mandate?.family ?? '—'} mandate; benchmark ${pf.mandate?.benchmark?.kind ?? '—'}.`}>
           <div className="vstack">
             <VerdictBand pf={pf} />
-            <div className="pf-bar">{toggle}</div>
-            <MetricTiles pf={pf} split={effective} />
             {testVisible && effective === 'test' && (
-              <p className="small muted">Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>
+              <p className="small muted">
+                Test is a visible audit.
+                <Info label="About the test split">
+                  <p>Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>
+                </Info>
+              </p>
             )}
+            <details className="pf-allmetrics">
+              <summary>All {effective} metrics</summary>
+              <MetricTiles pf={pf} split={effective} />
+            </details>
             <Block title="Whole sampled path (all splits)">
               {sum && testVisible ? (
                 <Kv
@@ -246,43 +346,14 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
         </Section>
       </div>
 
-      <SectionNav
-        items={[
-          { id: 'pf-curve', label: 'Curve' },
-          { id: 'pf-viability', label: 'Viability and cost' },
-          { id: 'pf-neighborhood', label: 'Neighborhood' },
-          { id: 'pf-book', label: 'Book and exposure' },
-          { id: 'pf-transitions', label: 'Transitions' },
-          { id: 'pf-episodes', label: 'Episodes' },
-        ]}
-      />
-
-      <Section title="Growth and drawdown" id="pf-curve">
-        {points.length >= 2 ? (
-          <PortfolioChart
-            points={points}
-            windows={windows}
-            transitions={transitions.map((r) => r.timestamp)}
-            totalRows={pf.path?.totalRows}
-            sampledRows={pf.path?.sampledRows}
-            note={hiddenNote}
-          />
-        ) : (
-          <div className="empty" role="status">
-            <span className="badge">Not available</span>
-            <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a curve.</p>
-          </div>
-        )}
-      </Section>
-
-      <Section title="Viability and cost stress" id="pf-viability" caption="Gross against net, break-even cost, extra delay and the server's diagnosis, as published.">
+      <Section title="Viability and cost stress" id="pf-viability" caption="Gross against net, break-even cost and extra delay.">
         <div className="vstack">
           <div className="pf-bar">{toggle}</div>
           <ViabilityBlock pf={pf} split={effective} />
         </div>
       </Section>
 
-      <Section title="Parameter neighborhood" id="pf-neighborhood" caption="Predeclared nearby configurations. Context only, never a way to pick a better one.">
+      <Section title="Parameter neighborhood" id="pf-neighborhood" caption="Predeclared nearby configurations; context only.">
         <div className="vstack">
           <div className="pf-bar">{toggle}</div>
           <NeighborhoodBlock pf={pf} split={effective} />

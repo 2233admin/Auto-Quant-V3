@@ -3,6 +3,7 @@ import type { ProjectSnapshot, ReportRow, SessionSnapshot, TrialRow } from '../.
 import { num, when } from '../../format'
 import './project.css'
 import { routeHref } from '../../route'
+import { Info } from '../../components/Info'
 
 const NA = (text: string) => <p className="pj-na">Not available: {text}</p>
 
@@ -41,7 +42,7 @@ function ptClass(t: TrialRow): string {
 
 // ---------------------------------------------------------------------------------------------
 
-function Trajectory({ trials, metric }: { trials: TrialRow[]; metric: string }) {
+export function Trajectory({ trials, metric, show = 'both' }: { trials: TrialRow[]; metric: string; show?: 'line' | 'ranked' | 'both' }) {
   const id = useId()
   const pts = trials.filter((t) => typeof t.primaryValue === 'number')
   if (pts.length === 0) return NA('no trial has a primary value yet.')
@@ -65,8 +66,7 @@ function Trajectory({ trials, metric }: { trials: TrialRow[]; metric: string }) 
   const baseline = trials.find((t) => t.role === 'baseline')
   const sorted = [...pts].sort((a, b) => (b.primaryValue as number) - (a.primaryValue as number))
   const ordered = [...pts].sort((a, b) => a.sequence - b.sequence)
-  return (
-    <div className="cols">
+  const line = (
       <figure className="pj-fig" aria-labelledby={`${id}-t`}>
         <h3 className="pj-sub" id={`${id}-t`}>
           Trajectory of the selection metric ({metric})
@@ -105,8 +105,15 @@ function Trajectory({ trials, metric }: { trials: TrialRow[]; metric: string }) 
             Trial sequence
           </text>
         </svg>
-        <p className="muted small">Orange marks the current leader. Validation metric chosen by the fixed Judge. The test split is not drawn.</p>
+        <p className="muted small">
+          Orange marks the current leader.
+          <Info label="About the trajectory">
+            <p>Orange marks the current leader. Validation metric chosen by the fixed Judge. The test split is not drawn.</p>
+          </Info>
+        </p>
       </figure>
+  )
+  const ranked = (
       <figure className="pj-fig">
         <h3 className="pj-sub">Trials ranked by {metric}</h3>
         <svg viewBox={`0 0 ${W} ${24 + sorted.length * 26}`} role="img" aria-label={`Ranked trial values, best first, ${sorted.length} trials`}>
@@ -128,11 +135,18 @@ function Trajectory({ trials, metric }: { trials: TrialRow[]; metric: string }) 
           })}
         </svg>
       </figure>
+  )
+  if (show === 'line') return line
+  if (show === 'ranked') return ranked
+  return (
+    <div className="cols">
+      {line}
+      {ranked}
     </div>
   )
 }
 
-function TrialMatrix({
+export function TrialMatrix({
   trials,
   scope,
 }: {
@@ -182,9 +196,55 @@ function TrialMatrix({
   )
 }
 
+/** The Session the first screen is about: the active one, else the newest. */
+export function focusSessionIndex(project: ProjectSnapshot): number {
+  const active = project.sessions.findIndex((s) => sessionMeta(s).status === 'active')
+  return active >= 0 ? active : project.sessions.length - 1
+}
+
+/** Where the Project stands, in one line, from server fields only (valid, review, latest Experiment verdict). */
+export function projectHeadline(project: ProjectSnapshot): { tone: 'bad' | 'ok'; word: string; text: string; why: string[] } {
+  const review = project.agentWorkBrief?.review
+  const bad = !project.valid || review?.status === 'blocked'
+  const idx = focusSessionIndex(project)
+  const exps = idx >= 0 ? (project.sessions[idx].experiments ?? []) : []
+  const last = exps.length ? exps.reduce((a, b) => (b.sequence > a.sequence ? b : a)) : null
+  const parts: string[] = []
+  if (review?.detail) parts.push(review.detail.replace(/\.$/, ''))
+  if (last) {
+    const head = last.hypothesis.split(':')[0].trim()
+    const id = head.length <= 12 ? head : `Trial ${last.sequence}`
+    const held = last.verdict === 'KEEP' ? 'held' : last.verdict === 'CRASH' ? 'crashed' : 'did not hold'
+    parts.push(`${id} ${held} (${last.verdict})`)
+  }
+  if (parts.length === 0) parts.push(`${project.studies.length} Study, ${project.runs.length} Runs, no Experiment yet`)
+  const why = [review?.label, review?.next, review?.boundary].filter((v): v is string => !!v)
+  return { tone: bad ? 'bad' : 'ok', word: bad ? 'Needs attention' : 'Verified', text: parts.join('; '), why }
+}
+
+/** First-screen chart: trajectory of the selection metric, next to the trial matrix of the focus Session. */
+export function TrialHero({ project }: { project: ProjectSnapshot }) {
+  const idx = focusSessionIndex(project)
+  if (idx < 0) return NA('this Project has no Research Session, so there is no trial trajectory yet.')
+  const s = project.sessions[idx]
+  const dm = s.decisionMatrix
+  const trials = dm?.trials ?? []
+  if (trials.length === 0) return NA('the Session has no decision matrix.')
+  return (
+    <div className="cols cols--3-2 pj-hero">
+      <Trajectory trials={trials} metric={dm?.objective?.metric ?? 'primary metric'} show="line" />
+      <div>
+        <h3 className="pj-sub">Trial matrix</h3>
+        <TrialMatrix trials={trials} scope={dm?.scope} />
+      </div>
+    </div>
+  )
+}
+
 export function ExperimentsBlock({ project }: { project: ProjectSnapshot }) {
   const sessions = project.sessions
   if (sessions.length === 0) return NA('this Project has no Research Session, so there is no Experiment ledger.')
+  const focus = focusSessionIndex(project)
   return (
     <>
       {sessions.map((s, i) => {
@@ -242,14 +302,23 @@ export function ExperimentsBlock({ project }: { project: ProjectSnapshot }) {
               </div>
             )}
             <p className="muted small">
-              {dm?.objective
-                ? `Objective: ${dm.objective.direction} ${dm.objective.metric}; an Experiment must beat the leader by at least ${dm.objective.minimumImprovement} to be kept. `
-                : ''}
-              The Judge assigns verdicts. Values are the validation selection metric.
+              Values are the validation selection metric; the Judge assigns verdicts.
+              <Info label="About the Experiment ledger">
+                <p>
+                  {dm?.objective
+                    ? `Objective: ${dm.objective.direction} ${dm.objective.metric}; an Experiment must beat the leader by at least ${dm.objective.minimumImprovement} to be kept. `
+                    : ''}
+                  The Judge assigns verdicts. Values are the validation selection metric.
+                </p>
+              </Info>
             </p>
-            <h3 className="pj-sub">Trial matrix</h3>
-            {trials.length === 0 ? NA('the Session has no decision matrix.') : <TrialMatrix trials={trials} scope={dm?.scope} />}
-            {trials.length > 0 && <Trajectory trials={trials} metric={dm?.objective?.metric ?? 'primary metric'} />}
+            {trials.length > 0 && i !== focus && (
+              <>
+                <h3 className="pj-sub">Trial matrix</h3>
+                <TrialMatrix trials={trials} scope={dm?.scope} />
+              </>
+            )}
+            {trials.length > 0 && <Trajectory trials={trials} metric={dm?.objective?.metric ?? 'primary metric'} show={i === focus ? 'ranked' : 'both'} />}
           </div>
         )
       })}
@@ -278,10 +347,14 @@ export function SelectionBlock({ project }: { project: ProjectSnapshot }) {
           <div key={meta.id ?? i}>
             <div className="pj-callout" role="note">
               <p>
-                <strong>{passes ? 'The selection adjustment passes.' : 'Headline numbers on this page are in-sample.'}</strong>{' '}
-                {passes
-                  ? 'The selected validation result survives the family-wise threshold. This is diagnostic evidence only and has no trading authority.'
-                  : `They have not survived the multiple-testing adjustment${adj ? '' : ' (it is not available)'}, so treat every IC and verdict here as selected from the trials counted below, not as a confirmed effect.`}
+                <strong>{passes ? 'The selection adjustment passes.' : 'Headline numbers on this page are in-sample.'}</strong>
+                <Info label="About the selection adjustment">
+                  <p>
+                    {passes
+                      ? 'The selected validation result survives the family-wise threshold. This is diagnostic evidence only and has no trading authority.'
+                      : `They have not survived the multiple-testing adjustment${adj ? '' : ' (it is not available)'}, so treat every IC and verdict here as selected from the trials counted below, not as a confirmed effect.`}
+                  </p>
+                </Info>
               </p>
               {si.externalHoldoutRequired && <p>An external holdout is required before any production-grade claim.</p>}
             </div>
@@ -340,7 +413,14 @@ export function SelectionBlock({ project }: { project: ProjectSnapshot }) {
               </dd>
             </dl>
             </div>
-            {si.warning && <p className="muted small">Server warning: {si.warning}</p>}
+            {si.warning && (
+              <p className="muted small">
+                Server warning
+                <Info label="Server warning">
+                  <p>{si.warning}</p>
+                </Info>
+              </p>
+            )}
           </div>
         )
       })}
@@ -532,8 +612,7 @@ export function NextMoveBlock({ project }: { project: ProjectSnapshot }) {
         <p>
           <span className="chip" data-v={review.status === 'blocked' ? 'CRASH' : 'BASELINE'}>
             {review.label}
-          </span>{' '}
-          {review.detail}
+          </span>
         </p>
       )}
       {action?.description ? (
@@ -548,26 +627,38 @@ export function NextMoveBlock({ project }: { project: ProjectSnapshot }) {
       ) : (
         !review?.label && <p className="pj-na">Not available: the Agent Work Brief recommends no action.</p>
       )}
-      {brief.reasons && brief.reasons.some((r) => r.message !== review?.detail) && (
-        <ul className="pj-list">
-          {brief.reasons
-            .filter((r) => r.message !== review?.detail)
-            .map((r, i) => (
-              <li key={r.code ?? i}>{r.message}</li>
-            ))}
-        </ul>
-      )}
       <p className="muted small">
-        {brief.focus?.studyName && <>Study {brief.focus.studyName}. </>}
-        {brief.focus?.laneName && <>Lane {brief.focus.laneName}. </>}
-        {brief.focus?.scientificStage && <>Stage {brief.focus.scientificStage}. </>}
-        {brief.authority && (
-          <>
-            Selection uses the {brief.authority.selectionSplit} split; the test split is {brief.authority.testEntersSelection ? 'part of' : 'never part of'} selection.
-            Trading authority: {brief.authority.tradingAuthority}.
-          </>
-        )}
+        {brief.focus?.studyName ? `Study ${brief.focus.studyName}` : 'Next move'}
+        {brief.authority && <> · trading authority {brief.authority.tradingAuthority}</>}
+        <Info label="About this move">
+          {brief.reasons && brief.reasons.some((r) => r.message !== review?.detail) && (
+            <ul className="pj-list">
+              {brief.reasons
+                .filter((r) => r.message !== review?.detail)
+                .map((r, i) => (
+                  <li key={r.code ?? i}>{r.message}</li>
+                ))}
+            </ul>
+          )}
+          <p>
+            {brief.focus?.studyName && <>Study {brief.focus.studyName}. </>}
+            {brief.focus?.laneName && <>Lane {brief.focus.laneName}. </>}
+            {brief.focus?.scientificStage && <>Stage {brief.focus.scientificStage}. </>}
+            {brief.authority && (
+              <>
+                Selection uses the {brief.authority.selectionSplit} split; the test split is {brief.authority.testEntersSelection ? 'part of' : 'never part of'} selection.
+                Trading authority: {brief.authority.tradingAuthority}.
+              </>
+            )}
+          </p>
+        </Info>
       </p>
     </>
   )
+}
+
+/** The question in one line, for the folded Question section's summary. */
+export function questionLine(project: ProjectSnapshot): string {
+  const text = project.agentWorkBrief?.question?.text ?? project.sessions.find((s) => s.delegation?.request)?.delegation?.request?.question
+  return text ?? 'No question recorded'
 }

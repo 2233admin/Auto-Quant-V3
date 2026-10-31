@@ -41,3 +41,10 @@
 .pf-matrix-fig { max-width: 760px; }
 .pf-tile .pf-delta { color: var(--text); }
 .pf-tiles .pf-sub { display: block; }
+
+.pf-hero-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
+.pf-hero-head h2 { margin: 0; font: var(--type-section); }
+.pf-hero-head .pf-bar { margin: 0; }
+.pf-allmetrics > summary { cursor: pointer; font: var(--type-body); color: var(--muted); padding: var(--space-1) 0; }
+.pf-allmetrics > summary:hover { color: var(--text); }
+.pf-allmetrics[open] > summary { margin-bottom: var(--space-3); }

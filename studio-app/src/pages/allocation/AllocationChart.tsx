@@ -1,3 +1,4 @@
+import { Info } from '../../components/Info'
 import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { niceTicks } from '../factorMath'
 import type { SplitWindow } from '../portfolio/PortfolioChart'
@@ -37,9 +38,9 @@ export function AllocationChart({
   const t0 = t[0]
   const t1 = t[t.length - 1]
 
-  const H1 = 190
-  const H2 = 100
-  const H3 = 100
+  const H1 = 150
+  const H2 = 80
+  const H3 = 70
   const top1 = m.t
   const bot1 = top1 + H1
   const top2 = bot1 + GAP
@@ -111,10 +112,17 @@ export function AllocationChart({
   return (
     <figure className="chart pf-chart">
       <figcaption>
-        <h3 id={`${id}-t`}>Daily net return, forecast volatility and exposure</h3>
-        <p className="muted small" id={`${id}-d`}>
-          Daily returns after costs, not compounded. {sampledRows !== undefined && totalRows !== undefined ? <>Sampled path: {sampledRows} of {totalRows.toLocaleString('en-US')} daily rows. </> : null}
-          Hover the chart, or focus it and use the arrow keys, to read a date.
+        <h3 id={`${id}-t`} className="sr-only">Daily net return, forecast volatility and exposure</h3>
+        <p className="sr-only" id={`${id}-d`}>
+          Daily returns after costs, not compounded. Hover the chart, or focus it and use the arrow keys, to read a date.
+        </p>
+        <p className="muted small">
+          Daily net return, forecast volatility and exposure
+          {sampledRows !== undefined && totalRows !== undefined && <> · {sampledRows} of {totalRows.toLocaleString('en-US')} daily rows</>}
+          <Info label="About this chart">
+            <p>Daily returns after costs, not compounded. Hover the chart, or focus it and use the arrow keys, to read a date.</p>
+            {note ? <p>{note}</p> : null}
+          </Info>
         </p>
       </figcaption>
       <div className="chart-bar">
@@ -203,7 +211,6 @@ export function AllocationChart({
           <span className="faint">Hover the chart to read a date.</span>
         )}
       </p>
-      {note ? <p className="muted small chart-note">{note}</p> : null}
       <details className="datatable">
         <summary>Data table</summary>
         <div className="tablewrap tablewrap--tall">
