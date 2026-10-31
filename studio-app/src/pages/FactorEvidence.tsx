@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { FactorDiagnostics, FactorFold, FactorSplit, RankSummary, RunRow, SelectionIntegrity } from '../api'
 import { Glyph } from '../design/icons'
 import { num, plural, when } from '../format'
@@ -226,6 +226,32 @@ export function VerdictHero({ study, adjustment }: { study: FactorDiagnostics; a
           <ReasonList reasons={topReasons(reasons)} />
         </details>
       )}
+    </section>
+  )
+}
+
+/**
+ * The same verdict as one line: chip and the first sentence cut to a single line (full text in the tooltip). "more" opens the
+ * whole sentence and the reasons in place.
+ */
+export function VerdictBar({ study, adjustment }: { study: FactorDiagnostics; adjustment: Adjustment | undefined }) {
+  const [open, setOpen] = useState(false)
+  const { verdict, reasons } = buildVerdict(study, adjustment)
+  const sentence = verdictSentence(study, adjustment, verdict)
+  const top = topReasons(reasons)
+  return (
+    <section className={`verdict verdict--${verdict} verdict--bar${open ? ' is-open' : ''}`} aria-labelledby="verdict-word">
+      <div className="verdict-top">
+        <h2 id="verdict-word" className="verdict-word">
+          <Glyph kind={VERDICT_GLYPH[verdict]} signal={verdict === 'fail'} />
+          <span>{VERDICT_WORD[verdict]}</span>
+        </h2>
+        <p className="verdict-sentence" title={sentence}>{sentence}</p>
+        <button type="button" className="linklike verdict-toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          {open ? 'less' : 'more'}
+        </button>
+      </div>
+      {open && top.length > 0 && <ReasonList reasons={top} />}
     </section>
   )
 }

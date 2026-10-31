@@ -22,6 +22,7 @@ import { TopBar, Updated, type Crumb } from './shell/TopBar'
 import { useRouter } from './useRouter'
 import { useShellData } from './useShellData'
 import { Loading } from './components/States'
+import { WorkbenchGallery } from './components/workbench/Gallery'
 
 export default function App() {
   const { route, go } = useRouter()
@@ -98,7 +99,9 @@ export default function App() {
       : `${route.view === 'event-study' ? 'Price event study · ' : route.view === 'factor' ? 'Factor evidence · ' : route.view === 'portfolio' ? 'Portfolio · ' : route.view === 'bookrisk' ? 'Book Risk · ' : route.view === 'bookstress' ? 'Reported-book path stress · ' :route.view === 'allocation' ? 'Strategic allocation · ' : route.view === 'rl' ? 'Governed RL policy · ' : route.view === 'run' ? 'Run · ' : route.view === 'compare' ? 'Compare Runs · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
 
   let page
-  if (isLibraryRoute(route)) {
+  if (new URLSearchParams(window.location.search).get('view') === 'kit') {
+    page = <WorkbenchGallery />
+  } else if (isLibraryRoute(route)) {
     page = <LibraryPage route={route} workspace={data.workspace} go={go} />
   } else if (route.view === 'projects') {
     page = data.workspace ? (

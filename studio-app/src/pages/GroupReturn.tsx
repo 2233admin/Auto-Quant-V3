@@ -1,8 +1,7 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { useCallback, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { FactorCumulativePoint, FactorDiagnostics, FactorSpreadSplit } from '../api'
 import { CompactTile, CompactTileGrid } from '../components/CompactTile'
 import { Info } from '../components/Info'
-import { useFitWidth } from '../design/useFitWidth'
 import { num, pct } from '../format'
 import { Chart, IcByHorizon } from './FactorCharts'
 import { niceTicks, SPLIT_LABEL } from './factorMath'
@@ -25,11 +24,31 @@ const LINES: { key: LineKey; label: string; stroke: string; width: number; dash?
 ]
 
 const m = { l: 56, r: 16, t: 22, b: 40 }
-const H = 330
+
+/** Width and height of the plot box in CSS px; the drawing is absolutely placed in it, so it can fill a card without feeding back into the box. */
+function useFitBox<T extends Element>(minW = 320, minH = 240): [(el: T | null) => void, number, number] {
+  const [size, setSize] = useState({ w: 0, h: 0 })
+  const observer = useRef<ResizeObserver | null>(null)
+  const ref = useCallback((el: T | null) => {
+    observer.current?.disconnect()
+    observer.current = null
+    if (!el) return
+    const read = () => {
+      const box = el.getBoundingClientRect()
+      setSize((prev) => (prev.w === Math.round(box.width) && prev.h === Math.round(box.height) ? prev : { w: Math.round(box.width), h: Math.round(box.height) }))
+    }
+    read()
+    const next = new ResizeObserver(read)
+    next.observe(el)
+    observer.current = next
+  }, [])
+  return [ref, Math.max(minW, size.w || 980), Math.max(minH, size.h || 330)]
+}
+
 
 /** Compounded group curves. Test-split points are removed before any scale, marker or readout is built when test is hidden. */
 function GroupReturnChart({ study, points, testShown }: { study: FactorDiagnostics; points: FactorCumulativePoint[]; testShown: boolean }) {
-  const [plotRef, W] = useFitWidth<HTMLDivElement>(320)
+  const [plotRef, W, H] = useFitBox<HTMLDivElement>(320, 240)
   const svgRef = useRef<SVGSVGElement>(null)
   const [hover, setHover] = useState<number | null>(null)
   const cum = study.quantilePath?.cumulative
@@ -70,6 +89,7 @@ function GroupReturnChart({ study, points, testShown }: { study: FactorDiagnosti
   return (
     <Chart
       title="Group cumulative return"
+      fill
       plotRef={plotRef}
       short={`Low, middle and high factor groups compounded at ${cum?.horizon ?? 1}-bar horizon, gross of costs, plus the high-minus-low long-short curve.`}
       desc={`Compounded growth multiple of the low, middle and high factor groups and of the long-short spread (high minus low), starting near 1.0. ${cum?.basis ?? ''} ${points.length} of ${int(cum?.totalRows ?? points.length)} bars are drawn. ${testShown ? '' : TEST_HIDDEN_NOTE + '.'}`.trim()}
@@ -118,7 +138,7 @@ function GroupReturnChart({ study, points, testShown }: { study: FactorDiagnosti
       {({ labelledBy }) => (
         <svg
           ref={svgRef}
-          className="plot"
+          className="plot plot--fill"
           viewBox={`0 0 ${W} ${H}`}
           role="img"
           aria-labelledby={labelledBy}
@@ -206,7 +226,7 @@ function SpreadGroup({ title, s, basis, audit }: { title: string; s: FactorSprea
 }
 
 /** Validation long-short tiles, plus the test group only when the test split is visible (the same rule as CoreTiles). */
-function SpreadTiles({ study, testShown }: { study: FactorDiagnostics; testShown: boolean }) {
+export function SpreadTiles({ study, testShown }: { study: FactorDiagnostics; testShown: boolean }) {
   const sum = study.spreadSummary
   if (!sum || sum.status !== 'available') return null
   const by = (split: string) => sum.splits.find((s) => s.split === split)
@@ -224,8 +244,9 @@ function SpreadTiles({ study, testShown }: { study: FactorDiagnostics; testShown
 type View = 'group' | 'ic'
 
 /**
- * The Factor page's hero. With group curves published it is the Group cumulative return chart beside the long-short
- * tiles, with Rank IC one click away; without them (single-asset Runs, older snapshots) it is the Rank IC chart as before.
+ * The Factor page's chart card. With group curves published it is the Group cumulative return chart, with Rank IC one click
+ * away in the card header; without them (single-asset Runs, older snapshots) it is the Rank IC chart. The long-short tiles
+ * live under it with the other metrics (`SpreadTiles`).
  */
 export function FactorHero({ study }: { study: FactorDiagnostics }) {
   const testShown = studyTestVisible(study)
@@ -236,17 +257,16 @@ export function FactorHero({ study }: { study: FactorDiagnostics }) {
     .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
   const groups = quantiles && points.length >= 2
   const view: View = choice ?? (groups ? 'group' : 'ic')
-  const tiles = groups ? <SpreadTiles study={study} testShown={testShown} /> : null
   const assets = study.predictionUniverse.predictionAssets?.length ?? 0
   return (
-    <div className={`wb-hero${tiles ? ' wb-hero--tiles' : ''}`}>
-      <div className="wb-hero-chart">
-        {groups && (
-          <div className="seg wb-hero-seg" role="group" aria-label="Hero chart">
-            <button type="button" aria-pressed={view === 'group'} onClick={() => setChoice('group')}>Group return</button>
-            <button type="button" aria-pressed={view === 'ic'} onClick={() => setChoice('ic')}>Rank IC</button>
-          </div>
-        )}
+    <section className="wb-hero wb-chartcard" aria-label="Factor chart">
+      {groups && (
+        <div className="seg wb-hero-seg" role="group" aria-label="Hero chart">
+          <button type="button" aria-pressed={view === 'group'} onClick={() => setChoice('group')}>Group return</button>
+          <button type="button" aria-pressed={view === 'ic'} onClick={() => setChoice('ic')}>Rank IC</button>
+        </div>
+      )}
+      <div className="wb-chartcard-body">
         {!quantiles && (
           <p className="muted small wb-hero-why">
             Group return curves do not exist for this Run: it is scored through time on {assets === 1 ? 'a single asset' : `${assets || 'its'} assets`}, so there is no cross-section to split into groups.
@@ -254,7 +274,6 @@ export function FactorHero({ study }: { study: FactorDiagnostics }) {
         )}
         {view === 'group' && groups ? <GroupReturnChart study={study} points={points} testShown={testShown} /> : <IcByHorizon study={study} hero />}
       </div>
-      {tiles}
-    </div>
+    </section>
   )
 }

@@ -31,6 +31,8 @@ export const outcomeOf = (job: Job): LoopOutcome => ({
   display: job.display,
 })
 
+const NOTE_WHOLE = 'Studio reports this command as a whole, so the bar cannot show a percentage. It is not a guess.'
+
 function percent(job: Job): number | null {
   if (job.status === 'succeeded') return 100
   if (job.stageMode === 'whole-action' || job.stages.length === 0) return null
@@ -93,7 +95,7 @@ function RunningInner({
   const copy = error ? errorCopy(error, 'read the job') : null
   return (
     <section className="lp" aria-label="Analysis progress">
-      <div className="lp-line" role="status" aria-live="polite">
+      <div className="lp-line" role="status" aria-live="polite" title={pct === null ? NOTE_WHOLE : undefined}>
         <Glyph kind={glyph} />
         <strong className="lp-word">{job?.status === 'queued' ? 'Queued' : 'Running'}</strong>
         <div
@@ -125,7 +127,7 @@ function RunningInner({
       </div>
       {error && copy && <p className="small sig" role="alert">{copy.title} {copy.detail}</p>}
       {cancelNote && <p className="small sig" role="alert">{cancelNote}</p>}
-      {pct === null && job && <p className="small faint lp-note">Studio reports this command as a whole, so the bar cannot show a percentage. It is not a guess.</p>}
+      {pct === null && job && <p className="small faint lp-note">{NOTE_WHOLE}</p>}
       {job && (
         <details className="lp-more">
           <summary>Stages and command</summary>
@@ -167,7 +169,7 @@ export function LoopResult({ outcome, project, onDismiss }: { outcome: LoopOutco
     <section className={`lr${bad ? ' is-bad' : ''}`} aria-label="Last analysis result" role="status">
       <Glyph kind={bad ? 'error' : 'confirmed'} signal={bad} />
       <div className="lr-body">
-        <p className="lr-line">{line}</p>
+        <p className="lr-line" title={line}>{line}</p>
         {outcome.status !== 'succeeded' && outcome.tail && (
           <details className="lp-more">
             <summary>Command output</summary>

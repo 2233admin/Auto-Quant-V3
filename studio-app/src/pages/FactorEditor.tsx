@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { type FactorDiagnostics, type ProjectSnapshot } from '../api'
 import { ACTIONS_OFF_COPY, useActions } from '../actions/ActionsContext'
 import { errorCopy } from '../actions/client'
@@ -10,9 +10,8 @@ import { useCatalog } from '../actions/useCatalog'
 import { CodeField } from '../components/CodeField'
 import { Info } from '../components/Info'
 import { pickIntegrity } from '../components/TrialCounter'
-import { when } from '../format'
+import { num, when } from '../format'
 import { Modal } from '../shell/Modal'
-import { Fact } from './FactorWorkbench'
 import { SPLIT_LABEL, SPLITS } from './factorMath'
 import { gatedSplits } from './testGate'
 import './factorEdit.css'
@@ -35,47 +34,97 @@ function LockIcon() {
 
 type Tested = Pick<FactorDiagnostics, 'run' | 'dataset' | 'predictionUniverse' | 'protocol' | 'summary'>
 
-/** The Study-locked inputs. Shown as facts with a lock: the Study fixes them so results stay comparable. */
+/** One locked fact as a small read-only chip: label above, value below, truncated with the full text in the tooltip. */
+function Chip({ label, value, mono = true, wide = false }: { label: string; value: string; mono?: boolean; wide?: boolean }) {
+  return (
+    <div className={`fe-fact${wide ? ' is-wide' : ''}`} title={`${label}: ${value}`}>
+      <span className="fe-fact-l">{label}</span>
+      <span className={`fe-fact-v${mono ? ' mono' : ''}`} translate="no">{value}</span>
+    </div>
+  )
+}
+
+/** The Study-locked inputs as a compact two-column grid of read-only chips under one lock and one "?". */
 function LockedFacts({ study }: { study: Tested }) {
   const { protocol } = study
   const windows = protocol.splits.splits
   const context = protocol.horizons.filter((h) => h !== protocol.primaryHorizon).sort((a, b) => a - b)
+  const range = (a: string | null | undefined, b: string | null | undefined) => `${day(a)} → ${day(b)}`
   return (
-    <section className="fe-sec" aria-labelledby="fe-locked">
+    <section className="fe-facts-sec" aria-labelledby="fe-locked">
       <h2 className="wb-h fe-h" id="fe-locked">
         <LockIcon /> Fixed by the Study
         <Info label="Why these inputs are locked" align="start">
           <p>Fixed by the Study so results stay comparable. The analysis window, horizon, splits and universe cannot be changed here; only the candidate source and the hypothesis can.</p>
         </Info>
       </h2>
-      <dl className="facts fe-facts">
-        <Fact label="Study">
-          <span className="mono" translate="no">{study.run.studyId}</span>
-        </Fact>
-        <Fact label="Horizon">
-          {protocol.primaryHorizon}-bar primary
-          {context.length > 0 && <span className="faint"> · context {context.join(', ')}-bar</span>}
-        </Fact>
-        <Fact label="Window">
-          <span className="splitlist">
-            {gatedSplits(study, SPLITS).map((s) => (
-              <span key={s}>
-                <span className="faint">{SPLIT_LABEL[s]}</span> {day(windows[s].start)} to {day(windows[s].end)}
-              </span>
-            ))}
-          </span>
-        </Fact>
-        <Fact label="Universe">
-          <span className="mono" translate="no">{(study.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}</span>
-          <span className="faint"> · {study.predictionUniverse.evaluationMode ?? '—'}</span>
-        </Fact>
-        <Fact label="Dataset">
-          <span className="mono" translate="no">{study.dataset.id}</span>
-          <span className="faint"> · {day(study.dataset.timeRange?.start)} to {day(study.dataset.timeRange?.end)}</span>
-        </Fact>
-        <Fact label="Run started">{when(study.run.startedAt)} UTC</Fact>
-      </dl>
+      <div className="fe-facts2" role="group" aria-label="Fixed by the Study">
+        <Chip label="Study" value={study.run.studyId} />
+        <Chip label="Horizon" value={`${protocol.primaryHorizon}-bar${context.length > 0 ? ` (+${context.join(', ')})` : ''}`} />
+        <Chip label="Universe" value={`${(study.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}${study.predictionUniverse.evaluationMode ? ` · ${study.predictionUniverse.evaluationMode}` : ''}`} />
+        <Chip label="Dataset" value={study.dataset.id} />
+        {gatedSplits(study, SPLITS).map((sp) => (
+          <Chip key={sp} label={SPLIT_LABEL[sp]} value={range(windows[sp].start, windows[sp].end)} />
+        ))}
+      </div>
     </section>
+  )
+}
+
+/** A line of text that never wraps: the full text sits in the tooltip, and "more" opens it in place. */
+function OneLine({ id, kind, children, text, action }: { id?: string; kind?: 'error' | 'ok' | 'info'; children?: ReactNode; text: string; action?: ReactNode }) {
+  const [open, setOpen] = useState(false)
+  useEffect(() => setOpen(false), [text])
+  return (
+    <div className={`fe-line${open ? ' is-open' : ''}${kind === 'error' ? ' is-error' : ''}`}>
+      <p id={id} className="fe-line-t small" title={text} role={kind === 'error' ? 'alert' : undefined}>{children ?? text}</p>
+      {action}
+      {text.length > 52 && (
+        <button type="button" className="linklike fe-more" aria-expanded={open} onClick={() => setOpen((v) => !v)}>{open ? 'less' : 'more'}</button>
+      )}
+    </div>
+  )
+}
+
+/** This Session's past trials, read-only, from the Project snapshot. */
+function History({ project, sessionId }: { project: ProjectSnapshot; sessionId: string | null }) {
+  const row = project.sessions.find((s) => (s.session?.id ?? s.id) === sessionId)
+  const experiments = [...(row?.experiments ?? [])].sort((a, b) => b.sequence - a.sequence)
+  const trials = [...(row?.decisionMatrix?.trials ?? [])].sort((a, b) => b.sequence - a.sequence)
+  if (!row) return <p className="small muted fe-pad">No Session on this Study yet, so there is no trial history.</p>
+  if (experiments.length === 0 && trials.length === 0) return <p className="small muted fe-pad">This Session has no completed trials yet.</p>
+  return (
+    <div className="fe-hist" role="region" aria-label="Session trial history" tabIndex={0}>
+      <table className="tbl fe-hist-t">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Verdict</th>
+            <th scope="col" className="r">Validation IC</th>
+            <th scope="col">{experiments.length > 0 ? 'Time (UTC)' : 'Role'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {experiments.length > 0
+            ? experiments.map((e) => (
+                <tr key={e.id} title={e.hypothesis}>
+                  <td className="mono">{e.sequence}</td>
+                  <td>{e.verdict}</td>
+                  <td className="r mono">{num(e.candidateValue, 4)}</td>
+                  <td className="mono">{when(e.completedAt)}</td>
+                </tr>
+              ))
+            : trials.map((t) => (
+                <tr key={`${t.role}-${t.sequence}-${t.runId}`} title={t.hypothesis}>
+                  <td className="mono">{t.sequence}</td>
+                  <td>{t.verdict}</td>
+                  <td className="r mono">{num(t.primaryValue, 4)}</td>
+                  <td>{t.role}</td>
+                </tr>
+              ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -231,75 +280,136 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
   const startBlock = activeJob ? `Blocked: job ${activeJob} is already running in this Project.` : startEntry && !startEntry.available ? startEntry.blockedBy ?? 'Blocked: this Study cannot start a Session.' : !startEntry ? 'Blocked: the server does not offer Start session for this Study.' : null
   const canStart = noSession && startBlock === null
 
+  const [tab, setTab] = useState<'candidate' | 'history'>('candidate')
+  const integrity = project.sessions.find((x) => (x.session?.id ?? x.id) === (sessionId ?? loadSession))?.selectionIntegrity
+  const trialN = (integrity?.candidateTrials ?? fam?.totalExecutions ?? 0) + 1
+  const trialM = (fam?.uniqueSourceTrials ?? 0) + 1
+  const trialTitle = 'Each run counts as a trial and cannot be removed. The confirm step shows the exact trial N of M and the selection adjustment.'
+  const mainReason = noSession ? startBlock : reason
+  const on = state.mode === 'on'
+
   return (
     <div className="fe">
-      <LockedFacts study={study} />
-
-      <section className="fe-sec" aria-labelledby="fe-cand">
-        <div className="fe-cand-head">
-          <h2 className="wb-h fe-h" id="fe-cand">Candidate</h2>
-          {doc && editable && (
-            <span className={`fe-chip${dirty ? ' is-dirty' : ''}`} role="status">{dirty ? 'Unsaved changes' : 'Saved'}</span>
-          )}
-          {doc && editable && dirty && (
-            <button type="button" className="abtn abtn--quiet fe-reset" onClick={() => { setDraft(doc.source); setConflict(false) }}>
-              Reset to saved
-            </button>
-          )}
+      <div className="fe-top">
+        <div className="fe-tabs" role="tablist" aria-label="Candidate pane">
+          <button type="button" role="tab" id="fe-tab-c" aria-selected={tab === 'candidate'} aria-controls="fe-panel" onClick={() => setTab('candidate')}>Candidate</button>
+          <button type="button" role="tab" id="fe-tab-h" aria-selected={tab === 'history'} aria-controls="fe-panel" onClick={() => setTab('history')}>History</button>
         </div>
-
-        {state.mode === 'off' && (
-          <div className="fe-note" role="note">
-            <p className="small">Read-only. {ACTIONS_OFF_COPY} to edit and run from this page.</p>
-            <div className="cmdrow">
-              <pre className="cmd mono" translate="no" aria-label="Command that enables editing">{OFF_COMMAND}</pre>
-              <CopyButton text={OFF_COMMAND} label="Copy command" />
-            </div>
-          </div>
-        )}
-
-        {noSession && (
-          <p className="small muted fe-note">
-            No active Session on Study <span className="mono" translate="no">{studyId}</span>. A Session holds the one candidate you edit; starting one opens a trial family.
-          </p>
-        )}
-
-        {doc ? (
+        <span className="fe-grow" />
+        {on && !noSession && (
           <>
-            <CodeField rows={9} label="Candidate source" value={draft} onChange={setDraft} readOnly={!editable} describedBy={doc.blockedReason ? ids.why : undefined} />
-            <p className="fe-meta small faint">
-              <span className="mono" translate="no">{doc.path}</span> · {doc.bytes.toLocaleString('en-US')} bytes · <span className="mono" translate="no">{doc.sha256.slice(0, 12)}</span>
-            </p>
-            {doc.blockedReason && state.mode === 'on' && <p id={ids.why} className="small sig">{doc.blockedReason}</p>}
+            <button type="button" className="abtn abtn--quiet fe-q" aria-label="Save" title="Save the candidate" disabled={!editable || !dirty || busy || conflict} onClick={() => void save()}>
+              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2h8l2 2v10H3z" /><path d="M5 2v4h5V2M5 14v-4h6v4" /></svg>
+              <span className="fe-q-t">Save</span>
+            </button>
+            <button type="button" className="abtn abtn--quiet fe-q" aria-label="Check" title={!editable ? 'Nothing to check: the candidate is read-only.' : dirty ? 'Check saves your edits first, then checks the saved file.' : 'Check the saved candidate'} disabled={!editable || busy} onClick={() => void checkAfterSave()}>
+              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 8.5l3.2 3.2L13 4.5" /></svg>
+              <span className="fe-q-t">Check</span>
+            </button>
           </>
-        ) : load.state === 'loading' ? (
-          <p className="small muted">Loading the candidate…</p>
-        ) : load.state === 'error' ? (
-          <p className="small sig" role="alert">Could not read the candidate: {load.message}</p>
+        )}
+        {on && (
+          <button
+            type="button"
+            className="abtn abtn--primary fe-primary"
+            disabled={noSession ? !canStart : reason !== null || busy}
+            aria-describedby={mainReason ? ids.why : undefined}
+            onClick={() => (noSession ? setStartOpen(true) : void runAnalysis())}
+          >
+            {noSession ? 'Start session' : phase === 'saving' ? 'Saving…' : phase === 'checking' ? 'Checking…' : 'Run analysis'}
+          </button>
+        )}
+        {on && !noSession && (
+          <span className="fe-trial-chip" title={trialTitle} aria-label={`Trial ${trialN} of ${trialM}. ${trialTitle}`}>
+            <span aria-hidden="true"><span className="fe-trial-lbl">Trial </span>{trialN}<span className="fe-trial-w"> of </span><span className="fe-trial-s">/</span>{trialM}</span>
+          </span>
+        )}
+      </div>
+
+      <div className="fe-status">
+        {mainReason && (
+          <OneLine
+            id={ids.why}
+            text={mainReason}
+            action={
+              <>
+                {retry && !noSession && <button type="button" className="linklike" onClick={catalog.reload}>Retry</button>}
+                {!noSession && activeJob && activeJobId !== activeJob && (
+                  <button type="button" className="linklike" onClick={() => setActiveJobId(activeJob)}>Show its progress</button>
+                )}
+              </>
+            }
+          />
+        )}
+        {state.mode === 'off' && (
+          <OneLine
+            text={`Read-only. ${ACTIONS_OFF_COPY} to edit and run from this page.`}
+            action={<CopyButton text={OFF_COMMAND} label="Copy command" />}
+          />
+        )}
+        {noSession && (
+          <OneLine text={`No active Session on Study ${studyId}. A Session holds the one candidate you edit; starting one opens a trial family.`} />
+        )}
+        {note && <OneLine kind={note.kind} text={note.text} />}
+      </div>
+
+      <div className="fe-scroll" role="tabpanel" id="fe-panel" aria-labelledby={tab === 'candidate' ? 'fe-tab-c' : 'fe-tab-h'}>
+        {tab === 'history' ? (
+          <History project={project} sessionId={sessionId ?? loadSession} />
         ) : (
-          <p className="small muted fe-note">
-            The candidate source of this Run is not published to the browser. {state.mode === 'off' ? 'It appears here once a Session exists and the server can read it.' : 'Start a Session to see and edit it here.'}
-          </p>
-        )}
+          <>
+            <LockedFacts study={study} />
 
-        {conflict && (
-          <div className="fe-conflict" role="alert">
-            <p className="small">
-              <strong>The candidate file changed on disk</strong> after you opened it, so Studio did not overwrite it. Your edits are still in the field.
-            </p>
-            <div className="fe-row">
-              <button type="button" className="abtn" onClick={() => setReloadNonce((n) => n + 1)}>Reload from disk</button>
-              <CopyButton text={draft} label="Copy my edits" />
-              <span className="small muted">Reload discards your edits; copy them first if you want to keep them.</span>
-            </div>
-          </div>
-        )}
-      </section>
+            <section className="fe-cand" aria-labelledby="fe-cand">
+              <div className="fe-cand-head">
+                <h2 className="wb-h fe-h" id="fe-cand">Candidate</h2>
+                {doc && editable && <span className={`fe-chip${dirty ? ' is-dirty' : ''}`} role="status">{dirty ? 'Unsaved changes' : 'Saved'}</span>}
+                {doc && editable && dirty && (
+                  <button type="button" className="abtn abtn--quiet fe-reset" onClick={() => { setDraft(doc.source); setConflict(false) }}>
+                    Reset to saved
+                  </button>
+                )}
+                {doc && (
+                  <span className="fe-meta small faint" title={`${doc.path} · ${doc.bytes.toLocaleString('en-US')} bytes · ${doc.sha256.slice(0, 12)}`}>
+                    <span className="mono" translate="no">{doc.path}</span> · {doc.bytes.toLocaleString('en-US')} bytes
+                  </span>
+                )}
+              </div>
 
-      {state.mode === 'on' && !noSession && (
-        <section className="fe-sec" aria-labelledby="fe-hyp-h">
-          <h2 className="wb-h fe-h" id="fe-hyp-h">Hypothesis</h2>
-          <label className="sr-only" htmlFor={ids.hyp}>Hypothesis: what this candidate is meant to test</label>
+              {conflict && (
+                <div className="fe-conflict" role="alert">
+                  <p className="small">
+                    <strong>The candidate file changed on disk</strong> after you opened it, so Studio did not overwrite it. Your edits are still in the field.
+                  </p>
+                  <div className="fe-row">
+                    <button type="button" className="abtn" onClick={() => setReloadNonce((n) => n + 1)}>Reload from disk</button>
+                    <CopyButton text={draft} label="Copy my edits" />
+                    <span className="small muted">Reload discards your edits; copy them first if you want to keep them.</span>
+                  </div>
+                </div>
+              )}
+
+              {doc ? (
+                <div className="fe-code">
+                  <CodeField rows={9} label="Candidate source" value={draft} onChange={setDraft} readOnly={!editable} describedBy={doc.blockedReason ? ids.why : undefined} />
+                </div>
+              ) : load.state === 'loading' ? (
+                <p className="small muted">Loading the candidate…</p>
+              ) : load.state === 'error' ? (
+                <p className="small sig" role="alert">Could not read the candidate: {load.message}</p>
+              ) : (
+                <p className="small muted">
+                  The candidate source of this Run is not published to the browser. {state.mode === 'off' ? 'It appears here once a Session exists and the server can read it.' : 'Start a Session to see and edit it here.'}
+                </p>
+              )}
+            </section>
+          </>
+        )}
+      </div>
+
+      {state.mode === 'on' && !noSession && tab === 'candidate' && (
+        <div className="fe-hyp">
+          <label className="fe-hyp-l" htmlFor={ids.hyp}>Hypothesis</label>
           <input
             id={ids.hyp}
             ref={hypRef}
@@ -307,7 +417,8 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
             type="text"
             value={hypothesis}
             maxLength={HYP_MAX + 50}
-            placeholder="What this candidate is meant to test"
+            placeholder="Hypothesis: what this candidate is meant to test"
+            title={showHypProblem ? hypProblem ?? undefined : `${HYP_MIN} to ${HYP_MAX} characters`}
             aria-invalid={showHypProblem ? true : undefined}
             aria-describedby={ids.hypNote}
             onChange={(event) => setHypothesis(event.target.value)}
@@ -319,74 +430,10 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
               }
             }}
           />
-          <p id={ids.hypNote} className={`small ${showHypProblem ? 'sig' : 'faint'}`} aria-live="polite">
-            {showHypProblem ? hypProblem : `${hypothesis.length} / ${HYP_MAX} · ${HYP_MIN} to ${HYP_MAX} characters`}
-          </p>
-        </section>
-      )}
-
-      {state.mode === 'on' && (
-        <div className="fe-actions">
-          {noSession ? (
-            <>
-              <button type="button" className="abtn abtn--primary fe-primary" disabled={!canStart} aria-describedby={!canStart ? ids.why : undefined} onClick={() => setStartOpen(true)}>
-                Start session
-              </button>
-              {startBlock && <p id={ids.why} className="small muted">{startBlock}</p>}
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="abtn abtn--primary fe-primary"
-                disabled={reason !== null || busy}
-                aria-describedby={reason ? ids.why : undefined}
-                onClick={() => void runAnalysis()}
-              >
-                {phase === 'saving' ? 'Saving…' : phase === 'checking' ? 'Checking…' : 'Run analysis'}
-              </button>
-              {reason && (
-                <p id={ids.why} className="small muted fe-reason">
-                  {reason}
-                  {retry && (
-                    <>
-                      {' '}
-                      <button type="button" className="linklike" onClick={catalog.reload}>Retry</button>
-                    </>
-                  )}
-                  {activeJob && activeJobId !== activeJob && (
-                    <>
-                      {' '}
-                      <button type="button" className="linklike" onClick={() => setActiveJobId(activeJob)}>Show its progress</button>
-                    </>
-                  )}
-                </p>
-              )}
-              <div className="fe-row">
-                <button type="button" className="abtn abtn--quiet" disabled={!editable || !dirty || busy || conflict} onClick={() => void save()}>
-                  Save
-                </button>
-                <button type="button" className="abtn abtn--quiet" disabled={!editable || busy} onClick={() => void checkAfterSave()}>
-                  Check
-                </button>
-                <span className="small faint">
-                  {!editable ? 'Nothing to save: the candidate is read-only.' : dirty ? 'Check saves your edits first, then checks the saved file.' : 'No unsaved changes to save.'}
-                </span>
-              </div>
-            </>
-          )}
-          <p className="small muted fe-trial">
-            Each run counts as a trial and cannot be removed.{' '}
-            {fam ? `This research family has ${fam.totalExecutions} counted so far (${fam.uniqueSourceTrials} unique). ` : 'No trial ledger yet. '}
-            The confirm step shows the exact trial N of M and the selection adjustment.
-          </p>
+          <span id={ids.hypNote} className={`fe-count small ${showHypProblem ? 'sig' : 'faint'}`} aria-live="polite">
+            {hypothesis.length} / {HYP_MAX}
+          </span>
         </div>
-      )}
-
-      {note && (
-        <p className={`small fe-msg${note.kind === 'error' ? ' sig' : ''}`} role={note.kind === 'error' ? 'alert' : 'status'}>
-          {note.text}
-        </p>
       )}
 
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} label="Confirm Run analysis" className="adialog">

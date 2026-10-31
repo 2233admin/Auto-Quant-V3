@@ -32,6 +32,7 @@ export function Chart({
   table,
   note,
   plotRef,
+  fill,
 }: {
   title: string
   /** Full explanation: read by screen readers and shown in the info disclosure. */
@@ -44,10 +45,12 @@ export function Chart({
   table: ReactNode
   note?: ReactNode
   plotRef?: (el: HTMLDivElement | null) => void
+  /** The drawing takes the height its card gives it instead of a fixed one. */
+  fill?: boolean
 }) {
   const id = useId()
   return (
-    <figure className="chart">
+    <figure className={fill ? 'chart chart--fill' : 'chart'}>
       <figcaption>
         <div className="chart-title">
           <h3 id={`${id}-t`}>{title}</h3>

@@ -571,3 +571,7 @@ Studio is not an evaluator. It calls the same Core loaders used by CLI:
 
 The durable boundary and known gaps are in
 [[docs/design/studio-observation-surface]].
+
+Shared page building blocks (two-pane workbench shell, tabs, action row, chart card,
+metric grid) and the `?view=kit` gallery are described in
+[[docs/design/studio-workbench-kit]].

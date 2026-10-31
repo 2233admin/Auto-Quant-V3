@@ -1,49 +1,161 @@
-/* Factor editor pane: locked Study facts, candidate source, hypothesis, one primary action. Tokens only. */
-.wb--edit { grid-template-columns: minmax(340px, 400px) minmax(0, 1fr); }
-.wb--edit .wb-side { max-height: calc(100vh - 72px); }
-.fe { display: grid; gap: var(--space-4); min-width: 0; }
-.fe-sec { display: grid; gap: var(--space-2); min-width: 0; }
+/* Factor workbench: two cards at viewport height. Left = candidate editor (sticky top row, locked facts, code field that takes the
+   remaining height, one-line hypothesis). Right = run selector, one-line verdict, chart card, metrics. Tokens only. */
+
+/* ---- Editor card ---- */
+.fe { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; }
+.fe p { margin: 0; }
+.fe-grow { flex: 1 1 0; min-width: 0; }
 .fe-h { display: flex; align-items: center; gap: 6px; margin: 0; }
 .fe-lock { flex: none; color: var(--muted); }
-.fe-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px var(--space-3); padding: var(--space-2) var(--space-3); border: 1px dashed var(--line-strong); border-radius: var(--radius-control); }
-.fe-cand-head { display: flex; align-items: center; gap: var(--space-2); min-height: 28px; }
-.fe-chip { margin-left: auto; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: 500 11px/18px var(--font-mono); color: var(--muted); }
+
+.fe-top { flex: none; display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--bg); position: sticky; top: 0; z-index: 3; }
+.fe-tabs { display: inline-flex; flex: none; padding: 2px; gap: 2px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--rail); }
+.fe-tabs button { padding: 3px 8px; border: 0; border-radius: 4px; background: none; color: var(--muted); font: var(--type-small); cursor: pointer; white-space: nowrap; }
+.fe-tabs button:hover { color: var(--text); }
+.fe-tabs button[aria-selected='true'] { background: var(--selected); color: var(--text); font-weight: 600; }
+.fe-tabs button:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
+.fe-q { flex: none; display: inline-flex; align-items: center; gap: 4px; }
+.fe-primary { flex: none; min-height: 28px; padding: 0 12px; white-space: nowrap; }
+.fe-trial-chip { flex: none; padding: 0 7px; border: 1px solid var(--line-strong); border-radius: 999px; font: 500 11px/18px var(--font-mono); color: var(--muted); white-space: nowrap; cursor: help; }
+.fe-trial-s, .fe-trial-n { display: none; }
+
+.fe-status { flex: none; display: grid; gap: 2px; padding: 0 10px; }
+.fe-status:not(:empty) { padding-top: 6px; }
+.fe-line { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.fe-line-t { flex: 1 1 auto; min-width: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fe-line.is-open .fe-line-t { white-space: normal; overflow-wrap: anywhere; }
+.fe-line.is-error .fe-line-t { color: var(--signal); }
+.fe-line > * { flex: none; }
+.fe-line > .fe-line-t { flex: 1 1 auto; }
+.fe-line .abtn { min-height: 22px; padding: 0 8px; font-size: 11px; }
+.fe-more { font: var(--type-small); color: var(--muted); }
+
+.fe-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: var(--space-3); padding: 10px; }
+.fe-pad { padding: 4px 0; }
+
+.fe-facts-sec { flex: none; display: grid; gap: 6px; }
+.fe-facts2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.fe-fact { display: grid; gap: 0; min-width: 0; padding: 3px 8px; border: 1px dashed var(--line-strong); border-radius: var(--radius-control); }
+.fe-fact-l { font: 400 10.5px/14px var(--font-sans); color: var(--faint); }
+.fe-fact-v { font-size: 11.5px; line-height: 16px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.fe-cand { flex: 1 1 auto; min-height: 200px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fe-cand-head { flex: none; display: flex; align-items: center; gap: var(--space-2); min-height: 24px; min-width: 0; }
+.fe-chip { padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: 500 11px/18px var(--font-mono); color: var(--muted); white-space: nowrap; }
 .fe-chip.is-dirty { color: var(--text); border-color: var(--text); }
 .fe-reset { flex: none; }
-.fe-meta { margin: 0; overflow-wrap: anywhere; }
-.fe-note { margin: 0; }
-div.fe-note { display: grid; gap: var(--space-2); }
-.fe-note .cmd { margin: 0; }
-.fe-input { width: 100%; box-sizing: border-box; min-height: 34px; padding: 0 var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--bg); color: var(--text); font: var(--type-body); }
+.fe-meta { margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fe-code { flex: 1 1 auto; min-height: 140px; display: flex; flex-direction: column; min-width: 0; }
+.fe-code .cf { flex: 1 1 auto; min-height: 0; grid-template-rows: minmax(0, 1fr) auto; }
+.fe-code .cf-box { min-height: 0; height: 100%; }
+.fe-code .cf-area { height: 100%; }
+.fe-conflict { flex: none; display: grid; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--signal); border-left-width: 4px; border-radius: var(--radius-control); }
+.fe-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.fe-hyp { flex: none; display: flex; align-items: center; gap: var(--space-2); padding: 8px 10px; border-top: 1px solid var(--line); background: var(--bg); position: sticky; bottom: 0; }
+.fe-hyp-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.fe-input { flex: 1 1 auto; min-width: 0; box-sizing: border-box; min-height: 30px; padding: 0 var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--bg); color: var(--text); font: var(--type-body); }
 .fe-input:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .fe-input[aria-invalid='true'] { border-color: var(--signal); }
-.fe-sec p, .fe-actions p { margin: 0; }
-.fe-actions { display: grid; gap: var(--space-2); }
-.fe-primary { width: 100%; min-height: 38px; }
-.fe-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.fe-reason { overflow-wrap: anywhere; }
-.fe-trial { padding-top: var(--space-2); border-top: 1px solid var(--line); }
-.fe-conflict { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--signal); border-left-width: 4px; border-radius: var(--radius-control); }
-.fe-msg { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
-.wb--edit .wb-main > .lp, .wb--edit .wb-main > .lr { margin-top: 0; }
-.fe-facts .fact:nth-child(n+3) { grid-column: 1 / -1; }
-.fe-facts .fact dd { font: var(--type-small); }
-.fe-facts .fact { grid-template-columns: 78px minmax(0, 1fr); gap: var(--space-2); align-items: baseline; }
-.fe-facts .fact:nth-child(-n+2) { grid-template-columns: minmax(0, 1fr); }
+.fe-count { flex: none; white-space: nowrap; font-family: var(--font-mono); }
 
-/* Narrower desktop (the editor pane takes more room than the old facts column): stack hero parts so nothing is squeezed. */
-@media (max-width: 1279px) and (min-width: 1100px) {
-  .wb--edit { grid-template-columns: minmax(300px, 340px) minmax(0, 1fr); }
+.fe-hist { overflow: auto; }
+.fe-hist-t { font: var(--type-small); }
+.fe-hist-t th, .fe-hist-t td { padding: 5px var(--space-2) 5px 0; }
+.fe-hist-t tbody tr { cursor: default; }
+
+/* The editor card is a size container: when it is narrow, Save/Check shrink to icons and the trial chip to "Trial 1/2". */
+.wb--edit .wb-side { container-type: inline-size; }
+@container (max-width: 560px) {
+  .fe-q-t, .fe-trial-w { display: none; }
+  .fe-trial-s { display: inline; }
+  .fe-q { padding: 0 5px; min-height: 26px; }
+  .fe-top { gap: 4px; padding: 8px 6px; }
+  .fe-tabs { gap: 0; padding: 1px; }
+  .fe-tabs button { padding: 3px 6px; font-size: 11.5px; }
+  .fe-primary { padding: 0 9px; }
+  .fe-trial-chip { padding: 0 5px; font-size: 10.5px; }
 }
-@media (max-width: 1279px) {
+@container (max-width: 360px) {
+  .fe-trial-lbl { display: none; }
+}
+
+/* ---- Result card ---- */
+.wb--edit .wb-screen { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); align-content: start; min-width: 0; }
+.wb--edit .wb-slot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; min-width: 0; }
+.wb--edit .wb-slot > .lp, .wb--edit .wb-slot > .lr { margin: 0; }
+.wb--edit .lp, .wb--edit .lr { padding: 4px var(--space-3); }
+.wb--edit .lr { align-items: center; }
+.wb--edit .lr-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wb--edit .lr-body { overflow: hidden; }
+.wb--edit .lr .abtn { min-height: 24px; }
+
+.wb--edit .wb-rh { position: static; margin: 0; padding: 0; border: 0; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px var(--space-4); background: none; }
+.wb--edit .wb-rh-sel { flex: 1 1 140px; min-width: 0; }
+.wb--edit .wb-rh-act { flex: none; min-height: 0; }
+.wb--edit .wb-rh .runsel { grid-template-columns: minmax(0, 1fr); }
+.wb--edit .wb-rh-links { flex-wrap: nowrap; }
+.wb--edit .wb-rh .runsel select { min-width: 0; width: 100%; }
+.wb--edit .wb-rh-links { margin-left: 0; }
+
+.verdict--bar { grid-template-columns: minmax(0, 1fr); padding: 5px var(--space-3); gap: 4px; }
+.verdict--bar .verdict-top { gap: var(--space-3); flex-wrap: nowrap; }
+.verdict--bar .verdict-word { font: 600 12px/18px var(--font-sans); padding: 1px 8px 1px 6px; }
+.verdict--bar .verdict-word svg { width: 14px; height: 14px; }
+.verdict--bar .verdict-sentence { font: 500 13px/20px var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.verdict--bar.is-open .verdict-sentence { white-space: normal; overflow: visible; }
+.verdict--bar.is-open .verdict-top { align-items: flex-start; }
+.verdict-toggle { flex: none; font: var(--type-small); color: var(--muted); }
+
+/* Chart card */
+.wb-chartcard { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; border: 1px solid var(--line); border-radius: var(--radius-control); padding: 8px 10px; }
+.wb-chartcard > .wb-hero-seg { position: absolute; top: 8px; right: 10px; z-index: 2; }
+.wb-chartcard-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
+.wb-chartcard .chart { flex: 1 1 auto; margin: 0; }
+.wb-chartcard .chart figcaption .chart-title { min-height: 24px; padding-right: 190px; }
+.wb-chartcard .chart-cap { display: none; }
+.wb-chartcard .chart--fill { display: flex; flex-direction: column; min-height: 0; }
+.wb-chartcard .chart--fill .plot-wrap { position: relative; flex: 1 1 auto; min-height: 240px; }
+.wb-chartcard .plot--fill { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.wb-metrics { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); min-width: 0; align-content: start; }
+.wb-metrics .core { gap: var(--space-2); }
+.wb-metrics .ctg { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.wb-metrics .core-h { font-size: 10.5px; }
+.wb--edit .wb-spread .ctg { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.wb--edit .wb-main > .tabs { margin-top: var(--space-3); }
+.wb--edit .wb-main .tabs, .wb--edit .wb-main > p { min-width: 0; }
+.wb--edit .wb-main > p { margin: var(--space-3) 0 0; }
+
+/* ---- Shell: at 1000px and wider the Factor page is two cards at viewport height; each card scrolls on its own and the page does not. ---- */
+@media (min-width: 1000px) {
+  .shell:has(.wb--split) { position: relative; height: 100dvh; min-height: 0; overflow: hidden; }
+  .shell:has(.wb--split) .main { height: 100dvh; min-height: 0; }
+  .shell:has(.wb--split) .page { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .pg:has(> .wb--split) { --gutter: 12px; --page-max: 2400px; flex: 1 1 auto; min-height: 0; padding: 10px 0; grid-template-rows: minmax(0, 1fr); align-content: stretch; }
+  .wb--split { grid-template-columns: minmax(340px, 40fr) minmax(0, 60fr); grid-template-rows: minmax(0, 1fr); gap: 12px; height: 100%; min-height: 0; align-items: stretch; }
+  .wb--split > .wb-card { min-height: 0; min-width: 0; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); }
+  .wb--split .wb-side { position: static; max-height: none; overflow: hidden; display: block; padding: 0; }
+  .wb--split .wb-main { display: block; overflow: auto; padding: 10px; }
+  .wb--split .wb-screen { min-height: 100%; grid-template-rows: auto auto minmax(300px, 1fr) auto; align-content: stretch; }
+  .wb--split .wb-metrics { max-height: 36vh; overflow: auto; }
+  .wb--split .wb-main > .tabs { margin-top: var(--space-4); }
+}
+
+/* Below 1000px: ordinary stacked flow, the page scrolls. */
+@media (max-width: 999px) {
+  .wb--edit { grid-template-columns: minmax(0, 1fr); }
+  .wb--edit .wb-side { position: static; max-height: none; overflow: visible; }
+  .wb--edit .wb-card { border: 1px solid var(--line-strong); border-radius: 8px; }
+  .wb--edit .fe { height: auto; }
+  .wb--edit .fe-scroll { overflow: visible; }
+  .wb--edit .fe-cand { min-height: 320px; }
+  .wb--edit .wb-main { padding: 10px; }
+  .wb--edit .wb-chartcard { min-height: 380px; }
+  .wb--edit .wb-chartcard .chart--fill .plot-wrap { min-height: 320px; }
   .wb--edit .wb-hero--tiles { grid-template-columns: minmax(0, 1fr); }
   .wb--edit .wb-spread .ctg { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
-  .wb--edit .verdict-top { flex-wrap: wrap; row-gap: var(--space-2); }
-  .wb--edit .verdict-word { order: 1; }
-  .wb--edit .verdict-top > .info { order: 2; margin-left: auto; }
-  .wb--edit .verdict-sentence { order: 3; flex: 1 1 100%; }
-  .wb--edit .wb-rh-act { gap: var(--space-1) var(--space-3); }
-  .wb--edit .wb-rh-links { margin-left: 0; gap: var(--space-1) var(--space-3); }
-  .wb--edit .fe-facts { grid-template-columns: minmax(0, 1fr); }
-  .wb--edit .fe-facts .fact:nth-child(-n+2) { grid-template-columns: 78px minmax(0, 1fr); }
 }
+
+/* The whole-command note moves into the progress line's tooltip in the workbench. */
+.wb--edit .lp-note { display: none; }

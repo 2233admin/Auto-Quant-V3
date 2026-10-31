@@ -5,11 +5,11 @@ import { num, plural, when } from '../format'
 import { Section } from '../design/layout'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
-import { FactorHero } from './GroupReturn'
+import { FactorHero, SpreadTiles } from './GroupReturn'
 import { IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
-import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictHero, VerdictReasons } from './FactorEvidence'
+import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictBar, VerdictReasons } from './FactorEvidence'
 import { adjustmentOf, CoreTiles, Tabs, useHashTab, type TabDef } from './FactorWorkbench'
 import { useActions } from '../actions/ActionsContext'
 import { LoopProgress, LoopResult, type LoopOutcome } from '../actions/LoopProgress'
@@ -307,32 +307,36 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
     { id: 'provenance', label: 'Provenance', badge: failing ? 'run error' : undefined },
   ]
   return (
-    <div className="wb wb--edit">
-      <aside className="wb-side" aria-label="Candidate editor">
-        <div className="wb-head">
-          <h1 className="wb-title">Factor evidence</h1>
-          <span className="wb-sub mono" translate="no">{study.run.id}</span>
-        </div>
+    <div className="wb wb--edit wb--split">
+      <aside className="wb-side wb-card" aria-label="Candidate editor">
+        <h1 className="sr-only">Factor evidence <span translate="no">{study.run.id}</span></h1>
         <FactorEditor project={project} study={study} />
       </aside>
 
-      <div className="wb-main">
-        <ResultHeader
-          select={<RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />}
-          action={null}
-          links={
-            <>
-              <a href={routeHref({ view: 'compare', id: project.id, a: study.run.id })}>Compare</a>
-              <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
-              <a href={routeHref({ view: 'run', id: project.id, run: study.run.id })}>Run summary</a>
-            </>
-          }
-        />
-        <LoopStatus loop={loop} project={project} />
-        <VerdictHero study={study} adjustment={adjustment} />
-        <FactorHero study={study} />
-        <CoreTiles study={study} project={project} validation={validation} testAudit={study.summary.testAudit} testVisible={testVisible} defs={study.protocol.semantics} />
-        <TrialCounter project={project} />
+      <div className="wb-main wb-card">
+        <div className="wb-screen">
+          <ResultHeader
+            select={<RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />}
+            action={null}
+            links={
+              <>
+                <a href={routeHref({ view: 'compare', id: project.id, a: study.run.id })}>Compare</a>
+                <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
+                <a href={routeHref({ view: 'run', id: project.id, run: study.run.id })}>Run summary</a>
+              </>
+            }
+          />
+          <div className="wb-slot">
+            <LoopStatus loop={loop} project={project} />
+            <VerdictBar study={study} adjustment={adjustment} />
+          </div>
+          <FactorHero study={study} />
+          <div className="wb-metrics">
+            <CoreTiles study={study} project={project} validation={validation} testAudit={study.summary.testAudit} testVisible={testVisible} defs={study.protocol.semantics} />
+            {study.quantileEvidence.status === 'available' && <SpreadTiles study={study} testShown={testVisible} />}
+            <TrialCounter project={project} />
+          </div>
+        </div>
 
         <Tabs
           label="Factor evidence sections"
@@ -458,6 +462,7 @@ export function FactorPage({ project, study, run, go }: { project: ProjectSnapsh
       if (done.status === 'succeeded' && done.actionId === 'experiment.evaluate' && done.runId) {
         navigate(routeHref({ view: 'factor', id: project.id, run: done.runId }))
         window.scrollTo(0, 0)
+        document.querySelector('.wb-main')?.scrollTo(0, 0)
       }
     },
   }
