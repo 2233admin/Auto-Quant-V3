@@ -66,7 +66,7 @@ function Trajectory({ trials, metric }: { trials: TrialRow[]; metric: string }) 
   const sorted = [...pts].sort((a, b) => (b.primaryValue as number) - (a.primaryValue as number))
   const ordered = [...pts].sort((a, b) => a.sequence - b.sequence)
   return (
-    <>
+    <div className="cols">
       <figure className="pj-fig" aria-labelledby={`${id}-t`}>
         <h3 className="pj-sub" id={`${id}-t`}>
           Trajectory of the selection metric ({metric})
@@ -128,7 +128,7 @@ function Trajectory({ trials, metric }: { trials: TrialRow[]; metric: string }) 
           })}
         </svg>
       </figure>
-    </>
+    </div>
   )
 }
 
@@ -285,6 +285,7 @@ export function SelectionBlock({ project }: { project: ProjectSnapshot }) {
               </p>
               {si.externalHoldoutRequired && <p>An external holdout is required before any production-grade claim.</p>}
             </div>
+            <div className="cols cols--2-3">
             <dl className="stats">
               <div>
                 <dt>Unique source trials</dt>
@@ -338,6 +339,7 @@ export function SelectionBlock({ project }: { project: ProjectSnapshot }) {
                 {si.externalHoldoutReason && <span className="faint small mono"> · {si.externalHoldoutReason}</span>}
               </dd>
             </dl>
+            </div>
             {si.warning && <p className="muted small">Server warning: {si.warning}</p>}
           </div>
         )
@@ -371,7 +373,7 @@ export function QuestionBlock({ project }: { project: ProjectSnapshot }) {
   if (!q && !req && !claim && !horizon) return NA('the Agent Work Brief and the delegated request carry no question.')
   const text = q?.text ?? req?.question
   return (
-    <div className="pj-two">
+    <div className="cols cols--3-2">
       <div>
         <h3 className="pj-sub">Question</h3>
         {text ? <blockquote className="pj-quote">{text}</blockquote> : <p className="pj-na">Not available: no question text.</p>}
@@ -383,8 +385,6 @@ export function QuestionBlock({ project }: { project: ProjectSnapshot }) {
           </>
         )}
         <Bullets title="Hypotheses" items={req?.hypotheses} />
-        <Bullets title="Constraints" items={req?.constraints} />
-        <Bullets title="Deliverables" items={req?.deliverables} />
       </div>
       <div>
         <h3 className="pj-sub">Claim and horizon</h3>
@@ -448,6 +448,8 @@ export function QuestionBlock({ project }: { project: ProjectSnapshot }) {
         ) : (
           NA('no Factor Run has recorded a claim or horizon yet.')
         )}
+        <Bullets title="Constraints" items={req?.constraints} />
+        <Bullets title="Deliverables" items={req?.deliverables} />
       </div>
     </div>
   )

@@ -1,0 +1,89 @@
+/* Page layout: width, rhythm, two-column pairs, sticky section nav, summary band, disclosures, tall tables.
+   Colour, type and radius come from tokens.css; nothing here introduces a new one. */
+
+/* One spacing scale: --space-8 between sections, --space-6 between blocks inside one, --space-3 under a heading. */
+.pg h2[id] { scroll-margin-top: 112px; }
+.pg .verdict { margin: 0; }
+.pg .notice { max-width: none; }
+
+/* Two columns for naturally paired blocks; a single column below 1100px. */
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8); align-items: start; }
+.cols--3-2 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.cols--2-3 { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+.cols > * { min-width: 0; }
+.cols .chart { max-width: none; margin-bottom: 0; }
+.cols .chart + .chart { margin-top: var(--space-6); }
+.cols .pj-fig, .cols .pj-fig svg { max-width: none; }
+@media (max-width: 1099px) {
+  .cols, .cols--3-2, .cols--2-3 { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Stacked blocks inside one section. */
+.vstack { display: grid; gap: var(--space-6); }
+.vstack > * { min-width: 0; }
+.vstack .chart { margin-bottom: 0; }
+
+/* Headings: optional one-line caption under the rule. */
+.sec { min-width: 0; }
+.sec-cap { margin: calc(-1 * var(--space-1)) 0 var(--space-3); font: var(--type-small); color: var(--muted); max-width: 90ch; }
+
+/* Sticky in-page nav, full bleed under the top bar, its items aligned to the page column. */
+.secnav {
+  grid-column: full; position: sticky; top: 52px; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  padding-inline: max(var(--gutter), calc((100% - var(--page-max)) / 2)); margin-block: calc(-1 * var(--space-4));
+}
+.secnav ul { display: flex; gap: var(--space-1); margin: 0; padding: 0; list-style: none; overflow-x: auto; }
+.secnav a {
+  display: block; padding: 10px var(--space-3); border-bottom: 2px solid transparent; color: var(--muted); text-decoration: none;
+  font: var(--type-small); white-space: nowrap;
+}
+.secnav li:first-child a { padding-left: 0; }
+.secnav a:hover { color: var(--text); }
+.secnav a[aria-current='location'] { color: var(--text); border-bottom-color: var(--text); }
+.secnav a:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+
+/* Summary band: verdict, headline numbers and next move, compact, above the fold. */
+.band { display: grid; gap: var(--space-6); border: 1px solid var(--line-strong); background: var(--raised); padding: var(--space-5); }
+.band > * { min-width: 0; }
+.band .verdict { border: 0; border-left: 4px solid var(--line-strong); padding: 0 0 0 var(--space-5); background: none; }
+.band .verdict--pass { border-left-color: var(--ok); }
+.band .verdict--fail { border-left-color: var(--signal); }
+.band .verdict--inconclusive { border-left-color: var(--warn); }
+.band .cmd { background: var(--bg); }
+.band .sec h2 { border-bottom-color: var(--line); }
+
+/* Folded sections: the whole heading row is the control. */
+.sec--fold > details > summary {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-4); cursor: pointer; list-style: none;
+  padding-bottom: var(--space-2); border-bottom: 1px solid var(--line);
+}
+.sec--fold > details > summary::-webkit-details-marker { display: none; }
+.sec--fold > details > summary h2 { margin: 0; padding: 0; border: 0; }
+.sec--fold > details > summary .sec-cap { margin: 0; flex: 1; }
+.sec--fold > details > summary::after { content: 'Show'; margin-left: auto; font: 500 11px/16px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.sec--fold > details[open] > summary::after { content: 'Hide'; }
+.sec--fold > details > summary:hover::after { color: var(--text); }
+.sec--fold > details > summary:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.sec-body { padding-top: var(--space-3); display: grid; gap: var(--space-4); }
+.sec-body > * { min-width: 0; }
+
+/* Tall tables scroll inside their own frame so the header row can stay put. */
+.tablewrap--tall { max-height: 460px; overflow: auto; }
+.tablewrap--tall thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); box-shadow: inset 0 -1px var(--line-strong); }
+
+/* Numerics: right-aligned, mono, tabular. */
+.tbl td.r, .tbl th.r { font-variant-numeric: tabular-nums; }
+.tbl td.r { font-family: var(--font-mono); }
+
+/* Compare page: the basis banner stays pinned above the table. */
+.pin { position: sticky; top: 52px; z-index: 5; background: var(--bg); padding-block: var(--space-2); margin-block: calc(-1 * var(--space-2)); }
+
+/* Wide tables pair up only when each half has room for all its columns. */
+@media (max-width: 1699px) {
+  .cols--tables { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Page head with a side control (Run selector): the control sits top right and has no extra top margin. */
+.pg-top .runsel { margin-top: 0; }
+.pg-top .runsel a { min-width: 0; }
+.pg-top nav { justify-self: end; max-width: 100%; }

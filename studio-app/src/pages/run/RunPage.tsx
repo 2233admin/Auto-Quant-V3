@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
 import type { ProjectSnapshot, RankSummary } from '../../api'
 import { num, plural, when } from '../../format'
+import { Section, SectionNav } from '../../design/layout'
 import { Notice } from '../../Notice'
 import { routeHref } from '../../route'
 import { RunList } from './RunList'
@@ -8,15 +8,6 @@ import { RunSelect } from './RunSelect'
 import { short, testAuditVisible, type RunDiagnostics } from './runTypes'
 import { useRun } from './useRun'
 import './run.css'
-
-function Section({ title, id, children }: { title: string; id: string; children: ReactNode }) {
-  return (
-    <section className="sec" aria-labelledby={id}>
-      <h2 id={id}>{title}</h2>
-      {children}
-    </section>
-  )
-}
 
 const day = (iso: string | undefined) => (iso ? iso.slice(0, 10) : '—')
 
@@ -51,67 +42,81 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
   const row = project.runs.find((r) => r.id === fe.run.id)
   return (
     <>
-      <Section title="Headline" id="run-headline">
-        <p className="small muted">
-          Selection uses the validation split only. The primary horizon is {fe.protocol.primaryHorizon} bars. {fe.run.summary}
-        </p>
-        <dl className="headlines">
-          <Headline label="Validation mean rank IC" value={num(v?.meanRankIc, 4)} note={`${fe.protocol.primaryHorizon}-bar horizon`} />
-          <Headline label="HAC t-statistic" value={num(v?.hacTStatistic, 2)} note={`p = ${num(v?.hacNormalPValue, 3)}`} />
-          <Headline label="IC information ratio" value={num(v?.rankIcir, 3)} note={`hit rate ${num(v?.rankHitRate, 3)}`} />
-          <Headline label="Observations" value={v ? v.observations.toLocaleString('en-US') : '—'} note={v?.sufficient === false ? 'below the minimum' : 'validation split'} />
-        </dl>
-      </Section>
+      <div className="band">
+        <Section title="Headline" id="run-headline">
+          <p className="small muted">
+            Selection uses the validation split only. The primary horizon is {fe.protocol.primaryHorizon} bars. {fe.run.summary}
+          </p>
+          <dl className="headlines">
+            <Headline label="Validation mean rank IC" value={num(v?.meanRankIc, 4)} note={`${fe.protocol.primaryHorizon}-bar horizon`} />
+            <Headline label="HAC t-statistic" value={num(v?.hacTStatistic, 2)} note={`p = ${num(v?.hacNormalPValue, 3)}`} />
+            <Headline label="IC information ratio" value={num(v?.rankIcir, 3)} note={`hit rate ${num(v?.rankHitRate, 3)}`} />
+            <Headline label="Observations" value={v ? v.observations.toLocaleString('en-US') : '—'} note={v?.sufficient === false ? 'below the minimum' : 'validation split'} />
+          </dl>
+        </Section>
+      </div>
 
-      <Section title="By split" id="run-splits">
-        <div className="tablewrap">
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th scope="col">Split</th>
-                <th scope="col" className="r">Mean rank IC</th>
-                <th scope="col" className="r">IC IR</th>
-                <th scope="col" className="r">HAC t</th>
-                <th scope="col" className="r">p</th>
-                <th scope="col" className="r">Hit rate</th>
-                <th scope="col" className="r">Obs.</th>
-              </tr>
-            </thead>
-            <tbody>
-              <SplitRow name={`Validation (${day(windows.validation.start)} to ${day(windows.validation.end)})`} role="selection split" s={v} />
-              {showTest && <SplitRow name={`Test (${day(windows.test.start)} to ${day(windows.test.end)})`} role="visible audit, not used for selection" s={fe.summary.testAudit} />}
-            </tbody>
-          </table>
-        </div>
-        {!showTest && <p className="small muted">The test split is not drawn: this Run's protocol does not mark it as a visible diagnostic.</p>}
-      </Section>
+      <SectionNav
+        items={[
+          { id: 'run-headline', label: 'Headline' },
+          { id: 'run-splits', label: 'By split' },
+          { id: 'run-horizons', label: 'Horizons' },
+          ...(fe.factorQualification.diagnosis ? [{ id: 'run-qualification', label: 'Qualification' }] : []),
+          { id: 'run-provenance', label: 'Provenance' },
+          { id: 'run-all', label: 'All Runs' },
+        ]}
+      />
 
-      <Section title="Horizon profile (validation)" id="run-horizons">
-        <div className="tablewrap">
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th scope="col">Horizon (bars)</th>
-                <th scope="col" className="r">Mean rank IC</th>
-                <th scope="col" className="r">HAC t</th>
-                <th scope="col" className="r">p</th>
-                <th scope="col" className="r">Obs.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fe.horizonProfile.map((h) => (
-                <tr key={h.horizon}>
-                  <th scope="row">{h.horizon}{h.horizon === fe.protocol.primaryHorizon && <span className="faint small">primary</span>}</th>
-                  <td className="r num">{num(h.validation.meanRankIc, 4)}</td>
-                  <td className="r num">{num(h.validation.hacTStatistic, 2)}</td>
-                  <td className="r num">{num(h.validation.hacNormalPValue, 3)}</td>
-                  <td className="r num">{h.validation.observations.toLocaleString('en-US')}</td>
+      <div className="cols cols--3-2">
+        <Section title="By split" id="run-splits">
+          <div className="tablewrap">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th scope="col">Split</th>
+                  <th scope="col" className="r">Mean rank IC</th>
+                  <th scope="col" className="r">IC IR</th>
+                  <th scope="col" className="r">HAC t</th>
+                  <th scope="col" className="r">p</th>
+                  <th scope="col" className="r">Hit rate</th>
+                  <th scope="col" className="r">Obs.</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
+              </thead>
+              <tbody>
+                <SplitRow name={`Validation (${day(windows.validation.start)} to ${day(windows.validation.end)})`} role="selection split" s={v} />
+                {showTest && <SplitRow name={`Test (${day(windows.test.start)} to ${day(windows.test.end)})`} role="visible audit, not used for selection" s={fe.summary.testAudit} />}
+              </tbody>
+            </table>
+          </div>
+          {!showTest && <p className="small muted">The test split is not drawn: this Run's protocol does not mark it as a visible diagnostic.</p>}
+        </Section>
+        <Section title="Horizon profile (validation)" id="run-horizons">
+          <div className="tablewrap">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th scope="col">Horizon (bars)</th>
+                  <th scope="col" className="r">Mean rank IC</th>
+                  <th scope="col" className="r">HAC t</th>
+                  <th scope="col" className="r">p</th>
+                  <th scope="col" className="r">Obs.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fe.horizonProfile.map((h) => (
+                  <tr key={h.horizon}>
+                    <th scope="row">{h.horizon}{h.horizon === fe.protocol.primaryHorizon && <span className="faint small">primary</span>}</th>
+                    <td className="r num">{num(h.validation.meanRankIc, 4)}</td>
+                    <td className="r num">{num(h.validation.hacTStatistic, 2)}</td>
+                    <td className="r num">{num(h.validation.hacNormalPValue, 3)}</td>
+                    <td className="r num">{h.validation.observations.toLocaleString('en-US')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      </div>
 
       {fe.factorQualification.diagnosis && (
         <Section title="Qualification diagnosis" id="run-qualification">
@@ -121,7 +126,7 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
         </Section>
       )}
 
-      <Section title="Provenance" id="run-provenance">
+      <Section title="Provenance" id="run-provenance" fold caption="Hashes, dataset and harness that produced this Run.">
         <dl className="kv">
           <dt>Run</dt><dd className="mono">{fe.run.id}</dd>
           <dt>Status</dt><dd>{fe.run.status ?? row?.status ?? '—'}</dd>
@@ -164,10 +169,9 @@ export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runI
       {load.state === 'loading' && <p className="muted">Loading Run…</p>}
       {load.state === 'error' && <Notice kind="error" label="Error" title="Could not load this Run." subtitle={load.message} />}
       {load.state === 'ready' && <Body fe={load.payload.factorExplorer} project={project} />}
-      <section className="sec" aria-labelledby="run-all">
-        <h2 id="run-all">All Runs of this Project</h2>
+      <Section title="All Runs of this Project" id="run-all">
         <RunList project={project} />
-      </section>
+      </Section>
     </div>
   )
 }

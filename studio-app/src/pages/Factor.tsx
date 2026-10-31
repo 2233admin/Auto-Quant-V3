@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RunRow } from '../api'
 import { Glyph } from '../design/icons'
 import { num, plural, when } from '../format'
+import { Section, SectionNav } from '../design/layout'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
 import { IcByHorizon, IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
@@ -12,15 +13,6 @@ import './factor.css'
 type Check = { id: string; group: string; state: 'pass' | 'fail' | 'info'; label: string; detail: ReactNode }
 
 const STATE_WORD = { pass: 'Pass', fail: 'Fail', info: 'Not a pass/fail' } as const
-
-function Section({ title, id, children }: { title: string; id: string; children: ReactNode }) {
-  return (
-    <section className="sec" aria-labelledby={id}>
-      <h2 id={id}>{title}</h2>
-      {children}
-    </section>
-  )
-}
 
 const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '—')
 const int = (v: number) => v.toLocaleString('en-US')
@@ -256,32 +248,64 @@ function Content({ study, project, loadingRun }: { study: FactorDiagnostics; pro
   const failures = checks.filter((c) => c.state === 'fail').length
   const trialsLine = frontier.ok ? `${frontier.value.trials} trial${frontier.value.trials === 1 ? '' : 's'} in the ledger` : 'no trial ledger'
   const runIc = study.summary.validation?.meanRankIc ?? null
+  const failing = !!runRow && ((runRow.errors ?? []).length > 0 || runRow.status !== 'succeeded')
   return (
     <>
-      <header className="pg-head">
-        <h1>Factor evidence</h1>
-        <p className="muted small">
-          <span className="state">
-            <Glyph kind={failures > 0 ? 'error' : 'supported'} signal={failures > 0} />
-            <span className={failures > 0 ? 'sig' : undefined}>{failures > 0 ? `${plural(failures, 'check')} failing` : 'No failing check'}</span>
-          </span>
-          {' · '}
-          {trialsLine}
-          {' · '}
-          <a href={routeHref({ view: 'project', id: project.id })}>Back to Project</a>
-        </p>
-        <p className="lede">
-          Run <span className="mono" translate="no">{study.run.id}</span> of Study <span className="mono" translate="no">{study.run.studyId}</span>,
-          started {when(study.run.startedAt)} UTC, on dataset <span className="mono" translate="no">{study.dataset.id}</span> from{' '}
-          {day(study.dataset.timeRange?.start)} to {day(study.dataset.timeRange?.end)}. Scored asset{' '}
-          <span className="mono" translate="no">{(study.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}</span>, evaluation mode{' '}
-          <span className="mono">{study.predictionUniverse.evaluationMode ?? '—'}</span>.
-        </p>
-      </header>
+      <div className="cols cols--3-2 pg-top">
+        <header className="pg-head">
+          <h1>Factor evidence</h1>
+          <p className="muted small">
+            <span className="state">
+              <Glyph kind={failures > 0 ? 'error' : 'supported'} signal={failures > 0} />
+              <span className={failures > 0 ? 'sig' : undefined}>{failures > 0 ? `${plural(failures, 'check')} failing` : 'No failing check'}</span>
+            </span>
+            {' · '}
+            {trialsLine}
+            {' · '}
+            <a href={routeHref({ view: 'project', id: project.id })}>Back to Project</a>
+          </p>
+          <p className="lede">
+            Run <span className="mono" translate="no">{study.run.id}</span> of Study <span className="mono" translate="no">{study.run.studyId}</span>,
+            started {when(study.run.startedAt)} UTC, on dataset <span className="mono" translate="no">{study.dataset.id}</span> from{' '}
+            {day(study.dataset.timeRange?.start)} to {day(study.dataset.timeRange?.end)}. Scored asset{' '}
+            <span className="mono" translate="no">{(study.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}</span>, evaluation mode{' '}
+            <span className="mono">{study.predictionUniverse.evaluationMode ?? '—'}</span>.
+          </p>
+        </header>
 
-      <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} />
+        <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} />
+      </div>
 
-      <VerdictStrip study={study} adjustment={adjustment} />
+      <div className="band">
+        <VerdictStrip study={study} adjustment={adjustment} />
+        <Section title="Headline (validation split)" id="sec-headline">
+          {validation ? (
+            <dl className="stats">
+              <div>
+                <dt>Mean rank IC, {study.protocol.primaryHorizon}-bar</dt>
+                <dd className="mono">{num(validation.meanRankIc, 4)}</dd>
+              </div>
+              <div>
+                <dt>HAC t statistic</dt>
+                <dd className="mono">{num(validation.hacTStatistic, 2)}</dd>
+              </div>
+              <div>
+                <dt>HAC normal p</dt>
+                <dd className="mono">{num(validation.hacNormalPValue, 3)}</dd>
+              </div>
+              <div>
+                <dt>Observations</dt>
+                <dd className="mono">
+                  {int(validation.observations)}
+                  {!validation.sufficient && <span className="sig"> · below minimum</span>}
+                </dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="muted">The Run published no validation summary.</p>
+          )}
+        </Section>
+      </div>
 
       <Notice
         kind="info"
@@ -290,99 +314,93 @@ function Content({ study, project, loadingRun }: { study: FactorDiagnostics; pro
         subtitle={`The test split never enters selection (${study.protocol.testRole}). Numbers from an external holdout are not drawn on this page.`}
       />
 
-      <Section title="Headline (validation split)" id="sec-headline">
-        {validation ? (
-          <dl className="stats">
-            <div>
-              <dt>Mean rank IC, {study.protocol.primaryHorizon}-bar</dt>
-              <dd className="mono">{num(validation.meanRankIc, 4)}</dd>
-            </div>
-            <div>
-              <dt>HAC t statistic</dt>
-              <dd className="mono">{num(validation.hacTStatistic, 2)}</dd>
-            </div>
-            <div>
-              <dt>HAC normal p</dt>
-              <dd className="mono">{num(validation.hacNormalPValue, 3)}</dd>
-            </div>
-            <div>
-              <dt>Observations</dt>
-              <dd className="mono">
-                {int(validation.observations)}
-                {!validation.sufficient && <span className="sig"> · below minimum</span>}
-              </dd>
-            </div>
-          </dl>
-        ) : (
-          <p className="muted">The Run published no validation summary.</p>
-        )}
+      <SectionNav
+        items={[
+          { id: 'verdict-word', label: 'Verdict' },
+          { id: 'sec-ic', label: 'IC' },
+          { id: 'sec-noise', label: 'Selection and noise' },
+          { id: 'sec-ledger', label: 'Check ledger' },
+          { id: 'sec-quantiles', label: 'Quantiles' },
+          { id: 'sec-qualification', label: 'Qualification' },
+          { id: 'sec-folds', label: 'Folds' },
+          { id: 'sec-horizons', label: 'Horizons' },
+          { id: 'sec-stability', label: 'Stability' },
+          { id: 'sec-protocol', label: 'Protocol' },
+          { id: 'sec-provenance', label: 'Provenance' },
+          { id: 'sec-errors', label: 'Run errors' },
+          { id: 'sec-limits', label: 'Limits' },
+        ]}
+      />
+
+      <Section title="Information coefficient" id="sec-ic" caption="Rank IC by horizon and split, and through time. Validation drives selection; test is a visible audit.">
+        <div className="cols">
+          <IcByHorizon study={study} />
+          <IcOverTime study={study} />
+        </div>
       </Section>
 
-      <Section title="Information coefficient" id="sec-ic">
-        <IcByHorizon study={study} />
-        <IcOverTime study={study} />
-      </Section>
-
-      <Section title="Quantile returns" id="sec-quantiles">
-        <Quantiles study={study} />
-      </Section>
-
-      <Section title="Selection and noise" id="sec-noise">
-        {frontier.ok ? (
-          <NoiseFrontierChart frontier={frontier.value} runIc={runIc} />
-        ) : (
-          <Empty title="Noise frontier" reason={frontier.reason} />
-        )}
-        {frontier.ok && (
-          <p className="muted small">
-            {frontier.value.leaderRunId ? (
-              <>
-                The selected value is Run <span className="mono" translate="no">{frontier.value.leaderRunId}</span>
-                {frontier.value.leaderRunId === study.run.id ? ' (the Run shown here).' : '; the Run shown on this page is a later one that did not replace it.'}
-              </>
+      <div className="cols">
+        <div className="vstack">
+          <Section title="Selection and noise" id="sec-noise">
+            {frontier.ok ? (
+              <NoiseFrontierChart frontier={frontier.value} runIc={runIc} />
             ) : (
-              'The selected value comes from the Session ledger; no single Run matches it exactly.'
+              <Empty title="Noise frontier" reason={frontier.reason} />
             )}
-          </p>
-        )}
-      </Section>
+            {frontier.ok && (
+              <p className="muted small">
+                {frontier.value.leaderRunId ? (
+                  <>
+                    The selected value is Run <span className="mono" translate="no">{frontier.value.leaderRunId}</span>
+                    {frontier.value.leaderRunId === study.run.id ? ' (the Run shown here).' : '; the Run shown on this page is a later one that did not replace it.'}
+                  </>
+                ) : (
+                  'The selected value comes from the Session ledger; no single Run matches it exactly.'
+                )}
+              </p>
+            )}
+          </Section>
+          <Section title="Quantile returns" id="sec-quantiles">
+            <Quantiles study={study} />
+          </Section>
+        </div>
+        <Section title="Check ledger" id="sec-ledger">
+          <Ledger checks={checks} />
+        </Section>
+      </div>
 
       <Section title="Qualification diagnosis" id="sec-qualification">
         <QualificationBlock study={study} />
       </Section>
 
-      <Section title="Chronological folds" id="sec-folds">
-        <FoldTable study={study} />
-      </Section>
+      <div className="cols cols--tables">
+        <Section title="Chronological folds" id="sec-folds">
+          <FoldTable study={study} />
+        </Section>
+        <Section title="Horizon profile" id="sec-horizons">
+          <HorizonTable study={study} />
+        </Section>
+      </div>
 
-      <Section title="Horizon profile" id="sec-horizons">
-        <HorizonTable study={study} />
-      </Section>
-
-      <Section title="Stability: regime, asset, style" id="sec-stability">
+      <Section title="Stability: regime, asset, style" id="sec-stability" fold caption="Per-split tables: market regime, asset and overlap with known styles.">
         <StabilityTables study={study} />
       </Section>
 
-      <Section title="Check ledger" id="sec-ledger">
-        <Ledger checks={checks} />
-      </Section>
-
-      <Section title="Protocol" id="sec-protocol">
+      <Section title="Protocol" id="sec-protocol" fold caption="Splits, horizons and the selection rules this Run was fixed under.">
         <ProtocolBox study={study} />
       </Section>
 
-      <Section title="Provenance" id="sec-provenance">
+      <Section title="Provenance" id="sec-provenance" fold caption="Hashes, dataset and harness that produced this Run.">
         <ProvenanceBox study={study} row={runRow} />
       </Section>
 
-      <Section title="Run errors" id="sec-errors">
+      <Section title="Run errors" id="sec-errors" fold defaultOpen={failing} caption="Status and any errors the Run recorded.">
         <RunErrors row={runRow} />
       </Section>
 
       <Section title="What these numbers do and do not show" id="sec-limits">
         <Limits study={study} frontier={frontier} />
       </Section>
-
       <p className="muted small">{study.warning}</p>
     </>
   )

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, getJson, type ProjectResponse, type ProjectSnapshot, type RunRow, type StudyRow } from '../api'
 import { Glyph } from '../design/icons'
+import { Section, SectionNav } from '../design/layout'
 import { num, plural, when } from '../format'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
@@ -72,15 +73,6 @@ function latestRunByStudy(runs: RunRow[]): Map<string, RunRow> {
   return latest
 }
 
-function Section({ title, children, id }: { title: string; children: ReactNode; id: string }) {
-  return (
-    <section className="sec" aria-labelledby={id}>
-      <h2 id={id}>{title}</h2>
-      {children}
-    </section>
-  )
-}
-
 const OTHER_LANES: { key: keyof ProjectSnapshot; name: string }[] = [
   { key: 'portfolioExplorer', name: 'Portfolio decision explorer' },
   { key: 'rlExplorer', name: 'Governed RL policy' },
@@ -116,12 +108,63 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         <Notice kind="error" label="Error" title="Project diagnostics." subtitle={project.diagnostics.map((d) => d.message ?? '').join('; ')} />
       )}
 
-      <Section title="Question and claim" id="sec-question">
-        <QuestionBlock project={project} />
-      </Section>
+      <div className="band">
+        <div className="cols cols--3-2">
+          <Section title="Next move" id="sec-next">
+            <NextMoveBlock project={project} />
+          </Section>
+          <Section title="Factor evidence (validation split)" id="sec-factor">
+            {validation ? (
+              <dl className="stats">
+                <div>
+                  <dt>Mean rank IC</dt>
+                  <dd className="mono">{num(validation.meanRankIc, 4)}</dd>
+                </div>
+                <div>
+                  <dt>Rank ICIR</dt>
+                  <dd className="mono">{num(validation.rankIcir, 3)}</dd>
+                </div>
+                <div>
+                  <dt>HAC normal p</dt>
+                  <dd className="mono">{num(validation.hacNormalPValue, 3)}</dd>
+                </div>
+                <div>
+                  <dt>Observations</dt>
+                  <dd className="mono">
+                    {validation.observations}
+                    {!validation.sufficient && <span className="sig"> · below minimum</span>}
+                  </dd>
+                </div>
+              </dl>
+            ) : (
+              <p className="muted">No verified Factor Run yet.</p>
+            )}
+            {project.factorExplorer && (
+              <p className="small">
+                <a href={routeHref({ view: 'factor', id: project.id, study: project.factorExplorer.run.studyId })}>Open Factor evidence</a>
+                <span className="muted"> · IC by horizon and split, IC over time, quantiles, noise frontier and the check ledger.</span>
+              </p>
+            )}
+          </Section>
+        </div>
+      </div>
 
-      <Section title="Next move" id="sec-next">
-        <NextMoveBlock project={project} />
+      <SectionNav
+        items={[
+          { id: 'sec-next', label: 'Next move' },
+          { id: 'sec-question', label: 'Question' },
+          { id: 'sec-studies', label: 'Studies' },
+          { id: 'sec-selection', label: 'Selection-adjusted' },
+          { id: 'sec-experiments', label: 'Experiments' },
+          { id: 'sec-runs', label: 'Runs' },
+          { id: 'sec-sessions', label: 'Sessions' },
+          { id: 'sec-docs', label: 'Reports' },
+          { id: 'sec-lanes', label: 'Other lanes' },
+        ]}
+      />
+
+      <Section title="Question and claim" id="sec-question" caption="What was asked, what it would support, and the limits it was asked under.">
+        <QuestionBlock project={project} />
       </Section>
 
       <Section title="Studies" id="sec-studies">
@@ -168,40 +211,6 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         <p className="muted small">Primary values are the Study's selection-split metric. Test and holdout numbers are not drawn here.</p>
       </Section>
 
-      <Section title="Factor evidence (validation split)" id="sec-factor">
-        {validation ? (
-          <dl className="stats">
-            <div>
-              <dt>Mean rank IC</dt>
-              <dd className="mono">{num(validation.meanRankIc, 4)}</dd>
-            </div>
-            <div>
-              <dt>Rank ICIR</dt>
-              <dd className="mono">{num(validation.rankIcir, 3)}</dd>
-            </div>
-            <div>
-              <dt>HAC normal p</dt>
-              <dd className="mono">{num(validation.hacNormalPValue, 3)}</dd>
-            </div>
-            <div>
-              <dt>Observations</dt>
-              <dd className="mono">
-                {validation.observations}
-                {!validation.sufficient && <span className="sig"> · below minimum</span>}
-              </dd>
-            </div>
-          </dl>
-        ) : (
-          <p className="muted">No verified Factor Run yet.</p>
-        )}
-        {project.factorExplorer && (
-          <p className="small">
-            <a href={routeHref({ view: 'factor', id: project.id, study: project.factorExplorer.run.studyId })}>Open Factor evidence</a>
-            <span className="muted"> · IC by horizon and split, IC over time, quantiles, noise frontier and the check ledger.</span>
-          </p>
-        )}
-      </Section>
-
       <Section title="Selection-adjusted evidence" id="sec-selection">
         <SelectionBlock project={project} />
       </Section>
@@ -214,45 +223,46 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         <RunList project={project} />
       </Section>
 
-      <Section title="Sessions" id="sec-sessions">
-        {project.sessions.length === 0 ? (
-          <p className="muted">No Research Sessions yet.</p>
-        ) : (
-          <ul className="plain">
-            {project.sessions.map((s, index) => {
-              const m = sessionMeta(s)
-              return (
-                <li key={m.id ?? index} className="mono small" translate="no">
-                  {m.id ?? 'session'} · {m.studyId ?? 'no Study recorded'} · {m.status ?? 'no status recorded'}
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </Section>
+      <div className="cols">
+          <Section title="Sessions" id="sec-sessions">
+            {project.sessions.length === 0 ? (
+              <p className="muted">No Research Sessions yet.</p>
+            ) : (
+              <ul className="plain">
+                {project.sessions.map((s, index) => {
+                  const m = sessionMeta(s)
+                  return (
+                    <li key={m.id ?? index} className="mono small" translate="no">
+                      {m.id ?? 'session'} · {m.studyId ?? 'no Study recorded'} · {m.status ?? 'no status recorded'}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </Section>
+          <Section title="Recent activity" id="sec-timeline">
+            {project.timeline.length === 0 ? (
+              <p className="muted">No Runs, Sessions or Reports yet.</p>
+            ) : (
+              <ol className="timeline">
+                {project.timeline.slice(0, 12).map((row) => (
+                  <li key={`${row.kind}/${row.id}`}>
+                    <span className="mono faint small">{when(row.at)}</span>
+                    <span className="kind">{row.kind}</span>
+                    <span className="trunc" translate="no">{row.title}</span>
+                    <span className="mono small">{row.value === null ? row.status : `${row.status} · ${num(row.value, 3)}`}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Section>
+      </div>
 
-      <Section title="Recent activity" id="sec-timeline">
-        {project.timeline.length === 0 ? (
-          <p className="muted">No Runs, Sessions or Reports yet.</p>
-        ) : (
-          <ol className="timeline">
-            {project.timeline.slice(0, 12).map((row) => (
-              <li key={`${row.kind}/${row.id}`}>
-                <span className="mono faint small">{when(row.at)}</span>
-                <span className="kind">{row.kind}</span>
-                <span className="trunc" translate="no">{row.title}</span>
-                <span className="mono small">{row.value === null ? row.status : `${row.status} · ${num(row.value, 3)}`}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </Section>
-
-      <Section title="Reports, Reviews, Dossiers and holdout" id="sec-docs">
+      <Section title="Reports, Reviews, Dossiers and holdout" id="sec-docs" fold caption="Session and Run Reports, Reviews, Dossiers and the external holdout.">
         <EvidenceDocsBlock project={project} />
       </Section>
 
-      <Section title="Other lanes" id="sec-lanes">
+      <Section title="Other lanes" id="sec-lanes" fold caption="Lanes the fallback Studio still draws.">
         <p className="muted small">Lanes still marked legacy are drawn by the fallback Studio from the same verified snapshot.</p>
         <ul className="plain">
           {OTHER_LANES.map((lane) => (

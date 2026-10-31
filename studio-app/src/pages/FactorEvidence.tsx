@@ -193,7 +193,7 @@ export function FoldTable({ study }: { study: FactorDiagnostics }) {
   const folds = (study.stability?.chronologicalFolds ?? []).filter((f) => shown.includes(f.split)).sort(foldOrder)
   if (folds.length === 0) return <Empty title="Chronological folds" reason="This Run publishes no chronological folds." />
   return (
-    <div className="tablewrap">
+    <div className="tablewrap tablewrap--tall">
       <table className="tbl">
         <caption className="faint small">Each split cut into consecutive halves in time order. The weakest validation fold is {study.summary.weakestValidationFold?.id ?? 'not recorded'}.</caption>
         <thead>
@@ -283,7 +283,7 @@ export function QualificationBlock({ study }: { study: FactorDiagnostics }) {
         <dt>Why</dt>
         <dd>{d.explanation}</dd>
       </dl>
-      <div className="tablewrap">
+      <div className="tablewrap tablewrap--tall">
         <table className="tbl">
           <caption className="faint small">
             Each variant against the HAC t line{finite(line) ? ` ${num(line, 2)}` : ''} the server publishes. The funnel stops at the first variant that fails; later rows are context.
@@ -355,7 +355,7 @@ export function HorizonTable({ study }: { study: FactorDiagnostics }) {
   const shown = visibleSplits(study)
   if (study.horizonProfile.length === 0) return <Empty title="Horizon profile" reason="This Run publishes no horizon profile." />
   return (
-    <div className="tablewrap">
+    <div className="tablewrap tablewrap--tall">
       <table className="tbl">
         <caption className="faint small">Candidate rank IC at each forward horizon. Selection reads only the {study.protocol.primaryHorizon}-bar horizon; the others are context.</caption>
         <thead>
@@ -412,7 +412,7 @@ export function StabilityTables({ study }: { study: FactorDiagnostics }) {
       <div>
         <h3 className="h-small">By market regime</h3>
         <p className="muted small">{study.protocol.semantics.regimes ?? 'Causal trailing market direction and volatility.'}</p>
-        <div className="tablewrap">
+        <div className="tablewrap tablewrap--tall">
           <table className="tbl">
             <thead>
               <tr>
@@ -446,7 +446,7 @@ export function StabilityTables({ study }: { study: FactorDiagnostics }) {
       </div>
       <div>
         <h3 className="h-small">By asset</h3>
-        <div className="tablewrap">
+        <div className="tablewrap tablewrap--tall">
           <table className="tbl">
             <thead>
               <tr>
@@ -473,7 +473,7 @@ export function StabilityTables({ study }: { study: FactorDiagnostics }) {
       </div>
       <div>
         <h3 className="h-small">Overlap with known styles</h3>
-        <div className="tablewrap">
+        <div className="tablewrap tablewrap--tall">
           <table className="tbl">
             <thead>
               <tr>

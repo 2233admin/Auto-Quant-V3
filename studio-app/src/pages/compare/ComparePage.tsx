@@ -1,5 +1,6 @@
 import type { ProjectSnapshot } from '../../api'
 import { num, when } from '../../format'
+import { Section } from '../../design/layout'
 import { Notice } from '../../Notice'
 import { routeHref } from '../../route'
 import { RunSelect } from '../run/RunSelect'
@@ -38,76 +39,78 @@ function Table({ a, b, project }: { a: RunDiagnostics; b: RunDiagnostics; projec
   const basis = compareBasis(a, b)
   return (
     <>
-      <BasisBanner basis={basis} />
-      <section className="sec" aria-labelledby="cmp-mode">
-        <h2 id="cmp-mode">Comparison mode: {basis.mode.name}</h2>
-        <p>{basis.mode.meaning}</p>
-        <ul className="plain small">
-          {provenanceSentences(a, b, project).map((s) => (
-            <li key={s}>{s}</li>
-          ))}
-        </ul>
-      </section>
-      <section className="sec" aria-labelledby="cmp-table">
-        <h2 id="cmp-table">Before and after</h2>
-        <p className="small muted">Run A is before, Run B is after. Delta is B minus A. Selection uses the validation split only.</p>
-        <div className="tablewrap">
-          <table className="tbl cmp">
-            <thead>
-              <tr>
-                <th scope="col">Measure</th>
-                <th scope="col" className="r">Run A (before)</th>
-                <th scope="col" className="r">Run B (after)</th>
-                <th scope="col" className="r">Delta (B - A)</th>
-                <th scope="col">Reading</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.label}>
-                  <th scope="row">{row.label}</th>
-                  <td className="r num">{num(row.a, row.digits)}</td>
-                  <td className="r num">{num(row.b, row.digits)}</td>
-                  <td className="r num">{row.a !== null && row.b !== null ? signed(row.b - row.a, row.digits) : '—'}</td>
-                  <td className="small muted">{deltaWord(row)}</td>
+      <div className="pin">
+        <BasisBanner basis={basis} />
+      </div>
+      <div className="cols cols--3-2">
+        <Section title="Before and after" id="cmp-table" caption="Run A is before, Run B is after. Delta is B minus A. Selection uses the validation split only.">
+          <div className="tablewrap">
+            <table className="tbl cmp">
+              <thead>
+                <tr>
+                  <th scope="col">Measure</th>
+                  <th scope="col" className="r">Run A (before)</th>
+                  <th scope="col" className="r">Run B (after)</th>
+                  <th scope="col" className="r">Delta (B - A)</th>
+                  <th scope="col">Reading</th>
                 </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.label}>
+                    <th scope="row">{row.label}</th>
+                    <td className="r num">{num(row.a, row.digits)}</td>
+                    <td className="r num">{num(row.b, row.digits)}</td>
+                    <td className="r num">{row.a !== null && row.b !== null ? signed(row.b - row.a, row.digits) : '—'}</td>
+                    <td className="small muted">{deltaWord(row)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {!rows.some((r) => r.group === 'test') && <p className="small muted">The test split is not drawn: at least one Run's protocol does not mark it as a visible diagnostic.</p>}
+        </Section>
+        <div className="vstack">
+          <Section title={`Comparison mode: ${basis.mode.name}`} id="cmp-mode">
+            <p>{basis.mode.meaning}</p>
+            <ul className="plain small">
+              {provenanceSentences(a, b, project).map((s) => (
+                <li key={s}>{s}</li>
               ))}
-            </tbody>
-          </table>
+            </ul>
+          </Section>
+          <Section title="Basis fields" id="cmp-basis" caption="What each Run records for the dataset, horizon and window.">
+            <div className="tablewrap">
+              <table className="tbl cmp">
+                <thead>
+                  <tr>
+                    <th scope="col">Field</th>
+                    <th scope="col">Run A</th>
+                    <th scope="col">Run B</th>
+                    <th scope="col">State</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {basis.checks.map((c) => (
+                    <tr key={c.key}>
+                      <th scope="row">{c.label}</th>
+                      <td className="mono small">{c.key === 'window' ? c.a ?? 'not in payload' : c.a ? (c.a.length > 40 ? short(c.a, 16) : c.a) : 'not in payload'}</td>
+                      <td className="mono small">{c.key === 'window' ? c.b ?? 'not in payload' : c.b ? (c.b.length > 40 ? short(c.b, 16) : c.b) : 'not in payload'}</td>
+                      <td>{c.state === 'same' ? 'Same' : c.state === 'different' ? 'Different' : 'Missing'}</td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <th scope="row">Started (UTC)</th>
+                    <td className="mono small">{when(a.run.startedAt)}</td>
+                    <td className="mono small">{when(b.run.startedAt)}</td>
+                    <td />
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </Section>
         </div>
-        {!rows.some((r) => r.group === 'test') && <p className="small muted">The test split is not drawn: at least one Run's protocol does not mark it as a visible diagnostic.</p>}
-      </section>
-      <section className="sec" aria-labelledby="cmp-basis">
-        <h2 id="cmp-basis">Basis fields</h2>
-        <div className="tablewrap">
-          <table className="tbl cmp">
-            <thead>
-              <tr>
-                <th scope="col">Field</th>
-                <th scope="col">Run A</th>
-                <th scope="col">Run B</th>
-                <th scope="col">State</th>
-              </tr>
-            </thead>
-            <tbody>
-              {basis.checks.map((c) => (
-                <tr key={c.key}>
-                  <th scope="row">{c.label}</th>
-                  <td className="mono small">{c.key === 'window' ? c.a ?? 'not in payload' : c.a ? (c.a.length > 40 ? short(c.a, 16) : c.a) : 'not in payload'}</td>
-                  <td className="mono small">{c.key === 'window' ? c.b ?? 'not in payload' : c.b ? (c.b.length > 40 ? short(c.b, 16) : c.b) : 'not in payload'}</td>
-                  <td>{c.state === 'same' ? 'Same' : c.state === 'different' ? 'Different' : 'Missing'}</td>
-                </tr>
-              ))}
-              <tr>
-                <th scope="row">Started (UTC)</th>
-                <td className="mono small">{when(a.run.startedAt)}</td>
-                <td className="mono small">{when(b.run.startedAt)}</td>
-                <td />
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      </div>
     </>
   )
 }
