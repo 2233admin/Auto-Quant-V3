@@ -70,6 +70,12 @@ class ImmutableRunTests(unittest.TestCase):
             (cache / "runtime.cpython-311.pyc").write_bytes(b"cache")
             self.assertEqual(_harness_source_hash(package), baseline)
 
+            bundle = package / "studio_app" / "assets"
+            bundle.mkdir(parents=True)
+            (package / "studio_app" / "index.html").write_text("<html>")
+            (bundle / "app.js").write_text("rebuilt bundle")
+            self.assertEqual(_harness_source_hash(package), baseline)
+
     def test_run_freezes_study_request_and_exact_upstream_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             _, project = make_project(directory)

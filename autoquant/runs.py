@@ -138,6 +138,10 @@ def _harness_source_hash(package_root: Path | None = None) -> str:
         and "__pycache__" not in path.parts
         and path.suffix != ".pyc"
         and path.name != "_build_identity.py"
+        # The built Studio bundle is a read-only presentation artifact of the
+        # sources under studio-app/; rebuilding it must not change the Harness
+        # identity that Runs record and replay compares.
+        and path.relative_to(package_root).parts[0] != "studio_app"
     }
     return hash_json(files)
 
