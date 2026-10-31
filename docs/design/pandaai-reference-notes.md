@@ -333,3 +333,11 @@ Run: formula `close/delay(close,20)-1`, CSI 300, 2026-02-21..2026-08-20, rebalan
 - Paper trading requires a saved strategy version. The dialog says it never connects real money. Copy this gate: only a saved, versioned artifact can be promoted.
 - Market terminal: 5,223 symbols, stocks and futures, single stocks and ETFs, intraday plus minute and day/week/month candles, main and sub indicators, five-level order book, risk, events and fund-flow tabs. A-share only; no crypto.
 - Copy: constraints form before generation, quality gate before library entry, "no auto backtest" default, versioned-only promotion to paper trading. Beat: a verdict that sees the 22% return rests on a factor with t near zero and a six-month in-sample window, and labels it inconclusive.
+
+### 5g. Parameter tuning (2026-10-31, owner-approved, about 68 compute credits)
+
+- Tuning is launched from the strategy's tuning tab and run by the chat agent: it reads the strategy's parameter block, designs up to 63 numeric candidates plus a baseline (cap 64), validates them, creates a task with an objective (here: total return), and does not change code or auto-apply.
+- Live task view: three counters (queued, running in parallel, aggregated), a per-combination status matrix, an overlaid net-value chart of all combinations normalised to 1, and a parameter table sortable by total return, Sharpe, max drawdown and Sortino. 58 combinations finished in about 4.5 minutes with 0 failures.
+- The agent reported best = top 5 holdings: total return 30.82% against 22.42% baseline, Sharpe 1.64. It called top-N the main sensitivity and 5-day rebalance a stable "sweet spot", from one six-month window.
+- Gap we should beat: the objective is total return on the same window it is reported on, with 59 trials and no deflation, no held-out segment, no noise baseline. The only guard is the 64-combination cap.
+- Side effect to remember for our own design: a follow-up chat turn ("可以") applied the best parameters and edited the saved strategy code (top_n 10 to 5) without a version being offered. Our Studio is read-only for exactly this reason: apply must be an explicit, recorded step with a trial number.
