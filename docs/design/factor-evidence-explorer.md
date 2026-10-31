@@ -121,6 +121,31 @@ them to the immutable metric tree.
 Quantile path points use the same sampled date anchors where available.
 Studio may switch horizon and split, but it cannot re-bin assets.
 
+`quantilePath.cumulative` is a projection of all primary-horizon quantile rows,
+not only the sampled ones. Core sorts them by date and compounds each of the
+low, middle, high, and high-minus-low per-bar returns across splits, so the
+first point is one plus the first return. The cumulative series, not the
+returns, is then thinned to at most 600 points, always keeping the first and
+last points and both bars on each side of every split boundary. The object
+carries `horizon`, `basis` (gross of costs and turnover), `totalRows`,
+`sampledRows`, and points with `timestamp`, `split`, `role`, `low`, `middle`,
+`high`, and `spread`. A per-bar return at or below -100 percent fails with
+`factor.quantile-compound` instead of emitting a non-finite value. Empty
+quantile artifacts publish a cumulative object with zero points.
+
+`spreadSummary` summarizes the primary-horizon high-minus-low return per split
+(`train`, `validation`, `test`, each with its `role`): `observations`,
+`meanPerBar`, `volatilityPerBar` (sample standard deviation), `sharpePerBar`
+(mean over volatility, not annualized because no verified periods-per-year
+exists), `totalReturn` and `maximumDrawdown` of the spread compounded within
+the split from a starting value of one (drawdown is zero or negative), and
+`hitRate` (share of bars with a positive spread). Everything is gross of costs
+and turnover. Temporal Runs publish `status=protocol-unavailable` with the
+same reason code as `quantileEvidence` and no split rows. Neither field changes
+any Run artifact; both are computed in the explorer from existing artifacts,
+and the existing `summary.testAudit` rule still governs test visibility.
+
+
 Single-asset temporal and two-asset relative-value evaluation have no
 cross-sectional prediction population to divide at one timestamp. Their
 immutable protocol therefore declares

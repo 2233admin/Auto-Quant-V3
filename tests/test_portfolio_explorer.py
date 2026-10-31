@@ -710,6 +710,11 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 viability["validation"]["net"]["sharpe"],
                 places=9,
             )
+            for side in ("gross", "net", "benchmark"):
+                self.assertIsInstance(
+                    viability["validation"][side]["calmar"],
+                    float,
+                )
             self.assertGreater(
                 viability["validation"]["temporal"]["months"],
                 0,

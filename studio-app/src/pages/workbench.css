@@ -57,6 +57,13 @@
 .wb-main .chart { max-width: none; margin: 0; }
 .wb-hero .chart { gap: 4px; }
 .wb-hero .plot { max-height: none; }
+.wb-hero--tiles { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: var(--space-4); align-items: start; }
+.wb-hero-chart { display: grid; gap: var(--space-2); min-width: 0; }
+.wb-hero-seg { width: max-content; }
+.wb-hero-why { margin: 0; max-width: 90ch; }
+.wb-spread { align-content: start; }
+.wb-spread .ctg { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 1100px) { .wb-hero--tiles { grid-template-columns: minmax(0, 1fr); } .wb-spread .ctg { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
 
 /* Core tiles: compact one-row metrics, grouped by split. */
 .core { display: grid; gap: var(--space-2); }

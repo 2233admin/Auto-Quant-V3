@@ -3327,6 +3327,7 @@ def _project_performance(value: dict[str, Any]) -> dict[str, Any]:
         "sharpe": float(value["sharpe"]),
         "sortino": float(value["sortino"]),
         "maximumDrawdown": float(value["maximum_drawdown"]),
+        "calmar": float(value["calmar"]),
         "expectedShortfall95": float(value["expected_shortfall_95"]),
         "positiveRate": float(value["positive_rate"]),
         "activeAnnualReturn": float(value["active_annual_return"]),
@@ -8453,6 +8454,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 "sharpe",
                 "sortino",
                 "maximumDrawdown",
+                "calmar",
                 "expectedShortfall95",
                 "positiveRate",
                 "activeAnnualReturn",
@@ -8466,6 +8468,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 "sharpe": {"type": "number"},
                 "sortino": {"type": "number"},
                 "maximumDrawdown": {"type": "number", "maximum": 0},
+                "calmar": {"type": "number"},
                 "expectedShortfall95": {"type": "number"},
                 "positiveRate": {
                     "type": "number",

@@ -11,6 +11,7 @@ export type PerfSummary = {
   sortino?: number | null
   maximumDrawdown?: number | null
   expectedShortfall95?: number | null
+  calmar?: number | null
   positiveRate?: number | null
   activeAnnualReturn?: number | null
   informationRatio?: number | null

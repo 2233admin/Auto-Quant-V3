@@ -250,6 +250,33 @@ export type FactorQuantileRow = {
   observations: number
 }
 
+/** One point of the compounded group curves: growth multiples starting near 1.0 (1.23 = +23%), gross of costs. */
+export type FactorCumulativePoint = {
+  timestamp: string
+  split: FactorSplit
+  role: string
+  low: number
+  middle: number
+  high: number
+  /** Compounded high-minus-low long-short curve. */
+  spread: number
+}
+
+/** Long-short (high minus low) statistics of one split, per bar, gross of costs. Every field optional: older Cores send none. */
+export type FactorSpreadStats = {
+  observations?: number
+  meanPerBar?: number | null
+  volatilityPerBar?: number | null
+  sharpePerBar?: number | null
+  totalReturn?: number | null
+  /** At most 0. */
+  maximumDrawdown?: number | null
+  hitRate?: number | null
+  basis?: string
+}
+
+export type FactorSpreadSplit = FactorSpreadStats & { split: FactorSplit; role?: string }
+
 export type FactorDiagnostics = {
   run: { id: string; studyId: string; startedAt: string; completedAt: string; inputHash?: string; studyHash?: string; sourceHash?: string }
   dataset: { id: string; version: string; hash?: string; universe: string[]; timeRange: { start?: string; end?: string } | null }
@@ -300,6 +327,14 @@ export type FactorDiagnostics = {
   quantileEvidence: { status: string; evaluationMode: string; reasonCode: string | null; reason: string | null; artifactRows: number }
   quantileSummary: FactorQuantileRow[]
   icPath: { totalRows: number; sampledRows: number; sampling: string; points: FactorIcPoint[] }
+  /** Added with the group-return chart; older snapshots do not send it. */
+  quantilePath?: {
+    totalRows?: number
+    sampledRows?: number
+    cumulative?: { horizon: number; basis?: string; totalRows: number; sampledRows: number; points: FactorCumulativePoint[] }
+  }
+  /** Long-short (high minus low) statistics per split; `splits` is empty when the evaluation mode has no groups. */
+  spreadSummary?: { status: string; evaluationMode?: string; horizon: number; basis: string; reasonCode: string | null; authority?: string; splits: FactorSpreadSplit[] }
   warning: string
 }
 

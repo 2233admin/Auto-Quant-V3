@@ -5,7 +5,8 @@ import { num, plural, when } from '../format'
 import { Section } from '../design/layout'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
-import { IcByHorizon, IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
+import { FactorHero } from './GroupReturn'
+import { IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
 import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictHero, VerdictReasons } from './FactorEvidence'
@@ -318,9 +319,7 @@ function Content({ study, project, loadingRun, go }: { study: FactorDiagnostics;
           }
         />
         <VerdictHero study={study} adjustment={adjustment} />
-        <div className="wb-hero">
-          <IcByHorizon study={study} hero />
-        </div>
+        <FactorHero study={study} />
         <CoreTiles study={study} project={project} validation={validation} testAudit={study.summary.testAudit} testVisible={testVisible} defs={study.protocol.semantics} />
         <TrialCounter project={project} />
 

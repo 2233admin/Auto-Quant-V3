@@ -305,7 +305,7 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
             {toggle}
           </div>
           {points.length >= 2 ? (
-            <AllocationChart points={points} windows={windows} ceiling={a.contract?.portfolioPolicy?.annualizedVolatilityCeiling} totalRows={a.dataset?.observations} sampledRows={allPoints.length} note={hiddenNote} />
+            <AllocationChart points={points} windows={windows} ceiling={a.contract?.portfolioPolicy?.annualizedVolatilityCeiling} totalRows={a.dataset?.observations} sampledRows={allPoints.length} note={hiddenNote} testVisible={testVisible} />
           ) : (
             <Empty title="Not available">
               <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a path.</p>

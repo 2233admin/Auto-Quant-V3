@@ -3788,6 +3788,162 @@ def _sample_indices(
     return sorted(selected)
 
 
+MAX_CUMULATIVE_POINTS = 600
+CUMULATIVE_GROUPS = (
+    ("low", "low"),
+    ("middle", "middle"),
+    ("high", "high"),
+    ("spread", "highMinusLow"),
+)
+CUMULATIVE_BASIS = "compounded per-bar group return, gross of costs and turnover"
+def _spread_basis() -> str:
+    return (
+        f"high-minus-low group return at primary horizon {PRIMARY_HORIZON}, "
+        "gross of costs and turnover; per-bar statistics are not annualized "
+        "because no verified periods-per-year is available; totalReturn and "
+        "maximumDrawdown use the spread compounded within the split from a "
+        "starting value of 1"
+    )
+
+
+def _primary_quantile_rows(
+    quantiles: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = [row for row in quantiles if row["horizon"] == PRIMARY_HORIZON]
+    return sorted(rows, key=lambda row: row["timestamp"])
+
+
+def _cumulative_quantiles(quantiles: list[dict[str, Any]]) -> dict[str, Any]:
+    """Compound every primary-horizon group return, then bound the output."""
+
+    rows = _primary_quantile_rows(quantiles)
+    levels = {name: 1.0 for name, _ in CUMULATIVE_GROUPS}
+    series: list[dict[str, Any]] = []
+    for row in rows:
+        point: dict[str, Any] = {
+            "timestamp": row["timestamp"],
+            "split": row["split"],
+            "role": row["role"],
+        }
+        for name, source in CUMULATIVE_GROUPS:
+            value = row[source]
+            if value <= -1.0:
+                _fail(
+                    f"factor-quantiles:{row['timestamp']}/{source}",
+                    "factor.quantile-compound",
+                    "A per-bar return at or below -100% cannot be compounded",
+                )
+            levels[name] *= 1.0 + value
+            if not math.isfinite(levels[name]):
+                _fail(
+                    f"factor-quantiles:{row['timestamp']}/{source}",
+                    "factor.quantile-compound",
+                    "Compounded group return is not finite",
+                )
+            point[name] = levels[name]
+        series.append(point)
+    required: set[int] = set()
+    if series:
+        required.update({0, len(series) - 1})
+    for index in range(1, len(series)):
+        if series[index - 1]["split"] != series[index]["split"]:
+            required.update({index - 1, index})
+    selected = _sample_indices(
+        len(series),
+        MAX_CUMULATIVE_POINTS,
+        required,
+        set(),
+    )
+    return {
+        "horizon": PRIMARY_HORIZON,
+        "basis": CUMULATIVE_BASIS,
+        "totalRows": len(series),
+        "sampledRows": len(selected),
+        "points": [series[index] for index in selected],
+    }
+
+
+def _spread_split_summary(split: str, values: list[float]) -> dict[str, Any]:
+    count = len(values)
+    mean = sum(values) / count if count else None
+    volatility = None
+    if count > 1:
+        volatility = math.sqrt(
+            sum((value - mean) ** 2 for value in values) / (count - 1)
+        )
+    sharpe = (
+        mean / volatility
+        if volatility is not None and volatility > 1e-15
+        else None
+    )
+    level = 1.0
+    peak = 1.0
+    drawdown = 0.0
+    for value in values:
+        level *= 1.0 + value
+        peak = max(peak, level)
+        drawdown = min(drawdown, level / peak - 1.0)
+    return {
+        "split": split,
+        "role": SPLIT_ROLES[split],
+        "observations": count,
+        "meanPerBar": mean,
+        "volatilityPerBar": volatility,
+        "sharpePerBar": sharpe,
+        "totalReturn": level - 1.0 if count else None,
+        "maximumDrawdown": drawdown if count else None,
+        "hitRate": (
+            sum(1 for value in values if value > 0.0) / count
+            if count
+            else None
+        ),
+    }
+
+
+def _spread_summary(
+    evaluation_mode: str,
+    quantiles: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Long-short summary of the high-minus-low group return per split."""
+
+    if evaluation_mode in {
+        SINGLE_ASSET_TEMPORAL_MODE,
+        TWO_ASSET_RELATIVE_VALUE_MODE,
+    }:
+        return {
+            "status": "protocol-unavailable",
+            "evaluationMode": evaluation_mode,
+            "horizon": PRIMARY_HORIZON,
+            "basis": _spread_basis(),
+            "reasonCode": "temporal-tertiles-not-defined",
+            "authority": "diagnostic-only",
+            "splits": [],
+        }
+    rows = _primary_quantile_rows(quantiles)
+    for row in rows:
+        if row["highMinusLow"] <= -1.0:
+            _fail(
+                f"factor-quantiles:{row['timestamp']}/high_minus_low",
+                "factor.quantile-compound",
+                "A per-bar return at or below -100% cannot be compounded",
+            )
+    return {
+        "status": "available",
+        "evaluationMode": evaluation_mode,
+        "horizon": PRIMARY_HORIZON,
+        "basis": _spread_basis(),
+        "reasonCode": None,
+        "authority": "diagnostic-only",
+        "splits": [
+            _spread_split_summary(
+                split,
+                [row["highMinusLow"] for row in rows if row["split"] == split],
+            )
+            for split in SPLITS
+        ],
+    }
+
+
 def _paths(
     daily: ParsedDaily,
     quantiles: list[dict[str, Any]],
@@ -3833,6 +3989,7 @@ def _paths(
         "timestampAnchors": len(selected_dates),
         "sampling": "aligned-to-ic-path-timestamps",
         "points": quantile_points,
+        "cumulative": _cumulative_quantiles(quantiles),
     }
 
 
@@ -4230,6 +4387,10 @@ def _load_factor_diagnostics_unlocked(
         "horizonProfile": _horizon_profile(metrics),
         "quantileEvidence": _quantile_evidence(
             semantics,
+            prediction_universe["evaluationMode"],
+            quantiles,
+        ),
+        "spreadSummary": _spread_summary(
             prediction_universe["evaluationMode"],
             quantiles,
         ),
@@ -4708,6 +4869,7 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
         "factorComponents",
         "horizonProfile",
         "quantileEvidence",
+        "spreadSummary",
         "quantileSummary",
         "stability",
         "coverage",
@@ -4957,6 +5119,25 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 }
             ],
         },
+        "spreadSummary": {
+            "type": "object",
+            "required": [
+                "status",
+                "evaluationMode",
+                "horizon",
+                "basis",
+                "reasonCode",
+                "authority",
+                "splits",
+            ],
+            "properties": {
+                "status": {"enum": ["available", "protocol-unavailable"]},
+                "horizon": {"type": "integer", "minimum": 1},
+                "basis": {"type": "string", "minLength": 1},
+                "authority": {"const": "diagnostic-only"},
+                "splits": {"type": "array", "maxItems": len(SPLITS)},
+            },
+        },
         "quantileSummary": {
             "type": "array",
             "minItems": len(SPLITS),
@@ -5031,7 +5212,34 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 "timestampAnchors",
                 "sampling",
                 "points",
+                "cumulative",
             ],
+            "properties": {
+                "cumulative": {
+                    "type": "object",
+                    "required": [
+                        "horizon",
+                        "basis",
+                        "totalRows",
+                        "sampledRows",
+                        "points",
+                    ],
+                    "properties": {
+                        "horizon": {"type": "integer", "minimum": 1},
+                        "basis": {"const": CUMULATIVE_BASIS},
+                        "totalRows": {"type": "integer", "minimum": 0},
+                        "sampledRows": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": MAX_CUMULATIVE_POINTS,
+                        },
+                        "points": {
+                            "type": "array",
+                            "maxItems": MAX_CUMULATIVE_POINTS,
+                        },
+                    },
+                },
+            },
         },
         "warning": {"type": "string", "minLength": 1},
     },

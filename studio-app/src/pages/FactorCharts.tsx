@@ -22,7 +22,7 @@ const int = (v: number) => v.toLocaleString('en-US')
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10)
 
 /** Figure shell: accessible title and description, the drawing, and the same numbers as a table. */
-function Chart({
+export function Chart({
   title,
   desc,
   short,
@@ -89,7 +89,7 @@ function Chart({
   )
 }
 
-function Swatch({ kind, label }: { kind: 'train' | 'validation' | 'test' | 'line' | 'dash' | 'dot' | 'ref'; label: string }) {
+export function Swatch({ kind, label }: { kind: 'train' | 'validation' | 'test' | 'line' | 'dash' | 'dot' | 'ref'; label: string }) {
   const id = useId()
   return (
     <span className="legend-item">

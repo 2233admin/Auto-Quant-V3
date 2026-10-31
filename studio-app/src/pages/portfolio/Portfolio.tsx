@@ -37,6 +37,7 @@ const METRICS: Metric[] = [
   { key: 'sharpe', label: 'Net Sharpe', kind: 'num', vsBench: true, gross: true },
   { key: 'sortino', label: 'Net Sortino', kind: 'num', vsBench: true, gross: true },
   { key: 'maximumDrawdown', label: 'Max drawdown', kind: 'pct', vsBench: true, gross: true },
+  { key: 'calmar', label: 'Calmar ratio', kind: 'num', vsBench: true, gross: false },
   { key: 'annualVolatility', label: 'Annualized volatility', kind: 'pct', vsBench: true, gross: false },
   { key: 'expectedShortfall95', label: 'Expected shortfall 95%', kind: 'pct', vsBench: true, gross: false },
   { key: 'positiveRate', label: 'Positive-day rate', kind: 'pct', vsBench: true, gross: false },
@@ -50,6 +51,7 @@ const SHORT: Record<string, string> = {
   sharpe: 'Net Sharpe',
   sortino: 'Net Sortino',
   maximumDrawdown: 'Max drawdown',
+  calmar: 'Calmar',
   annualVolatility: 'Volatility (ann.)',
   expectedShortfall95: 'Exp. shortfall 95%',
   positiveRate: 'Positive-day rate',
@@ -67,7 +69,7 @@ function MetricGrid({ pf, split }: { pf: PortfolioDiagnostics; split: Split }) {
   return (
     <div className="hero-tiles" style={{ ['--hc' as string]: 4, ['--hc2' as string]: 3 }}>
       <CompactTileGrid label={`Core numbers, ${split} split`}>
-        {METRICS.map((m) => {
+        {METRICS.filter((m) => m.key !== 'calmar' || finite(v.net?.calmar)).map((m) => {
           const bench = v.benchmark?.[m.key]
           return (
             <CompactTile
@@ -108,7 +110,7 @@ function MetricDetail({ pf, split }: { pf: PortfolioDiagnostics; split: Split })
           </tr>
         </thead>
         <tbody>
-          {METRICS.map((m) => {
+          {METRICS.filter((m) => m.key !== 'calmar' || finite(v.net?.calmar)).map((m) => {
             const net = v.net?.[m.key]
             const bench = v.benchmark?.[m.key]
             const gross = v.gross?.[m.key]

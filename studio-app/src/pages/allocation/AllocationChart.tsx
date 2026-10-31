@@ -23,6 +23,7 @@ export function AllocationChart({
   totalRows,
   sampledRows,
   note,
+  testVisible = false,
 }: {
   points: AllocPoint[]
   windows: SplitWindow[]
@@ -30,6 +31,8 @@ export function AllocationChart({
   totalRows?: number
   sampledRows?: number
   note?: string
+  /** Same rule as the page's numbers: test is protocol 'visible-audit-only' AND a test candidate block exists. */
+  testVisible?: boolean
 }) {
   const id = useId()
   const [figRef, W] = useFitWidth<HTMLElement>(420)
@@ -39,7 +42,7 @@ export function AllocationChart({
   const t0 = t[0]
   const t1 = t[t.length - 1]
 
-  const H1 = 190
+  const H1 = 280
   const H2 = 76
   const H3 = 66
   const top1 = m.t
@@ -161,7 +164,7 @@ export function AllocationChart({
             <rect x={m.l} y={top1} width={W - m.l - m.r} height={bot3 - top1} />
           </clipPath>
         </defs>
-        {windows.map((w) => {
+        {windows.filter((w) => w.split !== 'test' || testVisible).map((w) => {
           const a = Math.max(t0, w.start)
           const b = Math.min(t1, w.end)
           if (b <= a) return null

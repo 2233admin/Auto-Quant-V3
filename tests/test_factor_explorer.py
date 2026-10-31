@@ -12,6 +12,9 @@ import jsonschema
 
 from autoquant.factor_explorer import (
     FACTOR_DIAGNOSTICS_JSON_SCHEMA,
+    MAX_CUMULATIVE_POINTS,
+    _cumulative_quantiles,
+    _spread_summary,
     load_factor_diagnostics,
 )
 from autoquant.intake import prepare_project_intake
@@ -162,6 +165,16 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                     "reason": None,
                     "authority": "diagnostic-only",
                 },
+            )
+            cumulative = diagnostics["quantilePath"]["cumulative"]
+            self.assertEqual(cumulative["horizon"], 1)
+            self.assertGreater(cumulative["totalRows"], 0)
+            self.assertEqual(
+                diagnostics["spreadSummary"]["status"], "available"
+            )
+            self.assertEqual(
+                [item["split"] for item in diagnostics["spreadSummary"]["splits"]],
+                ["train", "validation", "test"],
             )
             self.assertEqual(len(diagnostics["stability"]["assets"]), 18)
             self.assertEqual(len(diagnostics["stability"]["styles"]), 12)
@@ -511,6 +524,154 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                     for item in observed["diagnostics"]
                 )
             )
+
+
+class QuantileProjectionTests(unittest.TestCase):
+    ROLES = {
+        "train": "training",
+        "validation": "selection",
+        "test": "visible-audit",
+    }
+
+    def row(self, day, split, low, middle, high, horizon=1):
+        return {
+            "timestamp": day,
+            "split": split,
+            "role": self.ROLES[split],
+            "horizon": horizon,
+            "low": low,
+            "middle": middle,
+            "high": high,
+            "highMinusLow": high - low,
+        }
+
+    def toy(self):
+        # Deliberately unsorted and with a horizon-5 row that must be ignored.
+        return [
+            self.row("2024-01-04", "validation", 0.0, 0.0, -0.5),
+            self.row("2024-01-02", "train", 0.01, 0.02, 0.10),
+            self.row("2024-01-03", "train", -0.02, 0.0, 0.10),
+            self.row("2024-01-05", "test", 0.0, 0.01, 0.2),
+            self.row("2024-01-02", "train", 9.0, 9.0, 9.0, horizon=5),
+        ]
+
+    def test_cumulative_matches_hand_compounding(self) -> None:
+        cumulative = _cumulative_quantiles(self.toy())
+        self.assertEqual(cumulative["horizon"], 1)
+        self.assertEqual(cumulative["totalRows"], 4)
+        self.assertEqual(cumulative["sampledRows"], 4)
+        points = cumulative["points"]
+        self.assertEqual(
+            [item["timestamp"] for item in points],
+            ["2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05"],
+        )
+        self.assertAlmostEqual(points[0]["low"], 1.01)
+        self.assertAlmostEqual(points[1]["low"], 1.01 * 0.98)
+        self.assertAlmostEqual(points[3]["low"], 1.01 * 0.98)
+        self.assertAlmostEqual(points[3]["middle"], 1.02 * 1.01)
+        self.assertAlmostEqual(points[2]["high"], 1.1 * 1.1 * 0.5)
+        # Spread returns are 0.09, 0.12, -0.5, 0.2.
+        self.assertAlmostEqual(points[0]["spread"], 1.09)
+        self.assertAlmostEqual(points[3]["spread"], 1.09 * 1.12 * 0.5 * 1.2)
+        self.assertEqual(points[2]["split"], "validation")
+        self.assertEqual(points[2]["role"], "selection")
+
+    def test_empty_quantiles_emit_empty_cumulative(self) -> None:
+        cumulative = _cumulative_quantiles([])
+        self.assertEqual(cumulative["totalRows"], 0)
+        self.assertEqual(cumulative["sampledRows"], 0)
+        self.assertEqual(cumulative["points"], [])
+
+    def test_invalid_compounding_fails_structurally(self) -> None:
+        bad = [self.row("2024-01-02", "train", -1.0, 0.0, 0.0)]
+        with self.assertRaises(AutoQuantValidationError) as caught:
+            _cumulative_quantiles(bad)
+        self.assertEqual(
+            caught.exception.issues[0].code, "factor.quantile-compound"
+        )
+
+    def test_downsampling_keeps_first_last_and_split_boundaries(self) -> None:
+        rows = []
+        for index in range(1500):
+            split = (
+                "train"
+                if index < 700
+                else "validation"
+                if index < 1100
+                else "test"
+            )
+            rows.append(
+                self.row(f"d{index:04d}", split, 0.001, 0.001, 0.002)
+            )
+        cumulative = _cumulative_quantiles(rows)
+        points = cumulative["points"]
+        self.assertEqual(cumulative["totalRows"], 1500)
+        self.assertLessEqual(len(points), MAX_CUMULATIVE_POINTS)
+        self.assertEqual(cumulative["sampledRows"], len(points))
+        stamps = [item["timestamp"] for item in points]
+        self.assertEqual(stamps[0], "d0000")
+        self.assertEqual(stamps[-1], "d1499")
+        for boundary in (699, 700, 1099, 1100):
+            self.assertIn(f"d{boundary:04d}", stamps)
+        self.assertEqual(stamps, sorted(stamps))
+        # Down-sampling thins the cumulative series, not the returns.
+        self.assertAlmostEqual(points[-1]["high"], 1.002**1500)
+        self.assertAlmostEqual(points[-1]["spread"], 1.001**1500)
+        by_stamp = {item["timestamp"]: item for item in points}
+        self.assertAlmostEqual(by_stamp["d0700"]["high"], 1.002**701)
+
+    def test_spread_summary_matches_hand_calculation(self) -> None:
+        summary = _spread_summary("cross-sectional", self.toy())
+        self.assertEqual(summary["status"], "available")
+        self.assertEqual(summary["horizon"], 1)
+        self.assertIn("gross of costs", summary["basis"])
+        self.assertIn("not annualized", summary["basis"])
+        by_split = {item["split"]: item for item in summary["splits"]}
+        self.assertEqual(list(by_split), ["train", "validation", "test"])
+        train = by_split["train"]
+        self.assertEqual(train["role"], "training")
+        self.assertEqual(train["observations"], 2)
+        self.assertAlmostEqual(train["meanPerBar"], 0.105)
+        volatility = math.sqrt(2 * 0.015**2)
+        self.assertAlmostEqual(train["volatilityPerBar"], volatility)
+        self.assertAlmostEqual(train["sharpePerBar"], 0.105 / volatility)
+        self.assertAlmostEqual(train["totalReturn"], 1.09 * 1.12 - 1.0)
+        self.assertEqual(train["maximumDrawdown"], 0.0)
+        self.assertEqual(train["hitRate"], 1.0)
+        validation = by_split["validation"]
+        self.assertEqual(validation["role"], "selection")
+        self.assertEqual(validation["observations"], 1)
+        self.assertIsNone(validation["volatilityPerBar"])
+        self.assertIsNone(validation["sharpePerBar"])
+        self.assertAlmostEqual(validation["totalReturn"], -0.5)
+        self.assertAlmostEqual(validation["maximumDrawdown"], -0.5)
+        self.assertEqual(validation["hitRate"], 0.0)
+
+    def test_spread_summary_drawdown_uses_running_peak(self) -> None:
+        returns = [0.10, -0.20, -0.10, 0.50]
+        rows = [
+            self.row(f"2024-02-0{index + 1}", "test", 0.0, 0.0, value)
+            for index, value in enumerate(returns)
+        ]
+        summary = _spread_summary("cross-sectional", rows)
+        test = summary["splits"][2]
+        trough = 1.10 * 0.8 * 0.9
+        self.assertAlmostEqual(test["maximumDrawdown"], trough / 1.10 - 1.0)
+        self.assertAlmostEqual(test["hitRate"], 0.5)
+        self.assertAlmostEqual(
+            test["totalReturn"], 1.1 * 0.8 * 0.9 * 1.5 - 1.0
+        )
+        empty = summary["splits"][0]
+        self.assertEqual(empty["observations"], 0)
+        self.assertIsNone(empty["totalReturn"])
+
+    def test_spread_summary_unavailable_for_temporal_modes(self) -> None:
+        summary = _spread_summary("single-asset-temporal", [])
+        self.assertEqual(summary["status"], "protocol-unavailable")
+        self.assertEqual(summary["splits"], [])
+        self.assertEqual(
+            summary["reasonCode"], "temporal-tertiles-not-defined"
+        )
 
 
 if __name__ == "__main__":
