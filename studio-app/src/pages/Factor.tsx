@@ -5,16 +5,16 @@ import { num, plural, when } from '../format'
 import { Section } from '../design/layout'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
-import { FactorHero, SpreadTiles } from './GroupReturn'
+import { FactorHero, spreadGroups } from './GroupReturn'
 import { IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
-import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictBar, VerdictReasons } from './FactorEvidence'
-import { adjustmentOf, CoreTiles, Tabs, useHashTab, type TabDef } from './FactorWorkbench'
+import { FactorVerdict, FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictReasons } from './FactorEvidence'
+import { adjustmentOf, coreGroups } from './FactorWorkbench'
+import { MetricGrid, PaneCard, Tabs, useHashTab, WorkbenchShell, type TabDef } from '../components/workbench'
 import { useActions } from '../actions/ActionsContext'
 import { LoopProgress, LoopResult, type LoopOutcome } from '../actions/LoopProgress'
 import { FactorEditor } from './FactorEditor'
-import { ResultHeader } from './ResultHeader'
 import { otherLaneOf } from './run/runTypes'
 import { Info } from '../components/Info'
 import { HeadlineMetrics, type HeadlineSplit } from '../components/HeadlineMetrics'
@@ -306,128 +306,131 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
     { id: 'stability', label: 'Stability' },
     { id: 'provenance', label: 'Provenance', badge: failing ? 'run error' : undefined },
   ]
+  const metricGroups = [...coreGroups({ study, project, validation, testAudit: study.summary.testAudit, testVisible, defs: study.protocol.semantics }), ...(study.quantileEvidence.status === 'available' ? spreadGroups(study, testVisible) : [])]
   return (
-    <div className="wb wb--edit wb--split">
-      <aside className="wb-side wb-card" aria-label="Candidate editor">
-        <h1 className="sr-only">Factor evidence <span translate="no">{study.run.id}</span></h1>
-        <FactorEditor project={project} study={study} />
-      </aside>
-
-      <div className="wb-main wb-card">
-        <div className="wb-screen">
-          <ResultHeader
-            select={<RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />}
-            action={null}
-            links={
-              <>
+    <WorkbenchShell
+      ratio={40}
+      left={<FactorEditor project={project} study={study} />}
+      right={
+        <PaneCard
+          label="Factor evidence"
+          actions={
+            <div className="fr-head">
+              <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />
+              <nav className="fr-links" aria-label="Related pages">
                 <a href={routeHref({ view: 'compare', id: project.id, a: study.run.id })}>Compare</a>
                 <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
                 <a href={routeHref({ view: 'run', id: project.id, run: study.run.id })}>Run summary</a>
-              </>
-            }
-          />
-          <div className="wb-slot">
-            <LoopStatus loop={loop} project={project} />
-            <VerdictBar study={study} adjustment={adjustment} />
-          </div>
+              </nav>
+            </div>
+          }
+          status={
+            <div className="fr-status">
+              <LoopStatus loop={loop} project={project} />
+              <FactorVerdict study={study} adjustment={adjustment} />
+            </div>
+          }
+        >
+          <h1 className="sr-only">Factor evidence <span translate="no">{study.run.id}</span></h1>
           <FactorHero study={study} />
-          <div className="wb-metrics">
-            <CoreTiles study={study} project={project} validation={validation} testAudit={study.summary.testAudit} testVisible={testVisible} defs={study.protocol.semantics} />
-            {study.quantileEvidence.status === 'available' && <SpreadTiles study={study} testShown={testVisible} />}
-            <TrialCounter project={project} />
-          </div>
-        </div>
+          {validation ? (
+            <MetricGrid groups={metricGroups} hiddenNote={testVisible && study.summary.testAudit ? undefined : TEST_HIDDEN_NOTE} />
+          ) : (
+            <p className="muted small">The Run published no validation summary.</p>
+          )}
+          <TrialCounter project={project} />
 
-        <Tabs
-          label="Factor evidence sections"
-          tabs={tabs}
-          active={tab}
-          onSelect={selectTab}
-          panels={{
-            evidence: (
-              <>
-                <Section title="Information coefficient over time" id="sec-ic" caption={testVisible ? "Per-timestamp rank IC; validation drives selection, test is a visible audit." : "Per-timestamp rank IC; validation drives selection."}>
-                  <IcOverTime study={study} />
-                </Section>
-                <Section title="Selection and noise" id="sec-noise">
-                  {frontier.ok ? <NoiseFrontierChart frontier={frontier.value} runIc={runIc} /> : <Empty title="Noise frontier" reason={frontier.reason} />}
-                  {frontier.ok && (
-                    <p className="muted small">
-                      {frontier.value.leaderRunId ? (
-                        <>
-                          Selected value: Run <span className="mono" translate="no">{frontier.value.leaderRunId}</span>
-                          {frontier.value.leaderRunId === study.run.id ? ' (this Run).' : '; this page shows a later Run that did not replace it.'}
-                        </>
-                      ) : (
-                        'The selected value comes from the Session ledger; no single Run matches it exactly.'
-                      )}
-                    </p>
-                  )}
-                </Section>
-                <Section title="Quantile returns" id="sec-quantiles">
-                  <Quantiles study={study} />
-                </Section>
-                <Section title="All headline figures" id="sec-headline" caption="Every published rank-IC figure for each shown split.">
-                  <HeadlineMetrics splits={headlineSplits} horizon={study.protocol.primaryHorizon} defs={study.protocol.semantics} />
-                </Section>
-                <Section title="What these numbers do and do not show" id="sec-limits" fold caption="Scope and limits of this Run's evidence.">
-                  <Limits study={study} frontier={frontier} />
-                </Section>
-              </>
-            ),
-            checks: (
-              <>
-                <Section title="Why this verdict" id="sec-reasons" caption="Every reason behind the verdict; the ? opens the field it reads.">
-                  <VerdictReasons study={study} adjustment={adjustment} />
-                </Section>
-                <Section title="Check ledger" id="sec-ledger">
-                  <Ledger checks={checks} />
-                </Section>
-                <Section title="Qualification diagnosis" id="sec-qualification">
-                  <QualificationBlock study={study} />
-                </Section>
-              </>
-            ),
-            stability: (
-              <>
-                <Section title="Chronological folds" id="sec-folds">
-                  <FoldTable study={study} />
-                </Section>
-                <Section title="Horizon profile" id="sec-horizons">
-                  <HorizonTable study={study} />
-                </Section>
-                <Section title="Stability: regime, asset, style" id="sec-stability" caption="Per-split tables: market regime, asset and overlap with known styles.">
-                  <StabilityTables study={study} />
-                </Section>
-              </>
-            ),
-            provenance: (
-              <>
-                <Section title="Protocol" id="sec-protocol" caption="Splits, horizons and the selection rules this Run was fixed under.">
-                  <ProtocolBox study={study} />
-                </Section>
-                <Section title="Provenance" id="sec-provenance" caption="Hashes, dataset and harness that produced this Run.">
-                  <ProvenanceBox study={study} row={runRow} />
-                </Section>
-                <Section title="Run errors" id="sec-errors" caption="Status and any errors the Run recorded.">
-                  <RunErrors row={runRow} />
-                </Section>
-                <NotPublished />
-              </>
-            ),
-          }}
-        />
-        <p className="muted small">
-          {study.warning}{' '}
-          <Info label="Why test is shown but not used for selection" align="start">
-            <p>
-              Validation drives selection; test is shown as a visible audit. The test split never enters selection ({study.protocol.testRole}). Numbers from an
-              external holdout are not drawn on this page.
-            </p>
-          </Info>
-        </p>
-      </div>
-    </div>
+          <Tabs
+            label="Factor evidence sections"
+            tabs={tabs}
+            active={tab}
+            onSelect={selectTab}
+            panels={{
+              evidence: (
+                <>
+                  <Section title="Information coefficient over time" id="sec-ic" caption={testVisible ? "Per-timestamp rank IC; validation drives selection, test is a visible audit." : "Per-timestamp rank IC; validation drives selection."}>
+                    <IcOverTime study={study} />
+                  </Section>
+                  <Section title="Selection and noise" id="sec-noise">
+                    {frontier.ok ? <NoiseFrontierChart frontier={frontier.value} runIc={runIc} /> : <Empty title="Noise frontier" reason={frontier.reason} />}
+                    {frontier.ok && (
+                      <p className="muted small">
+                        {frontier.value.leaderRunId ? (
+                          <>
+                            Selected value: Run <span className="mono" translate="no">{frontier.value.leaderRunId}</span>
+                            {frontier.value.leaderRunId === study.run.id ? ' (this Run).' : '; this page shows a later Run that did not replace it.'}
+                          </>
+                        ) : (
+                          'The selected value comes from the Session ledger; no single Run matches it exactly.'
+                        )}
+                      </p>
+                    )}
+                  </Section>
+                  <Section title="Quantile returns" id="sec-quantiles">
+                    <Quantiles study={study} />
+                  </Section>
+                  <Section title="All headline figures" id="sec-headline" caption="Every published rank-IC figure for each shown split.">
+                    <HeadlineMetrics splits={headlineSplits} horizon={study.protocol.primaryHorizon} defs={study.protocol.semantics} />
+                  </Section>
+                  <Section title="What these numbers do and do not show" id="sec-limits" fold caption="Scope and limits of this Run's evidence.">
+                    <Limits study={study} frontier={frontier} />
+                  </Section>
+                </>
+              ),
+              checks: (
+                <>
+                  <Section title="Why this verdict" id="sec-reasons" caption="Every reason behind the verdict; the ? opens the field it reads.">
+                    <VerdictReasons study={study} adjustment={adjustment} />
+                  </Section>
+                  <Section title="Check ledger" id="sec-ledger">
+                    <Ledger checks={checks} />
+                  </Section>
+                  <Section title="Qualification diagnosis" id="sec-qualification">
+                    <QualificationBlock study={study} />
+                  </Section>
+                </>
+              ),
+              stability: (
+                <>
+                  <Section title="Chronological folds" id="sec-folds">
+                    <FoldTable study={study} />
+                  </Section>
+                  <Section title="Horizon profile" id="sec-horizons">
+                    <HorizonTable study={study} />
+                  </Section>
+                  <Section title="Stability: regime, asset, style" id="sec-stability" caption="Per-split tables: market regime, asset and overlap with known styles.">
+                    <StabilityTables study={study} />
+                  </Section>
+                </>
+              ),
+              provenance: (
+                <>
+                  <Section title="Protocol" id="sec-protocol" caption="Splits, horizons and the selection rules this Run was fixed under.">
+                    <ProtocolBox study={study} />
+                  </Section>
+                  <Section title="Provenance" id="sec-provenance" caption="Hashes, dataset and harness that produced this Run.">
+                    <ProvenanceBox study={study} row={runRow} />
+                  </Section>
+                  <Section title="Run errors" id="sec-errors" caption="Status and any errors the Run recorded.">
+                    <RunErrors row={runRow} />
+                  </Section>
+                  <NotPublished />
+                </>
+              ),
+            }}
+          />
+          <p className="muted small">
+            {study.warning}{' '}
+            <Info label="Why test is shown but not used for selection" align="start">
+              <p>
+                Validation drives selection; test is shown as a visible audit. The test split never enters selection ({study.protocol.testRole}). Numbers from an
+                external holdout are not drawn on this page.
+              </p>
+            </Info>
+          </p>
+        </PaneCard>
+      }
+    />
   )
 }
 
@@ -462,7 +465,7 @@ export function FactorPage({ project, study, run, go }: { project: ProjectSnapsh
       if (done.status === 'succeeded' && done.actionId === 'experiment.evaluate' && done.runId) {
         navigate(routeHref({ view: 'factor', id: project.id, run: done.runId }))
         window.scrollTo(0, 0)
-        document.querySelector('.wb-main')?.scrollTo(0, 0)
+        document.querySelectorAll('.wb-pane-body, .fe-scroll').forEach((el) => el.scrollTo(0, 0))
       }
     },
   }
@@ -486,42 +489,37 @@ export function FactorPage({ project, study, run, go }: { project: ProjectSnapsh
   const explorer = wanted ? fetched?.study ?? null : inline
   const mismatch = explorer && study && explorer.run.studyId !== study
   const pending = !!fetchId && !fetched
+  if (explorer && !mismatch) return <Content study={explorer} project={project} loadingRun={pending} go={navigate} loop={loop} />
   return (
     <div className="pg">
-      {explorer && !mismatch ? (
-        <Content study={explorer} project={project} loadingRun={pending} go={navigate} loop={loop} />
+      <header className="pg-head">
+        <h1>Factor evidence</h1>
+      </header>
+      <RunSelector project={project} shown={wanted ?? inline?.run.id ?? ''} loading={pending} go={navigate} />
+      <LoopStatus loop={loop} project={project} />
+      {other && otherHref ? (
+        <p className="muted">
+          This Run belongs to the {other.lane} lane. <a href={otherHref}>Open {other.lane}</a>
+        </p>
+      ) : pending ? (
+        <p className="muted">Loading Run…</p>
+      ) : fetched?.error ? (
+        <Notice kind="error" label="Error" title={`Could not load Run ${wanted}.`} subtitle={fetched.error} />
       ) : (
-        <>
-          <header className="pg-head">
-            <h1>Factor evidence</h1>
-          </header>
-          <RunSelector project={project} shown={wanted ?? inline?.run.id ?? ''} loading={pending} go={navigate} />
-          <LoopStatus loop={loop} project={project} />
-          {other && otherHref ? (
-            <p className="muted">
-              This Run belongs to the {other.lane} lane. <a href={otherHref}>Open {other.lane}</a>
-            </p>
-          ) : pending ? (
-            <p className="muted">Loading Run…</p>
-          ) : fetched?.error ? (
-            <Notice kind="error" label="Error" title={`Could not load Run ${wanted}.`} subtitle={fetched.error} />
-          ) : (
-            <Notice
-              kind="info"
-              label="Info"
-              title={mismatch ? `No verified Factor Run for Study ${study}.` : 'This Project has no verified Factor Run.'}
-              subtitle={
-                mismatch
-                  ? `The shown Factor Run belongs to Study ${explorer.run.studyId}.`
-                  : 'Run the Factor Study with aq run, then reload.'
-              }
-            />
-          )}
-          <p>
-            <a href={routeHref({ view: 'project', id: project.id })}>Back to Project</a>
-          </p>
-        </>
+        <Notice
+          kind="info"
+          label="Info"
+          title={mismatch ? `No verified Factor Run for Study ${study}.` : 'This Project has no verified Factor Run.'}
+          subtitle={
+            mismatch
+              ? `The shown Factor Run belongs to Study ${explorer.run.studyId}.`
+              : 'Run the Factor Study with aq run, then reload.'
+          }
+        />
       )}
+      <p>
+        <a href={routeHref({ view: 'project', id: project.id })}>Back to Project</a>
+      </p>
     </div>
   )
 }

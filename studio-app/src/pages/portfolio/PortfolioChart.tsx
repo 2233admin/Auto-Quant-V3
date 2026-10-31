@@ -1,8 +1,6 @@
-import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { useCallback, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { niceTicks } from '../factorMath'
-import { Info } from '../../components/Info'
 import type { PathPoint } from './portfolioTypes'
-import { useFitWidth } from '../../design/useFitWidth'
 
 const m = { l: 60, r: 16, t: 28, b: 40 }
 const GAP = 22
@@ -18,6 +16,8 @@ const day = (ms: number) => new Date(ms).toISOString().slice(0, 10)
 export type SplitWindow = { split: string; label: string; start: number; end: number }
 type SeriesKey = 'net' | 'gross' | 'bench' | 'ticks' | 'exposure'
 
+const FULL: Record<SeriesKey, string> = { net: 'Net growth (after costs)', gross: 'Gross growth (no cost)', bench: 'Benchmark growth', ticks: 'Transition dates', exposure: 'Exposure panel' }
+
 function Swatch({ kind }: { kind: SeriesKey | 'dd' }) {
   return (
     <svg width="22" height="12" aria-hidden="true">
@@ -32,8 +32,61 @@ function Swatch({ kind }: { kind: SeriesKey | 'dd' }) {
   )
 }
 
+/** Explanation for the chart card's "?" (what the curve is, what the transition ticks mean). */
+export function PortfolioChartInfo({ transitions, note }: { transitions: string[]; note?: string }) {
+  const n = new Set(transitions).size
+  return (
+    <>
+      <p>Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path). Hover the chart, or focus it and use the arrow keys, to read a date.</p>
+      <p>
+        Transition ticks (bottom of the growth panel) mark only the dates of the server&apos;s recent signal transitions
+        {n ? ` (${n} distinct dates)` : ''}; earlier ones are not published, so a tick-free stretch does not mean no trading.
+        {note ? ` ${note}` : ''}
+      </p>
+    </>
+  )
+}
+
+/** The sampled daily path as a table (kept from the old chart's "Data table" disclosure). */
+export function PathTable({ points }: { points: PathPoint[] }) {
+  return (
+    <div className="tablewrap tablewrap--tall">
+      <table className="tbl">
+        <caption className="small muted">Sampled daily path</caption>
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Split</th>
+            <th scope="col" className="r">Net</th>
+            <th scope="col" className="r">Gross</th>
+            <th scope="col" className="r">Benchmark</th>
+            <th scope="col" className="r">Drawdown</th>
+            <th scope="col" className="r">Gross exp.</th>
+            <th scope="col" className="r">Net exp.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {points.map((p) => (
+            <tr key={p.timestamp}>
+              <td className="mono">{p.timestamp.slice(0, 10)}</td>
+              <td>{p.split ?? '—'}</td>
+              <td className="r">{g3(p.netGrowth)}</td>
+              <td className="r">{g3(p.grossGrowth)}</td>
+              <td className="r">{g3(p.benchmarkGrowth)}</td>
+              <td className="r">{p1(p.drawdown)}</td>
+              <td className="r">{g3(p.grossExposure)}</td>
+              <td className="r">{g3(p.netExposure)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 /**
  * Net and benchmark growth with a drawdown panel (and optional exposure panel) under one shared time axis.
+ * Fills the box its parent gives it (series toggles on top, readout below, the plot takes the rest).
  * Everything drawn is a published sampled value; the code only scales and formats it.
  */
 export function PortfolioChart({
@@ -42,18 +95,30 @@ export function PortfolioChart({
   transitions,
   totalRows,
   sampledRows,
-  note,
 }: {
   points: PathPoint[]
   windows: SplitWindow[]
   transitions: string[]
   totalRows?: number
   sampledRows?: number
-  note?: string
 }) {
   const id = useId()
-  const [figRef, W] = useFitWidth<HTMLElement>(420)
   const svgRef = useRef<SVGSVGElement>(null)
+  const [box, setBox] = useState({ w: 0, h: 0 })
+  const roRef = useRef<ResizeObserver | null>(null)
+  const plotRef = useCallback((el: HTMLDivElement | null) => {
+    roRef.current?.disconnect()
+    roRef.current = null
+    if (!el) return
+    const read = () => {
+      const r = el.getBoundingClientRect()
+      setBox((p) => (Math.abs(p.w - r.width) < 1 && Math.abs(p.h - r.height) < 1 ? p : { w: Math.round(r.width), h: Math.round(r.height) }))
+    }
+    read()
+    roRef.current = new ResizeObserver(read)
+    roRef.current.observe(el)
+  }, [])
+  const W = Math.max(320, box.w || 640)
   const [on, setOn] = useState<Record<SeriesKey, boolean>>({ net: true, gross: false, bench: true, ticks: true, exposure: false })
   const [hover, setHover] = useState<number | null>(null)
   const toggle = (k: SeriesKey) => setOn((s) => ({ ...s, [k]: !s[k] }))
@@ -66,7 +131,10 @@ export function PortfolioChart({
   const hasExpo = points.some((p) => finite(p.grossExposure) || finite(p.netExposure))
   const showExpo = on.exposure && hasExpo
 
-  const heights = { growth: 220, dd: 80, expo: 80 }
+  const H = Math.max(240, box.h || 360)
+  const panels = showExpo ? 3 : 2
+  const plotH = Math.max(120, H - m.t - m.b - GAP * (panels - 1))
+  const heights = showExpo ? { growth: plotH * 0.5, dd: plotH * 0.25, expo: plotH * 0.25 } : { growth: plotH * 0.66, dd: plotH * 0.34, expo: 0 }
   const gTop = m.t
   const gBot = gTop + heights.growth
   const dTop = gBot + GAP
@@ -74,7 +142,6 @@ export function PortfolioChart({
   const eTop = dBot + GAP
   const eBot = eTop + heights.expo
   const axisY = showExpo ? eBot : dBot
-  const H = axisY + m.b
 
   const x = (ms: number) => m.l + ((ms - t0) / (t1 - t0)) * (W - m.l - m.r)
 
@@ -143,35 +210,21 @@ export function PortfolioChart({
   const clip = `${id}-clip`
 
   const legend: { key: SeriesKey; label: string; avail: boolean; why: string }[] = [
-    { key: 'net', label: 'Net growth', avail: true, why: '' },
-    { key: 'gross', label: 'Gross growth', avail: hasGross, why: 'the Run publishes no gross growth' },
-    { key: 'bench', label: 'Benchmark growth', avail: hasBench, why: 'the Run publishes no benchmark growth' },
-    { key: 'ticks', label: 'Transition dates', avail: tickDates.length > 0, why: 'no published transition date falls inside the visible window' },
-    { key: 'exposure', label: 'Exposure panel', avail: hasExpo, why: 'the Run publishes no exposure path' },
+    { key: 'net', label: 'Net', avail: true, why: '' },
+    { key: 'gross', label: 'Gross', avail: hasGross, why: 'the Run publishes no gross growth' },
+    { key: 'bench', label: 'Benchmark', avail: hasBench, why: 'the Run publishes no benchmark growth' },
+    { key: 'ticks', label: 'Transitions', avail: tickDates.length > 0, why: 'no published transition date falls inside the visible window' },
+    { key: 'exposure', label: 'Exposure', avail: hasExpo, why: 'the Run publishes no exposure path' },
   ]
 
   return (
-    <figure ref={figRef} className="chart pf-chart">
-      <figcaption>
-        <h3 id={`${id}-t`} className="sr-only">Net growth, benchmark and drawdown</h3>
-        <p className="sr-only" id={`${id}-d`}>
-          Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path).
-          {totalRows !== undefined && sampledRows !== undefined && <> Sampled path: {sampledRows} of {totalRows.toLocaleString('en-US')} daily rows.</>} Hover the chart, or focus it and use the arrow keys, to read a date.
-        </p>
-        <p className="muted small">
-          Growth of 1.0 after costs
-          {totalRows !== undefined && sampledRows !== undefined && <> · {sampledRows} of {totalRows.toLocaleString('en-US')} daily rows</>}
-          <Info label="About this chart">
-            <p>Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path). Hover the chart, or focus it and use the arrow keys, to read a date.</p>
-            <p>
-              Transition ticks (bottom of the growth panel) mark only the dates of the server&apos;s recent signal transitions
-              {tickDates.length ? ` (${tickDates.length} distinct dates)` : ''}; earlier ones are not published, so a tick-free stretch does not mean no trading.
-              {note ? ` ${note}` : ''}
-            </p>
-          </Info>
-        </p>
-      </figcaption>
-      <div className="chart-bar">
+    <div className="pf-embed">
+      <p className="sr-only" id={`${id}-d`}>
+        Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path).
+        {totalRows !== undefined && sampledRows !== undefined && <> Sampled path: {sampledRows} of {totalRows.toLocaleString('en-US')} daily rows.</>} Hover the chart, or focus it and use the arrow keys, to read a date.
+      </p>
+      <h3 id={`${id}-t`} className="sr-only">Net growth, benchmark and drawdown</h3>
+      <div className="pf-embed-bar">
         <span className="legend" role="group" aria-label="Series">
           {legend.map((l) => (
             <button
@@ -180,7 +233,7 @@ export function PortfolioChart({
               className="pf-toggle"
               aria-pressed={l.avail && on[l.key]}
               disabled={!l.avail}
-              title={l.avail ? undefined : `not available: ${l.why}`}
+              title={l.avail ? FULL[l.key] : `not available: ${l.why}`}
               onClick={() => toggle(l.key)}
             >
               <Swatch kind={l.key} />
@@ -189,14 +242,20 @@ export function PortfolioChart({
           ))}
           <span className="legend-item">
             <Swatch kind="dd" />
-            Drawdown (always shown)
+            Drawdown
           </span>
         </span>
+        {totalRows !== undefined && sampledRows !== undefined && (
+          <span className="faint small">{sampledRows} of {totalRows.toLocaleString('en-US')} daily rows</span>
+        )}
       </div>
+      <div className="pf-embed-plot" ref={plotRef}>
       <svg
         ref={svgRef}
         className="plot pf-plot"
         viewBox={`0 0 ${W} ${H}`}
+        width={W}
+        height={H}
         role="img"
         aria-labelledby={`${id}-t ${id}-d`}
         tabIndex={0}
@@ -316,6 +375,7 @@ export function PortfolioChart({
           </g>
         )}
       </svg>
+      </div>
       <p className="pf-readout mono small" aria-live="off">
         {hp ? (
           <>
@@ -329,40 +389,6 @@ export function PortfolioChart({
           <span className="faint">Hover the chart to read a date.</span>
         )}
       </p>
-      <details className="datatable">
-        <summary>Data table</summary>
-        <div className="tablewrap tablewrap--tall">
-          <table className="tbl">
-            <caption className="small muted">Sampled daily path</caption>
-            <thead>
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Split</th>
-                <th scope="col" className="r">Net</th>
-                <th scope="col" className="r">Gross</th>
-                <th scope="col" className="r">Benchmark</th>
-                <th scope="col" className="r">Drawdown</th>
-                <th scope="col" className="r">Gross exp.</th>
-                <th scope="col" className="r">Net exp.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {points.map((p) => (
-                <tr key={p.timestamp}>
-                  <td className="mono">{p.timestamp.slice(0, 10)}</td>
-                  <td>{p.split ?? '—'}</td>
-                  <td className="r">{g3(p.netGrowth)}</td>
-                  <td className="r">{g3(p.grossGrowth)}</td>
-                  <td className="r">{g3(p.benchmarkGrowth)}</td>
-                  <td className="r">{p1(p.drawdown)}</td>
-                  <td className="r">{g3(p.grossExposure)}</td>
-                  <td className="r">{g3(p.netExposure)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
-    </figure>
+    </div>
   )
 }

@@ -4,7 +4,7 @@ import './workbench.css'
 
 export type VerdictTone = 'bad' | 'ok' | 'warn'
 const GLYPH: Record<VerdictTone, GlyphKind> = { bad: 'error', ok: 'supported', warn: 'inconclusive' }
-export type VerdictReason = { tone: 'bad' | 'info'; text: ReactNode; field?: string }
+export type VerdictReason = { tone: 'good' | 'bad' | 'info'; text: ReactNode; field?: string }
 
 /**
  * One-line verdict: tone pill (word + glyph, never colour alone) and a sentence truncated to one line. "More" shows the
@@ -31,7 +31,7 @@ export function VerdictBar({ tone, word, children, reasons = [] }: { tone: Verdi
           <ul>
             {reasons.map((r, i) => (
               <li key={i}>
-                <Glyph kind={r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
+                <Glyph kind={r.tone === 'good' ? 'supported' : r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
                 <span>
                   {r.text}
                   {r.field && <span className="faint small mono"> {r.field}</span>}

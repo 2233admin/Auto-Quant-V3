@@ -42,7 +42,6 @@
 .bullets { list-style: disc; padding-left: 1.2em; display: grid; gap: var(--space-2); font: var(--type-body); }
 .plot .val { paint-order: stroke; stroke: var(--raised); stroke-width: 3px; stroke-linejoin: round; }
 
-/* Verdict hero (workbench.css owns the layout around it) */
 .kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px var(--space-5); margin: 0 0 var(--space-4); font: var(--type-body); }
 .kv dt { color: var(--muted); font: var(--type-small); padding-top: 1px; }
 .kv dd { margin: 0; overflow-wrap: anywhere; }
@@ -52,3 +51,29 @@
 .stack { display: grid; gap: var(--space-6); }
 .stack .tbl caption { padding-top: 0; }
 @media (max-width: 800px) { .kv { grid-template-columns: 1fr; } }
+
+/* Factor workbench: right card (Run selector and links in the card header; charts and sections in its body). */
+.fr-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1) var(--space-4); width: 100%; min-width: 0; }
+.fr-head .runsel { flex: 1 1 160px; min-width: 0; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
+.fr-head .runsel select { min-width: 0; width: 100%; }
+.fr-status { display: grid; gap: 6px; min-width: 0; }
+.fr-head { flex: 1 1 auto; }
+.fr-links { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font: var(--type-small); margin-left: auto; }
+.fr-links a { white-space: nowrap; }
+.wb-chart-fill > .plot { border: 0; background: none; height: 100%; }
+.wb-chart-legend .legend { gap: var(--space-1) var(--space-4); }
+.wb-pane .chart { max-width: none; margin: 0; }
+.wb-pane .sec h2 { margin-bottom: var(--space-2); }
+.wb-pane .sec-cap { margin-bottom: var(--space-2); }
+
+/* Run selector bar and tab-panel details shared by the Factor tabs */
+.runsel--bar select { font: var(--type-small); height: 30px; padding: 0 8px; background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); width: 100%; min-width: 0; max-width: 100%; }
+.wb-tabpanel .cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.wb-tabpanel .tbl caption .info { margin-left: 6px; }
+.h-small .info { margin-left: 6px; }
+
+/* Verdict reasons list (Checks tab) */
+.verdict-reasons { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font: var(--type-small); }
+.verdict-reasons li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: var(--space-2); align-items: start; color: var(--muted); }
+.verdict-reasons li > svg { margin-top: 2px; }
+.verdict-field { overflow-wrap: anywhere; margin: 0; }

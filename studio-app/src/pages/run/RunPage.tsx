@@ -8,16 +8,17 @@ import { Notice } from '../../Notice'
 import { HeadlineMetrics, type HeadlineSplit } from '../../components/HeadlineMetrics'
 import { Info } from '../../components/Info'
 import { NotPublished } from '../../components/NotPublished'
-import { TrialCounter } from '../../components/TrialCounter'
+import { pickIntegrity, TrialCounter } from '../../components/TrialCounter'
+import { FactChips, MetricGrid, PaneCard, Tabs, useHashTab, VerdictBar, WorkbenchShell, type Fact, type MetricGroup, type TabDef } from '../../components/workbench'
 import { routeHref } from '../../route'
-import { IcByHorizon } from '../FactorCharts'
-import { QualificationBlock, VerdictHero, VerdictReasons } from '../FactorEvidence'
-import { adjustmentOf, CoreTiles, TestedFacts, Tabs, useHashTab, type TabDef } from '../FactorWorkbench'
+import { buildVerdict, QualificationBlock, topReasons, VerdictReasons, verdictSentence } from '../FactorEvidence'
+import { adjustmentOf } from '../FactorWorkbench'
+import { SPLIT_LABEL, SPLITS } from '../factorMath'
 import { RunList } from './RunList'
 import { RunSelect } from './RunSelect'
-import { TEST_HIDDEN_NOTE } from '../testGate'
+import { IcByHorizonCard, IcByHorizonTable } from '../FactorCharts'
+import { gatedSplits, TEST_HIDDEN_NOTE } from '../testGate'
 import { otherLaneOf, short, testAuditVisible, type RunDiagnostics } from './runTypes'
-import { ResultHeader } from '../ResultHeader'
 import { useRun } from './useRun'
 import './run.css'
 
@@ -42,12 +43,75 @@ const TAB_IDS = ['evidence', 'checks', 'provenance', 'runs'] as const
 /** Old section anchors now live inside a tab. */
 const ANCHOR_TAB: Record<string, TabId> = {
   'run-headline': 'evidence',
+  'run-ic-table': 'evidence',
   'run-splits': 'evidence',
   'run-horizons': 'evidence',
   'run-reasons': 'checks',
   'run-qualification': 'checks',
   'run-provenance': 'provenance',
   'run-all': 'runs',
+}
+
+const VERDICT_WORD = { pass: 'Pass', fail: 'Fail', inconclusive: 'Inconclusive' } as const
+const int = (v: number) => v.toLocaleString('en-US')
+
+/** The published validation (and, only when its audit is visible, test) numbers as compact tiles. */
+function metricGroups(fe: RunDiagnostics, project: ProjectSnapshot, showTest: boolean): MetricGroup[] {
+  const v = fe.summary.validation
+  const t = fe.summary.testAudit
+  const horizon = fe.protocol.primaryHorizon
+  const fam = pickIntegrity(project)?.researchFamily
+  const measure = fe.protocol.semantics?.measure ? <p>{fe.protocol.semantics.measure}</p> : undefined
+  const inference = fe.protocol.semantics?.inference ? <p>{fe.protocol.semantics.inference}</p> : undefined
+  const groups: MetricGroup[] = []
+  if (v) {
+    const weak = v.sufficient === false
+    groups.push({
+      heading: `Validation · selection split · ${horizon}-bar horizon`,
+      label: `Validation split, ${horizon}-bar horizon`,
+      tiles: [
+        { label: 'Mean rank IC', value: num(v.meanRankIc, 4), info: measure },
+        { label: 'HAC t', value: num(v.hacTStatistic, 2), info: inference },
+        { label: 'HAC p', value: num(v.hacNormalPValue, 3), note: 'two-sided', info: inference },
+        { label: 'Hit rate', value: num(v.rankHitRate, 3), info: <p>Share of bars with rank IC above 0.</p> },
+        { label: 'Rank IC IR', value: num(v.rankIcir, 3) },
+        { label: 'Mean Pearson IC', value: num(v.meanPearsonIc, 4) },
+        { label: 'Rank IC std', value: num(v.rankIcStandardDeviation, 3) },
+        { label: 'Observations', value: int(v.observations), note: `min ${int(v.minimumObservations)}`, tone: weak ? 'weak' : 'neutral', toneReason: weak ? 'below min' : undefined },
+        { label: 'Trials counted', value: fam ? int(fam.totalExecutions) : '—', note: fam ? `${fam.uniqueSourceTrials} unique` : 'no ledger' },
+      ],
+    })
+  }
+  if (showTest && t) {
+    groups.push({
+      heading: 'Test · visible audit, not used for selection',
+      label: `Test split visible audit, ${horizon}-bar horizon`,
+      tiles: [
+        { label: 'Mean rank IC', value: num(t.meanRankIc, 4) },
+        { label: 'HAC t', value: num(t.hacTStatistic, 2) },
+        { label: 'HAC p', value: num(t.hacNormalPValue, 3) },
+        { label: 'Hit rate', value: num(t.rankHitRate, 3) },
+        { label: 'Observations', value: int(t.observations), note: `min ${int(t.minimumObservations)}` },
+      ],
+    })
+  }
+  return groups
+}
+
+/** "What was tested": the locked Study and Run facts. */
+function testedFacts(fe: RunDiagnostics): Fact[] {
+  const { protocol } = fe
+  const windows = protocol.splits.splits
+  const context = protocol.horizons.filter((h) => h !== protocol.primaryHorizon).sort((a, b) => a - b)
+  return [
+    { label: 'Study', value: fe.run.studyId, mono: true },
+    { label: 'Run started', value: `${when(fe.run.startedAt)} UTC` },
+    { label: 'Dataset', value: `${fe.dataset.id} · ${day(fe.dataset.timeRange?.start)} to ${day(fe.dataset.timeRange?.end)}`, mono: true },
+    { label: 'Scored asset', value: (fe.predictionUniverse.predictionAssets ?? []).join(', ') || '—', mono: true },
+    { label: 'Evaluation mode', value: fe.predictionUniverse.evaluationMode ?? '—', mono: true },
+    { label: 'Horizon', value: `${protocol.primaryHorizon}-bar primary${context.length ? ` · context ${context.join(', ')}-bar` : ''}` },
+    ...gatedSplits(fe, SPLITS).map((s) => ({ label: `${SPLIT_LABEL[s]} window`, value: `${day(windows[s].start)} to ${day(windows[s].end)}` })),
+  ]
 }
 
 function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot }) {
@@ -60,6 +124,7 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
     ...(v ? [{ name: 'Validation', role: 'selection split', summary: v }] : []),
     ...(showTest && fe.summary.testAudit ? [{ name: 'Test', role: 'visible audit, not used for selection', summary: fe.summary.testAudit }] : []),
   ]
+  const { verdict, reasons } = buildVerdict(fe, adjustment)
   const [tab, selectTab, anchor] = useHashTab<TabId>(TAB_IDS, 'evidence', ANCHOR_TAB)
   useEffect(() => {
     if (anchor) requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ block: 'start' }))
@@ -72,11 +137,11 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
   ]
   return (
     <>
-      <VerdictHero study={fe} adjustment={adjustment} />
-      <div className="wb-hero">
-        <IcByHorizon study={fe} hero />
-      </div>
-      <CoreTiles study={fe} project={project} validation={v} testAudit={fe.summary.testAudit} testVisible={showTest} defs={fe.protocol.semantics} />
+      <VerdictBar tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'} word={VERDICT_WORD[verdict]} reasons={topReasons(reasons).map((r) => ({ tone: r.tone === 'bad' ? 'bad' : 'info', text: r.text, field: r.field }))}>
+        {verdictSentence(fe, adjustment, verdict)}
+      </VerdictBar>
+      <IcByHorizonCard study={fe} table={false} />
+      <MetricGrid groups={metricGroups(fe, project, showTest)} hiddenNote={showTest ? undefined : TEST_HIDDEN_NOTE} />
       <TrialCounter project={project} />
       <Tabs
         label="Run sections"
@@ -86,6 +151,11 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
         panels={{
           evidence: (
             <>
+              <Section title="Rank IC by horizon and split" id="run-ic-table" caption="The numbers behind the chart.">
+                <div className="tablewrap">
+                  <IcByHorizonTable study={fe} />
+                </div>
+              </Section>
               <Section title="By split" id="run-splits" caption={showTest ? undefined : TEST_HIDDEN_NOTE}>
                 <div className="tablewrap">
                   <table className="tbl">
@@ -217,60 +287,52 @@ export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runI
       </div>
     )
   }
-  return (
-    <div className="pg">
-      <div className="wb">
-        <aside className="wb-side" aria-label="What was tested">
-          <div className="wb-head">
-            <h1 className="wb-title">Run <span className="mono" translate="no">{runId.replace(/^run-/, '')}</span></h1>
-            <span className="wb-sub">
-              {plural(project.runs.length, 'Run')} in this Project. <LaunchedLabel runId={runId} />
-            </span>
-          </div>
-          {fe && (
-            <section aria-labelledby="wb-tested">
-              <h2 className="wb-h" id="wb-tested">What was tested</h2>
-              <TestedFacts study={fe} />
-            </section>
-          )}
-        </aside>
-        <div className="wb-main">
-          <ResultHeader
-            select={<RunSelect bar label="Run" runs={project.runs} value={runId} onChange={(id) => go(routeHref({ view: 'run', id: project.id, run: id }))} />}
-            action={<RunAnalysisButton project={project} preferStudyId={study} />}
-            links={
-              <>
-                <a href={factorHref}>Full Factor evidence</a>
-                <a href={routeHref({ view: 'compare', id: project.id, a: runId })}>Compare</a>
-                <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
-              </>
-            }
-          />
-          {load.state === 'loading' && <p className="muted">Loading Run…</p>}
-          {load.state === 'error' &&
-            (load.unsupported ? (
-              <Notice
-                kind="info"
-                label="Info"
-                title="This Run is not a Factor Run, so it has no Factor evidence page."
-                subtitle="The Run route serves Factor Runs only. Open the Project to find the page for this Run's lane."
-              />
-            ) : (
-              <Notice kind="error" label="Error" title="Could not load this Run." subtitle={load.message} />
-            ))}
-          {load.state === 'error' && load.unsupported && (
-            <p className="small">
-              <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a> · <a href={routeHref({ view: 'runs' })}>Run history</a>
-            </p>
-          )}
-          {fe && <Body fe={fe} project={project} />}
-          {!fe && (
-            <Section title="All Runs of this Project" id="run-all">
-              <RunList project={project} />
-            </Section>
-          )}
-        </div>
-      </div>
-    </div>
+  const runLabelId = runId.replace(/^run-/, '')
+  const left = (
+    <PaneCard label="What was tested" actions={<RunAnalysisButton project={project} preferStudyId={study} />}>
+      <header className="rp-lhead">
+        <h1>
+          Run <span className="mono" translate="no">{runLabelId}</span>
+        </h1>
+        <p className="muted small">
+          {plural(project.runs.length, 'Run')} in this Project. <LaunchedLabel runId={runId} />
+        </p>
+      </header>
+      <RunSelect bar label="Run" runs={project.runs} value={runId} onChange={(id) => go(routeHref({ view: 'run', id: project.id, run: id }))} />
+      <nav className="rp-links" aria-label="Related pages">
+        <a href={factorHref}>Full Factor evidence</a>
+        <a href={routeHref({ view: 'compare', id: project.id, a: runId })}>Compare</a>
+        <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
+      </nav>
+      {fe && <FactChips label="What was tested" locked facts={testedFacts(fe)} info={<p>These values come from the Study and the Run. They are read-only here.</p>} />}
+    </PaneCard>
   )
+  const right = (
+    <PaneCard label="Run result">
+      {load.state === 'loading' && <p className="muted">Loading Run…</p>}
+      {load.state === 'error' &&
+        (load.unsupported ? (
+          <Notice
+            kind="info"
+            label="Info"
+            title="This Run is not a Factor Run, so it has no Factor evidence page."
+            subtitle="The Run route serves Factor Runs only. Open the Project to find the page for this Run's lane."
+          />
+        ) : (
+          <Notice kind="error" label="Error" title="Could not load this Run." subtitle={load.message} />
+        ))}
+      {load.state === 'error' && load.unsupported && (
+        <p className="small">
+          <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a> · <a href={routeHref({ view: 'runs' })}>Run history</a>
+        </p>
+      )}
+      {fe && <Body fe={fe} project={project} />}
+      {!fe && (
+        <Section title="All Runs of this Project" id="run-all">
+          <RunList project={project} />
+        </Section>
+      )}
+    </PaneCard>
+  )
+  return <WorkbenchShell left={left} right={right} ratio={34} />
 }

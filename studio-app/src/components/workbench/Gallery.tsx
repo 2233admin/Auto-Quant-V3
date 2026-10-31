@@ -118,6 +118,7 @@ export function WorkbenchGallery() {
     >
       {right === 'chart' ? (
         <ChartCard
+          fill
           title={metric === 'group' ? 'Group return' : 'Rank IC'}
           info={<p>Cumulative return of each factor-rank group. Higher groups should earn more than lower ones.</p>}
           toggle={<SegmentedToggle label="Chart" value={metric} onChange={setMetric} options={[{ id: 'group', label: 'Group return' }, { id: 'ic', label: 'Rank IC' }]} />}

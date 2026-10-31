@@ -28,7 +28,7 @@ export function PaneCard({
         <header className="wb-pane-head">
           {(tabs || actions) && (
             <div className="wb-pane-row">
-              <div className="wb-pane-tabs">{tabs}</div>
+              {tabs && <div className="wb-pane-tabs">{tabs}</div>}
               {actions && <div className="wb-pane-actions">{actions}</div>}
             </div>
           )}

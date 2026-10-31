@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { FactorDiagnostics, FactorFold, FactorSplit, RankSummary, RunRow, SelectionIntegrity } from '../api'
 import { Glyph } from '../design/icons'
 import { num, plural, when } from '../format'
@@ -6,6 +6,7 @@ import { SPLIT_LABEL, SPLITS } from './factorMath'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { Empty } from './FactorCharts'
 import { Info } from '../components/Info'
+import { VerdictBar } from '../components/workbench'
 
 const int = (v: number) => v.toLocaleString('en-US')
 const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '—')
@@ -126,7 +127,6 @@ export function buildVerdict(study: FactorDiagnostics, adjustment: Adjustment | 
 }
 
 const VERDICT_WORD: Record<Verdict, string> = { pass: 'Pass', fail: 'Fail', inconclusive: 'Inconclusive' }
-const VERDICT_GLYPH = { pass: 'supported', fail: 'refuted', inconclusive: 'inconclusive' } as const
 
 const ic4 = (v: number) => `${v < 0 ? '-' : ''}${Math.abs(v).toFixed(4)}`
 
@@ -186,73 +186,15 @@ function ReasonList({ reasons }: { reasons: Reason[] }) {
   )
 }
 
-/** The hero verdict: chip, one sentence, at most three reasons. Stage and label provenance sit behind the "?" button. */
-export function VerdictHero({ study, adjustment }: { study: FactorDiagnostics; adjustment: Adjustment | undefined }) {
-  const { verdict, reasons } = buildVerdict(study, adjustment)
-  const diagnosis = study.factorQualification.diagnosis
-  return (
-    <section className={`verdict verdict--${verdict}`} aria-labelledby="verdict-word">
-      <div className="verdict-top">
-        <h2 id="verdict-word" className="verdict-word">
-          <Glyph kind={VERDICT_GLYPH[verdict]} signal={verdict === 'fail'} />
-          <span>{VERDICT_WORD[verdict]}</span>
-        </h2>
-        <p className="verdict-sentence">{verdictSentence(study, adjustment, verdict)}</p>
-        <Info label="How this verdict is read" align="end">
-          <p>
-            Validation split only.{' '}
-            {diagnosis ? (
-              <>
-                Stage <span className="mono">{diagnosis.stage}</span>
-                {diagnosis.iterationFocus && (
-                  <>
-                    ; next focus <span className="mono">{diagnosis.iterationFocus}</span>
-                  </>
-                )}
-                .
-              </>
-            ) : (
-              'No qualification stage.'
-            )}
-          </p>
-          <p>Label read from the server stage and its qualifies-for-portfolio flag; the family-wise flag can only demote a pass.</p>
-        </Info>
-      </div>
-      {topReasons(reasons).length > 0 && (
-        <details className="verdict-more">
-          <summary>
-            {topReasons(reasons).length} {topReasons(reasons).length === 1 ? 'reason' : 'reasons'}
-          </summary>
-          <ReasonList reasons={topReasons(reasons)} />
-        </details>
-      )}
-    </section>
-  )
-}
+const KIT_TONE = { pass: 'ok', fail: 'bad', inconclusive: 'warn' } as const
 
-/**
- * The same verdict as one line: chip and the first sentence cut to a single line (full text in the tooltip). "more" opens the
- * whole sentence and the reasons in place.
- */
-export function VerdictBar({ study, adjustment }: { study: FactorDiagnostics; adjustment: Adjustment | undefined }) {
-  const [open, setOpen] = useState(false)
+/** The verdict as the kit's one-line bar: word, the first sentence, and "More" for the whole sentence and the top reasons. */
+export function FactorVerdict({ study, adjustment }: { study: FactorDiagnostics; adjustment: Adjustment | undefined }) {
   const { verdict, reasons } = buildVerdict(study, adjustment)
-  const sentence = verdictSentence(study, adjustment, verdict)
-  const top = topReasons(reasons)
   return (
-    <section className={`verdict verdict--${verdict} verdict--bar${open ? ' is-open' : ''}`} aria-labelledby="verdict-word">
-      <div className="verdict-top">
-        <h2 id="verdict-word" className="verdict-word">
-          <Glyph kind={VERDICT_GLYPH[verdict]} signal={verdict === 'fail'} />
-          <span>{VERDICT_WORD[verdict]}</span>
-        </h2>
-        <p className="verdict-sentence" title={sentence}>{sentence}</p>
-        <button type="button" className="linklike verdict-toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-          {open ? 'less' : 'more'}
-        </button>
-      </div>
-      {open && top.length > 0 && <ReasonList reasons={top} />}
-    </section>
+    <VerdictBar tone={KIT_TONE[verdict]} word={VERDICT_WORD[verdict]} reasons={topReasons(reasons)}>
+      {verdictSentence(study, adjustment, verdict)}
+    </VerdictBar>
   )
 }
 

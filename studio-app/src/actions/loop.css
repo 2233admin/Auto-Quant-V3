@@ -1,20 +1,12 @@
-/* Inline progress and last-result line of the Factor workbench. Tokens only. */
-.lp, .lr { border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--raised); padding: 6px var(--space-3); display: grid; gap: 4px; }
-.lp-line { display: grid; grid-template-columns: auto auto minmax(80px, 1fr) 3.2em auto auto; align-items: center; gap: var(--space-3); min-height: 28px; }
-.lp-word { font: 600 13px/20px var(--font-sans); }
-.lp-bar { position: relative; height: 6px; background: var(--selected); border-radius: 3px; overflow: hidden; }
-.lp-bar > span { display: block; height: 100%; background: var(--text); transition: width .3s; }
-.lp-bar.is-indeterminate > span { width: 28%; background: var(--muted); animation: lp-slide 1.4s ease-in-out infinite; }
-@keyframes lp-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(360%); } }
-@media (prefers-reduced-motion: reduce) { .lp-bar.is-indeterminate > span { animation: none; width: 100%; opacity: .4; } }
-.lp-pct, .lp-time { font-size: 12px; text-align: right; }
+/* Last-result line of the Factor workbench (the progress line is the kit's StatusLine). Tokens only. */
+.lr { border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--raised); padding: 4px var(--space-3); display: grid; gap: 4px; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; border-left: 4px solid var(--ok); }
+.lr.is-bad { border-left-color: var(--signal); }
+.lr-line { margin: 0; font: 500 13px/20px var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lr-body { display: grid; gap: 4px; min-width: 0; overflow: hidden; }
+.lr .abtn { min-height: 24px; }
 .lp-note { margin: 0; }
 .lp-more > summary { cursor: pointer; width: max-content; font: var(--type-small); color: var(--muted); }
 .lp-more > summary:hover { color: var(--text); }
 .lp-more > summary:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .lp-more[open] { display: grid; gap: var(--space-2); }
-.lp .cmd, .lr .cmd { margin: 0; max-height: 8em; overflow: auto; }
-.lr { grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--space-3); border-left: 4px solid var(--ok); }
-.lr.is-bad { border-left-color: var(--signal); }
-.lr-line { margin: 0; font: 500 13px/20px var(--font-sans); }
-.lr-body { display: grid; gap: 4px; min-width: 0; }
+.wb-status-more .cmd, .lr .cmd { margin: 0; max-height: 8em; overflow: auto; }

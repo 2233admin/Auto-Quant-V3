@@ -14,15 +14,21 @@ export function ChartCard({
   info,
   toggle,
   legend,
+  table,
   minHeight = 220,
+  fill = false,
   children,
 }: {
   title: string
   info?: ReactNode
   toggle?: ReactNode
   legend?: ReactNode
+  /** The plotted numbers as a table, behind a "Data table" disclosure under the plot (the text alternative of the drawing). */
+  table?: ReactNode
   /** Smallest plot height; the body scrolls rather than squashing below it. */
   minHeight?: number
+  /** Take the height of the parent (a flush pane body) instead of the default slot height. */
+  fill?: boolean
   children: (size: ChartSize) => ReactNode
 }) {
   const [fitRef, width] = useFitWidth<HTMLDivElement>(240)
@@ -44,7 +50,7 @@ export function ChartCard({
     return () => ro.disconnect()
   }, [el])
   return (
-    <figure className="wb-chart">
+    <figure className={`wb-chart${fill ? ' is-fill' : ''}`}>
       <figcaption className="wb-chart-head">
         <span className="wb-chart-title">
           <strong>{title}</strong>
@@ -56,6 +62,12 @@ export function ChartCard({
       <div className="wb-chart-body" ref={ref} style={{ minHeight }}>
         <div className="wb-chart-fill">{height > 0 && children({ width, height })}</div>
       </div>
+      {table && (
+        <details className="wb-chart-table datatable">
+          <summary>Data table</summary>
+          <div className="tablewrap">{table}</div>
+        </details>
+      )}
     </figure>
   )
 }

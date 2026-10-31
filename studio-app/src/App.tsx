@@ -118,7 +118,7 @@ export default function App() {
       ) : route.view === 'compare' ? (
         <ComparePage project={project.project} a={route.a} b={route.b} go={go} />
       ) : route.view === 'portfolio' ? (
-        <PortfolioPage project={project.project} />
+        <PortfolioPage project={project.project} go={go} />
       ) : route.view === 'bookrisk' ? (
         <BookRiskPage project={project.project} />
       ) : route.view === 'bookstress' ? (

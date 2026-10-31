@@ -8,76 +8,56 @@ import { CopyButton } from '../actions/CopyButton'
 import { StartSessionDialog } from '../actions/StartSessionDialog'
 import { useCatalog } from '../actions/useCatalog'
 import { CodeField } from '../components/CodeField'
-import { Info } from '../components/Info'
 import { pickIntegrity } from '../components/TrialCounter'
 import { num, when } from '../format'
+import { ActionRow, FactChips, PaneCard, TabList, type ActionButton, type Fact } from '../components/workbench'
 import { Modal } from '../shell/Modal'
 import { SPLIT_LABEL, SPLITS } from './factorMath'
 import { gatedSplits } from './testGate'
 import './factorEdit.css'
 
 const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '—')
+const SAVE_ICON = (
+  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M3 2h8l2 2v10H3z" />
+    <path d="M5 2v4h5V2M5 14v-4h6v4" />
+  </svg>
+)
+const CHECK_ICON = (
+  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M3 8.5l3.2 3.2L13 4.5" />
+  </svg>
+)
 const OFF_COMMAND = 'aq studio serve --allow-actions'
 /** Block texts that describe the saved file only; they cannot apply while the editor holds unsaved changes. */
 const STALE_DISK_BLOCK = /does not differ from the leader/i
 const HYP_MIN = 8
 const HYP_MAX = 500
 
-function LockIcon() {
-  return (
-    <svg className="fe-lock" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <rect x="3" y="7" width="10" height="7" rx="1" />
-      <path d="M5 7V5a3 3 0 0 1 6 0v2" />
-    </svg>
-  )
-}
-
 type Tested = Pick<FactorDiagnostics, 'run' | 'dataset' | 'predictionUniverse' | 'protocol' | 'summary'>
 
-/** One locked fact as a small read-only chip: label above, value below, truncated with the full text in the tooltip. */
-function Chip({ label, value, mono = true, wide = false }: { label: string; value: string; mono?: boolean; wide?: boolean }) {
-  return (
-    <div className={`fe-fact${wide ? ' is-wide' : ''}`} title={`${label}: ${value}`}>
-      <span className="fe-fact-l">{label}</span>
-      <span className={`fe-fact-v${mono ? ' mono' : ''}`} translate="no">{value}</span>
-    </div>
-  )
-}
-
-/** The Study-locked inputs as a compact two-column grid of read-only chips under one lock and one "?". */
-function LockedFacts({ study }: { study: Tested }) {
+/** The Study-locked inputs as read-only facts (shown under one lock and one "?"). */
+function lockedFacts(study: Tested): Fact[] {
   const { protocol } = study
   const windows = protocol.splits.splits
   const context = protocol.horizons.filter((h) => h !== protocol.primaryHorizon).sort((a, b) => a - b)
   const range = (a: string | null | undefined, b: string | null | undefined) => `${day(a)} → ${day(b)}`
-  return (
-    <section className="fe-facts-sec" aria-labelledby="fe-locked">
-      <h2 className="wb-h fe-h" id="fe-locked">
-        <LockIcon /> Fixed by the Study
-        <Info label="Why these inputs are locked" align="start">
-          <p>Fixed by the Study so results stay comparable. The analysis window, horizon, splits and universe cannot be changed here; only the candidate source and the hypothesis can.</p>
-        </Info>
-      </h2>
-      <div className="fe-facts2" role="group" aria-label="Fixed by the Study">
-        <Chip label="Study" value={study.run.studyId} />
-        <Chip label="Horizon" value={`${protocol.primaryHorizon}-bar${context.length > 0 ? ` (+${context.join(', ')})` : ''}`} />
-        <Chip label="Universe" value={`${(study.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}${study.predictionUniverse.evaluationMode ? ` · ${study.predictionUniverse.evaluationMode}` : ''}`} />
-        <Chip label="Dataset" value={study.dataset.id} />
-        {gatedSplits(study, SPLITS).map((sp) => (
-          <Chip key={sp} label={SPLIT_LABEL[sp]} value={range(windows[sp].start, windows[sp].end)} />
-        ))}
-      </div>
-    </section>
-  )
+  return [
+    { label: 'Study', value: study.run.studyId, mono: true },
+    { label: 'Horizon', value: `${protocol.primaryHorizon}-bar${context.length > 0 ? ` (+${context.join(', ')})` : ''}` },
+    { label: 'Universe', value: `${(study.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}${study.predictionUniverse.evaluationMode ? ` · ${study.predictionUniverse.evaluationMode}` : ''}`, mono: true },
+    { label: 'Dataset', value: study.dataset.id, mono: true },
+    ...gatedSplits(study, SPLITS).map((sp) => ({ label: SPLIT_LABEL[sp], value: range(windows[sp].start, windows[sp].end) })),
+  ]
 }
 
 /** A line of text that never wraps: the full text sits in the tooltip, and "more" opens it in place. */
-function OneLine({ id, kind, children, text, action }: { id?: string; kind?: 'error' | 'ok' | 'info'; children?: ReactNode; text: string; action?: ReactNode }) {
+function OneLine({ kind, children, text, action }: { kind?: 'error' | 'ok' | 'info'; children?: ReactNode; text: string; action?: ReactNode }) {
   const [open, setOpen] = useState(false)
   useEffect(() => setOpen(false), [text])
   return (
     <div className={`fe-line${open ? ' is-open' : ''}${kind === 'error' ? ' is-error' : ''}`}>
-      <p id={id} className="fe-line-t small" title={text} role={kind === 'error' ? 'alert' : undefined}>{children ?? text}</p>
+      <p className="fe-line-t small" title={text} role={kind === 'error' ? 'alert' : undefined}>{children ?? text}</p>
       {action}
       {text.length > 52 && (
         <button type="button" className="linklike fe-more" aria-expanded={open} onClick={() => setOpen((v) => !v)}>{open ? 'less' : 'more'}</button>
@@ -136,6 +116,7 @@ type Load =
 
 type Note = { kind: 'ok' | 'error' | 'info'; text: string } | null
 
+/** The left card of the Factor workbench. */
 export function FactorEditor({ project, study }: { project: ProjectSnapshot; study: Tested }) {
   const { state, setActiveJobId, activeJobId, version } = useActions()
   const catalog = useCatalog(project.id)
@@ -163,7 +144,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [startOpen, setStartOpen] = useState(false)
   const hypRef = useRef<HTMLInputElement>(null)
-  const ids = { hyp: useId(), hypNote: useId(), why: useId() }
+  const ids = { hyp: useId(), hypNote: useId() }
 
   const wantsLoad = state.mode === 'off' ? !!loadSession : state.mode === 'on' && !!sessionId
   useEffect(() => {
@@ -288,153 +269,165 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
   const mainReason = noSession ? startBlock : reason
   const on = state.mode === 'on'
 
+  /** An enabled button, or one disabled WITH its reason (the kit's ActionButton contract). */
+  const button = (label: ReactNode, onClick: () => void, blocked: string | null, title?: string, ariaLabel?: string): ActionButton =>
+    blocked === null ? { label, onClick, title, ariaLabel } : { label, title, ariaLabel, disabled: true, disabledReason: blocked }
+  const primary = button(
+    noSession ? 'Start session' : phase === 'saving' ? 'Saving…' : phase === 'checking' ? 'Checking…' : 'Run analysis',
+    () => (noSession ? setStartOpen(true) : void runAnalysis()),
+    (noSession ? !canStart : reason !== null || busy) ? mainReason ?? 'A job is already running in this Project.' : null,
+  )
+  const saveReason = !editable
+    ? 'Nothing to save: the candidate is read-only.'
+    : !dirty
+      ? 'Nothing to save: there are no unsaved changes.'
+      : conflict
+        ? 'Resolve the save conflict first.'
+        : busy
+          ? 'Wait for the current step to finish.'
+          : null
+  const checkReason = !editable ? 'Nothing to check: the candidate is read-only.' : busy ? 'Wait for the current step to finish.' : null
+  const secondary: ActionButton[] = [
+    button(SAVE_ICON, () => void save(), saveReason, 'Save the candidate', 'Save'),
+    button(CHECK_ICON, () => void checkAfterSave(), checkReason, dirty ? 'Check saves your edits first, then checks the saved file.' : 'Check the saved candidate', 'Check'),
+    ...(retry && !noSession ? [button('Retry', catalog.reload, null)] : []),
+    ...(!noSession && activeJob && activeJobId !== activeJob ? [button('Progress', () => setActiveJobId(activeJob), null, 'Show the progress of the running job')] : []),
+  ]
+
   return (
-    <div className="fe">
-      <div className="fe-top">
-        <div className="fe-tabs" role="tablist" aria-label="Candidate pane">
-          <button type="button" role="tab" id="fe-tab-c" aria-selected={tab === 'candidate'} aria-controls="fe-panel" onClick={() => setTab('candidate')}>Candidate</button>
-          <button type="button" role="tab" id="fe-tab-h" aria-selected={tab === 'history'} aria-controls="fe-panel" onClick={() => setTab('history')}>History</button>
-        </div>
-        <span className="fe-grow" />
-        {on && !noSession && (
-          <>
-            <button type="button" className="abtn abtn--quiet fe-q" aria-label="Save" title="Save the candidate" disabled={!editable || !dirty || busy || conflict} onClick={() => void save()}>
-              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2h8l2 2v10H3z" /><path d="M5 2v4h5V2M5 14v-4h6v4" /></svg>
-              <span className="fe-q-t">Save</span>
-            </button>
-            <button type="button" className="abtn abtn--quiet fe-q" aria-label="Check" title={!editable ? 'Nothing to check: the candidate is read-only.' : dirty ? 'Check saves your edits first, then checks the saved file.' : 'Check the saved candidate'} disabled={!editable || busy} onClick={() => void checkAfterSave()}>
-              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 8.5l3.2 3.2L13 4.5" /></svg>
-              <span className="fe-q-t">Check</span>
-            </button>
-          </>
-        )}
-        {on && (
-          <button
-            type="button"
-            className="abtn abtn--primary fe-primary"
-            disabled={noSession ? !canStart : reason !== null || busy}
-            aria-describedby={mainReason ? ids.why : undefined}
-            onClick={() => (noSession ? setStartOpen(true) : void runAnalysis())}
-          >
-            {noSession ? 'Start session' : phase === 'saving' ? 'Saving…' : phase === 'checking' ? 'Checking…' : 'Run analysis'}
-          </button>
-        )}
-        {on && !noSession && (
-          <span className="fe-trial-chip" title={trialTitle} aria-label={`Trial ${trialN} of ${trialM}. ${trialTitle}`}>
-            <span aria-hidden="true"><span className="fe-trial-lbl">Trial </span>{trialN}<span className="fe-trial-w"> of </span><span className="fe-trial-s">/</span>{trialM}</span>
-          </span>
-        )}
-      </div>
-
-      <div className="fe-status">
-        {mainReason && (
-          <OneLine
-            id={ids.why}
-            text={mainReason}
-            action={
-              <>
-                {retry && !noSession && <button type="button" className="linklike" onClick={catalog.reload}>Retry</button>}
-                {!noSession && activeJob && activeJobId !== activeJob && (
-                  <button type="button" className="linklike" onClick={() => setActiveJobId(activeJob)}>Show its progress</button>
-                )}
-              </>
-            }
+    <>
+      <PaneCard
+        label="Candidate editor"
+        flush
+        tabs={
+          <TabList
+            label="Candidate pane"
+            tabs={[
+              { id: 'candidate', label: 'Candidate' },
+              { id: 'history', label: 'History' },
+            ]}
+            active={tab}
+            onSelect={setTab}
           />
-        )}
-        {state.mode === 'off' && (
-          <OneLine
-            text={`Read-only. ${ACTIONS_OFF_COPY} to edit and run from this page.`}
-            action={<CopyButton text={OFF_COMMAND} label="Copy command" />}
-          />
-        )}
-        {noSession && (
-          <OneLine text={`No active Session on Study ${studyId}. A Session holds the one candidate you edit; starting one opens a trial family.`} />
-        )}
-        {note && <OneLine kind={note.kind} text={note.text} />}
-      </div>
-
-      <div className="fe-scroll" role="tabpanel" id="fe-panel" aria-labelledby={tab === 'candidate' ? 'fe-tab-c' : 'fe-tab-h'}>
-        {tab === 'history' ? (
-          <History project={project} sessionId={sessionId ?? loadSession} />
-        ) : (
-          <>
-            <LockedFacts study={study} />
-
-            <section className="fe-cand" aria-labelledby="fe-cand">
-              <div className="fe-cand-head">
-                <h2 className="wb-h fe-h" id="fe-cand">Candidate</h2>
-                {doc && editable && <span className={`fe-chip${dirty ? ' is-dirty' : ''}`} role="status">{dirty ? 'Unsaved changes' : 'Saved'}</span>}
-                {doc && editable && dirty && (
-                  <button type="button" className="abtn abtn--quiet fe-reset" onClick={() => { setDraft(doc.source); setConflict(false) }}>
-                    Reset to saved
-                  </button>
-                )}
-                {doc && (
-                  <span className="fe-meta small faint" title={`${doc.path} · ${doc.bytes.toLocaleString('en-US')} bytes · ${doc.sha256.slice(0, 12)}`}>
-                    <span className="mono" translate="no">{doc.path}</span> · {doc.bytes.toLocaleString('en-US')} bytes
+        }
+        actions={
+          on ? (
+            <ActionRow
+              primary={primary}
+              secondary={noSession ? [] : secondary}
+              chip={
+                noSession ? undefined : (
+                  <span className="fe-trial-chip" title={trialTitle} aria-label={`Trial ${trialN} of ${trialM}. ${trialTitle}`}>
+                    <span aria-hidden="true">
+                      <span className="fe-trial-lbl">Trial </span>
+                      {trialN}/{trialM}
+                    </span>
                   </span>
-                )}
-              </div>
-
-              {conflict && (
-                <div className="fe-conflict" role="alert">
-                  <p className="small">
-                    <strong>The candidate file changed on disk</strong> after you opened it, so Studio did not overwrite it. Your edits are still in the field.
-                  </p>
-                  <div className="fe-row">
-                    <button type="button" className="abtn" onClick={() => setReloadNonce((n) => n + 1)}>Reload from disk</button>
-                    <CopyButton text={draft} label="Copy my edits" />
-                    <span className="small muted">Reload discards your edits; copy them first if you want to keep them.</span>
-                  </div>
-                </div>
-              )}
-
-              {doc ? (
-                <div className="fe-code">
-                  <CodeField rows={9} label="Candidate source" value={draft} onChange={setDraft} readOnly={!editable} describedBy={doc.blockedReason ? ids.why : undefined} />
-                </div>
-              ) : load.state === 'loading' ? (
-                <p className="small muted">Loading the candidate…</p>
-              ) : load.state === 'error' ? (
-                <p className="small sig" role="alert">Could not read the candidate: {load.message}</p>
-              ) : (
-                <p className="small muted">
-                  The candidate source of this Run is not published to the browser. {state.mode === 'off' ? 'It appears here once a Session exists and the server can read it.' : 'Start a Session to see and edit it here.'}
-                </p>
-              )}
-            </section>
-          </>
-        )}
-      </div>
-
-      {state.mode === 'on' && !noSession && tab === 'candidate' && (
-        <div className="fe-hyp">
-          <label className="fe-hyp-l" htmlFor={ids.hyp}>Hypothesis</label>
-          <input
-            id={ids.hyp}
-            ref={hypRef}
-            className="fe-input"
-            type="text"
-            value={hypothesis}
-            maxLength={HYP_MAX + 50}
-            placeholder="Hypothesis: what this candidate is meant to test"
-            title={showHypProblem ? hypProblem ?? undefined : `${HYP_MIN} to ${HYP_MAX} characters`}
-            aria-invalid={showHypProblem ? true : undefined}
-            aria-describedby={ids.hypNote}
-            onChange={(event) => setHypothesis(event.target.value)}
-            onBlur={() => setTouched(true)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault()
-                if (!reason && !busy) void runAnalysis()
+                )
               }
-            }}
-          />
-          <span id={ids.hypNote} className={`fe-count small ${showHypProblem ? 'sig' : 'faint'}`} aria-live="polite">
-            {hypothesis.length} / {HYP_MAX}
-          </span>
+            />
+          ) : undefined
+        }
+        status={
+          <>
+            {state.mode === 'off' && (
+              <OneLine text={`Read-only. ${ACTIONS_OFF_COPY} to edit and run from this page.`} action={<CopyButton text={OFF_COMMAND} label="Copy command" />} />
+            )}
+            {noSession && <OneLine text={`No active Session on Study ${studyId}. A Session holds the one candidate you edit; starting one opens a trial family.`} />}
+            {note && <OneLine kind={note.kind} text={note.text} />}
+          </>
+        }
+      >
+        <div className="fe">
+          <div className="fe-scroll" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+            {tab === 'history' ? (
+              <History project={project} sessionId={sessionId ?? loadSession} />
+            ) : (
+              <>
+                <FactChips
+                  label="Fixed by the Study"
+                  locked
+                  info={<p>Fixed by the Study so results stay comparable. The analysis window, horizon, splits and universe cannot be changed here; only the candidate source and the hypothesis can.</p>}
+                  facts={lockedFacts(study)}
+                />
+
+                <section className="fe-cand" aria-labelledby="fe-cand">
+                  <div className="fe-cand-head">
+                    <h2 className="fe-h" id="fe-cand">Candidate</h2>
+                    {doc && editable && <span className={`fe-chip${dirty ? ' is-dirty' : ''}`} role="status">{dirty ? 'Unsaved changes' : 'Saved'}</span>}
+                    {doc && editable && dirty && (
+                      <button type="button" className="abtn abtn--quiet fe-reset" onClick={() => { setDraft(doc.source); setConflict(false) }}>
+                        Reset to saved
+                      </button>
+                    )}
+                    {doc && (
+                      <span className="fe-meta small faint" title={`${doc.path} · ${doc.bytes.toLocaleString('en-US')} bytes · ${doc.sha256.slice(0, 12)}`}>
+                        <span className="mono" translate="no">{doc.path}</span> · {doc.bytes.toLocaleString('en-US')} bytes
+                      </span>
+                    )}
+                  </div>
+
+                  {conflict && (
+                    <div className="fe-conflict" role="alert">
+                      <p className="small">
+                        <strong>The candidate file changed on disk</strong> after you opened it, so Studio did not overwrite it. Your edits are still in the field.
+                      </p>
+                      <div className="fe-row">
+                        <button type="button" className="abtn" onClick={() => setReloadNonce((n) => n + 1)}>Reload from disk</button>
+                        <CopyButton text={draft} label="Copy my edits" />
+                        <span className="small muted">Reload discards your edits; copy them first if you want to keep them.</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {doc ? (
+                    <div className="fe-code">
+                      <CodeField rows={9} label="Candidate source" value={draft} onChange={setDraft} readOnly={!editable} />
+                    </div>
+                  ) : load.state === 'loading' ? (
+                    <p className="small muted">Loading the candidate…</p>
+                  ) : load.state === 'error' ? (
+                    <p className="small sig" role="alert">Could not read the candidate: {load.message}</p>
+                  ) : (
+                    <p className="small muted">
+                      The candidate source of this Run is not published to the browser. {state.mode === 'off' ? 'It appears here once a Session exists and the server can read it.' : 'Start a Session to see and edit it here.'}
+                    </p>
+                  )}
+                </section>
+              </>
+            )}
+          </div>
+
+          {state.mode === 'on' && !noSession && tab === 'candidate' && (
+            <div className="fe-hyp">
+              <label className="fe-hyp-l" htmlFor={ids.hyp}>Hypothesis</label>
+              <input
+                id={ids.hyp}
+                ref={hypRef}
+                className="fe-input"
+                type="text"
+                value={hypothesis}
+                maxLength={HYP_MAX + 50}
+                placeholder="Hypothesis: what this candidate is meant to test"
+                title={showHypProblem ? hypProblem ?? undefined : `${HYP_MIN} to ${HYP_MAX} characters`}
+                aria-invalid={showHypProblem ? true : undefined}
+                aria-describedby={ids.hypNote}
+                onChange={(event) => setHypothesis(event.target.value)}
+                onBlur={() => setTouched(true)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    if (!reason && !busy) void runAnalysis()
+                  }
+                }}
+              />
+              <span id={ids.hypNote} className={`fe-count small ${showHypProblem ? 'sig' : 'faint'}`} aria-live="polite">
+                {hypothesis.length} / {HYP_MAX}
+              </span>
+            </div>
+          )}
         </div>
-      )}
+      </PaneCard>
 
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} label="Confirm Run analysis" className="adialog">
         {catalog.state === 'ready' && bootstrap && picked && (
@@ -467,7 +460,6 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
           />
         )}
       </Modal>
-    </div>
+    </>
   )
 }
-

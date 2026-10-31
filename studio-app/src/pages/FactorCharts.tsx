@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from 'react'
 import type { FactorDiagnostics, FactorQuantileRow, FactorSplit } from '../api'
 import { num, ret } from '../format'
 import { Info } from '../components/Info'
+import { ChartCard } from '../components/workbench'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import {
   expectedMaxZ,
@@ -140,9 +141,8 @@ function useChartWidth(): [(el: HTMLDivElement | null) => void, number] {
 
 /* ---------------------------------------------------------------- 1. IC by horizon x split */
 
-export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: boolean }) {
-  const pattern = useId()
-  const [plotRef, W] = useChartWidth()
+/** Bars of the Rank IC chart: one per horizon and shown split. Shared by the figure, its legend and its data table. */
+function icBars(study: FactorDiagnostics) {
   /** Same rule as the page's tiles: test is drawn only when its audit exists and the protocol marks it a visible diagnostic. */
   const testShown = studyTestVisible(study)
   const shownSplits = gatedSplits(study, SPLITS)
@@ -155,7 +155,72 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
       return { horizon: row.horizon, split, mean: s.meanRankIc, se: hacStandardError(s), n: s.observations, t: s.hacTStatistic, sufficient: s.sufficient }
     }),
   )
-  const H = hero ? 330 : 360
+  return { testShown, shownSplits, rows, primary, bars }
+}
+
+export function IcByHorizonLegend({ study }: { study: FactorDiagnostics }) {
+  const { testShown } = icBars(study)
+  return (
+    <span className="legend">
+      <Swatch kind="train" label="Train" />
+      <Swatch kind="validation" label="Validation (selection)" />
+      {testShown ? <Swatch kind="test" label="Test (visible audit)" /> : <span className="faint">{TEST_HIDDEN_NOTE}</span>}
+    </span>
+  )
+}
+
+export const IC_BY_HORIZON_DESC =
+  'Mean rank IC of the factor against the forward return, with ±1.96 HAC standard-error whiskers. A whisker that crosses zero means the mean is not distinguishable from noise.'
+export const IC_BY_HORIZON_SHORT = 'Mean rank IC with ±1.96 HAC whiskers; a whisker crossing zero means noise.'
+
+export function IcByHorizonNote({ study }: { study: FactorDiagnostics }) {
+  const { primary } = icBars(study)
+  return (
+    <>
+      Whiskers are ±1.96 HAC standard errors, recovered as |mean IC / HAC t|. The HAC maximum lag equals each forward horizon, so overlapping
+      forward returns are accounted for; a bar with no whisker has no usable t statistic. Only the {primary}-bar horizon drives selection.
+    </>
+  )
+}
+
+export function IcByHorizonTable({ study }: { study: FactorDiagnostics }) {
+  const { bars } = icBars(study)
+  return (
+    <table className="tbl">
+      <caption className="small muted">Mean rank IC, HAC statistics and observations</caption>
+      <thead>
+        <tr>
+          <th scope="col" className="r">Horizon</th>
+          <th scope="col">Split</th>
+          <th scope="col" className="r">Mean IC</th>
+          <th scope="col" className="r">HAC SE</th>
+          <th scope="col" className="r">HAC t</th>
+          <th scope="col" className="r">Observations</th>
+        </tr>
+      </thead>
+      <tbody>
+        {bars.map((b) => (
+          <tr key={`${b.horizon}/${b.split}`}>
+            <td className="r mono">{b.horizon}</td>
+            <td>{SPLIT_LABEL[b.split]}</td>
+            <td className="r mono">{ic4(b.mean)}</td>
+            <td className="r mono">{num(b.se, 4)}</td>
+            <td className="r mono">{num(b.t, 2)}</td>
+            <td className="r mono">
+              {int(b.n)}
+              {!b.sufficient && ' · below minimum'}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+/** The drawing alone, at `width` x `height` CSS px (one SVG unit is one CSS px, so axis text stays 11px). */
+export function IcByHorizonPlot({ study, width: W, height: H, labelledBy, label }: { study: FactorDiagnostics; width: number; height: number; labelledBy?: string; label?: string }) {
+  const pattern = useId()
+  const { shownSplits, rows, primary, bars } = icBars(study)
   const m = { l: 60, r: 16, t: 24, b: 78 }
   const values = bars.flatMap((b) => (b.mean === null ? [] : b.se === null ? [b.mean] : [b.mean - 1.96 * b.se, b.mean + 1.96 * b.se]))
   const lo = Math.min(0, ...values)
@@ -172,135 +237,138 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
   const baseline = y(0)
 
   return (
+    <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={labelledBy} aria-label={labelledBy ? undefined : label}>
+      <defs>
+        <pattern id={pattern} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="5" stroke="var(--text)" strokeWidth="1.5" />
+        </pattern>
+      </defs>
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={m.l} x2={W - m.r} y1={y(t)} y2={y(t)} stroke="var(--grid)" strokeWidth={t === 0 ? 0 : 1} opacity=".7" />
+          <text x={m.l - 8} y={y(t) + 4} textAnchor="end" className="ax">
+            {t === 0 ? '0' : t.toFixed(3)}
+          </text>
+        </g>
+      ))}
+      <text transform={`translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">
+        mean rank IC
+      </text>
+      {rows.map((row, gi) => {
+        const gx = m.l + gi * gw
+        return (
+          <g key={row.horizon}>
+            {gi > 0 && <line x1={gx} x2={gx} y1={m.t} y2={H - m.b + 6} stroke="var(--line)" />}
+            {shownSplits.map((split, si) => {
+              const b = bars.find((x) => x.horizon === row.horizon && x.split === split)!
+              const cx = gx + gw / 2 + (si - (nSplit - 1) / 2) * slot
+              const above = (b.mean ?? 0) >= 0
+              const topY = b.mean === null ? baseline : y(Math.max(0, b.mean))
+              const hgt = b.mean === null ? 0 : Math.max(1, Math.abs(y(b.mean) - baseline))
+              const wHi = b.mean !== null && b.se !== null ? y(b.mean + 1.96 * b.se) : null
+              const wLo = b.mean !== null && b.se !== null ? y(b.mean - 1.96 * b.se) : null
+              const labelY = above ? Math.min(topY, wHi ?? topY) - 6 : Math.max(baseline + hgt, wLo ?? 0) + 14
+              const fill = split === 'train' ? 'var(--stroke)' : split === 'validation' ? 'var(--text)' : `url(#${pattern})`
+              return (
+                <g key={split}>
+                  {b.mean !== null && (
+                    <rect
+                      x={cx - bw / 2}
+                      y={topY}
+                      width={bw}
+                      height={hgt}
+                      fill={fill}
+                      opacity={split === 'train' ? 0.55 : 1}
+                      stroke={split === 'test' ? 'var(--text)' : 'none'}
+                      strokeWidth="1.2"
+                    />
+                  )}
+                  {wHi !== null && wLo !== null &&
+                    (['var(--bg)', 'var(--text)'] as const).map((color, k) => (
+                      <g key={color} stroke={color} strokeWidth={k === 0 ? 4 : 1.6}>
+                        <line x1={cx} x2={cx} y1={wHi} y2={wLo} />
+                        <line x1={cx - 5} x2={cx + 5} y1={wHi} y2={wHi} />
+                        <line x1={cx - 5} x2={cx + 5} y1={wLo} y2={wLo} />
+                      </g>
+                    ))}
+                  {b.mean !== null && (
+                    <text x={cx} y={labelY} textAnchor="middle" className="val">
+                      {ic4(b.mean)}
+                    </text>
+                  )}
+                  <text x={cx} y={H - m.b + 18} textAnchor="middle" className="ax">
+                    {split === 'validation' ? 'val' : split}
+                  </text>
+                  {slot >= 70 && (
+                    <text x={cx} y={H - m.b + 32} textAnchor="middle" className="ax faint">
+                      n={int(b.n)}
+                    </text>
+                  )}
+                </g>
+              )
+            })}
+            <text x={gx + gw / 2} y={H - 10} textAnchor="middle" className="grp">
+              {row.horizon}-bar horizon{row.horizon === primary ? ' · primary' : ''}
+            </text>
+          </g>
+        )
+      })}
+      <line x1={m.l} x2={W - m.r} y1={baseline} y2={baseline} stroke="var(--text)" strokeWidth="1.2" />
+    </svg>
+  )
+}
+
+/** The Rank IC chart as a workbench card (Factor hero and Run page). `table={false}` leaves the numbers to a section of the page. */
+export function IcByHorizonCard({
+  study,
+  toggle,
+  legendExtra,
+  table = true,
+}: {
+  study: FactorDiagnostics
+  toggle?: ReactNode
+  legendExtra?: ReactNode
+  table?: boolean
+}) {
+  return (
+    <ChartCard
+      title="Rank IC by horizon and split"
+      info={
+        <>
+          <p>{IC_BY_HORIZON_DESC}</p>
+          <p>
+            <IcByHorizonNote study={study} />
+          </p>
+        </>
+      }
+      toggle={toggle}
+      legend={
+        <>
+          <IcByHorizonLegend study={study} />
+          {legendExtra}
+        </>
+      }
+      table={table ? <IcByHorizonTable study={study} /> : undefined}
+      minHeight={260}
+    >
+      {({ width, height }) => <IcByHorizonPlot study={study} width={width} height={height} label={IC_BY_HORIZON_SHORT} />}
+    </ChartCard>
+  )
+}
+
+export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: boolean }) {
+  const [plotRef, W] = useChartWidth()
+  return (
     <Chart
       title="Rank IC by horizon and split"
       plotRef={plotRef}
-      short="Mean rank IC with ±1.96 HAC whiskers; a whisker crossing zero means noise."
-      desc="Mean rank IC of the factor against the forward return, with ±1.96 HAC standard-error whiskers. A whisker that crosses zero means the mean is not distinguishable from noise."
-      legend={
-        <span className="legend">
-          <Swatch kind="train" label="Train" />
-          <Swatch kind="validation" label="Validation (selection)" />
-          {testShown ? <Swatch kind="test" label="Test (visible audit)" /> : <span className="faint">{TEST_HIDDEN_NOTE}</span>}
-        </span>
-      }
-      note={
-        <>
-          Whiskers are ±1.96 HAC standard errors, recovered as |mean IC / HAC t|. The HAC maximum lag equals each forward horizon, so overlapping
-          forward returns are accounted for; a bar with no whisker has no usable t statistic. Only the {primary}-bar horizon drives selection.
-        </>
-      }
-      table={
-        <table className="tbl">
-          <caption className="small muted">Mean rank IC, HAC statistics and observations</caption>
-          <thead>
-            <tr>
-              <th scope="col" className="r">Horizon</th>
-              <th scope="col">Split</th>
-              <th scope="col" className="r">Mean IC</th>
-              <th scope="col" className="r">HAC SE</th>
-              <th scope="col" className="r">HAC t</th>
-              <th scope="col" className="r">Observations</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bars.map((b) => (
-              <tr key={`${b.horizon}/${b.split}`}>
-                <td className="r mono">{b.horizon}</td>
-                <td>{SPLIT_LABEL[b.split]}</td>
-                <td className="r mono">{ic4(b.mean)}</td>
-                <td className="r mono">{num(b.se, 4)}</td>
-                <td className="r mono">{num(b.t, 2)}</td>
-                <td className="r mono">
-                  {int(b.n)}
-                  {!b.sufficient && ' · below minimum'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      }
+      short={IC_BY_HORIZON_SHORT}
+      desc={IC_BY_HORIZON_DESC}
+      legend={<IcByHorizonLegend study={study} />}
+      note={<IcByHorizonNote study={study} />}
+      table={<IcByHorizonTable study={study} />}
     >
-      {({ labelledBy }) => (
-        <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={labelledBy}>
-          <defs>
-            <pattern id={pattern} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <line x1="0" y1="0" x2="0" y2="5" stroke="var(--text)" strokeWidth="1.5" />
-            </pattern>
-          </defs>
-          {ticks.map((t) => (
-            <g key={t}>
-              <line x1={m.l} x2={W - m.r} y1={y(t)} y2={y(t)} stroke="var(--grid)" strokeWidth={t === 0 ? 0 : 1} opacity=".7" />
-              <text x={m.l - 8} y={y(t) + 4} textAnchor="end" className="ax">
-                {t === 0 ? '0' : t.toFixed(3)}
-              </text>
-            </g>
-          ))}
-          <text transform={`translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">
-            mean rank IC
-          </text>
-          {rows.map((row, gi) => {
-            const gx = m.l + gi * gw
-            return (
-              <g key={row.horizon}>
-                {gi > 0 && <line x1={gx} x2={gx} y1={m.t} y2={H - m.b + 6} stroke="var(--line)" />}
-                {shownSplits.map((split, si) => {
-                  const b = bars.find((x) => x.horizon === row.horizon && x.split === split)!
-                  const cx = gx + gw / 2 + (si - (nSplit - 1) / 2) * slot
-                  const above = (b.mean ?? 0) >= 0
-                  const topY = b.mean === null ? baseline : y(Math.max(0, b.mean))
-                  const hgt = b.mean === null ? 0 : Math.max(1, Math.abs(y(b.mean) - baseline))
-                  const wHi = b.mean !== null && b.se !== null ? y(b.mean + 1.96 * b.se) : null
-                  const wLo = b.mean !== null && b.se !== null ? y(b.mean - 1.96 * b.se) : null
-                  const labelY = above ? Math.min(topY, wHi ?? topY) - 6 : Math.max(baseline + hgt, wLo ?? 0) + 14
-                  const fill = split === 'train' ? 'var(--stroke)' : split === 'validation' ? 'var(--text)' : `url(#${pattern})`
-                  return (
-                    <g key={split}>
-                      {b.mean !== null && (
-                        <rect
-                          x={cx - bw / 2}
-                          y={topY}
-                          width={bw}
-                          height={hgt}
-                          fill={fill}
-                          opacity={split === 'train' ? 0.55 : 1}
-                          stroke={split === 'test' ? 'var(--text)' : 'none'}
-                          strokeWidth="1.2"
-                        />
-                      )}
-                      {wHi !== null && wLo !== null &&
-                        (['var(--bg)', 'var(--text)'] as const).map((color, k) => (
-                          <g key={color} stroke={color} strokeWidth={k === 0 ? 4 : 1.6}>
-                            <line x1={cx} x2={cx} y1={wHi} y2={wLo} />
-                            <line x1={cx - 5} x2={cx + 5} y1={wHi} y2={wHi} />
-                            <line x1={cx - 5} x2={cx + 5} y1={wLo} y2={wLo} />
-                          </g>
-                        ))}
-                      {b.mean !== null && (
-                        <text x={cx} y={labelY} textAnchor="middle" className="val">
-                          {ic4(b.mean)}
-                        </text>
-                      )}
-                      <text x={cx} y={H - m.b + 18} textAnchor="middle" className="ax">
-                        {split === 'validation' ? 'val' : split}
-                      </text>
-                      {slot >= 70 && (
-                        <text x={cx} y={H - m.b + 32} textAnchor="middle" className="ax faint">
-                          n={int(b.n)}
-                        </text>
-                      )}
-                    </g>
-                  )
-                })}
-                <text x={gx + gw / 2} y={H - 10} textAnchor="middle" className="grp">
-                  {row.horizon}-bar horizon{row.horizon === primary ? ' · primary' : ''}
-                </text>
-              </g>
-            )
-          })}
-          <line x1={m.l} x2={W - m.r} y1={baseline} y2={baseline} stroke="var(--text)" strokeWidth="1.2" />
-        </svg>
-      )}
+      {({ labelledBy }) => <IcByHorizonPlot study={study} width={W} height={hero ? 330 : 360} labelledBy={labelledBy} />}
     </Chart>
   )
 }
@@ -397,7 +465,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
       }
     >
       {({ labelledBy }) => (
-        <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={labelledBy}>
+          <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={labelledBy}>
           {windows.map((w) =>
             w.end > w.start ? (
               <g key={w.split}>
@@ -529,7 +597,7 @@ export function Quantiles({ study }: { study: FactorDiagnostics }) {
       }
     >
       {({ labelledBy }) => (
-        <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={labelledBy}>
+          <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={labelledBy}>
           {ticks.map((t) => (
             <g key={t}>
               <line x1={m.l} x2={W - m.r} y1={y(t)} y2={y(t)} stroke="var(--grid)" strokeWidth={t === 0 ? 0 : 1} opacity=".7" />
@@ -672,7 +740,7 @@ export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontie
       }
     >
       {({ labelledBy }) => (
-        <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={labelledBy}>
+          <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={labelledBy}>
           {ticks.map((t) => (
             <g key={t}>
               <line x1={m.l} x2={W - m.r} y1={y(t)} y2={y(t)} stroke="var(--grid)" strokeWidth={t === 0 ? 0 : 1} opacity=".7" />

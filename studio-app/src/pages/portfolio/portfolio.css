@@ -55,3 +55,18 @@
 .pf-sticky .pf-split, .pf-sticky .pf-bar { align-self: center; flex: none; }
 .pf-hero-head { margin-bottom: 4px; }
 @media (max-width: 767px) { .pf-sticky { flex-wrap: wrap; } }
+
+/* Workbench layout (kit): chart slot, selector row, embedded chart. */
+.pf-selrow { display: flex; align-items: center; gap: var(--space-2); min-width: 0; width: 100%; }
+.pf-selrow .runsel { margin: 0; flex: 1 1 0; min-width: 0; }
+.pf-selrow .runsel select { min-width: 0; width: 100%; }
+.pf-selrow .pf-split { flex: none; }
+.pf-lhead h1 { margin: 0 0 var(--space-1); font: var(--type-section); }
+.pf-lhead p { margin: 0; }
+.pf-reasons { margin: 0; padding-left: var(--space-4); display: grid; gap: var(--space-2); }
+.pf-embed { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.pf-embed-bar { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-3) 0; }
+.pf-embed-bar .legend { gap: var(--space-1) var(--space-2); }
+.pf-embed-plot { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; }
+.pf-embed-plot > .plot { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
+.pf-embed .pf-readout { flex: none; padding: 0 var(--space-3) var(--space-2); }

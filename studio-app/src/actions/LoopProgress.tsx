@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ProjectSnapshot } from '../api'
-import { Glyph, type GlyphKind } from '../design/icons'
+import { Glyph } from '../design/icons'
+import { StatusLine } from '../components/workbench'
 import { useActions } from './ActionsContext'
 import { actionCall, errorCopy } from './client'
 import { elapsed, useJob } from './JobPanel'
@@ -91,51 +92,34 @@ function RunningInner({
   }, [job])
 
   const pct = job ? percent(job) : null
-  const glyph: GlyphKind = 'running'
   const copy = error ? errorCopy(error, 'read the job') : null
+  const cancel = () => {
+    actionCall<Job>(bootstrap, 'POST', `/api/v1/jobs/${encodeURIComponent(jobId)}/cancel`, {}).catch((reason: unknown) => {
+      const c = errorCopy(reason, 'cancel the job')
+      setCancelNote(`${c.title} ${c.detail}`)
+    })
+  }
   return (
-    <section className="lp" aria-label="Analysis progress">
-      <div className="lp-line" role="status" aria-live="polite" title={pct === null ? NOTE_WHOLE : undefined}>
-        <Glyph kind={glyph} />
-        <strong className="lp-word">{job?.status === 'queued' ? 'Queued' : 'Running'}</strong>
-        <div
-          className={`lp-bar${pct === null ? ' is-indeterminate' : ''}`}
-          role="progressbar"
-          aria-label="Analysis progress"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={pct ?? undefined}
-          aria-valuetext={pct === null ? 'In progress, not measured stage by stage' : `${pct} percent`}
-        >
-          <span style={pct === null ? undefined : { width: `${pct}%` }} />
-        </div>
-        <span className="lp-pct mono">{pct === null ? '—' : `${pct}%`}</span>
-        <span className="lp-time mono faint">{job ? elapsed(job, now) : '—'}</span>
-        <button
-          type="button"
-          className="abtn abtn--quiet"
-          disabled={!job}
-          onClick={() => {
-            actionCall<Job>(bootstrap, 'POST', `/api/v1/jobs/${encodeURIComponent(jobId)}/cancel`, {}).catch((reason: unknown) => {
-              const c = errorCopy(reason, 'cancel the job')
-              setCancelNote(`${c.title} ${c.detail}`)
-            })
-          }}
-        >
-          Cancel
-        </button>
-      </div>
+    <div aria-label="Analysis progress">
+      <StatusLine
+        state="running"
+        text={job?.status === 'queued' ? 'Queued' : 'Running'}
+        percent={pct}
+        elapsed={job ? elapsed(job, now) : '—'}
+        onCancel={job ? cancel : undefined}
+        details={
+          job && (
+            <>
+              {pct === null && <p className="small faint lp-note">{NOTE_WHOLE}</p>}
+              <StagePipeline job={job} />
+              <pre className="cmd mono" translate="no">{job.display}</pre>
+            </>
+          )
+        }
+      />
       {error && copy && <p className="small sig" role="alert">{copy.title} {copy.detail}</p>}
       {cancelNote && <p className="small sig" role="alert">{cancelNote}</p>}
-      {pct === null && job && <p className="small faint lp-note">{NOTE_WHOLE}</p>}
-      {job && (
-        <details className="lp-more">
-          <summary>Stages and command</summary>
-          <StagePipeline job={job} />
-          <pre className="cmd mono" translate="no">{job.display}</pre>
-        </details>
-      )}
-    </section>
+    </div>
   )
 }
 

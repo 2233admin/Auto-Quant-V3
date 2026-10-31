@@ -1,20 +1,20 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import type { ProjectSnapshot } from '../../api'
-import { Glyph } from '../../design/icons'
-import { Section, SectionNav } from '../../design/layout'
+import { Section } from '../../design/layout'
 import { routeHref } from '../../route'
-import { PortfolioChart, type SplitWindow } from './PortfolioChart'
+import { PathTable, PortfolioChart, PortfolioChartInfo, type SplitWindow } from './PortfolioChart'
 import { BookBlock, EpisodesTable, NeighborhoodBlock, TransitionsTable, ViabilityBlock } from './PortfolioBlocks'
 import type { PerfSummary, PortfolioDiagnostics } from './portfolioTypes'
 import { Block, day, finite, fn, Kv, NA, SplitToggle, sp, up } from './pfmt'
 import { Info } from '../../components/Info'
-import { HeroLine } from '../hero'
-import { CompactTile, CompactTileGrid } from '../../components/CompactTile'
+import { ChartCard, FactChips, MetricGrid, PaneCard, Tabs, useHashTab, VerdictBar, WorkbenchShell, type Fact, type MetricGroup, type TabDef, type VerdictReason } from '../../components/workbench'
+import { RunSelect } from '../run/RunSelect'
+import { otherLaneOf } from '../run/runTypes'
 import './portfolio.css'
 import { Empty } from '../../components/States'
 
 type Split = 'validation' | 'test'
-type Verdict = 'pass' | 'fail' | 'inconclusive'
+type Verdict = 'fail' | 'inconclusive'
 
 /**
  * The server's own stage enum, nothing derived. The three non-positive stages are a fail. The one positive stage,
@@ -22,8 +22,7 @@ type Verdict = 'pass' | 'fail' | 'inconclusive'
  * external holdout, so this lane has no "pass" state to show.
  */
 const FAIL_STAGES = new Set(['factor-edge-absent', 'factor-not-monetized', 'cost-fragile'])
-const WORD: Record<Verdict, string> = { pass: 'Pass', fail: 'Fail', inconclusive: 'Inconclusive' }
-const GLYPH = { pass: 'supported', fail: 'refuted', inconclusive: 'inconclusive' } as const
+const WORD: Record<Verdict, string> = { fail: 'Fail', inconclusive: 'Inconclusive' }
 
 function verdictOf(pf: PortfolioDiagnostics): Verdict {
   const stage = pf.strategyViability?.diagnosis?.stage
@@ -61,35 +60,31 @@ const SHORT: Record<string, string> = {
 
 const fmtMetric = (m: Metric, x: number | null | undefined) => (m.kind === 'pct' ? (m.key === 'maximumDrawdown' || m.key.endsWith('Return') ? sp(x) : up(x, 1)) : fn(x))
 
-/** The twelve published headline metrics as compact one-row tiles; the benchmark value rides beside the net value. */
-function MetricGrid({ pf, split }: { pf: PortfolioDiagnostics; split: Split }) {
+/** The published headline metrics (Calmar and expected shortfall included) as compact tiles; the benchmark value rides beside the net value. */
+function metricGroups(pf: PortfolioDiagnostics, split: Split): MetricGroup[] | null {
   const v = pf.strategyViability?.[split]
-  if (!v?.net) return <p><NA why={`strategyViability.${split}.net is not in the payload`} /></p>
+  if (!v?.net) return null
   const f = v.friction
-  return (
-    <div className="hero-tiles" style={{ ['--hc' as string]: 4, ['--hc2' as string]: 3 }}>
-      <CompactTileGrid label={`Core numbers, ${split} split`}>
-        {METRICS.filter((m) => m.key !== 'calmar' || finite(v.net?.calmar)).map((m) => {
+  const label = split === 'validation' ? 'Validation · selection split' : 'Test · visible audit'
+  return [
+    {
+      heading: label,
+      label: `Core numbers, ${split} split`,
+      tiles: [
+        ...METRICS.filter((m) => m.key !== 'calmar' || finite(v.net?.calmar)).map((m) => {
           const bench = v.benchmark?.[m.key]
-          return (
-            <CompactTile
-              key={m.key}
-              label={SHORT[m.key] ?? m.label}
-              value={fmtMetric(m, v.net?.[m.key])}
-              note={m.vsBench && finite(bench) ? <span title="Benchmark value">bm {fmtMetric(m, bench)}</span> : undefined}
-              info={m.label}
-            />
-          )
-        })}
-        <CompactTile label="1-way turnover / yr" value={finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—'} info="Annualized one-way turnover: traded notional per year, one way." />
-        <CompactTile
-          label="Total cost drag"
-          value={up(f?.totalCostDrag, 2)}
-          info={`Total cost drag at ${finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade.`}
-        />
-      </CompactTileGrid>
-    </div>
-  )
+          return {
+            label: SHORT[m.key] ?? m.label,
+            value: fmtMetric(m, v.net?.[m.key]),
+            note: m.vsBench && finite(bench) ? <span title="Benchmark value">bm {fmtMetric(m, bench)}</span> : undefined,
+            info: m.label,
+          }
+        }),
+        { label: '1-way turnover / yr', value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—', info: 'Annualized one-way turnover: traded notional per year, one way.' },
+        { label: 'Total cost drag', value: up(f?.totalCostDrag, 2), info: `Total cost drag at ${finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade.` },
+      ],
+    },
+  ]
 }
 
 /** Gross, net and benchmark side by side for every headline metric, behind a disclosure. */
@@ -131,83 +126,34 @@ function MetricDetail({ pf, split }: { pf: PortfolioDiagnostics; split: Split })
   )
 }
 
-function VerdictBand({ pf }: { pf: PortfolioDiagnostics }) {
-  const verdict = verdictOf(pf)
-  const d = pf.strategyViability?.diagnosis
-  const sig = pf.signalMonetization?.diagnosis
-  const agg = pf.parameterNeighborhood?.validation?.aggregate
-  const reasons: { tone: 'bad' | 'info'; text: ReactNode; field: string }[] = []
-  reasons.push(
-    d
-      ? { tone: verdict === 'fail' ? 'bad' : 'info', text: d.explanation, field: `strategyViability.diagnosis.stage = ${d.stage}` }
-      : { tone: 'info', text: <NA why="strategyViability.diagnosis is not in the payload, so there is no server verdict" />, field: 'strategyViability.diagnosis' },
-  )
-  if (sig) reasons.push({ tone: 'info', text: sig.explanation, field: `signalMonetization.diagnosis.outcome = ${sig.outcome}` })
-  if (agg) {
-    reasons.push({
-      tone: 'info',
-      text: `${up(agg.positiveNetSharpeRate, 0)} of ${agg.configurationCount} nearby configurations have a positive validation net Sharpe; ${up(agg.signAgreementWithBaseRate, 0)} share the base sign.`,
-      field: 'parameterNeighborhood.validation.aggregate',
-    })
-  }
-  return (
-    <section className={`verdict verdict--${verdict}`} aria-labelledby="pf-verdict-word">
-      <div className="verdict-main">
-        <p className="verdict-kicker">Verdict · validation split</p>
-        <h2 id="pf-verdict-word" className="verdict-word">
-          <Glyph kind={GLYPH[verdict]} signal={verdict === 'fail'} />
-          <span>{WORD[verdict]}</span>
-        </h2>
-        <p className="muted small">
-          {d ? (
-            <>
-              Stage <span className="mono">{d.stage}</span>.
-            </>
-          ) : null}
-          <Info label="About this verdict">
-            <p>
-              {d ? (
-                <>
-                  Stage <span className="mono">{d.stage}</span>; next focus <span className="mono">{d.iterationFocus}</span>.{' '}
-                </>
-              ) : null}
-              Read from the server stage only. This lane never shows Pass: even the best stage still needs robustness checks and a fresh external holdout.
-            </p>
-          </Info>
-        </p>
-      </div>
-      <ul className="verdict-reasons">
-        {reasons.map((r, i) => (
-          <li key={i}>
-            <Glyph kind={r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
-            <span>
-              {r.text}
-              <Info label="Field behind this line">
-                <p className="mono verdict-field">{r.field}</p>
-              </Info>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
+type TabId = 'detail' | 'viability' | 'neighborhood' | 'book' | 'transitions' | 'episodes' | 'path'
+const TAB_IDS = ['detail', 'viability', 'neighborhood', 'book', 'transitions', 'episodes', 'path'] as const
+/** Old section anchors (the former section bar) now live inside a tab. */
+const ANCHOR_TAB: Record<string, TabId> = {
+  'pf-summary': 'detail',
+  'pf-viability': 'viability',
+  'pf-neighborhood': 'neighborhood',
+  'pf-book': 'book',
+  'pf-transitions': 'transitions',
+  'pf-episodes': 'episodes',
 }
 
-export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
+export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: (href: string) => void }) {
   const pf = project.portfolioExplorer
   const [split, setSplit] = useState<Split>('validation')
-  const head = (
-    <header className="pg-head">
-      <h1>Portfolio</h1>
-      <p className="muted small">
-        Project <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a>. Research diagnostics of a mechanical strategy; no trading authority.
-      </p>
-    </header>
-  )
+  const [tab, selectTab, anchor] = useHashTab<TabId>(TAB_IDS, 'detail', ANCHOR_TAB)
+  useEffect(() => {
+    if (anchor) requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ block: 'start' }))
+  }, [anchor, tab])
   if (!pf) {
     return (
       <div className="pg pf">
-        {head}
+        <header className="pg-head">
+          <h1>Portfolio</h1>
+          <p className="muted small">
+            Project <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a>. Research diagnostics of a mechanical strategy; no trading authority.
+          </p>
+        </header>
         <Empty title="No evidence in this Project">
           <p>This Project has no Portfolio Run, so there is no net-growth curve, viability diagnosis or parameter neighborhood to draw. Nothing is estimated in its place.</p>
           <p className="small">
@@ -233,7 +179,7 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
     .filter((k) => pf.selection?.splits?.[k] && (k !== 'test' || testVisible))
     .map((k) => ({
       split: k,
-      label: `${k[0].toUpperCase()}${k.slice(1)} · ${k === 'train' ? 'training' : k === 'validation' ? 'selection' : 'visible audit'}`,
+      label: k === 'test' ? 'Test · audit' : `${k[0].toUpperCase()}${k.slice(1)}`,
       start: Date.parse(pf.selection?.splits?.[k]?.start ?? ''),
       end: Date.parse(pf.selection?.splits?.[k]?.end ?? ''),
     }))
@@ -255,140 +201,190 @@ export function PortfolioPage({ project }: { project: ProjectSnapshot }) {
   const vBench = vv?.benchmark?.sharpe
   const verdict = verdictOf(pf)
   const d = pf.strategyViability?.diagnosis
+  const sig = pf.signalMonetization?.diagnosis
+  const agg = pf.parameterNeighborhood?.validation?.aggregate
+  const reasons: (VerdictReason & { field: string })[] = [
+    d
+      ? { tone: verdict === 'fail' ? 'bad' : 'info', text: d.explanation, field: `strategyViability.diagnosis.stage = ${d.stage}` }
+      : { tone: 'info', text: <NA why="strategyViability.diagnosis is not in the payload, so there is no server verdict" />, field: 'strategyViability.diagnosis' },
+  ]
+  if (sig) reasons.push({ tone: 'info', text: sig.explanation, field: `signalMonetization.diagnosis.outcome = ${sig.outcome}` })
+  if (agg) {
+    reasons.push({
+      tone: 'info',
+      text: `${up(agg.positiveNetSharpeRate, 0)} of ${agg.configurationCount} nearby configurations have a positive validation net Sharpe; ${up(agg.signAgreementWithBaseRate, 0)} share the base sign.`,
+      field: 'parameterNeighborhood.validation.aggregate',
+    })
+  }
+  const sentence =
+    finite(vSharpe) && finite(vBench)
+      ? `Validation net Sharpe ${fn(vSharpe)}, ${vSharpe - vBench >= 0 ? 'above' : 'below'} benchmark by ${fn(Math.abs(vSharpe - vBench), 1)}.${d ? ` Stage ${d.stage}.` : ''}`
+      : 'No validation net Sharpe is published for this Run.'
 
-  return (
-    <div className="pg pf">
-      <header className="pg-head">
+  const portfolioRuns = project.runs.filter((r) => otherLaneOf(project, r.id)?.view === 'portfolio')
+  const groups = metricGroups(pf, effective)
+  const win = (k: 'train' | 'validation' | 'test') => {
+    const w = pf.selection?.splits?.[k]
+    return w ? `${day(w.start)} to ${day(w.end)}` : '—'
+  }
+  const facts: Fact[] = [
+    { label: 'Project', value: <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a> },
+    { label: 'Run', value: run?.id?.replace(/^run-/, '') ?? '—', mono: true },
+    { label: 'Study', value: run?.studyId ?? '—', mono: true },
+    { label: 'Universe', value: `${pf.universe?.length ?? '—'} assets` },
+    { label: 'Mandate', value: pf.mandate?.family ?? '—', mono: true },
+    { label: 'Benchmark', value: pf.mandate?.benchmark?.kind ?? '—', mono: true },
+    { label: 'Selection split', value: pf.selection?.selectionSplit ?? 'validation', mono: true },
+    { label: 'Test role', value: pf.selection?.testRole ?? '—', mono: true },
+    { label: 'Train', value: win('train') },
+    { label: 'Validation', value: win('validation') },
+    ...(testVisible ? [{ label: 'Test', value: win('test') }] : []),
+    { label: 'Sampled path', value: finite(pf.path?.sampledRows) ? `${pf.path?.sampledRows} of ${(pf.path?.totalRows ?? 0).toLocaleString('en-US')} rows` : '—' },
+  ]
+
+  const tabs: TabDef<TabId>[] = [
+    { id: 'detail', label: 'Detail' },
+    { id: 'viability', label: 'Viability and cost' },
+    { id: 'neighborhood', label: 'Neighborhood' },
+    { id: 'book', label: 'Book and exposure' },
+    { id: 'transitions', label: 'Transitions', badge: String(transitions.length) },
+    { id: 'episodes', label: 'Episodes', badge: String(episodes.length) },
+    { id: 'path', label: 'Path data' },
+  ]
+
+  const left = (
+    <PaneCard label="Study and Project">
+      <header className="pf-lhead">
         <h1>Portfolio</h1>
         <p className="muted small">
-          Project <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a> · Run <span className="mono">{run?.id?.replace(/^run-/, '') ?? '—'}</span> · study{' '}
-          <span className="mono">{run?.studyId ?? '—'}</span>
+          Research diagnostics of a mechanical strategy; no trading authority.
           <Info label="About this page">
             <p>
-              Research diagnostics of a mechanical strategy; no trading authority. Selection uses the {pf.selection?.selectionSplit ?? 'validation'} split only. Test is{' '}
-              <span className="mono">{pf.selection?.testRole ?? '—'}</span>
+              Selection uses the {pf.selection?.selectionSplit ?? 'validation'} split only. Test is <span className="mono">{pf.selection?.testRole ?? '—'}</span>
               {pf.selection?.testEntersSelection === false ? ' and never enters selection' : ''}.
               {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
             </p>
           </Info>
         </p>
       </header>
-
-      <SectionNav
-        items={[
-          { id: 'pf-summary', label: 'Verdict and metrics' },
-          { id: 'pf-viability', label: 'Viability and cost' },
-          { id: 'pf-neighborhood', label: 'Neighborhood' },
-          { id: 'pf-book', label: 'Book and exposure' },
-          { id: 'pf-transitions', label: 'Transitions' },
-          { id: 'pf-episodes', label: 'Episodes' },
-        ]}
-      />
-
-      <div className="pf-sticky">
-        <HeroLine
-          tone={verdict === 'fail' ? 'bad' : 'warn'}
-          word={WORD[verdict]}
-          why={
-            d ? (
-              <Info label="Why this verdict">
-                <p>{d.explanation}</p>
-                <p className="faint mono">strategyViability.diagnosis.stage = {d.stage}</p>
-              </Info>
-            ) : undefined
-          }
-        >
-          {finite(vSharpe) && finite(vBench)
-            ? `validation net Sharpe ${fn(vSharpe)}, ${vSharpe - vBench >= 0 ? 'above' : 'below'} benchmark by ${fn(Math.abs(vSharpe - vBench), 1)}`
-            : 'no validation net Sharpe is published for this Run'}
-        </HeroLine>
-        {toggle}
-      </div>
-
-      <div className="hero-stack">
-        <section aria-labelledby="pf-curve" className="pf-hero-chart">
-          <div className="pf-hero-head">
-            <h2 id="pf-curve">Growth and drawdown</h2>
-          </div>
-          {points.length >= 2 ? (
-            <PortfolioChart
-              points={points}
-              windows={windows}
-              transitions={transitions.map((r) => r.timestamp)}
-              totalRows={pf.path?.totalRows}
-              sampledRows={pf.path?.sampledRows}
-              note={hiddenNote}
-            />
-          ) : (
-            <Empty title="Not available">
-              <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a curve.</p>
-            </Empty>
-          )}
-        </section>
-
-        <MetricGrid pf={pf} split={effective} />
-      </div>
-
-      <div className="band">
-        <Section title="Verdict and metrics" id="pf-summary" caption={`Universe ${pf.universe?.length ?? '—'} assets; ${pf.mandate?.family ?? '—'} mandate; benchmark ${pf.mandate?.benchmark?.kind ?? '—'}.`}>
-          <div className="vstack">
-            <VerdictBand pf={pf} />
-            {testVisible && effective === 'test' && (
-              <p className="small muted">
-                Test is a visible audit.
-                <Info label="About the test split">
-                  <p>Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>
-                </Info>
-              </p>
-            )}
-            <details className="pf-allmetrics">
-              <summary>Benchmark and gross detail, {effective} split</summary>
-              <MetricDetail pf={pf} split={effective} />
-            </details>
-            <Block title="Whole sampled path (all splits)">
-              {sum && testVisible ? (
-                <Kv
-                  rows={[
-                    ['Net / gross / benchmark total return', `${sp(sum.netTotalReturn)} / ${sp(sum.grossTotalReturn)} / ${sp(sum.benchmarkTotalReturn)}`],
-                    ['Max drawdown', `${sp(sum.maximumDrawdown)} on ${day(sum.maximumDrawdownAt)}`],
-                    ['Total one-way turnover', `${fn(sum.totalOneWayTurnover, 1)}x; largest single day ${up(sum.maximumOneWayTurnover)}`],
-                    ['Total cost', up(sum.totalCost, 2)],
-                    ['Rebalance days', finite(sum.rebalanceDays) ? `${sum.rebalanceDays} of ${pf.path?.totalRows ?? '—'}` : '—'],
-                  ]}
-                />
-              ) : (
-                <NA why={sum ? 'the whole-path summary mixes in the test split, and no test audit is published for this Run' : 'path.summary is not in the payload'} />
-              )}
-            </Block>
-          </div>
-        </Section>
-      </div>
-
-      <Section title="Viability and cost stress" id="pf-viability" caption="Gross against net, break-even cost and extra delay.">
-        <div className="vstack">
-          <div className="pf-bar">{toggle}</div>
-          <ViabilityBlock pf={pf} split={effective} />
-        </div>
-      </Section>
-
-      <Section title="Parameter neighborhood" id="pf-neighborhood" caption="Predeclared nearby configurations; context only.">
-        <div className="vstack">
-          <div className="pf-bar">{toggle}</div>
-          <NeighborhoodBlock pf={pf} split={effective} />
-        </div>
-      </Section>
-
-      <Section title="Current book and exposure" id="pf-book" caption="Last published decision date, with per-asset attribution.">
-        <BookBlock pf={pf} split={effective} hiddenWhy={bookHidden} />
-      </Section>
-
-      <Section title="Recent transitions" id="pf-transitions" fold caption={`${transitions.length} signal transitions.`}>
-        <TransitionsTable rows={transitions} total={transitionsAll.length} />
-      </Section>
-
-      <Section title="Recent episodes" id="pf-episodes" fold caption={`${episodes.length} position episodes.`}>
-        <EpisodesTable rows={episodes} total={episodesAll.length} />
-      </Section>
-    </div>
+      <FactChips label="What was run" locked facts={facts} info={<p>These values come from the Study and the Run. They are read-only here.</p>} />
+    </PaneCard>
   )
+
+  const selector =
+    portfolioRuns.length > 0 ? (
+      <RunSelect bar label="Portfolio Run" runs={portfolioRuns} value={run?.id} onChange={(id) => go?.(routeHref({ view: 'run', id: project.id, run: id }))} />
+    ) : (
+      <span className="mono small faint">{run?.id?.replace(/^run-/, '') ?? '—'}</span>
+    )
+
+  const right = (
+    <PaneCard
+      label="Results"
+      actions={
+        <div className="pf-selrow">
+          {selector}
+          {toggle}
+        </div>
+      }
+    >
+      <VerdictBar tone={verdict === 'fail' ? 'bad' : 'warn'} word={WORD[verdict]} reasons={reasons.map((r) => ({ tone: r.tone, text: r.text, field: r.field }))}>
+        {sentence}
+      </VerdictBar>
+      {points.length >= 2 ? (
+        <ChartCard title="Growth and drawdown" info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} minHeight={260}>
+          {() => <PortfolioChart points={points} windows={windows} transitions={transitions.map((r) => r.timestamp)} totalRows={pf.path?.totalRows} sampledRows={pf.path?.sampledRows} />}
+        </ChartCard>
+      ) : (
+        <Empty title="Not available">
+          <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a curve.</p>
+        </Empty>
+      )}
+      {groups ? <MetricGrid groups={groups} hiddenNote={testVisible ? undefined : hiddenNote} /> : <p><NA why={`strategyViability.${effective}.net is not in the payload`} /></p>}
+      <Tabs
+        label="Portfolio sections"
+        tabs={tabs}
+        active={tab}
+        onSelect={selectTab}
+        panels={{
+          detail: (
+            <Section title="Verdict and metrics" id="pf-summary" caption={`Universe ${pf.universe?.length ?? '—'} assets; ${pf.mandate?.family ?? '—'} mandate; benchmark ${pf.mandate?.benchmark?.kind ?? '—'}.`}>
+              <div className="vstack">
+                <ul className="pf-reasons">
+                  {reasons.map((r, i) => (
+                    <li key={i}>
+                      {r.text} <span className="faint small mono">{r.field}</span>
+                    </li>
+                  ))}
+                </ul>
+                {d && (
+                  <p className="small muted">
+                    Stage <span className="mono">{d.stage}</span>; next focus <span className="mono">{d.iterationFocus}</span>. Read from the server stage only. This lane never shows Pass: even the best stage still needs robustness checks and a fresh external holdout.
+                  </p>
+                )}
+                {testVisible && effective === 'test' && (
+                  <p className="small muted">
+                    Test is a visible audit.
+                    <Info label="About the test split">
+                      <p>Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>
+                    </Info>
+                  </p>
+                )}
+                <Block title="Whole sampled path (all splits)">
+                  {sum && testVisible ? (
+                    <Kv
+                      rows={[
+                        ['Net / gross / benchmark total return', `${sp(sum.netTotalReturn)} / ${sp(sum.grossTotalReturn)} / ${sp(sum.benchmarkTotalReturn)}`],
+                        ['Max drawdown', `${sp(sum.maximumDrawdown)} on ${day(sum.maximumDrawdownAt)}`],
+                        ['Total one-way turnover', `${fn(sum.totalOneWayTurnover, 1)}x; largest single day ${up(sum.maximumOneWayTurnover)}`],
+                        ['Total cost', up(sum.totalCost, 2)],
+                        ['Rebalance days', finite(sum.rebalanceDays) ? `${sum.rebalanceDays} of ${pf.path?.totalRows ?? '—'}` : '—'],
+                      ]}
+                    />
+                  ) : (
+                    <NA why={sum ? 'the whole-path summary mixes in the test split, and no test audit is published for this Run' : 'path.summary is not in the payload'} />
+                  )}
+                </Block>
+                <Block title={`Benchmark and gross detail, ${effective} split`}>
+                  <MetricDetail pf={pf} split={effective} />
+                </Block>
+              </div>
+            </Section>
+          ),
+          viability: (
+            <Section title="Viability and cost stress" id="pf-viability" caption="Gross against net, break-even cost and extra delay.">
+              <ViabilityBlock pf={pf} split={effective} />
+            </Section>
+          ),
+          neighborhood: (
+            <Section title="Parameter neighborhood" id="pf-neighborhood" caption="Predeclared nearby configurations; context only.">
+              <NeighborhoodBlock pf={pf} split={effective} />
+            </Section>
+          ),
+          book: (
+            <Section title="Current book and exposure" id="pf-book" caption="Last published decision date, with per-asset attribution.">
+              <BookBlock pf={pf} split={effective} hiddenWhy={bookHidden} />
+            </Section>
+          ),
+          transitions: (
+            <Section title="Recent transitions" id="pf-transitions" caption={`${transitions.length} signal transitions.`}>
+              <TransitionsTable rows={transitions} total={transitionsAll.length} />
+            </Section>
+          ),
+          episodes: (
+            <Section title="Recent episodes" id="pf-episodes" caption={`${episodes.length} position episodes.`}>
+              <EpisodesTable rows={episodes} total={episodesAll.length} />
+            </Section>
+          ),
+          path: (
+            <Section title="Sampled daily path" id="pf-path" caption="The points the growth chart draws.">
+              {points.length >= 2 ? <PathTable points={points} /> : <NA why="too few path points" />}
+            </Section>
+          ),
+        }}
+      />
+    </PaneCard>
+  )
+
+  return <WorkbenchShell left={left} right={right} ratio={30} />
 }
