@@ -1,0 +1,15 @@
+/* Run page and Run list. Tokens come from design/tokens.css. */
+.runsel { display: inline-grid; gap: 4px; margin-top: var(--space-3); max-width: 100%; }
+.runsel-label { font: var(--type-small); color: var(--muted); }
+.runsel select { font: var(--type-body); padding: 6px 10px; background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); max-width: 100%; min-width: 24rem; }
+.runlist-bar { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-3); }
+.btn { font: var(--type-small); padding: 4px 12px; border: 1px solid var(--line-strong); background: var(--selected); color: var(--text); text-decoration: none; }
+.btn:hover { background: var(--hover); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.headlines { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); margin: var(--space-3) 0 0; }
+.headline { display: grid; gap: 2px; }
+.headline dt { font: var(--type-small); color: var(--muted); }
+.headline dd { margin: 0; font: 500 24px/32px var(--font-mono); }
+.kv { display: grid; grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr); gap: 6px var(--space-4); margin: 0; font: var(--type-body); }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }

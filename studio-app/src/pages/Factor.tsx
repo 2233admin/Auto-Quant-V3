@@ -1,11 +1,12 @@
-import type { ReactNode } from 'react'
-import type { FactorDiagnostics, ProjectSnapshot } from '../api'
+import { useEffect, useState, type ReactNode } from 'react'
+import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RunRow } from '../api'
 import { Glyph } from '../design/icons'
 import { num, plural, when } from '../format'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
 import { IcByHorizon, IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
+import { FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictStrip } from './FactorEvidence'
 import './factor.css'
 
 type Check = { id: string; group: string; state: 'pass' | 'fail' | 'info'; label: string; detail: ReactNode }
@@ -218,7 +219,36 @@ function Limits({ study, frontier }: { study: FactorDiagnostics; frontier: Front
   )
 }
 
-function Content({ study, project }: { study: FactorDiagnostics; project: ProjectSnapshot }) {
+/** Every Factor Run of the Project, newest first. Only the Run in `project.factorExplorer` is inlined; the rest load from /api/v1/run. */
+function RunSelector({ project, shown, loading }: { project: ProjectSnapshot; shown: string; loading: boolean }) {
+  const runs = project.runs.filter((r) => r.subject.kind === 'factor').sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+  if (runs.length < 2) return null
+  const latest = project.factorExplorer?.run.id
+  return (
+    <nav aria-label="Factor Runs of this Project">
+      <ul className="runsel">
+        {runs.map((r) => (
+          <li key={r.id}>
+            <a href={routeHref({ view: 'factor', id: project.id, run: r.id })} aria-current={r.id === shown ? 'true' : undefined}>
+              <span>
+                <span className="mono" translate="no">run-…{r.id.slice(-12)}</span>
+                {r.id === latest && <span className="faint"> · latest</span>}
+                {r.id === shown && loading && <span className="faint"> · loading</span>}
+              </span>
+              <span>
+                {when(r.startedAt)} UTC · {r.primaryMetric} <span className="mono">{num(r.primaryValue, 4)}</span> · {r.status}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+function Content({ study, project, loadingRun }: { study: FactorDiagnostics; project: ProjectSnapshot; loadingRun?: boolean }) {
+  const runRow: RunRow | undefined = project.runs.find((r) => r.id === study.run.id)
+  const adjustment = project.sessions.map((s) => s.selectionIntegrity).find((s) => s?.selectionMetric === 'validation_mean_ic')?.selectionAdjustment
   const frontier = noiseFrontier(project.sessions, project.runs)
   const checks = buildChecks(study, frontier, project.sessions)
   const primary = study.horizonProfile.find((row) => row.horizon === study.protocol.primaryHorizon)
@@ -248,6 +278,10 @@ function Content({ study, project }: { study: FactorDiagnostics; project: Projec
           <span className="mono">{study.predictionUniverse.evaluationMode ?? '—'}</span>.
         </p>
       </header>
+
+      <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} />
+
+      <VerdictStrip study={study} adjustment={adjustment} />
 
       <Notice
         kind="info"
@@ -313,8 +347,36 @@ function Content({ study, project }: { study: FactorDiagnostics; project: Projec
         )}
       </Section>
 
+      <Section title="Qualification diagnosis" id="sec-qualification">
+        <QualificationBlock study={study} />
+      </Section>
+
+      <Section title="Chronological folds" id="sec-folds">
+        <FoldTable study={study} />
+      </Section>
+
+      <Section title="Horizon profile" id="sec-horizons">
+        <HorizonTable study={study} />
+      </Section>
+
+      <Section title="Stability: regime, asset, style" id="sec-stability">
+        <StabilityTables study={study} />
+      </Section>
+
       <Section title="Check ledger" id="sec-ledger">
         <Ledger checks={checks} />
+      </Section>
+
+      <Section title="Protocol" id="sec-protocol">
+        <ProtocolBox study={study} />
+      </Section>
+
+      <Section title="Provenance" id="sec-provenance">
+        <ProvenanceBox study={study} row={runRow} />
+      </Section>
+
+      <Section title="Run errors" id="sec-errors">
+        <RunErrors row={runRow} />
       </Section>
 
       <Section title="What these numbers do and do not show" id="sec-limits">
@@ -326,28 +388,58 @@ function Content({ study, project }: { study: FactorDiagnostics; project: Projec
   )
 }
 
-export function FactorPage({ project, study }: { project: ProjectSnapshot; study?: string }) {
-  const explorer = project.factorExplorer
+type Loaded = { key: string; study: FactorDiagnostics | null; error: string | null }
+
+export function FactorPage({ project, study, run }: { project: ProjectSnapshot; study?: string; run?: string }) {
+  const inline = project.factorExplorer
+  const wanted = run && run !== inline?.run.id ? run : null
+  const [loaded, setLoaded] = useState<Loaded | null>(null)
+  const key = wanted ? `${project.id}/${wanted}` : ''
+
+  useEffect(() => {
+    if (!wanted) return
+    const controller = new AbortController()
+    getJson<{ factorExplorer: FactorDiagnostics | null }>(
+      `/api/v1/run?${new URLSearchParams({ project: project.id, id: wanted })}`,
+      controller.signal,
+    )
+      .then((body) => setLoaded({ key, study: body.factorExplorer, error: body.factorExplorer ? null : 'The server returned no Factor evidence for this Run.' }))
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) setLoaded({ key, study: null, error: error instanceof Error ? error.message : String(error) })
+      })
+    return () => controller.abort()
+  }, [project.id, wanted, key])
+
+  const fetched = wanted && loaded?.key === key ? loaded : null
+  const explorer = wanted ? fetched?.study ?? null : inline
   const mismatch = explorer && study && explorer.run.studyId !== study
+  const pending = !!wanted && !fetched
   return (
     <div className="pg">
       {explorer && !mismatch ? (
-        <Content study={explorer} project={project} />
+        <Content study={explorer} project={project} loadingRun={pending} />
       ) : (
         <>
           <header className="pg-head">
             <h1>Factor evidence</h1>
           </header>
-          <Notice
-            kind="info"
-            label="Info"
-            title={mismatch ? `No verified Factor Run for Study ${study}.` : 'This Project has no verified Factor Run.'}
-            subtitle={
-              mismatch
-                ? `The latest verified Factor Run belongs to Study ${explorer.run.studyId}.`
-                : 'Run the Factor Study with aq run, then reload.'
-            }
-          />
+          <RunSelector project={project} shown={wanted ?? inline?.run.id ?? ''} loading={pending} />
+          {pending ? (
+            <p className="muted">Loading Run…</p>
+          ) : fetched?.error ? (
+            <Notice kind="error" label="Error" title={`Could not load Run ${wanted}.`} subtitle={fetched.error} />
+          ) : (
+            <Notice
+              kind="info"
+              label="Info"
+              title={mismatch ? `No verified Factor Run for Study ${study}.` : 'This Project has no verified Factor Run.'}
+              subtitle={
+                mismatch
+                  ? `The shown Factor Run belongs to Study ${explorer.run.studyId}.`
+                  : 'Run the Factor Study with aq run, then reload.'
+              }
+            />
+          )}
           <p>
             <a href={routeHref({ view: 'project', id: project.id })}>Back to Project</a>
           </p>

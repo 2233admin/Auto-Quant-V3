@@ -1875,6 +1875,70 @@ def build_project_snapshot(
     )
 
 
+def build_run_diagnostics(
+    directory: str | Path,
+    requested_project: str | None,
+    requested_run: str | None,
+    *,
+    project_id: str | None = None,
+) -> dict[str, Any]:
+    """Read-only Factor diagnostics for any verified Run of one Project."""
+
+    missing = [
+        _issue(name, code, f"Query parameter {name} is required")
+        for name, value, code in (
+            ("project", requested_project, "project.id-required"),
+            ("id", requested_run, "run.id-required"),
+        )
+        if not value
+    ]
+    if missing:
+        raise AutoQuantValidationError(missing)
+    assert requested_project is not None and requested_run is not None
+    if project_id is not None and requested_project != project_id:
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    requested_project,
+                    "project.unknown",
+                    f"Studio is restricted to Project {project_id}",
+                )
+            ]
+        )
+    root = Path(directory).expanduser().absolute()
+    direct = (root / PROJECT_MANIFEST).is_file()
+    _, _, _, projects, _ = _resolve_source(
+        directory,
+        None if direct else requested_project,
+    )
+    project = next(
+        (item for item in projects if item.manifest.id == requested_project),
+        None,
+    )
+    if project is None:
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    requested_project,
+                    "project.unknown",
+                    f"Unknown Project: {requested_project}",
+                )
+            ]
+        )
+    diagnostics = load_factor_diagnostics(
+        project,
+        requested_run,
+        point_limit=DEFAULT_FACTOR_POINTS,
+    )
+    return {
+        "schemaVersion": SCHEMA_VERSION,
+        "kind": "autoquant-studio-run",
+        "projectId": requested_project,
+        "runId": requested_run,
+        "factorExplorer": diagnostics,
+    }
+
+
 def _studio_app_bytes(relative: str) -> bytes | None:
     resource = files("autoquant").joinpath("studio_app", *relative.split("/"))
     try:
@@ -2152,6 +2216,29 @@ def _handler(
                         lambda: build_project_snapshot(
                             directory,
                             requested,
+                            project_id=project_id,
+                        ),
+                        head_only,
+                    )
+                    return
+                if path == "/api/v1/run":
+                    query = parse_qs(urlsplit(self.path).query)
+                    projects_q = query.get("project") or []
+                    runs_q = query.get("id") or []
+                    requested_p = projects_q[0] if len(projects_q) == 1 else None
+                    requested_r = runs_q[0] if len(runs_q) == 1 else None
+                    self._cached(
+                        ("run", requested_p, requested_r),
+                        requested_p
+                        if requested_p
+                        and not any(
+                            token in requested_p for token in ("/", "\\", "..")
+                        )
+                        else None,
+                        lambda: build_run_diagnostics(
+                            directory,
+                            requested_p,
+                            requested_r,
                             project_id=project_id,
                         ),
                         head_only,

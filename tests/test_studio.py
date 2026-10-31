@@ -729,6 +729,62 @@ class StudioObservationTests(unittest.TestCase):
                     workspace.root_dir, "someone-else", project_id=other
                 )
 
+    def test_run_route_serves_any_run_read_only_and_rejects_bad_ids(self) -> None:
+        from tests.test_factor_explorer import make_lab
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, project, run = make_lab(Path(directory))
+            run_id = run.result["id"]
+            pid = project.manifest.id
+            server = create_studio_server(workspace.root_dir, port=0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            base = f"http://127.0.0.1:{server.server_port}"
+            try:
+                with urlopen(
+                    f"{base}/api/v1/run?project={pid}&id={run_id}", timeout=30
+                ) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertTrue(response.headers["ETag"].startswith('"'))
+                    payload = json.loads(response.read())
+                self.assertEqual(payload["kind"], "autoquant-studio-run")
+                self.assertEqual(payload["projectId"], pid)
+                self.assertEqual(payload["runId"], run_id)
+                self.assertEqual(
+                    payload["factorExplorer"]["kind"],
+                    "autoquant-factor-diagnostics",
+                )
+                self.assertEqual(payload["factorExplorer"]["run"]["id"], run_id)
+
+                for query in (
+                    f"?project=no-such-project&id={run_id}",
+                    f"?project={pid}&id=run-does-not-exist",
+                    f"?project={pid}&id=run-..%2F..%2Fx",
+                    f"?project={pid}&id=..%5C..%5Cx",
+                    f"?project=..%2F..&id={run_id}",
+                    f"?project={pid}",
+                    f"?id={run_id}",
+                ):
+                    with self.assertRaises(HTTPError, msg=query) as raised:
+                        urlopen(f"{base}/api/v1/run{query}", timeout=10)
+                    self.assertEqual(raised.exception.code, 422, query)
+                    body = json.loads(raised.exception.read())
+                    self.assertFalse(body["ok"])
+                    self.assertEqual(body["error"]["code"], "validation.failed")
+
+                request = Request(
+                    f"{base}/api/v1/run?project={pid}&id={run_id}",
+                    method="POST",
+                    data=b"{}",
+                )
+                with self.assertRaises(HTTPError) as raised:
+                    urlopen(request, timeout=3)
+                self.assertEqual(raised.exception.code, 405)
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=3)
+
     def test_invalid_port_and_workspace_manifest_remain_core_errors(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace, _, _ = self._setup(directory)

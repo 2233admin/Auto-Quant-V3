@@ -5,6 +5,8 @@ import { num, plural, when } from '../format'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
 import { verification } from '../shell/Rail'
+import { RunList } from './run/RunList'
+import { EvidenceDocsBlock, ExperimentsBlock, NextMoveBlock, QuestionBlock, SelectionBlock, sessionMeta } from './project/ProjectResearch'
 
 type Load = { state: 'loading' } | { state: 'error'; message: string } | { state: 'ready'; project: ProjectSnapshot }
 
@@ -90,12 +92,10 @@ const OTHER_LANES: { key: keyof ProjectSnapshot; name: string }[] = [
 
 export function ProjectPage({ project }: { project: ProjectSnapshot }) {
   const look = verification(project.valid)
-  const brief = project.agentWorkBrief
   const counts = project.counts
   const n = (key: string) => (typeof counts[key] === 'number' ? (counts[key] as number) : 0)
   const latest = latestRunByStudy(project.runs)
   const validation = project.factorExplorer?.summary?.validation
-  const holdout = project.externalHoldout
   return (
     <div className="pg">
       <header className="pg-head">
@@ -116,25 +116,12 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         <Notice kind="error" label="Error" title="Project diagnostics." subtitle={project.diagnostics.map((d) => d.message ?? '').join('; ')} />
       )}
 
+      <Section title="Question and claim" id="sec-question">
+        <QuestionBlock project={project} />
+      </Section>
+
       <Section title="Next move" id="sec-next">
-        {brief?.primaryAction?.description ? (
-          <>
-            <p>{brief.primaryAction.description}</p>
-            {brief.primaryAction.display && <pre className="cmd mono" translate="no">{brief.primaryAction.display}</pre>}
-            <p className="muted small">
-              {brief.focus?.laneName && <>Lane {brief.focus.laneName}. </>}
-              {brief.focus?.scientificStage && <>Stage {brief.focus.scientificStage}. </>}
-              {brief.authority && (
-                <>
-                  Selection uses the {brief.authority.selectionSplit} split; the test split is{' '}
-                  {brief.authority.testEntersSelection ? 'part of' : 'never part of'} selection. Trading authority: {brief.authority.tradingAuthority}.
-                </>
-              )}
-            </p>
-          </>
-        ) : (
-          <p className="muted">The Agent Work Brief has no recommended action for this Project.</p>
-        )}
+        <NextMoveBlock project={project} />
       </Section>
 
       <Section title="Studies" id="sec-studies">
@@ -215,16 +202,31 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         )}
       </Section>
 
+      <Section title="Selection-adjusted evidence" id="sec-selection">
+        <SelectionBlock project={project} />
+      </Section>
+
+      <Section title="Experiments and trials" id="sec-experiments">
+        <ExperimentsBlock project={project} />
+      </Section>
+
+      <Section title="Runs" id="sec-runs">
+        <RunList project={project} />
+      </Section>
+
       <Section title="Sessions" id="sec-sessions">
         {project.sessions.length === 0 ? (
           <p className="muted">No Research Sessions yet.</p>
         ) : (
           <ul className="plain">
-            {project.sessions.map((s, index) => (
-              <li key={s.id ?? index} className="mono small" translate="no">
-                {s.id ?? 'session'} · {s.studyId ?? '—'} · {s.status ?? '—'}
-              </li>
-            ))}
+            {project.sessions.map((s, index) => {
+              const m = sessionMeta(s)
+              return (
+                <li key={m.id ?? index} className="mono small" translate="no">
+                  {m.id ?? 'session'} · {m.studyId ?? 'no Study recorded'} · {m.status ?? 'no status recorded'}
+                </li>
+              )
+            })}
           </ul>
         )}
       </Section>
@@ -246,8 +248,8 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         )}
       </Section>
 
-      <Section title="External holdout" id="sec-holdout">
-        <p>{holdout ? `Recorded: ${holdout.status ?? holdout.state ?? 'present'}. Details stay in the legacy Studio.` : 'No external holdout has been run for this Project.'}</p>
+      <Section title="Reports, Reviews, Dossiers and holdout" id="sec-docs">
+        <EvidenceDocsBlock project={project} />
       </Section>
 
       <Section title="Other lanes" id="sec-lanes">

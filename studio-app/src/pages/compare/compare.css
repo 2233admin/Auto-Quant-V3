@@ -1,0 +1,8 @@
+/* Compare page: locked-basis banner and before/after table. */
+.cmp-pick { display: flex; flex-wrap: wrap; gap: var(--space-5); }
+.basis { border: 1px solid var(--line-strong); border-left-width: 4px; padding: var(--space-3) var(--space-4); background: var(--raised); }
+.basis--locked { border-left-color: var(--text); }
+.basis--open { border-left-color: var(--faint); }
+.basis-title { font: 500 14px/20px var(--font-sans); }
+.basis p { margin: var(--space-2) 0 0; }
+.cmp td, .cmp th { vertical-align: baseline; }

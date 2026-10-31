@@ -46,6 +46,10 @@ export type RunRow = {
   primaryValue: number | null
   startedAt: string
   summary: string
+  /** Present on current servers; the shape of an error entry is not fixed, so it is rendered defensively. */
+  errors?: unknown[]
+  failureDisposition?: string | null
+  durationMs?: number | null
 }
 
 export type TimelineRow = {
@@ -66,11 +70,18 @@ export type ProjectSnapshot = {
   counts: Record<string, number | Record<string, number>>
   studies: StudyRow[]
   runs: RunRow[]
-  sessions: { id?: string; status?: string; studyId?: string; selectionIntegrity?: SelectionIntegrity }[]
+  sessions: SessionSnapshot[]
   timeline: TimelineRow[]
   externalHoldout: { status?: string; state?: string } | null
+  runReports?: ReportRow[]
+  reviews?: ReportRow[]
+  dossiers?: ReportRow[]
   agentWorkBrief: {
-    focus?: { laneName?: string; studyName?: string; scientificStage?: string; operatingMode?: string }
+    focus?: { laneName?: string | null; studyName?: string; scientificStage?: string; operatingMode?: string }
+    question?: { title?: string; text?: string; origin?: string } | null
+    researchAgenda?: ResearchAgenda | null
+    review?: { status?: string; label?: string; detail?: string; next?: string; boundary?: string } | null
+    reasons?: { code?: string; message?: string }[]
     primaryAction?: { description?: string; display?: string }
     authority?: { selectionSplit?: string; testRole?: string; testEntersSelection?: boolean; tradingAuthority?: string }
   } | null
@@ -179,6 +190,33 @@ export type RankSummary = {
   sufficient: boolean
   hacTStatistic: number | null
   hacNormalPValue: number | null
+  /** Pearson IC mean for the same split; present on current servers. */
+  meanPearsonIc?: number | null
+  pearsonIcir?: number | null
+}
+
+/** One row of `stability.chronologicalFolds` (and the qualification fold lists): a rank-IC summary with its fold id. */
+export type FactorFold = RankSummary & { id: string; split: FactorSplit; role: string }
+export type FactorRegimeRow = RankSummary & { split: FactorSplit; role: string; regime: string }
+export type FactorAssetRow = { split: FactorSplit; role: string; asset: string; rankCorrelation: number | null; observations: number }
+export type FactorStyleRow = {
+  split: FactorSplit
+  role: string
+  style: string
+  meanRankCorrelation: number | null
+  meanAbsoluteRankCorrelation: number | null
+  observations: number
+}
+/** The four factor variants the qualification funnel compares, per split. */
+export type FactorQualificationSplit = {
+  role: string
+  candidate: RankSummary
+  dominantStyle: RankSummary
+  styleNeutralCandidate: RankSummary
+  equalRankBlend: RankSummary
+  incremental: Record<string, number | null>
+  candidateChronologicalFolds: FactorFold[]
+  weakestCandidateFold: FactorFold | null
 }
 
 export type FactorHorizonRow = { horizon: number } & Record<FactorSplit, RankSummary & { role: string }>
@@ -205,8 +243,17 @@ export type FactorQuantileRow = {
 }
 
 export type FactorDiagnostics = {
-  run: { id: string; studyId: string; startedAt: string; completedAt: string }
-  dataset: { id: string; version: string; universe: string[]; timeRange: { start?: string; end?: string } | null }
+  run: { id: string; studyId: string; startedAt: string; completedAt: string; inputHash?: string; studyHash?: string; sourceHash?: string }
+  dataset: { id: string; version: string; hash?: string; universe: string[]; timeRange: { start?: string; end?: string } | null }
+  harness?: { id?: string; version?: string; commit?: string; dirty?: boolean; buildProvenance?: string; python?: string; sourceHash?: string }
+  researchHorizon?: {
+    primaryForwardBars: number
+    diagnosticForwardBars: number[]
+    targetSemantics: string
+    selectionAuthority: { primary: string; diagnostics: string }
+    source: { horizonPolicy: string; horizon: string; kind: string }
+  }
+  stability?: { chronologicalFolds: FactorFold[]; causalRegimes: FactorRegimeRow[]; assets: FactorAssetRow[]; styles: FactorStyleRow[] }
   predictionUniverse: { evaluationMode?: string; predictionAssets?: string[] }
   protocol: {
     selectionSplit: string
@@ -214,7 +261,7 @@ export type FactorDiagnostics = {
     testEntersSelection: boolean
     horizons: number[]
     primaryHorizon: number
-    semantics: { inference?: string; measure?: string }
+    semantics: { inference?: string; measure?: string; regimes?: string }
     splits: {
       method: string
       candidateDependent: boolean
@@ -225,11 +272,21 @@ export type FactorDiagnostics = {
     /** Added with the Factor evidence page; older servers do not send it. */
     causality?: { available: boolean; reason: string | null; audit?: string; cuts?: string[]; crossAssetContext?: string | null }
   }
-  summary: { validation?: RankSummary; testAudit?: RankSummary }
+  summary: {
+    validation?: RankSummary
+    testAudit?: RankSummary
+    weakestValidationFold?: { id: string; meanRankIc: number | null }
+    maximumValidationStyleOverlap?: { style: string; meanRankCorrelation: number | null }
+  }
   inputAvailability: { available: boolean; observationCoverage?: number; observedRows?: number; possibleRows?: number }
   factorQualification: {
     available: boolean
-    diagnosis?: { stage: string; explanation: string; qualifiesForPortfolio: boolean }
+    diagnosis?: { stage: string; iterationFocus?: string; explanation: string; qualifiesForPortfolio: boolean }
+    claim?: { claim: string; outcome: string; testRole: string; knownStyle?: string | null; selectionAuthority?: string; tradingAuthority?: string }
+    semantics?: { diagnosticThresholds?: { minimumPositiveHacTStatistic?: number; selectionAdjustedSignificanceRequiredSeparately?: boolean } }
+    selection?: { dominantStyle?: string }
+    validation?: FactorQualificationSplit
+    testAudit?: FactorQualificationSplit
   }
   horizonProfile: FactorHorizonRow[]
   quantileEvidence: { status: string; evaluationMode: string; reasonCode: string | null; reason: string | null; artifactRows: number }
@@ -249,7 +306,7 @@ export type SelectionIntegrity = {
   externalHoldoutRequired?: boolean | null
   externalHoldoutReason?: string
   warning?: string
-  researchFamily?: { id: string; uniqueSourceTrials: number; totalExecutions: number; trialCountAssumption: string; reproducible: boolean }
+  researchFamily?: { id: string; uniqueSourceTrials: number; failedSourceTrials?: number; successfulSourceTrials?: number; totalExecutions: number; trialCountAssumption: string; reproducible: boolean }
   selectionAdjustment?: {
     status: string
     method: string | null
@@ -264,4 +321,58 @@ export type SelectionIntegrity = {
       uniqueTrials: number
     } | null
   }
+}
+
+/** Report, Review and Dossier rows: no sample was available when this was typed, so every key is optional and read defensively. */
+export type ReportRow = { id?: string; title?: string; status?: string; createdAt?: string; runId?: string } & Record<string, unknown>
+
+export type ExperimentRow = {
+  id: string
+  sequence: number
+  verdict: string
+  hypothesis: string
+  leaderValue: number | null
+  candidateValue: number | null
+  improvement: number | null
+  runId: string
+  completedAt: string
+}
+
+export type TrialRow = {
+  role: string
+  sequence: number
+  experimentId: string | null
+  runId: string
+  status: string
+  verdict: string
+  hypothesis: string
+  primaryValue: number | null
+  objectiveImprovementVsBaseline: number | null
+  isCurrentLeader: boolean
+  errors: unknown[]
+}
+
+export type ResearchAgenda = {
+  status?: string
+  reason?: string | null
+  moveRole?: string
+  diagnosis?: { stage?: string; iterationFocus?: string; explanation?: string }
+  moves?: { priority: number; id: string; title: string; hypothesis?: string; rationale?: string }[]
+}
+
+export type SessionSnapshot = {
+  session?: { id?: string; status?: string; studyId?: string; createdAt?: string; updatedAt?: string }
+  /** Older snapshots: kept so a flat shape still renders. */
+  id?: string
+  status?: string
+  studyId?: string
+  selectionIntegrity?: SelectionIntegrity
+  delegation?: { request?: { title?: string; question?: string; decisionContext?: string; horizon?: string; hypotheses?: string[]; constraints?: string[]; deliverables?: string[] } } | null
+  experiments?: ExperimentRow[]
+  decisionMatrix?: {
+    objective?: { direction?: string; metric?: string; minimumImprovement?: number }
+    scope?: { trialLimit: number; totalCandidateTrials: number; displayedCandidateTrials: number; omittedCandidateTrials: number }
+    trials?: TrialRow[]
+  } | null
+  reports?: ReportRow[]
 }
