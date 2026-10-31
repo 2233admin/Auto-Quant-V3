@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import re
 import shlex
 import threading
@@ -1821,7 +1823,12 @@ def build_workspace_summary(
     *,
     project_id: str | None = None,
 ) -> dict[str, Any]:
-    snapshot = build_studio_snapshot(directory, project_id=project_id)
+    return workspace_summary_from_snapshot(
+        build_studio_snapshot(directory, project_id=project_id)
+    )
+
+
+def workspace_summary_from_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     return {
         "schemaVersion": SCHEMA_VERSION,
         "kind": "autoquant-studio-workspace-summary",
@@ -1908,10 +1915,114 @@ def _error_payload(error: Exception) -> tuple[int, dict[str, Any]]:
     )
 
 
+FINGERPRINT_SKIP = {"__pycache__", ".git", "node_modules"}
+
+
+def _walk_fingerprint(paths: list[Path]) -> str:
+    """Cheap change detector: relative path, mtime_ns and size of every entry.
+
+    Same idea as make or the git index. It never reads file contents, so a
+    cache hit still reflects the last verified build, and any write below a
+    watched path changes the digest and forces a fresh verified build.
+    """
+    digest = hashlib.sha256()
+    stack: list[tuple[str, Path]] = [("", path) for path in paths]
+    while stack:
+        label, path = stack.pop()
+        try:
+            stat = path.lstat()
+        except OSError:
+            digest.update(f"{label}{path.name}\0missing\n".encode())
+            continue
+        digest.update(
+            f"{label}{path.name}\0{stat.st_mtime_ns}\0{stat.st_size}\n".encode()
+        )
+        if not path.is_dir() or path.is_symlink():
+            continue
+        try:
+            with os.scandir(path) as entries:
+                children = sorted(
+                    entry.name
+                    for entry in entries
+                    if entry.name not in FINGERPRINT_SKIP
+                )
+        except OSError:
+            continue
+        for name in reversed(children):
+            stack.append((f"{label}{path.name}/", path / name))
+    return digest.hexdigest()
+
+
+def _fingerprint_paths(directory: Path, scope_id: str | None) -> list[Path]:
+    root = directory.expanduser().absolute()
+    if (root / PROJECT_MANIFEST).is_file():
+        return [root]
+    workspace = load_workspace(root.resolve())
+    base = workspace.projects_dir
+    return [
+        root / WORKSPACE_MANIFEST,
+        workspace.configuration_path,
+        base / scope_id if scope_id else base,
+    ]
+
+
+class _CachedPayload:
+    __slots__ = ("payload", "body", "etag", "fingerprint")
+
+    def __init__(self, payload: dict[str, Any], fingerprint: str) -> None:
+        self.payload = payload
+        self.body = json.dumps(
+            payload, ensure_ascii=False, separators=(",", ":")
+        ).encode()
+        self.etag = '"' + hashlib.sha256(self.body).hexdigest()[:24] + '"'
+        self.fingerprint = fingerprint
+
+
+class SnapshotCache:
+    """Per-server cache of verified Studio payloads, one entry per key.
+
+    A request recomputes the file fingerprint and reuses the entry only when
+    it is unchanged. Concurrent requests for one key share a single rebuild.
+    Failed builds are never cached. The fingerprint is taken before the build,
+    so a write racing a build leaves a stale fingerprint and the next request
+    rebuilds.
+    """
+
+    def __init__(self, directory: Path) -> None:
+        self._directory = directory
+        self._entries: dict[Any, _CachedPayload] = {}
+        self._locks: dict[Any, threading.Lock] = {}
+        self._guard = threading.Lock()
+
+    def get(
+        self,
+        key: Any,
+        scope_id: str | None,
+        build: Callable[[], dict[str, Any]],
+    ) -> _CachedPayload:
+        try:
+            fingerprint = _walk_fingerprint(
+                _fingerprint_paths(self._directory, scope_id)
+            )
+        except AutoQuantValidationError:
+            return _CachedPayload(build(), "")
+        with self._guard:
+            lock = self._locks.setdefault(key, threading.Lock())
+        with lock:
+            entry = self._entries.get(key)
+            if entry is not None and entry.fingerprint == fingerprint:
+                return entry
+            entry = _CachedPayload(build(), fingerprint)
+            self._entries[key] = entry
+            return entry
+
+
 def _handler(
     directory: Path,
     project_id: str | None,
 ) -> type[BaseHTTPRequestHandler]:
+    cache = SnapshotCache(directory)
+
     class StudioHandler(BaseHTTPRequestHandler):
         server_version = "AutoQuantStudio/0.1"
 
@@ -1922,11 +2033,14 @@ def _handler(
             length: int,
             *,
             cache_control: str = "no-store",
+            etag: str | None = None,
         ) -> None:
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(length))
             self.send_header("Cache-Control", cache_control)
+            if etag is not None:
+                self.send_header("ETag", etag)
             for key, value in SECURITY_HEADERS.items():
                 self.send_header(key, value)
             self.end_headers()
@@ -1939,26 +2053,46 @@ def _handler(
             *,
             cache_control: str = "no-store",
             head_only: bool = False,
+            etag: str | None = None,
         ) -> None:
             self._headers(
                 status,
                 content_type,
                 len(body),
                 cache_control=cache_control,
+                etag=etag,
             )
             if not head_only:
                 self.wfile.write(body)
 
-        def _json(self, payload: dict[str, Any], head_only: bool) -> None:
+        def _cached(
+            self,
+            key: Any,
+            scope_id: str | None,
+            build: Callable[[], dict[str, Any]],
+            head_only: bool,
+        ) -> None:
+            entry = cache.get(key, scope_id, build)
+            candidates = {
+                value.strip().removeprefix("W/")
+                for value in self.headers.get("If-None-Match", "").split(",")
+            }
+            if entry.etag in candidates or "*" in candidates:
+                self._headers(
+                    HTTPStatus.NOT_MODIFIED,
+                    "application/json; charset=utf-8",
+                    0,
+                    cache_control="no-cache",
+                    etag=entry.etag,
+                )
+                return
             self._send(
                 HTTPStatus.OK,
                 "application/json; charset=utf-8",
-                json.dumps(
-                    payload,
-                    ensure_ascii=False,
-                    separators=(",", ":"),
-                ).encode(),
+                entry.body,
+                cache_control="no-cache",
                 head_only=head_only,
+                etag=entry.etag,
             )
 
         def _route(self, *, head_only: bool = False) -> None:
@@ -1982,36 +2116,42 @@ def _handler(
                     )
                     return
                 if path == "/api/v1/snapshot":
-                    body = json.dumps(
-                        build_studio_snapshot(
-                            directory,
-                            project_id=project_id,
-                        ),
-                        ensure_ascii=False,
-                        separators=(",", ":"),
-                    ).encode()
-                    self._send(
-                        HTTPStatus.OK,
-                        "application/json; charset=utf-8",
-                        body,
-                        head_only=head_only,
-                    )
-                    return
-                if path == "/api/v1/workspace":
-                    self._json(
-                        build_workspace_summary(
+                    self._cached(
+                        "snapshot",
+                        None,
+                        lambda: build_studio_snapshot(
                             directory,
                             project_id=project_id,
                         ),
                         head_only,
                     )
                     return
+                if path == "/api/v1/workspace":
+                    self._cached(
+                        "workspace",
+                        None,
+                        lambda: workspace_summary_from_snapshot(
+                            cache.get(
+                                "snapshot",
+                                None,
+                                lambda: build_studio_snapshot(
+                                    directory,
+                                    project_id=project_id,
+                                ),
+                            ).payload
+                        ),
+                        head_only,
+                    )
+                    return
                 if path == "/api/v1/project":
                     ids = parse_qs(urlsplit(self.path).query).get("id") or []
-                    self._json(
-                        build_project_snapshot(
+                    requested = ids[0] if len(ids) == 1 else None
+                    self._cached(
+                        ("project", requested),
+                        requested,
+                        lambda: build_project_snapshot(
                             directory,
-                            ids[0] if len(ids) == 1 else None,
+                            requested,
                             project_id=project_id,
                         ),
                         head_only,

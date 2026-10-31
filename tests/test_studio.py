@@ -331,7 +331,8 @@ class StudioObservationTests(unittest.TestCase):
                 with urlopen(f"{base}/api/v1/snapshot", timeout=3) as response:
                     snapshot = json.loads(response.read())
                     self.assertEqual(snapshot["kind"], "autoquant-studio-snapshot")
-                    self.assertEqual(response.headers["Cache-Control"], "no-store")
+                    self.assertEqual(response.headers["Cache-Control"], "no-cache")
+                    self.assertTrue(response.headers["ETag"].startswith('"'))
 
                 with urlopen(f"{base}/legacy", timeout=3) as response:
                     html = response.read().decode()
@@ -642,7 +643,8 @@ class StudioObservationTests(unittest.TestCase):
             try:
                 with urlopen(f"{base}/api/v1/workspace", timeout=10) as response:
                     summary = json.loads(response.read())
-                    self.assertEqual(response.headers["Cache-Control"], "no-store")
+                    self.assertEqual(response.headers["Cache-Control"], "no-cache")
+                    self.assertTrue(response.headers["ETag"].startswith('"'))
                     self.assertEqual(response.headers["X-Frame-Options"], "DENY")
                 self.assertEqual(
                     summary["kind"], "autoquant-studio-workspace-summary"
