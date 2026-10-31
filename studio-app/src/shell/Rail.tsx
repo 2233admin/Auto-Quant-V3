@@ -2,6 +2,14 @@ import { Glyph, Icon, Mark } from '../design/icons'
 import { routeHref, routeProjectId, type Route } from '../route'
 import type { ShellData } from '../useShellData'
 
+/** The cross-Project library pages, in the reference product's order. */
+const LIBRARY_NAV = [
+  { view: 'strategies', label: 'Strategies', icon: 'strategies' },
+  { view: 'factors', label: 'Factors', icon: 'factors' },
+  { view: 'runs', label: 'Runs', icon: 'runs' },
+  { view: 'tuning', label: 'Tuning', icon: 'tuning' },
+] as const
+
 type RailProps = { route: Route; data: ShellData; narrow: boolean; onSearch: () => void }
 
 /** Glyph and word for a Project's verification state. */
@@ -38,6 +46,13 @@ export function Rail({ route, data, narrow, onSearch }: RailProps) {
           <span className="nav-short">Projects</span>
           <span className="count mono">{data.workspace ? projects.length : '—'}</span>
         </a>
+        {LIBRARY_NAV.map((item) => (
+          <a key={item.view} className={route.view === item.view ? 'nav is-on' : 'nav'} href={routeHref({ view: item.view })} aria-current={route.view === item.view ? 'page' : undefined}>
+            <Icon name={item.icon} />
+            <span className="nav-label">{item.label}</span>
+            <span className="nav-short">{item.label}</span>
+          </a>
+        ))}
       </nav>
       {projects.length > 0 && (
         <section className="raildirs" aria-labelledby="rail-projects">
@@ -86,6 +101,13 @@ export function TabBar({ route, data }: { route: Route; data: ShellData }) {
         <span className="nav-short">Projects</span>
         <span className="count mono">{data.workspace ? data.workspace.projects.length : '—'}</span>
       </a>
+      {LIBRARY_NAV.map((item) => (
+        <a key={item.view} className={route.view === item.view ? 'tab is-on' : 'tab'} href={routeHref({ view: item.view })}>
+          <Icon name={item.icon} />
+          <span className="nav-label">{item.label}</span>
+          <span className="nav-short">{item.label}</span>
+        </a>
+      ))}
     </nav>
   )
 }

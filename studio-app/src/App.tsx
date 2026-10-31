@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ActionsProvider } from './actions/ActionsContext'
 import { useTheme } from './design/theme'
 import { useWidth } from './design/useWidth'
 import { Notice } from './Notice'
@@ -8,8 +9,13 @@ import { FactorPage } from './pages/Factor'
 import { ProjectPage, useProject } from './pages/Project'
 import { ComparePage } from './pages/compare/ComparePage'
 import { PortfolioPage } from './pages/portfolio/Portfolio'
+import { BookRiskPage } from './pages/lanes/BookRisk'
+import { BookStressPage } from './pages/lanes/BookStress'
+import { AllocationPage } from './pages/allocation/Allocation'
+import { RlPage } from './pages/rl/Rl'
 import { RunPage } from './pages/run/RunPage'
 import { routeHref, routeProjectId } from './route'
+import { isLibraryRoute, LIBRARY_TITLE, LibraryPage } from './library/Library'
 import { Palette } from './shell/Palette'
 import { Rail, TabBar } from './shell/Rail'
 import { TopBar, Updated, type Crumb } from './shell/TopBar'
@@ -54,6 +60,18 @@ export default function App() {
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'run' ? 'Run' : 'Compare Runs' },
             ]
+        : route.view === 'allocation' || route.view === 'rl'
+          ? [
+              { label: 'Projects', href: routeHref({ view: 'projects' }) },
+              { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
+              { label: route.view === 'rl' ? 'Governed RL policy' : 'Strategic allocation' },
+            ]
+        : route.view === 'bookrisk' || route.view === 'bookstress'
+          ? [
+              { label: 'Projects', href: routeHref({ view: 'projects' }) },
+              { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
+              { label: route.view === 'bookrisk' ? 'Book Risk' : 'Reported-book path stress' },
+            ]
         : route.view === 'portfolio'
           ? [
               { label: 'Projects', href: routeHref({ view: 'projects' }) },
@@ -66,14 +84,22 @@ export default function App() {
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: 'Factor evidence' },
             ]
-          : [{ label: 'Projects' }]
+          : isLibraryRoute(route)
+            ? route.view === 'tuning' && route.id
+              ? [{ label: LIBRARY_TITLE.tuning, href: routeHref({ view: 'tuning' }) }, { label: (data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id), data: true }]
+              : [{ label: LIBRARY_TITLE[route.view] }]
+            : [{ label: 'Projects' }]
   document.title =
     route.view === 'projects'
       ? 'AutoQuant Studio'
-      : `${route.view === 'event-study' ? 'Price event study · ' : route.view === 'factor' ? 'Factor evidence · ' : route.view === 'portfolio' ? 'Portfolio · ' : route.view === 'run' ? 'Run · ' : route.view === 'compare' ? 'Compare Runs · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
+      : isLibraryRoute(route)
+        ? `${LIBRARY_TITLE[route.view]} · AutoQuant Studio`
+      : `${route.view === 'event-study' ? 'Price event study · ' : route.view === 'factor' ? 'Factor evidence · ' : route.view === 'portfolio' ? 'Portfolio · ' : route.view === 'bookrisk' ? 'Book Risk · ' : route.view === 'bookstress' ? 'Reported-book path stress · ' :route.view === 'allocation' ? 'Strategic allocation · ' : route.view === 'rl' ? 'Governed RL policy · ' : route.view === 'run' ? 'Run · ' : route.view === 'compare' ? 'Compare Runs · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
 
   let page
-  if (route.view === 'projects') {
+  if (isLibraryRoute(route)) {
+    page = <LibraryPage route={route} workspace={data.workspace} go={go} />
+  } else if (route.view === 'projects') {
     page = data.workspace ? (
       <Projects workspace={data.workspace} freshness={<Updated data={data} />} error={data.error} />
     ) : (
@@ -89,6 +115,14 @@ export default function App() {
         <ComparePage project={project.project} a={route.a} b={route.b} go={go} />
       ) : route.view === 'portfolio' ? (
         <PortfolioPage project={project.project} />
+      ) : route.view === 'bookrisk' ? (
+        <BookRiskPage project={project.project} />
+      ) : route.view === 'bookstress' ? (
+        <BookStressPage project={project.project} />
+      ) : route.view === 'allocation' ? (
+        <AllocationPage project={project.project} />
+      ) : route.view === 'rl' ? (
+        <RlPage project={project.project} />
       ) : route.view === 'factor' ? (
         <FactorPage project={project.project} study={route.study} run={route.run} />
       ) : (
@@ -112,6 +146,7 @@ export default function App() {
   }
 
   return (
+    <ActionsProvider workspace={data.workspace} routeKey={JSON.stringify(route)} go={go} refresh={data.refresh}>
     <div ref={ref}>
       <a className="skip" href="#content">Skip to content</a>
       <div className="shell">
@@ -126,5 +161,6 @@ export default function App() {
       <TabBar route={route} data={data} />
       <Palette open={palette} onClose={() => setPalette(false)} projects={data.workspace?.projects ?? []} go={go} />
     </div>
+    </ActionsProvider>
   )
 }

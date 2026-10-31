@@ -1,7 +1,8 @@
 # Studio local actions
 
-Status: proposed design; nothing here is implemented. Owner decision of
-2026-11-01: Studio gets a local action layer that can start work, but only by
+Status: slice S1 implemented (server side: flag, security layer, JobRunner,
+audit log, the single `experiment.evaluate` action); S2 to S5 are proposed.
+Owner decision of 2026-11-01: Studio gets a local action layer that can start work, but only by
 invoking existing `aq` commands. This document owns that layer: the opt-in
 flag, the HTTP action and job surface, the security model, the action catalog,
 the job model, the UI flows, and the build slices.
@@ -380,6 +381,32 @@ on the Hypothesis objects and on S2 to S4.
 Parallelism: S2 (browser) can start as soon as the S1 route contract and a
 mock server exist; S3 and S4 can proceed in parallel with S2 and with each
 other.
+
+## S1 implementation notes
+
+Choices where the text above left room (the code is authoritative):
+
+- The snapshot, workspace, and project HTTP responses carry
+  `actions: {enabled: true, token, tokenHeader, catalog}` only when the flag
+  is set. Without the flag the key is absent (absent means disabled), so the
+  default responses stay byte-identical. The offline `aq studio snapshot` never
+  carries it.
+- `X-Studio-Token` is required on every action and job route including GETs,
+  because job tails are returned only to the page holding the token.
+- A missing `Sec-Fetch-Site` header is accepted (non-browser clients such as
+  `curl` and tests do not send it); a present value other than `same-origin`
+  or `none` is refused.
+- Preview `trial` is `{n, m, ...}`: `n` is this run's candidate-trial index in
+  the Session and `m` the Project research family source-trial count after the
+  run (the baseline counts), both read from the Core Session projection.
+- The `preflight passed` precondition is not evaluated by Studio; `aq
+  experiment evaluate` itself enforces it. Studio checks Session `active`,
+  authority valid (not stale), and candidate differs from the leader.
+- Job `stages` are whole-action (`pending`, `running`, then `done`, `failed`,
+  or `skipped`) with `stageMode: "whole-action"`; no per-stage progress is
+  invented.
+- Output buffers keep the last 256 KiB per stream. The audit log lives under
+  the served directory (`<root>/.autoquant/`).
 
 ## Open questions
 

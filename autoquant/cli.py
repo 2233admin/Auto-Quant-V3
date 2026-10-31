@@ -1372,6 +1372,7 @@ def build_parser() -> RaisingArgumentParser:
     studio_serve.add_argument("--host", default="127.0.0.1")
     studio_serve.add_argument("--port", type=int, default=8765)
     studio_serve.add_argument("--no-open", action="store_true")
+    studio_serve.add_argument("--allow-actions", action="store_true")
     studio_serve.set_defaults(command_id="studio.serve")
     return parser
 
@@ -5504,6 +5505,7 @@ def _studio_serve(args: argparse.Namespace) -> CommandResult:
         host=args.host,
         port=args.port,
         open_browser=not args.no_open,
+        allow_actions=args.allow_actions,
     )
     return CommandResult(
         "studio.serve",

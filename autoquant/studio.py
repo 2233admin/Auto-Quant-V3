@@ -61,6 +61,16 @@ from .runs import (
     run_read_memo,
 )
 from .sessions import list_sessions, load_session, session_snapshot
+from .studio_actions import (
+    MAX_BODY_BYTES,
+    TOKEN_HEADER,
+    ActionError,
+    ActionService,
+    default_spawn,
+    failure,
+    is_loopback_host,
+    success,
+)
 from .studies import hash_json, list_studies, load_study
 from .workspace import (
     PROJECT_MANIFEST,
@@ -2084,6 +2094,7 @@ class SnapshotCache:
 def _handler(
     directory: Path,
     project_id: str | None,
+    actions: ActionService | None = None,
 ) -> type[BaseHTTPRequestHandler]:
     cache = SnapshotCache(directory)
 
@@ -2135,8 +2146,15 @@ def _handler(
             scope_id: str | None,
             build: Callable[[], dict[str, Any]],
             head_only: bool,
+            *,
+            with_actions: bool = False,
         ) -> None:
             entry = cache.get(key, scope_id, build)
+            if actions is not None and with_actions:
+                entry = _CachedPayload(
+                    {**entry.payload, "actions": actions.bootstrap()},
+                    entry.fingerprint,
+                )
             candidates = {
                 value.strip().removeprefix("W/")
                 for value in self.headers.get("If-None-Match", "").split(",")
@@ -2154,13 +2172,157 @@ def _handler(
                 HTTPStatus.OK,
                 "application/json; charset=utf-8",
                 entry.body,
-                cache_control="no-cache",
+                cache_control="no-store" if actions is not None else "no-cache",
                 head_only=head_only,
                 etag=entry.etag,
             )
 
+        def _json(
+            self,
+            status: int,
+            payload: dict[str, Any],
+            *,
+            head_only: bool = False,
+        ) -> None:
+            self._send(
+                status,
+                "application/json; charset=utf-8",
+                json.dumps(
+                    payload, ensure_ascii=False, separators=(",", ":")
+                ).encode(),
+                head_only=head_only,
+            )
+
+        def _gate(self, *, mutating: bool) -> bool:
+            """Action-layer request gates; True means the request may proceed."""
+            assert actions is not None
+            try:
+                if not actions.host_allowed(self.headers.get("Host")):
+                    raise ActionError(
+                        403, "studio.host", "Host header is not allowed"
+                    )
+                if mutating:
+                    if not actions.origin_allowed(
+                        self.headers.get("Origin"),
+                        self.headers.get("Sec-Fetch-Site"),
+                    ):
+                        raise ActionError(
+                            403, "studio.origin", "Cross-origin request refused"
+                        )
+                    content_type = (
+                        self.headers.get("Content-Type", "")
+                        .split(";")[0]
+                        .strip()
+                        .lower()
+                    )
+                    if content_type != "application/json":
+                        raise ActionError(
+                            415,
+                            "studio.content-type",
+                            "Content-Type must be application/json",
+                        )
+                return True
+            except ActionError as error:
+                self._json(error.status, failure(error))
+                return False
+
+        def _token_ok(self) -> bool:
+            assert actions is not None
+            if actions.token_valid(self.headers.get(TOKEN_HEADER)):
+                return True
+            error = ActionError(
+                403, "studio.token", f"Missing or invalid {TOKEN_HEADER}"
+            )
+            self._json(error.status, failure(error))
+            return False
+
+        def _action_get(self, path: str, head_only: bool) -> bool:
+            """Serve GET action/job routes; False when path is not one."""
+            assert actions is not None
+            job_match = re.fullmatch(r"/api/v1/jobs/([A-Za-z0-9-]+)", path)
+            if path not in {"/api/v1/actions", "/api/v1/jobs"} and not job_match:
+                return False
+            if not self._token_ok():
+                return True
+            try:
+                if path == "/api/v1/actions":
+                    ids = parse_qs(urlsplit(self.path).query).get("project") or []
+                    data = actions.catalog(ids[0] if ids else None)
+                elif path == "/api/v1/jobs":
+                    data = {
+                        "jobs": [
+                            job.to_dict() for job in actions.runner.recent()
+                        ]
+                    }
+                else:
+                    job = actions.runner.get(job_match.group(1))
+                    if job is None:
+                        raise ActionError(
+                            404, "studio.unknown-job", "Unknown job"
+                        )
+                    data = job.to_dict()
+                self._json(HTTPStatus.OK, success(data), head_only=head_only)
+            except ActionError as error:
+                self._json(error.status, failure(error), head_only=head_only)
+            except AutoQuantValidationError as error:
+                status, payload = _error_payload(error)
+                self._json(status, payload, head_only=head_only)
+            return True
+
+        def _action_post(self, path: str) -> bool:
+            """Serve POST action/job routes; False when path is not one."""
+            assert actions is not None
+            cancel = re.fullmatch(r"/api/v1/jobs/([A-Za-z0-9-]+)/cancel", path)
+            if path not in {"/api/v1/actions/preview", "/api/v1/actions"} and not cancel:
+                return False
+            if not self._gate(mutating=True) or not self._token_ok():
+                return True
+            try:
+                try:
+                    length = int(self.headers.get("Content-Length") or 0)
+                except ValueError:
+                    length = -1
+                if not 0 <= length <= MAX_BODY_BYTES:
+                    raise ActionError(
+                        400, "studio.bad-request", "Invalid request body size"
+                    )
+                raw = self.rfile.read(length) if length else b""
+                try:
+                    body = json.loads(raw.decode("utf-8")) if raw else {}
+                except (ValueError, UnicodeDecodeError):
+                    raise ActionError(
+                        400, "studio.bad-request", "Body must be valid JSON"
+                    ) from None
+                if cancel:
+                    job = actions.runner.cancel(cancel.group(1))
+                    if job is None:
+                        raise ActionError(
+                            404, "studio.unknown-job", "Unknown job"
+                        )
+                    self._json(HTTPStatus.OK, success(job.to_dict()))
+                elif path == "/api/v1/actions/preview":
+                    self._json(HTTPStatus.OK, success(actions.preview(body)))
+                else:
+                    self._json(HTTPStatus.ACCEPTED, success(actions.create(body)))
+            except ActionError as error:
+                self._json(error.status, failure(error))
+            except AutoQuantValidationError as error:
+                status, payload = _error_payload(error)
+                self._json(status, payload)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            except Exception as error:
+                status, payload = _error_payload(error)
+                self._json(status, payload)
+            return True
+
         def _route(self, *, head_only: bool = False) -> None:
             path = urlsplit(self.path).path
+            if actions is not None:
+                if not self._gate(mutating=False):
+                    return
+                if self._action_get(path, head_only):
+                    return
             try:
                 if path == "/api/v1/health":
                     body = json.dumps(
@@ -2168,7 +2330,11 @@ def _handler(
                             "schemaVersion": SCHEMA_VERSION,
                             "ok": True,
                             "service": "autoquant-studio",
-                            "mode": "read-only",
+                            "mode": (
+                                "read-only"
+                                if actions is None
+                                else "local-actions"
+                            ),
                         },
                         separators=(",", ":"),
                     ).encode()
@@ -2188,6 +2354,7 @@ def _handler(
                             project_id=project_id,
                         ),
                         head_only,
+                        with_actions=True,
                     )
                     return
                 if path == "/api/v1/workspace":
@@ -2205,6 +2372,7 @@ def _handler(
                             ).payload
                         ),
                         head_only,
+                        with_actions=True,
                     )
                     return
                 if path == "/api/v1/project":
@@ -2219,6 +2387,7 @@ def _handler(
                             project_id=project_id,
                         ),
                         head_only,
+                        with_actions=True,
                     )
                     return
                 if path == "/api/v1/run":
@@ -2324,6 +2493,8 @@ def _handler(
             self._route(head_only=True)
 
         def _read_only(self) -> None:
+            if actions is not None and not self._gate(mutating=False):
+                return
             self._send(
                 HTTPStatus.METHOD_NOT_ALLOWED,
                 "application/json; charset=utf-8",
@@ -2331,6 +2502,10 @@ def _handler(
             )
 
         def do_POST(self) -> None:
+            if actions is not None and self._action_post(
+                urlsplit(self.path).path
+            ):
+                return
             self._read_only()
 
         def do_PUT(self) -> None:
@@ -2354,6 +2529,7 @@ def _handler(
 class AutoQuantStudioServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
+    actions: ActionService | None = None
 
 
 def create_studio_server(
@@ -2362,17 +2538,51 @@ def create_studio_server(
     project_id: str | None = None,
     host: str = "127.0.0.1",
     port: int = 8765,
+    allow_actions: bool = False,
+    action_options: dict[str, Any] | None = None,
 ) -> AutoQuantStudioServer:
     if not isinstance(port, int) or isinstance(port, bool) or not 0 <= port <= 65535:
         raise AutoQuantValidationError(
             [_issue(port, "studio.port", "Studio port must be from 0 to 65535")]
         )
     root = Path(directory).expanduser().absolute()
+    if allow_actions and not is_loopback_host(host):
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    host,
+                    "studio.actions-non-loopback",
+                    "--allow-actions is only permitted with a loopback host "
+                    "(127.0.0.1, localhost, ::1)",
+                )
+            ]
+        )
     build_studio_snapshot(root, project_id=project_id)
-    return AutoQuantStudioServer(
+    actions: ActionService | None = None
+    if allow_actions:
+        scope, resolved, _, _, _ = _resolve_source(root, project_id)
+
+        def load_projects() -> dict[str, ProjectContext]:
+            return {
+                project.manifest.id: project
+                for project in _resolve_source(root, project_id)[3]
+            }
+
+        actions = ActionService(
+            resolved,
+            scope=scope,
+            load_projects=load_projects,
+            fingerprint=lambda project: _walk_fingerprint([project.root_dir]),
+            **(action_options or {}),
+        )
+    server = AutoQuantStudioServer(
         (host, port),
-        _handler(root, project_id),
+        _handler(root, project_id, actions),
     )
+    server.actions = actions
+    if actions is not None:
+        actions.bind_port(server.server_port)
+    return server
 
 
 def serve_studio(
@@ -2382,17 +2592,24 @@ def serve_studio(
     host: str = "127.0.0.1",
     port: int = 8765,
     open_browser: bool = True,
+    allow_actions: bool = False,
 ) -> None:
     server = create_studio_server(
         directory,
         project_id=project_id,
         host=host,
         port=port,
+        allow_actions=allow_actions,
     )
     display_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
     url = f"http://{display_host}:{server.server_port}"
     print(f"AutoQuant Studio: {url}", flush=True)
-    print("Mode: local read-only observation", flush=True)
+    print(
+        "Mode: local actions enabled"
+        if allow_actions
+        else "Mode: local read-only observation",
+        flush=True,
+    )
     if open_browser:
         threading.Thread(
             target=webbrowser.open,
@@ -2475,6 +2692,17 @@ STUDIO_SNAPSHOT_JSON_SCHEMA: dict[str, Any] = {
         "projects": {
             "type": "array",
             "items": {"$ref": "#/$defs/project"},
+        },
+        "actions": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["enabled", "token", "tokenHeader", "catalog"],
+            "properties": {
+                "enabled": {"const": True},
+                "token": {"type": "string", "minLength": 1},
+                "tokenHeader": {"type": "string", "minLength": 1},
+                "catalog": {"type": "string", "minLength": 1},
+            },
         },
     },
     "$defs": {

@@ -1,3 +1,4 @@
+import type { ActionsBootstrap } from './actions/types'
 import type { PortfolioDiagnostics } from './pages/portfolio/portfolioTypes'
 /** Wire types for the Studio routes this app reads. Only fields the pages use are typed. */
 
@@ -27,6 +28,8 @@ export type WorkspaceSummary = {
   valid: boolean
   diagnostics: { path?: string; code?: string; message?: string }[]
   projects: ProjectSummary[]
+  /** Present only when Studio was started with --allow-actions; absent means read-only. */
+  actions?: ActionsBootstrap
 }
 
 export type StudyRow = {

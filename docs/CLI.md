@@ -1320,7 +1320,8 @@ aq studio serve <path> \
   [--project ID] \
   [--host 127.0.0.1] \
   [--port 8765] \
-  [--no-open]
+  [--no-open] \
+  [--allow-actions]
 ```
 
 `studio snapshot` builds one Workspace or direct-Project observation through
@@ -1337,7 +1338,16 @@ publish, run, or show command.
 packaged read-only browser presentation and the same snapshot contract. It
 does not support `--json` because its stdout announces a live URL rather than
 one terminal envelope. Loopback is the default; non-loopback binding is an
-explicit operator choice and V1 has no authentication. See [[docs/STUDIO]].
+explicit operator choice and, without `--allow-actions`, has no authentication.
+
+`--allow-actions` (default off) adds the opt-in local action layer: a
+per-process token, Host/Origin/content-type checks, and the single allowlisted
+action `experiment.evaluate`, which runs `aq experiment evaluate` as a child
+process with an append-only audit log at `.autoquant/studio-actions.jsonl`. It
+is refused with a non-loopback `--host`, and the banner prints
+`Mode: local actions enabled`. Without the flag the routes do not exist and the
+server stays read-only. See [[docs/STUDIO]] and
+[[docs/design/studio-local-actions]].
 
 ## Success envelope
 
@@ -1394,7 +1404,9 @@ Current operation effects are:
 
 Only `session.promote` currently uses `mutates-project`, after locked-history,
 stale-base, source-hash, and rollback checks. `studio.serve` is the only
-`long-running-server`; its routes are fixed and read-only.
+`long-running-server`; its routes are fixed and read-only unless the operator
+passes `--allow-actions`, which adds only the action and job routes of
+[[docs/design/studio-local-actions]].
 
 ## Error envelope
 

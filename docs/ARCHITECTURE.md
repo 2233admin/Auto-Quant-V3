@@ -122,7 +122,9 @@ The V2 foundation now implements:
   and compatible optional RL lane Reports into one verified Project
   deliverable without re-evaluating raw Runs or recomputing later mechanical
   decisions.
-- one packaged local read-only Studio with a shared versioned snapshot,
+- one packaged local Studio, read-only by default (an opt-in `--allow-actions`
+  layer can start the allowlisted `aq experiment evaluate` command; see
+  [[docs/design/studio-local-actions]]), with a shared versioned snapshot,
   Workspace/Project overview, request → lane Reports → Dossier delivery,
   effective Projects/configuration disclosure, exact copyable CLI commands,
   explicit mutable Campaign progress, defensive HTTP boundary, bounded
@@ -586,7 +588,9 @@ These commands must not start autonomous research or a long backtest.
   implemented.
 - Network ingestion, corporate-action computation, exchange-holiday
   verification, and point-in-time universe contracts are not implemented.
-- Studio is read-only and does not yet provide confirmed Core operations.
+- Studio is read-only unless started with `--allow-actions`, which provides one
+  confirmed Core operation (`experiment.evaluate`); the browser action UI and
+  further actions are later slices of [[docs/design/studio-local-actions]].
 - ML is a supported architectural direction but has no execution contract yet.
 - Optional host-side automatic Project creation, coworker assignment, and
   delivery are not implemented here; AutoQuant emits exact report artifacts

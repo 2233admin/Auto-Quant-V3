@@ -1378,8 +1378,8 @@ CLI_COMMANDS = [
     ),
     descriptor(
         "studio.serve",
-        "aq studio serve <path> [--project ID] [--host HOST] [--port PORT] [--no-open]",
-        "Serve the packaged local read-only quant research workbench until interrupted.",
+        "aq studio serve <path> [--project ID] [--host HOST] [--port PORT] [--no-open] [--allow-actions]",
+        "Serve the packaged local read-only quant research workbench until interrupted; with --allow-actions (loopback only) it can also start the allowlisted aq experiment evaluate command.",
         "long-running-server",
         [
             PATH_ARGUMENT,
@@ -1406,6 +1406,14 @@ CLI_COMMANDS = [
                 "boolean",
                 False,
                 "Do not open the default browser.",
+                default=False,
+            ),
+            argument(
+                "allow-actions",
+                "option",
+                "boolean",
+                False,
+                "Enable the opt-in local action layer (token, Host and Origin checks, audit log); refused with a non-loopback host. Default off keeps Studio read-only.",
                 default=False,
             ),
         ],

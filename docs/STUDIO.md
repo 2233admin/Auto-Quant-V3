@@ -1,10 +1,12 @@
 # AutoQuant Studio
 
-AutoQuant Studio is the local, read-only human observation surface for the
-same verified research state exposed by Core and `aq`. It helps a human review
-the desk where coding Agents work; it is neither the primary Agent control
-surface nor an OpenAlice-specific report viewer. Standalone and hosted
-Workspaces render the same Core snapshot.
+AutoQuant Studio is the local, read-only-by-default human observation surface
+for the same verified research state exposed by Core and `aq`. It helps a
+human review the desk where coding Agents work; it is neither the primary
+Agent control surface nor an OpenAlice-specific report viewer. Standalone and
+hosted Workspaces render the same Core snapshot. An operator can opt in to a
+small local action layer with `--allow-actions` (see "Local actions" below);
+without that flag Studio is strictly read-only.
 
 ## Open a Workspace
 
@@ -21,6 +23,52 @@ aq studio serve . --port 8877 --no-open
 
 A direct Project path is also valid. A Workspace can be restricted to one
 Project with `--project ID`.
+
+## Local actions (opt in)
+
+```bash
+aq studio serve . --allow-actions
+```
+
+`--allow-actions` is off by default, so the default server is byte-for-byte
+the read-only server described elsewhere in this guide. When set, the startup
+banner prints `Mode: local actions enabled` and the server accepts exactly one
+action in this release: `experiment.evaluate`, which runs the existing
+`aq experiment evaluate --session S --hypothesis TEXT` command as a child
+process. Studio never imports a Core mutator and writes no Project file; the
+child `aq` process writes exactly what it would write from a terminal. The
+only file Studio itself writes is its append-only audit log
+`.autoquant/studio-actions.jsonl` under the served directory. The design,
+threat model, and later slices are owned by
+[[docs/design/studio-local-actions]].
+
+Guards, all enforced server-side:
+
+- `--allow-actions` is refused with a non-loopback `--host`.
+- Every request (GET included) must carry a `Host` of `127.0.0.1:<port>`,
+  `localhost:<port>`, or `[::1]:<port>`; anything else is `403 studio.host`.
+- A random per-process token is delivered only in the snapshot, workspace, and
+  project responses as `actions.token` (never written to disk). Every action
+  and job route, including GETs, requires it in the `X-Studio-Token` header.
+  Without the flag the responses carry no `actions` key and no token exists.
+- POSTs also need `Content-Type: application/json`, an `Origin` equal to an
+  allowed host when present, and `Sec-Fetch-Site` of `same-origin` or `none`
+  when present.
+- Nothing starts on first click: `POST /api/v1/actions/preview` returns the
+  exact argv, a command hash, and trial N of M; `POST /api/v1/actions` must
+  echo that hash with `confirm: true` and `secondConfirm: true`. A hash made
+  stale by any change to the Project is `409 studio.stale-preview`.
+- One active job per Project (`409 studio.busy`), a 15 minute timeout, output
+  capped at 256 KiB per stream (the tail is kept and `truncated` is set), a
+  scrubbed child environment, and cancel that terminates the whole process
+  tree (`taskkill /T /F` on Windows).
+
+Routes (all JSON; success is `{"schemaVersion":1,"ok":true,"data":...}`):
+`GET /api/v1/actions`, `POST /api/v1/actions/preview`, `POST /api/v1/actions`
+(`202` with `jobId`), `GET /api/v1/jobs`, `GET /api/v1/jobs/<id>`, and
+`POST /api/v1/jobs/<id>/cancel`. Job state lives in server memory only. The
+browser confirm dialog and progress panel are a later slice; until then the
+routes are driven by the documented contract and the CLI remains the fallback.
 
 The repository clone is already a Workspace and opens with the checked-in
 `sample-research-desk`. The Workspace rail shows the effective Projects path
@@ -414,7 +462,7 @@ The Research Cockpit consumes Core's `progression` projection. It labels the
 current Factor focus, Portfolio locked by Factor evidence, and RL locked by the
 simple Portfolio baseline without deriving pass/fail from metric signs. A weak
 Factor can therefore produce a published one-lane early-stop Dossier while the
-downstream workbenches remain read-only. Once both required gates pass, the
+downstream workbenches remain locked (read-only evidence views). Once both required gates pass, the
 deliverable is complete and governed RL is presented as an optional complexity
 challenge rather than mandatory program completion.
 
@@ -506,7 +554,9 @@ Studio is not an evaluator. It calls the same Core loaders used by CLI:
 - the browser cannot bind, execute, or reinterpret a frozen holdout; it only
   renders Core status, the verified Agent Assessment, and copyable CLI
   authority;
-- no browser interaction changes a Project.
+- without `--allow-actions` no browser interaction changes a Project; with it,
+  only the allowlisted action layer can start the existing `aq` command and the
+  browser still computes no metric or verdict.
 
 The durable boundary and known gaps are in
 [[docs/design/studio-observation-surface]].

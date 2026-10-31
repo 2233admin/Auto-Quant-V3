@@ -1,4 +1,5 @@
 import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
+import { hashWithJob, sectionOfHash } from '../actions/jobHash'
 
 /** Distance from the viewport top at which a heading counts as "current": top bar (52) + section nav (~40) + air. */
 const SPY_LINE = 52 + 40 + 20
@@ -70,7 +71,7 @@ export function SectionNav({ items }: { items: NavItem[] }) {
   const key = items.map((i) => i.id).join('|')
 
   useEffect(() => {
-    const hash = decodeURIComponent(window.location.hash.slice(1))
+    const hash = decodeURIComponent(sectionOfHash())
     if (hash && items.some((i) => i.id === hash)) requestAnimationFrame(() => reveal(hash))
     // Only on first mount of this page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,7 +111,7 @@ export function SectionNav({ items }: { items: NavItem[] }) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
     event.preventDefault()
     if (reveal(id)) {
-      window.history.replaceState(null, '', `#${id}`)
+      window.history.replaceState(null, '', hashWithJob(id))
       setActive(id)
     }
   }

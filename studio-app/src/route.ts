@@ -7,6 +7,14 @@ export type Route =
   | { view: 'compare'; id: string; a?: string; b?: string }
   | { view: 'factor'; id: string; study?: string; run?: string }
   | { view: 'portfolio'; id: string }
+  | { view: 'factors' }
+  | { view: 'runs' }
+  | { view: 'strategies' }
+  | { view: 'tuning'; id?: string }
+  | { view: 'bookrisk'; id: string }
+  | { view: 'bookstress'; id: string }
+  | { view: 'allocation'; id: string }
+  | { view: 'rl'; id: string }
 
 const EVENT_STUDY_PATH = /^\/projects\/([^/]+)\/event-study\/?$/
 
@@ -23,6 +31,14 @@ export function parseRoute(search: string, pathname = '/'): Route {
   const id = p.get('id')
   if (p.get('view') === 'project' && id) return { view: 'project', id }
   if (p.get('view') === 'portfolio' && id) return { view: 'portfolio', id }
+  if (p.get('view') === 'factors') return { view: 'factors' }
+  if (p.get('view') === 'runs') return { view: 'runs' }
+  if (p.get('view') === 'strategies') return { view: 'strategies' }
+  if (p.get('view') === 'tuning') return id ? { view: 'tuning', id } : { view: 'tuning' }
+  if (p.get('view') === 'bookrisk' && id) return { view: 'bookrisk', id }
+  if (p.get('view') === 'bookstress' && id) return { view: 'bookstress', id }
+  if (p.get('view') === 'allocation' && id) return { view: 'allocation', id }
+  if (p.get('view') === 'rl' && id) return { view: 'rl', id }
   const projectParam = p.get('project')
   if (p.get('view') === 'run' && projectParam && id) return { view: 'run', id: projectParam, run: id }
   if (p.get('view') === 'compare' && projectParam) {
@@ -41,6 +57,10 @@ export function parseRoute(search: string, pathname = '/'): Route {
 export function routeHref(route: Route): string {
   if (route.view === 'project') return `/?${new URLSearchParams({ view: 'project', id: route.id })}`
   if (route.view === 'portfolio') return `/?${new URLSearchParams({ view: 'portfolio', id: route.id })}`
+  if (route.view === 'factors' || route.view === 'runs' || route.view === 'strategies') return `/?${new URLSearchParams({ view: route.view })}`
+  if (route.view === 'tuning') return `/?${new URLSearchParams(route.id ? { view: 'tuning', id: route.id } : { view: 'tuning' })}`
+  if (route.view === 'bookrisk' || route.view === 'bookstress') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`
+  if (route.view === 'allocation' || route.view === 'rl') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`
   if (route.view === 'factor') {
     const params = new URLSearchParams({ view: 'factor', id: route.id })
     if (route.study) params.set('study', route.study)
@@ -60,5 +80,5 @@ export function routeHref(route: Route): string {
 
 /** The Project a route belongs to, if any. */
 export function routeProjectId(route: Route): string | null {
-  return route.view === 'projects' ? null : route.id
+  return route.view === 'projects' || route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'tuning' ? null : route.id
 }

@@ -6,6 +6,7 @@ import { num, plural, when } from '../format'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
 import { verification } from '../shell/Rail'
+import { RunAnalysisButton } from '../actions/RunAnalysisButton'
 import { RunList } from './run/RunList'
 import { EvidenceDocsBlock, ExperimentsBlock, NextMoveBlock, QuestionBlock, SelectionBlock, sessionMeta } from './project/ProjectResearch'
 
@@ -112,6 +113,7 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         <div className="cols cols--3-2">
           <Section title="Next move" id="sec-next">
             <NextMoveBlock project={project} />
+            <RunAnalysisButton project={project} />
           </Section>
           <Section title="Factor evidence (validation split)" id="sec-factor">
             {validation ? (
@@ -272,6 +274,14 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
                 <a href={routeHref({ view: 'event-study', id: project.id })}>Open event study</a>
               ) : lane.key === 'portfolioExplorer' && project.portfolioExplorer ? (
                 <a href={routeHref({ view: 'portfolio', id: project.id })}>Open Portfolio</a>
+              ) : lane.key === 'bookRiskExplorer' && project.bookRiskExplorer ? (
+                <a href={routeHref({ view: 'bookrisk', id: project.id })}>Open Book Risk</a>
+              ) : lane.key === 'bookPathStressExplorer' && project.bookPathStressExplorer ? (
+                <a href={routeHref({ view: 'bookstress', id: project.id })}>Open path stress</a>
+              ) : lane.key === 'allocationExplorer' && project.allocationExplorer ? (
+                <a href={routeHref({ view: 'allocation', id: project.id })}>Open strategic allocation</a>
+              ) : lane.key === 'rlExplorer' && project.rlExplorer ? (
+                <a href={routeHref({ view: 'rl', id: project.id })}>Open governed RL policy</a>
               ) : project[lane.key] ? (
                 <a href="/legacy">Open in legacy Studio</a>
               ) : (

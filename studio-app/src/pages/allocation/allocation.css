@@ -1,0 +1,5 @@
+/* Strategic Allocation lane page. Tokens only; verdict, chart frame, legend and tables come from factor.css and layout.css. */
+.al-bar-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.al-cell { display: inline-flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.al-bar { display: inline-block; width: 64px; height: 8px; border: 1px solid var(--stroke); background: var(--bg); }
+.al-bar i { display: block; height: 100%; background: var(--text); }

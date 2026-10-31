@@ -234,7 +234,8 @@ not impersonate it.
 
 ## Observe with Studio
 
-Studio is a read-only projection over the same verified loaders used by CLI:
+By default Studio is a read-only projection over the same verified loaders used by CLI
+(`--allow-actions` opts in to the local action layer in [[docs/design/studio-local-actions]]):
 
 ```bash
 uv run aq studio snapshot . --json

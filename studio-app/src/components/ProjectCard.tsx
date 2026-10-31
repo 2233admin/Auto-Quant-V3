@@ -61,7 +61,7 @@ const H = 36
 const PAD = 4
 
 /** Plain SVG line: no axes, scaled to its own min and max, last point marked. Scaling only; no statistics. */
-function Sparkline({ values, label }: { values: number[]; label: string }) {
+export function Sparkline({ values, label }: { values: number[]; label: string }) {
   const lo = Math.min(...values)
   const hi = Math.max(...values)
   const x = (i: number) => (values.length === 1 ? W / 2 : PAD + (i * (W - 2 * PAD)) / (values.length - 1))

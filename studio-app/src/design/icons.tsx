@@ -136,6 +136,25 @@ const ICONS = {
       <path d="M2.5 3.2c2-.6 3.8-.4 5.5.8 1.7-1.2 3.5-1.4 5.5-.8v9.6c-2-.6-3.8-.4-5.5.8-1.7-1.2-3.5-1.4-5.5-.8zM8 4v9.6" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
     ),
   },
+  factors: {
+    box: 16,
+    body: <path d="M2.5 12.5V8.2M6 12.5V4.5M9.5 12.5V9.6M13 12.5V6.2M2 13.5h12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />,
+  },
+  strategies: {
+    box: 16,
+    body: <path d="M2.5 12l3.4-4.2 2.6 2.4 5-6.2M10.4 4h3.1v3.1" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />,
+  },
+  tuning: {
+    box: 16,
+    body: (
+      <>
+        <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        <circle cx="5.5" cy="4.5" r="1.6" fill="var(--rail)" stroke="currentColor" strokeWidth="1.3" />
+        <circle cx="10.5" cy="8" r="1.6" fill="var(--rail)" stroke="currentColor" strokeWidth="1.3" />
+        <circle cx="6.5" cy="11.5" r="1.6" fill="var(--rail)" stroke="currentColor" strokeWidth="1.3" />
+      </>
+    ),
+  },
   lock: {
     box: 14,
     body: (

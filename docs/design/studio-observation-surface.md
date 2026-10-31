@@ -10,14 +10,17 @@ Related: [[docs/ARCHITECTURE]], [[docs/CLI]], [[docs/PROJECT_FORMAT]],
 [[docs/design/portfolio-risk-governor]],
 [[docs/design/executed-book-risk-compliance]],
 [[docs/design/portfolio-liquidity-capacity]],
-[[docs/design/reported-position-book-risk]], and
-[[docs/design/quant-research-lifecycle]].
+[[docs/design/reported-position-book-risk]],
+[[docs/design/quant-research-lifecycle]], and
+[[docs/design/studio-local-actions]].
 
 ## Scope
 
 This document owns the local Studio snapshot, read-only HTTP boundary,
 presentation responsibilities, and the distinction between immutable evidence
-and mutable execution progress.
+and mutable execution progress. The opt-in local action boundary
+(`--allow-actions`) is owned by [[docs/design/studio-local-actions]]; without
+that flag every read-only statement here is literally true.
 
 It does not own research decisions, evaluation, source mutation, promotion,
 remote hosting, authentication, or cloud persistence.
@@ -29,7 +32,8 @@ Studio has three layers:
 ```text
 AutoQuant Core loaders
 → versioned Studio snapshot
-→ CLI JSON or local read-only HTTP
+→ CLI JSON or local read-only HTTP (or, with `--allow-actions`, local HTTP
+  that can start allowlisted `aq` commands)
 → packaged browser presentation
 ```
 
@@ -39,9 +43,11 @@ normalizes those verified objects for observation. The HTTP server and browser
 must not reimplement validators or inspect arbitrary Project files.
 
 The browser may sort, filter, select, render, and copy an exact Core-generated
-CLI command. It cannot create metrics, change verdicts, execute commands,
-publish Reports, or write Project state. Clipboard copy grants no new
-authority.
+CLI command. It cannot create metrics or change verdicts. By default it also
+cannot execute commands, publish Reports, or write Project state; only with
+`--allow-actions` can the action layer of [[docs/design/studio-local-actions]]
+run an existing `aq` command, and then the child `aq` process writes, never
+Studio or browser logic. Clipboard copy grants no new authority.
 
 ## Snapshot contract
 
@@ -117,6 +123,12 @@ There is no arbitrary path, artifact download, mutation, command, or shell
 endpoint. Responses set a restrictive Content Security Policy, disable
 sniffing and framing, and avoid cross-origin access. Binding to a non-loopback
 address is an explicit operator choice and V1 has no authentication.
+
+With `--allow-actions` the fixed routes `/api/v1/actions` and
+`/api/v1/jobs/...` also exist; there is still no arbitrary path, download, or
+shell endpoint, and non-loopback binding is refused because an
+unauthenticated process spawner must not be reachable remotely. See
+[[docs/design/studio-local-actions]].
 
 ## Presentation priorities
 
@@ -244,8 +256,11 @@ the overall delivery state back to a single-lane Report.
 3. Snapshot and HTTP output are versioned and deterministic apart from
    generation time and current progress.
 4. One invalid category cannot silently corrupt another category's claims.
-5. Browser presentation performs no Project writes or command execution.
-6. Server routes are fixed and read-only.
+5. The browser performs no Project writes. Command execution happens only
+   server-side through the action layer, only with `--allow-actions`.
+6. Server routes are fixed. All routes are read-only unless `--allow-actions`
+   is set; then only the action and job routes in
+   [[docs/design/studio-local-actions]] can start work.
 7. The packaged application has no network or CDN dependency.
 8. CLI and HTTP expose the same snapshot builder.
 9. Cross-lane cockpit labels describe verified relationships and never create
@@ -263,5 +278,6 @@ the overall delivery state back to a single-lane Report.
 - Progress does not prove the originating process is still alive.
 - Portfolio, Factor, and governed RL Runs have artifact-specific bounded
   explorers.
-- Studio operations remain read-only.
+- Studio can start allowlisted `aq` commands when `--allow-actions` is set;
+  otherwise it is read-only.
 - Remote and multi-user serving are not supported.

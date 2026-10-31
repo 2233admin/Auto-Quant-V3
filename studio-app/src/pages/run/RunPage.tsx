@@ -1,6 +1,8 @@
 import type { ProjectSnapshot, RankSummary } from '../../api'
 import { num, plural, when } from '../../format'
 import { Section, SectionNav } from '../../design/layout'
+import { LaunchedLabel } from '../../actions/LaunchedLabel'
+import { RunAnalysisButton } from '../../actions/RunAnalysisButton'
 import { Notice } from '../../Notice'
 import { HeadlineMetrics, type HeadlineSplit } from '../../components/HeadlineMetrics'
 import { NotPublished } from '../../components/NotPublished'
@@ -157,8 +159,11 @@ export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runI
           <a href={factorHref}>Open the full Factor evidence for this Run</a>
           {' · '}
           <a href={routeHref({ view: 'compare', id: project.id, a: runId })}>Compare with another Run</a>
+          {' '}
+          <LaunchedLabel runId={runId} />
         </p>
         <RunSelect label="Run" runs={project.runs} value={runId} onChange={(id) => go(routeHref({ view: 'run', id: project.id, run: id }))} />
+        <RunAnalysisButton project={project} preferStudyId={study} />
       </header>
       {load.state === 'loading' && <p className="muted">Loading Run…</p>}
       {load.state === 'error' && <Notice kind="error" label="Error" title="Could not load this Run." subtitle={load.message} />}
