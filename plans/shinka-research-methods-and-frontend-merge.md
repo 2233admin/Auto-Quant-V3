@@ -79,6 +79,33 @@ Owner decisions (2026-10-31):
 - Write actions in the UI; Studio stays read-only, holdout never one click.
 - Phase 3 implementation before phases 1 and 2 are accepted.
 
+## Parity matrix
+
+The new shell is served at `/` and the legacy Studio at `/legacy`. A row moves
+to `migrated` only when the new page draws the same verified snapshot fields
+and the owner accepts it. `/legacy` is removed when no row says `legacy`.
+
+| Surface | Status | New page | Note |
+| --- | --- | --- | --- |
+| Workspace / Project list | migrated (slice 1) | Projects | `/api/v1/workspace` |
+| Project header, brief, next move | migrated (slice 1) | Project | Agent Work Brief |
+| Studies and latest Run per Study | migrated (slice 1) | Project | validation-split values only |
+| Factor evidence, validation split | migrated (slice 1) | Project | tertiles, folds, components still legacy |
+| Sessions list, activity timeline | migrated (slice 1) | Project | no KEEP/REVERT trajectory chart yet |
+| External holdout | legacy | link only | state shown, board stays legacy |
+| Factor qualification funnel, components, quantiles | legacy | | |
+| Portfolio decision explorer, sizing, stress, viability | legacy | | |
+| Research program / lane admission | legacy | | |
+| Research agenda | legacy | | |
+| Governed RL policy lab | legacy | | |
+| Book risk, path stress | legacy | | |
+| Price event study | legacy | | |
+| Strategic allocation | legacy | | |
+| Reports, Independent Reviews, Dossiers | legacy | | |
+| Selection-adjusted evidence (DSR family trials) | legacy | | noise-frontier chart planned |
+| Command palette | migrated (slice 1) | Ctrl K | pages and Projects only |
+| Theme (dark/light), auto refresh | migrated (slice 1) | top bar | |
+
 ## Acceptance
 
 - [ ] PBO is computed from a published per-bar return matrix of the top-K
@@ -109,9 +136,9 @@ Owner decisions (2026-10-31):
   rule, Session binding.
 - [ ] 1.5 Workspace library (`raw/`, `wiki/`, manifest, `aq library ...`);
   finding write-back after a Report; holdout numbers excluded until audit.
-- [ ] 2.1 Frontend contract: `/api/v1/workspace` and per-Project snapshot
+- [x] 2.1 Frontend contract (slice 1): `/api/v1/workspace` and per-Project snapshot
   split (current single fat snapshot is the adapter source).
-- [ ] 2.2 Port shell, tokens, Directions/Project, Report, Compare, Library
+- [ ] 2.2 (slice 1 done) Port shell, tokens, Directions/Project, Report, Compare, Library
   pages; wire noise-frontier chart to `expected_max_SR`.
 - [ ] 2.3 Parity matrix and per-lane migration; `/legacy` mount.
 - [ ] 2.4 Browser regression (Puppeteer) and owner visual acceptance.
@@ -139,3 +166,8 @@ Owner decisions (2026-10-31):
 ## Progress log
 
 - 2026-10-31 — Plan created from the ShinkaEvolve survey and owner decisions.
+- 2026-10-31 — Slice 1 (branch `feat/shinka-studio-frontend`): server routes
+  `/api/v1/workspace` and `/api/v1/project?id=`, legacy Studio at `/legacy`,
+  built app committed at `autoquant/studio_app/`, source in `studio-app/`.
+  Ported design tokens, shell, Modal, Notice; Projects and Project pages are
+  new. Term, Markdown, Palette i18n, run/compare/analysis pages not ported.
