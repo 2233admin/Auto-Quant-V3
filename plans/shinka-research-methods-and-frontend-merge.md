@@ -304,3 +304,7 @@ nav link to `/legacy` disappears, and `/legacy` is removed in `0.10.1`.
   once by `aq hypothesis confirm`, which alone yields `confirmed` or
   `unconfirmed`. New implementation steps H10 to H17 and open questions 11 to
   17 added. Design only, nothing implemented.
+- 2026-10-31 — Read the public DGT reference pages (site and TradingView) and wrote
+  [[docs/design/dgt-reference-component-notes]]: per-component F/U/P notes, own-model
+  definitions on OHLCV, 28 unverified vendor usefulness claims in falsifiable form,
+  vendor Terms constraints, and the open undisclosed items. Research notes only.

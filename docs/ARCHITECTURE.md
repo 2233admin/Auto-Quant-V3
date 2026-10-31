@@ -495,6 +495,8 @@ cannot own Workspace, Project, or evidence semantics.
   [[docs/design/reference-absorption-inventory]]
 - Hypothesis and idea verdict (proposed):
   [[docs/design/hypothesis-and-idea-verdict]]
+- DGT reference component notes (research notes):
+  [[docs/design/dgt-reference-component-notes]]
 - Portfolio-native Allocation Lab:
   [[docs/design/portfolio-native-allocation-lab]]
 - Panel-native shared factor runtime:
