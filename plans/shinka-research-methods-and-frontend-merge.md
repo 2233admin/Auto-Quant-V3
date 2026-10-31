@@ -1,7 +1,8 @@
 # Merge Shinka Research methods and frontend into AutoQuant V2
 
-- Status: `proposed`
+- Status: `in-progress`
 - Updated: `2026-10-31`
+- Target release: `v0.10.0`
 - Related design: [[docs/design/selection-adjusted-research-evidence]],
   [[docs/design/research-selection-integrity]],
   [[docs/design/frozen-external-holdout-challenge]],
@@ -48,6 +49,16 @@ Owner decisions (2026-10-31):
 5. Engine: built only when a concrete consumer asks for it; no phase-3 work
    is scheduled.
 6. English only for now; the Shinka zh i18n bundle is not ported yet.
+7. Option B revised (2026-10-31): the legacy Studio design is not wanted. It
+   stays mounted at `/legacy` only as a hidden fallback (no visible nav link
+   once a lane is migrated) and is removed in `0.10.1`. Every AQV2 lane is
+   re-drawn natively in the new design before `0.10.0`.
+8. All features of the reference projects (LuxAlgo `edge-stats`,
+   `prop-firm-sim`) are taken in over time, as methods ported to Python; no TS
+   code is copied. See "Reference feature inventory".
+9. Slice order: A Event Study honesty envelope and UI; B Factor/Portfolio
+   noise frontier, ledger and Portfolio bootstrap CI; C Hypothesis and PBO;
+   D remaining lanes; E Workspace library.
 
 ## Concept mapping
 
@@ -79,11 +90,70 @@ Owner decisions (2026-10-31):
 - Write actions in the UI; Studio stays read-only, holdout never one click.
 - Phase 3 implementation before phases 1 and 2 are accepted.
 
+## Reference feature inventory
+
+Methods only. Both projects are MIT; the code is not copied and not
+redistributed, so no code licence text is shipped. Product text says
+"method referenced from", never "Edge Stats" or "LuxAlgo" as a product name,
+and never uses their logos (their `TRADEMARKS.md` forbids implying
+endorsement). `edge-stats` calendar and event data are CC BY 4.0 with required
+attribution "Calendar data from Edge Stats by LuxAlgo
+(github.com/LuxAlgo/edge-stats)"; if those dates are ever vendored, ship that
+line in `THIRD_PARTY_NOTICES`. PineTS is AGPL-3.0: never embed it in AQV2; it
+may only run as a separate external tool.
+
+### edge-stats (conditional probability engine)
+
+- [ ] Wilson 95% CI on every binary rate, N always attached. In scope for
+  `0.10.0` (slice A): it is the honesty floor for Event Study and later
+  hit-rate outputs.
+- [ ] Min-N guards: warn below 30, no estimate below 10. In scope `0.10.0`
+  (slice A).
+- [ ] First-half vs second-half stability split. In scope `0.10.0` (slice A).
+- [ ] Per-year counts. In scope `0.10.0` (slice A).
+- [ ] Value distribution (quantiles) for continuous outcomes. In scope
+  `0.10.0` (slice A).
+- [ ] Recency view (last 250 sessions vs full history). Later (`0.10.x`): the
+  sample Study has too few events for a recency split to mean anything; needs
+  a longer fixture first.
+- [ ] Normalized query echo and URL-encoded query. Later: AQV2 Event Study
+  has a fixed Study contract, not a free query DSL; revisit with the Studio
+  query builder.
+- [ ] Drill-down to the matching sessions. In scope `0.10.0` (slice A, list of
+  event sessions with dates and outcomes).
+- [ ] Session view with bars (price chart with levels drawn). Later: needs a
+  chart library decision (Vela is Apache-2.0) and intraday bars the base
+  package does not carry yet.
+- [ ] Versioned holiday/half-day calendars and macro event calendars
+  (FOMC, CPI, NFP, OPEX) with cited sources. Later: AQV2 already pins
+  `exchange-calendars`; macro event dates would be new conditioning data and
+  carry the CC BY 4.0 attribution above.
+- [ ] Preset report catalog (one versioned query file each). Later, after the
+  Hypothesis object exists, as Hypothesis templates.
+
+### prop-firm-sim (Monte Carlo of challenge journeys)
+
+- [ ] Seeded deterministic Monte Carlo (same seed, same bytes). In scope
+  `0.10.0` as the engine for slice B; AQV2 Runs are already deterministic.
+- [ ] Block bootstrap of returns / trade log. In scope `0.10.0` (slice B):
+  gives a Portfolio validation Sharpe and max-drawdown confidence interval.
+- [ ] Pass probability with CI and EV. Later: depends on a caller-owned rule
+  set (drawdown or target limits); AQV2 Mandates are the natural home, not
+  firm-specific rules fetched from a remote directory.
+- [ ] Sensitivity analysis and optimal risk sizing. Later (`0.10.x`) on top of
+  the bootstrap engine.
+- [ ] Trade-log import adapters (MetaTrader, broker JSON). Later: AQV2
+  Book Risk already takes reported positions; a trade-log intake is a
+  separate plan.
+- [ ] Not taken: the remote LuxAlgo prop-firm directory and firm rule
+  catalogue (external service, not research evidence).
+
 ## Parity matrix
 
 The new shell is served at `/` and the legacy Studio at `/legacy`. A row moves
 to `migrated` only when the new page draws the same verified snapshot fields
-and the owner accepts it. `/legacy` is removed when no row says `legacy`.
+and the owner accepts it. `/legacy` is a hidden fallback (see decision 7): once a row is migrated its
+nav link to `/legacy` disappears, and `/legacy` is removed in `0.10.1`.
 
 | Surface | Status | New page | Note |
 | --- | --- | --- | --- |
@@ -99,7 +169,7 @@ and the owner accepts it. `/legacy` is removed when no row says `legacy`.
 | Research agenda | legacy | | |
 | Governed RL policy lab | legacy | | |
 | Book risk, path stress | legacy | | |
-| Price event study | legacy | | |
+| Price event study | in progress (slice A) | Event Study | honesty envelope, per-year, drill-down |
 | Strategic allocation | legacy | | |
 | Reports, Independent Reviews, Dossiers | legacy | | |
 | Selection-adjusted evidence (DSR family trials) | legacy | | noise-frontier chart planned |
@@ -162,7 +232,9 @@ and the owner accepts it. `/legacy` is removed when no row says `legacy`.
   every Run: 284 `load_run` calls for 19 Runs, 3.09 s per build, repeated on
   every request. Fix is a per-build memo plus a fingerprint-keyed server
   cache; CLI verification is untouched.
-- 2026-10-31 — Open: the Harness `sourceHash` hashes every file under the
+- 2026-10-31 — Decided: the built `studio_app/` bundle is excluded from
+  the Harness `sourceHash` (commit `b294b42`). Earlier note follows.
+- 2026-10-31 — (superseded) Open: the Harness `sourceHash` hashes every file under the
   package, including `studio_app/` and `studio_assets/`, so each frontend
   rebuild changes the Harness identity recorded in new Runs. Proposal, not
   applied: exclude `studio_app/` (a presentation bundle, not evaluation code)
@@ -188,3 +260,5 @@ and the owner accepts it. `/legacy` is removed when no row says `legacy`.
   (bundle 845 KB / 39 files -> 597 KB / 15). Inter Variable has no
   latin-only entry, so it still carries every subset. Data routes now send
   `Cache-Control: no-cache` plus `ETag` instead of `no-store`.
+- 2026-10-31 — Owner decisions 7-9 recorded; reference feature inventory
+  added; slice A (Event Study honesty envelope) started.
