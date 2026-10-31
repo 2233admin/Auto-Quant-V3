@@ -151,13 +151,23 @@ and the owner accepts it. `/legacy` is removed when no row says `legacy`.
   analysis pages (`THIRD_PARTY_NOTICES`); decide whether the viz_tree
   analysis iframe is ported or dropped (it is only meaningful with the engine).
 - Where `dist` lives: commit built assets, or build in the release pipeline.
-- Tracking: the AQV2 fork's GitHub repo has issues disabled; this plan is the record.
+- Tracking: issue #1 on `2233admin/Auto-Quant-V3`; this plan holds the detail.
 
 ## Findings and decisions
 
 - 2026-10-31 — Survey found AQV2 already covers DSR, family trial counting,
   holdout and evaluator hashing; the real gaps are PBO, Hypothesis, library,
   engine and frontend.
+- 2026-10-31 — Snapshot builder was slow because every projection re-verified
+  every Run: 284 `load_run` calls for 19 Runs, 3.09 s per build, repeated on
+  every request. Fix is a per-build memo plus a fingerprint-keyed server
+  cache; CLI verification is untouched.
+- 2026-10-31 — Open: the Harness `sourceHash` hashes every file under the
+  package, including `studio_app/` and `studio_assets/`, so each frontend
+  rebuild changes the Harness identity recorded in new Runs. Proposal, not
+  applied: exclude `studio_app/` (a presentation bundle, not evaluation code)
+  in `_harness_source_hash`. This changes the hash of every future Run, so it
+  needs an owner decision.
 
 ## Verification
 
@@ -171,3 +181,10 @@ and the owner accepts it. `/legacy` is removed when no row says `legacy`.
   built app committed at `autoquant/studio_app/`, source in `studio-app/`.
   Ported design tokens, shell, Modal, Notice; Projects and Project pages are
   new. Term, Markdown, Palette i18n, run/compare/analysis pages not ported.
+- 2026-10-31 — Snapshot builder speedup, three commits: per-build Run memo
+  (snapshot 3.09 s -> 1.58 s, disk loads 284 -> 19 per build); fingerprint
+  cache with single-flight rebuild, ETag and 304 (warm request about 0.03 s,
+  cold unchanged); Project page makes one request, Plex Mono latin-only
+  (bundle 845 KB / 39 files -> 597 KB / 15). Inter Variable has no
+  latin-only entry, so it still carries every subset. Data routes now send
+  `Cache-Control: no-cache` plus `ETag` instead of `no-store`.
