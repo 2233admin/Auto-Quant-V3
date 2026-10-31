@@ -3226,6 +3226,28 @@ def _run_book_risk(args: argparse.Namespace) -> CommandResult:
     )
 
 
+def _format_envelope_rate(value: dict[str, Any]) -> str:
+    """Render one envelope rate; a rate never appears without its N."""
+
+    count = f"N={value['n']}"
+    if value["estimate"] is None:
+        return f"withheld ({count}, {value['successes']} hits, below the minimum sample)"
+    low, high = value["ci95"]
+    flag = " small sample" if value["guard"] == "small-sample" else ""
+    return (
+        f"{value['estimate']:.1%} ({count}, {value['successes']} hits, "
+        f"95% CI [{low:.1%}, {high:.1%}]){flag}"
+    )
+
+
+def _format_envelope_stability(value: dict[str, Any]) -> str:
+    agree = {True: "halves agree", False: "halves differ", None: "not assessed"}
+    return (
+        f"first half {_format_envelope_rate(value['firstHalf'])}; second half "
+        f"{_format_envelope_rate(value['secondHalf'])}; {agree[value['agree']]}"
+    )
+
+
 def _run_event_study(args: argparse.Namespace) -> CommandResult:
     project = _selected_project(args)
     diagnostics = load_event_study_diagnostics(project, args.run)
@@ -3235,6 +3257,7 @@ def _run_event_study(args: argparse.Namespace) -> CommandResult:
     excess = diagnostics["distributions"]["primaryEventExcess"]
     unconditional = diagnostics["distributions"]["unconditionalAsset"]
     comparison = diagnostics["comparisons"]
+    envelope = diagnostics["envelope"]
     return CommandResult(
         "run.event-study",
         diagnostics,
@@ -3251,14 +3274,17 @@ def _run_event_study(args: argparse.Namespace) -> CommandResult:
             f"{populations['primaryEvents']} primary · "
             f"{populations['overlapExcludedEvents']} overlap-excluded · "
             f"{populations['rightCensoredEvents']} right-censored\n"
-            f"Primary mean / hit rate: {primary['mean']} / "
-            f"{primary['positiveRate']}\n"
+            f"Primary mean: {primary['mean']} · positive-return "
+            f"{_format_envelope_rate(envelope['outcomes']['primaryPositiveReturn'])}\n"
+            f"Stability: "
+            f"{_format_envelope_stability(envelope['outcomes']['primaryPositiveReturn']['stability'])}\n"
             f"Unconditional mean: {unconditional['mean']} · delta "
             f"{comparison['primaryMeanMinusUnconditionalAssetMean']}\n"
             f"Matched mean excess: {excess['mean']}\n"
             f"Conclusion: {diagnostics['conclusion']['status']} · "
             f"{diagnostics['conclusion']['observedPrimaryEvents']}/"
             f"{diagnostics['conclusion']['minimumEvents']} minimum events\n"
+            f"{envelope['disclaimer']}\n"
             "Historical descriptive association only; no causal, Order, or "
             "trading authority.\n"
         ),

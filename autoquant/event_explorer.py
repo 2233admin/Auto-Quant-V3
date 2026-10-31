@@ -10,6 +10,7 @@ from typing import Any
 
 import numpy as np
 
+from .event_envelope import build_event_envelope
 from .event_studies import load_event_study_policy
 from .runs import load_run
 from .workspace import (
@@ -533,6 +534,7 @@ def load_event_study_diagnostics(
         "comparisons": comparisons,
         "uncertainty": uncertainty,
         "conclusion": conclusion,
+        "envelope": build_event_envelope(events, unconditional_asset),
         "events": events,
         "artifacts": {
             kind: {
@@ -568,6 +570,7 @@ EVENT_STUDY_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
         "comparisons",
         "uncertainty",
         "conclusion",
+        "envelope",
         "events",
         "artifacts",
         "warning",
@@ -583,6 +586,7 @@ EVENT_STUDY_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
         "comparisons": {"type": "object"},
         "uncertainty": {"type": "object"},
         "conclusion": {"type": "object"},
+        "envelope": {"type": "object"},
         "events": {"type": "array"},
         "artifacts": {"type": "object"},
         "warning": {"type": "string", "minLength": 1},

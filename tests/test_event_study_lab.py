@@ -163,6 +163,26 @@ class EventStudyLabTests(unittest.TestCase):
                 diagnostics["conclusion"]["tradingAuthority"],
                 "none",
             )
+            envelope = diagnostics["envelope"]
+            positive = envelope["outcomes"]["primaryPositiveReturn"]
+            primary_returns = [
+                row["assetReturn"]
+                for row in diagnostics["events"]
+                if row["primaryEligible"]
+            ]
+            self.assertEqual(positive["n"], 4)
+            self.assertEqual(
+                positive["successes"],
+                sum(1 for value in primary_returns if value > 0.0),
+            )
+            self.assertEqual(positive["guard"], "withheld")
+            self.assertIsNone(positive["estimate"])
+            self.assertEqual(sum(row["n"] for row in positive["perYear"]), 4)
+            self.assertEqual(
+                envelope["unconditionalPositiveReturn"]["n"],
+                diagnostics["populations"]["unconditionalObservations"],
+            )
+            self.assertEqual(envelope["returnDistribution"]["n"], 4)
             brief = build_agent_work_brief(project)
             self.assertIsNone(brief["primaryAction"])
             self.assertEqual(
@@ -200,6 +220,7 @@ class EventStudyLabTests(unittest.TestCase):
                 projected["run"]["id"],
                 run.result["id"],
             )
+            self.assertEqual(projected["envelope"], envelope)
             self.assertIn(
                 "run.event-study",
                 {
