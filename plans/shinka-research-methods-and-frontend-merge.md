@@ -295,3 +295,12 @@ nav link to `/legacy` disappears, and `/legacy` is removed in `0.10.1`.
   edge-stats, prop-firm-sim, Vela, PineTS and trade-journal; ten conflicts
   with AQV2 principles and six proposed native shapes recorded; thin checklists
   above replaced by per-slice lists.
+- 2026-10-31 — Owner decisions folded into
+  [[docs/design/hypothesis-and-idea-verdict]]: Allocation, Book Risk, and Path
+  Stress get verdict rules (Q3); many Hypotheses flow through one Project
+  pipeline with `M` disclosed and no pooled DSR (Q4); one Hypothesis per
+  dedicated Project with a Workspace-level idea record and an incremental
+  (ablation) Hypothesis kind (Q6); a sealed tail carved at intake and opened
+  once by `aq hypothesis confirm`, which alone yields `confirmed` or
+  `unconfirmed`. New implementation steps H10 to H17 and open questions 11 to
+  17 added. Design only, nothing implemented.
