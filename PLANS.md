@@ -20,6 +20,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/measured-idea-workbench-shell]] | Reproduce measured floating shell and persistent Idea editor/result geometry with existing evidence gates. | 2026-11-01 |
 | [[plans/idea-answer-charts]] | Put the existing gated Factor chart and validation metrics beside the idea verdict on desktop. | 2026-11-01 |
 | [[plans/idea-first-factor-studio]] | Connect a new Factor idea to a counted analysis and an honest evidence-bound conclusion in Studio. | 2026-11-01 |
 | [[plans/shinka-research-methods-and-frontend-merge]] | Merge the Shinka research methods and Studio frontend plus the reference honesty and Monte Carlo methods into AutoQuant for v0.10.0. | 2026-10-31 |

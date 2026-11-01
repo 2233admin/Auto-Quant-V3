@@ -10,13 +10,27 @@ metric grid. It follows the shape of the PandaAI result workbench studied in
 [[docs/design/pandaai-frontend-study]].
 
 The kit lives in `studio-app/src/components/workbench/` and is imported from
-`components/workbench` (`index.ts`). It adds no colours, fonts or sizes: every
-rule in `workbench.css` reads the CSS variables in `design/tokens.css`. It
+`components/workbench` (`index.ts`). It reuses colours and fonts from
+`design/tokens.css`. Shared controls use token spacing; measured layout geometry
+in `floating.css` and the Idea composition may specify pixel dimensions and
+corner radii without changing the visual tokens. It
 computes no statistic; values arrive formatted from Core, as everywhere else
 in Studio (see [[docs/design/studio-observation-surface]]).
 
 ## Components
 
+- `FloatingShell` gives every app route the same 8px canvas margin and gap,
+  rounded sidebar and main surface. The sidebar places brand, Ideas, a dashed
+  New idea action, recent ideas and library navigation in that order; collapse,
+  Attention, Settings and Search occupy the bottom block. Navigation rows are
+  40px high. At narrower desktop widths the rail contracts to 180px; the
+  existing compact and phone navigation remain available. The Idea title
+  replaces the ordinary top bar; other pages retain their content and tools.
+- `TitleCard` is the measured 56px heading surface: return link, title,
+  single-line subtitle and a type badge. It spans both workbench columns.
+- `ParamGrid` renders labelled, read-only Study inputs in two columns, with
+  22px controls, 4px row gaps, lock icons and full-value tooltips. It never
+  changes authority or infers missing parameters.
 - `WorkbenchShell` places a `left` and a `right` slot side by side. From 1000px
   up it is exactly the viewport height under the 52px app header, the page does
   not scroll, and each column is its own scroll container. `ratio` is the left
@@ -45,7 +59,8 @@ in Studio (see [[docs/design/studio-observation-surface]]).
   `reasons` list. It uses the same tones as `VerdictBand` and `HeroLine`.
 - `StatusLine` is one slim line: state glyph, text, a percent bar (or an
   indeterminate bar when `percent` is `null`), elapsed time, an optional
-  Cancel and a `details` disclosure for stages or the command.
+  Cancel and a `details` disclosure for stages or the command. A completed
+  line retains its supplied progress bar; completion does not invent stages.
 - `ChartCard` has a header (title, an `Info` "?", a `toggle` slot and a
   `legend` slot) and a body that fills the remaining height. Its child is a
   render prop `(size) => ReactNode` with the measured `width` and `height`;
@@ -64,8 +79,9 @@ body gives independent scrolling.
 
 1. One primary button per card. Everything else is secondary or quiet.
 2. A disabled button always says why, on the line under the row.
-3. Tokens only. A new colour, font or size goes into `design/tokens.css`
-   first, never into a component.
+3. Colours and typography stay on existing tokens. Measured layout dimensions
+   and radii may be local to a composition; generic component defaults remain
+   unchanged unless the capability is explicitly additive.
 4. State is carried by words and glyph shapes, never by colour alone.
 5. Every control is reachable and operable from the keyboard, and a scroll
    container that has no focusable child is itself focusable.

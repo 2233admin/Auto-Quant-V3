@@ -28,7 +28,7 @@ export function StatusLine({
   onCancel?: () => void
   details?: ReactNode
 }) {
-  const bar = state === 'running' && percent !== undefined
+  const bar = (state === 'running' || state === 'done') && percent !== undefined
   const pct = percent ?? null
   return (
     <div className="wb-status" data-state={state}>

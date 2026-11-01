@@ -8,6 +8,8 @@ import { IdeaVerdict, ideaMetricGroups, ideaVerdict } from '../src/pages/IdeaVer
 import { FactorHero } from '../src/pages/GroupReturn'
 import { IcByHorizonPlot } from '../src/pages/FactorCharts'
 import { studyTestVisible } from '../src/pages/testGate'
+import { candidateExpression, expressionSource } from '../src/pages/ideaEditor'
+import { ParamGrid, StatusLine, TitleCard } from '../src/components/workbench'
 
 const rank = { meanRankIc: 0.12, meanPearsonIc: 0.11, hacTStatistic: 2.5, hacNormalPValue: 0.01, rankHitRate: 0.6, rankIcir: 0.5, rankIcStandardDeviation: 0.2, observations: 30, minimumObservations: 20, sufficient: true }
 const testRank = { ...rank, meanRankIc: 876.5432 }
@@ -101,10 +103,51 @@ test('failed, unavailable, pending and untested answers never mount charts or me
   assert.match(answer({ job: { status: 'failed', actionId: 'session.start', result: { error: { message: 'Missing feature.' } } } }), /Missing feature/)
 })
 
-test('result has one primary; editing moves primary ownership to the editor', () => {
-  assert.equal((answer().match(/abtn--primary/g) ?? []).length, 1)
-  assert.equal((answer({ editing: true }).match(/abtn--primary/g) ?? []).length, 0)
+test('result keeps every action secondary; editor always owns the primary', () => {
+  assert.equal((answer().match(/abtn--primary/g) ?? []).length, 0)
   assert.doesNotMatch(answer(), /Declare another trial/)
   assert.match(answer({ onDeclareTrial: () => {} }), /Declare another trial/)
   assert.match(answer(), /<details class="idea-evidence"><summary>Question identity and evidence/)
+})
+
+test('result order is selector, actions, status, one-line verdict, chart, metrics', () => {
+  const html = answer()
+  const markers = ['idea-run-selector', 'idea-action-chips', 'idea-status', 'wb-verdict', 'wb-chart', 'idea-core-metrics']
+  const positions = markers.map(m => html.indexOf(m))
+  assert.ok(positions.every((n, i) => n >= 0 && (!i || n > positions[i - 1])))
+  assert.match(html, /Analysis Run/)
+  assert.match(html, /Supported · Trial 1/)
+  assert.match(html, /Stage count not recorded/)
+  assert.doesNotMatch(html, /<h2 class="idea-conclusion"/)
+})
+
+test('history options preserve Run identity and never reuse the latest Supported word', () => {
+  const old = { ...run, id: 'older-run' }
+  const html = answer({ runs: [run, old] })
+  assert.match(html, /value="older-run">older-run · Completed · Trial 1/)
+  assert.match(html, /value="run-one" selected="">run-one · Supported · Trial 2/)
+})
+
+test('expression adapter round-trips only its exact authored wrapper', () => {
+  const expression = 'panel.groupby("asset")["close"].pct_change(5, fill_method=None)'
+  const source = expressionSource(expression, '')
+  assert.equal(candidateExpression(source), expression)
+  assert.equal(expressionSource(candidateExpression(source), source), source)
+  const arbitrary = 'import pandas as pd\n# another implementation\ndef compute_factor(panel):\n    return panel.close\n'
+  assert.equal(candidateExpression(arbitrary), '')
+  assert.equal(expressionSource('', arbitrary), arbitrary)
+})
+
+test('locked parameters are read-only inputs and title owns the Ideas return link', () => {
+  const html = renderToStaticMarkup(<ParamGrid params={[{ label: 'Assets', value: 'A, B' }]} />)
+  assert.match(html, /readOnly=""/)
+  assert.match(html, /Locked by the Study/)
+  assert.match(renderToStaticMarkup(<TitleCard title="Momentum" subtitle="Question" backHref="/" type="Factor" />), /aria-label="Back to Ideas"/)
+})
+
+test('completed status retains progress; whole-action jobs do not invent stage counts', () => {
+  assert.match(renderToStaticMarkup(<StatusLine state="done" text="Analysis complete" percent={100} />), /100%/)
+  const html = answer({ job: { status: 'succeeded', stageMode: 'whole-action', stages: [{ state: 'pending' }] } })
+  assert.match(html, /Command-level progress/)
+  assert.doesNotMatch(html, /0\/1 stages complete/)
 })

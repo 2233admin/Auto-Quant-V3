@@ -53,8 +53,20 @@ candidate explanation is visibly a trial-family note; it neither rewrites
 the original question nor resets or removes any Core trial. The operational
 audit is not immutable research evidence and cannot authorize a verdict.
 
-The answer's first desktop screen shows the one-line verdict, conclusion
-sentence, existing FactorHero chart and MetricGrid. The chart uses the published
+The desktop workbench keeps a full-width title card above two floating cards.
+The title contains the Ideas return link, idea name, frozen question and Factor
+badge. The left card remains an editor after an answer exists. Its fixed header
+contains Hypothesis and History tabs, a quiet Save and the only primary Run
+analysis action. The question's lock explanation precedes six read-only Study
+parameters in two columns and three rows. A short expression box reports Needs
+check until this exact draft passes preflight. Advanced Python and the optional
+next-trial hypothesis are disclosures. Save alone does not spend a trial; Run
+still saves, checks and opens the counted confirmation. Cancelling confirmation
+does not discard the saved candidate. A blocked or stale Session remains visibly
+read-only, with its actual reason available beside the disabled action.
+
+The right card orders the Run selector and facts, action chips, progress line,
+one-line verdict, existing FactorHero chart and MetricGrid. The chart uses the published
 `quantilePath.cumulative` group growth curves, including the gross high-minus-low
 spread. Single-asset temporal Runs and Runs without drawable quantiles fall
 back to the existing Rank IC chart. Failed, protocol-unavailable, untested and
@@ -74,15 +86,27 @@ protocol role are necessary. Hidden test points are removed before chart
 scales, boundaries, hover readouts and data tables are constructed; the Rank IC
 fallback uses the same gate. No test or holdout metric is needed for this card.
 
-The Next step row links to the exact Run's Factor diagnostics. Declare another
-trial appears only when the existing active Session has an editable candidate
-and no analysis is running. It opens the existing optional editor; it does not
-execute a trial. While editing, Run analysis owns the sole primary action and
-diagnostics becomes a secondary link. Trial confirmation remains unchanged.
+The selector opens each retained Run's own evidence. A historical Run never
+borrows the latest Run's passing family adjustment. Parameters opens a locked
+facts dialog; Open diagnostics links to the exact Run. Export JSON downloads
+the selected development evidence and validation summary, without exporting a
+hidden test payload. Declare another trial appears only when the existing
+active Session has an editable candidate and no analysis is running; it focuses
+the trial-note disclosure and never executes a trial. All result actions are
+secondary. Run analysis always owns the sole primary action in the editor.
+The status line uses recorded stages and duration; absent stage counts are
+explicitly unknown, and whole-action jobs never imply measured stage progress.
 
-At desktop widths of 1000px and above, the question stays left and the wider
-answer card scrolls independently. Chart and metric sizing are local to the
-idea page and preserve the shared colours, typography and tokens. The Ideas
+At desktop widths of 1000px and above, the editor stays left and the wider
+answer card scrolls independently. Geometry follows the supplied 1534 by 847
+reference: an 8px canvas margin, 240px sidebar, 56px title, 16px column gap,
+35:65 editor/result split and 22px card corners. The chart occupies 49 percent
+of viewport height. Metrics follow with an 11px gap and three-column tiles;
+their remaining rows and the small conclusion scroll inside the result card.
+The frozen-question row adds 15px above the parameter grid relative to the
+reference. The action-chip row is naturally shorter when fewer operations are
+available; it contains no placeholder actions. Chart and metric sizing are local
+to the idea page and preserve shared colours, typography and tokens. The Ideas
 table uses bounded columns, a single-line question with its full text in the
 tooltip, and omits the redundant Next step column below 1200px. Its idea link
 still opens the same workbench.
