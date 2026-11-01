@@ -20,8 +20,8 @@ in Studio (see [[docs/design/studio-observation-surface]]).
 ## Components
 
 - `FloatingShell` gives every app route the same 8px canvas margin and gap,
-  rounded sidebar and main surface. The sidebar places brand, Ideas, a dashed
-  New idea action, recent ideas and library navigation in that order; collapse,
+  rounded sidebar and main surface. The sidebar places brand, a dashed
+  New factor action, three recent factors and library navigation in that order; collapse,
   Attention, Settings and Search occupy the bottom block. Navigation rows are
   40px high. At narrower desktop widths the rail contracts to 180px; the
   existing compact and phone navigation remain available. The Idea title

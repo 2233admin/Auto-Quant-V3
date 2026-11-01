@@ -55,7 +55,7 @@ export function parseRoute(search: string, pathname = '/'): Route {
     const run = p.get('run')
     return { view: 'factor', id, ...(study ? { study } : {}), ...(run ? { run } : {}) }
   }
-  return { view: 'projects' }
+  return { view: 'factors' }
 }
 
 export function routeHref(route: Route): string {

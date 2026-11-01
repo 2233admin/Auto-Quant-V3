@@ -907,6 +907,21 @@ def candidate_view(
     service: "ActionService | None",
 ) -> dict[str, Any]:
     """Read-only candidate payload for GET /api/v1/candidate."""
+    if session_id == "canonical":
+        # Inspect a Project with retained Runs but no Session; this never opens a write path.
+        path = confine_workspace_path(project.root_dir, CANDIDATE_RELATIVE, "candidate")
+        if _is_link(project.root_dir / "factors") or _is_link(path) or not path.is_file():
+            raise ActionError(404, "studio.candidate-missing", "Canonical candidate is missing or linked")
+        if path.stat().st_size > CANDIDATE_READ_MAX_BYTES:
+            raise ActionError(413, "candidate.too-large", "Canonical candidate exceeds the read limit")
+        raw = path.read_bytes()
+        try:
+            source = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            raise ActionError(422, "candidate.not-utf8", "Canonical candidate is not valid UTF-8") from None
+        return {"project": project.manifest.id, "session": None, "path": _display_path(path, root, project),
+                "source": source, "sha256": _sha256(raw), "bytes": len(raw), "editable": False,
+                "blockedReason": "Canonical candidate is read-only after retained Runs; start a Session to edit."}
     if not isinstance(session_id, str) or not SESSION_ID.match(session_id):
         raise _validation(
             "session",
@@ -1145,6 +1160,11 @@ class ActionService:
     def _start_block(self, project: ProjectContext, study_id: str) -> None:
         for item in list_sessions(project):
             if item.status == "active" and item.study_id == study_id:
+                # A stale Session is retained evidence, but cannot be edited again.
+                # Core can start a fresh Session without rewriting or deleting it.
+                prior = session_snapshot(project, load_session(project, item.id))
+                if not prior["authority"]["valid"]:
+                    continue
                 raise ActionError(
                     409,
                     "studio.blocked",

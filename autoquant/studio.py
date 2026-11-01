@@ -1769,6 +1769,9 @@ def build_studio_snapshot(
     )
     with run_read_memo():
         observations = [_project_snapshot(project) for project in projects]
+        from .studio_library import library_projection
+        for project, observation in zip(projects, observations):
+            observation["library"] = library_projection(project, observation, root)
     harness = harness_identity()
     return {
         "schemaVersion": SCHEMA_VERSION,
@@ -1800,6 +1803,7 @@ def _project_summary(project: dict[str, Any]) -> dict[str, Any]:
         "id": project["id"],
         "name": project["name"],
         "description": project.get("description"),
+        "library": project.get("library"),
         "valid": project["valid"],
         "diagnostics": len(project.get("diagnostics") or []),
         "counts": project.get("counts") or {},

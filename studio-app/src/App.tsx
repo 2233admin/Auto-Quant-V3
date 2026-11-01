@@ -3,7 +3,7 @@ import { ActionsProvider } from './actions/ActionsContext'
 import { useTheme } from './design/theme'
 import { useWidth } from './design/useWidth'
 import { Notice } from './Notice'
-import { Projects } from './pages/Projects'
+import { FactorLibrary } from './library/FactorLibrary'
 import { AttentionPage } from './pages/Attention'
 import { SettingsPage } from './pages/Settings'
 import { EventStudyPage } from './pages/EventStudy'
@@ -21,7 +21,7 @@ import { routeHref, routeProjectId } from './route'
 import { isLibraryRoute, LIBRARY_TITLE, LibraryPage } from './library/Library'
 import { Palette } from './shell/Palette'
 import { Rail, TabBar } from './shell/Rail'
-import { TopBar, Updated, type Crumb } from './shell/TopBar'
+import { TopBar, type Crumb } from './shell/TopBar'
 import { useRouter } from './useRouter'
 import { useShellData } from './useShellData'
 import { Loading } from './components/States'
@@ -53,40 +53,40 @@ export default function App() {
   const projectCrumb = (id: string) => ({ label: known?.name ?? id, data: true })
   const crumbs: Crumb[] =
     route.view === 'project'
-      ? [{ label: 'Ideas', href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
+      ? [{ label: 'Factors', href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
       : route.view === 'event-study'
         ? [
-            { label: 'Ideas', href: routeHref({ view: 'projects' }) },
+            { label: 'Factors', href: routeHref({ view: 'projects' }) },
             { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
             { label: 'Price event study' },
           ]
         : route.view === 'run' || route.view === 'compare'
           ? [
-              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
+              { label: 'Factors', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'run' ? 'Run' : 'Compare Runs' },
             ]
         : route.view === 'allocation' || route.view === 'rl'
           ? [
-              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
+              { label: 'Factors', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'rl' ? 'Governed RL policy' : 'Strategic allocation' },
             ]
         : route.view === 'bookrisk' || route.view === 'bookstress'
           ? [
-              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
+              { label: 'Factors', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'bookrisk' ? 'Book Risk' : 'Reported-book path stress' },
             ]
         : route.view === 'portfolio'
           ? [
-              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
+              { label: 'Factors', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: 'Portfolio' },
             ]
         : route.view === 'factor'
           ? [
-              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
+              { label: 'Factors', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: 'Factor evidence' },
             ]
@@ -98,7 +98,7 @@ export default function App() {
               ? [{ label: 'Attention' }]
               : route.view === 'settings'
                 ? [{ label: 'Settings' }]
-                : [{ label: 'Ideas' }]
+                : [{ label: 'Factors' }]
   document.title =
     route.view === 'projects'
       ? 'AutoQuant Studio'
@@ -119,7 +119,7 @@ export default function App() {
     page = <SettingsPage workspace={data.workspace} />
   } else if (route.view === 'projects') {
     page = data.workspace ? (
-      <Projects workspace={data.workspace} freshness={<Updated data={data} />} error={data.error} go={go} />
+      <FactorLibrary workspace={data.workspace} go={go} />
     ) : (
       <div className="pg">{data.error ? <Notice kind="error" label="Error" title="Could not load the Workspace." subtitle={data.error} /> : <Loading label="Loading Workspace…" minHeight={240} />}</div>
     )
@@ -153,7 +153,7 @@ export default function App() {
       <div className="pg">
         <Notice kind="error" label="Error" title="Could not load this Project." subtitle={project.message} />
         <p>
-          <a href={routeHref({ view: 'projects' })}>Back to Ideas</a>
+          <a href={routeHref({ view: 'projects' })}>Back to Factors</a>
         </p>
       </div>
     )

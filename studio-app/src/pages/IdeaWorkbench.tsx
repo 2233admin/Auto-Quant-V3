@@ -6,7 +6,7 @@ import { getDatasets, getIdea, jobError, waitJob, type DatasetChoices, type Idea
 import type { Job, Preview } from '../actions/types'
 import { isTerminal } from '../actions/types'
 import { CodeField } from '../components/CodeField'
-import { ActionRow, PaneCard, WorkbenchShell, TitleCard, ParamGrid, TabList, type ActionButton } from '../components/workbench'
+import { ActionRow, PaneCard, WorkbenchShell, TitleCard, TabList, type ActionButton } from '../components/workbench'
 import { Modal } from '../shell/Modal'
 import { IdeaVerdict } from './IdeaVerdict'
 import { NewIdeaDialog } from './NewIdeaDialog'
@@ -14,14 +14,14 @@ import { Info } from '../components/Info'
 import { Icon } from '../design/icons'
 import { routeHref } from '../route'
 import { candidateExpression, expressionSource } from './ideaEditor'
-import { AnimatedDetails } from '../components/motion'
+import { SessionRecovery } from './FactorEditorState'
 import './factorEdit.css'
 import './ideas.css'
 
-const STUDY = 'ohlcv-factor-quality'
 const errorText = (e: unknown) => e instanceof Error ? e.message : String(e)
 
 export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
+  const STUDY = project.library?.factor?.studyId ?? 'ohlcv-factor-quality'
   const { state, version, jobFinished, hideDock } = useActions()
   const b = state.mode === 'on' ? state.bootstrap : null
   const [idea, setIdea] = useState<Idea | null>(null)
@@ -33,12 +33,13 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
   const [doc, setDoc] = useState<CandidateDoc | null>(null)
   const [draft, setDraft] = useState('')
   const [expression, setExpression] = useState('')
-  const [advanced, setAdvanced] = useState(false)
+  const [advanced, setAdvanced] = useState(true)
+  const [expandedParams, setExpandedParams] = useState(false)
+  const [expandedQuestion, setExpandedQuestion] = useState(false)
   const [editorTab, setEditorTab] = useState('hypothesis')
   const [selectedRun, setSelectedRun] = useState<string | null>(null)
   const [checkedSource, setCheckedSource] = useState<string | null>(null)
   const [savedForTrial, setSavedForTrial] = useState(false)
-  const [trialNoteOpen, setTrialNoteOpen] = useState(false)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
@@ -48,7 +49,8 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
   const [newIdea, setNewIdea] = useState(false)
   const [evidence, setEvidence] = useState<FactorDiagnostics | null>(null)
   const [evidenceRun, setEvidenceRun] = useState<string | null>(null)
-  const session = project.sessions.find(s => (s.session?.studyId ?? s.studyId) === STUDY && (s.session?.status ?? s.status) === 'active')
+  const matchingSessions = project.sessions.filter(s => (s.session?.studyId ?? s.studyId) === STUDY)
+  const session = matchingSessions.find(s => (s.session?.status ?? s.status) === 'active' && s.authority?.valid) ?? matchingSessions.find(s => (s.session?.status ?? s.status) === 'active') ?? matchingSessions[0]
   const sessionId = session?.session?.id ?? session?.id ?? null
   const runs = project.runs.filter(r => r.studyId === STUDY).sort((a, z) => z.startedAt.localeCompare(a.startedAt) || z.id.localeCompare(a.id))
   const latest = runs[0] ?? null
@@ -56,23 +58,28 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
   const selectedPackage = packages?.datasets.find(d => d.path === dataset)
 
   const reload = useCallback(async () => {
-    if (!b) return
+    if (!b) {
+      const f = project.library?.factor
+      setIdea({ hypothesis: f?.question ?? project.description, hypothesisSha256: '', verdictPolicy: 'factor-idea-development-v1', bound: f?.bound || project.runs.length > 0, frozen: project.runs.length > 0, initialAuthored: true, request: f?.request ?? null, bindings: [], jobs: [], evidence: f?.evidence ?? null })
+      return
+    }
     const data = await getIdea(b, project.id)
     setIdea(data)
     const researchJobs = data.jobs.filter(j => ['session.start', 'session.check', 'experiment.evaluate'].includes(j.actionId))
     if (researchJobs.length) setJob(researchJobs[0])
     if (!data.bound) setPackages(await getDatasets(b))
-  }, [b, project.id])
+  }, [b, project.id, project.library])
   useEffect(() => { reload().catch(e => setError(errorText(e))) }, [reload, version, project.runs.length])
   useEffect(() => { hideDock(true); return () => hideDock(false) }, [hideDock])
   useEffect(() => {
-    if (!idea?.bound || (!sessionId && latest)) return
-    getCandidate(project.id, sessionId ?? 'initial').then(d => {
+    if (!idea?.bound) return
+    getCandidate(project.id, sessionId ?? (latest || !b ? 'canonical' : 'initial')).then(d => {
       setDoc(d)
       // A new idea never evaluates the template demonstrator by default.
-      const authored = sessionId || idea?.initialAuthored ? d.source : ''
+      const authored = sessionId || latest || !b || idea?.initialAuthored ? d.source : ''
       setDraft(authored)
       setExpression(candidateExpression(authored))
+      setAdvanced(!candidateExpression(authored))
       setCheckedSource(null)
       setSavedForTrial(false)
     }).catch(e => setError(errorText(e)))
@@ -95,7 +102,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
 
   const source = advanced ? draft : expressionSource(expression, draft)
   const busyReason = busy || (job && !isTerminal(job.status) ? 'An analysis is running. Wait for it to finish.' : '')
-  const reason = !b ? 'Start Studio with --allow-actions to run this idea.' : !idea ? 'Loading the idea…' : busyReason || (!idea.bound ? (!dataset ? 'Select a staged dataset package.' : !assets.length ? 'Select the assets this factor will predict.' : !accepted ? 'Confirm the prediction claim and evidence limits below.' : null) : !doc ? (latest && !sessionId ? 'The first Run failed without a Session. Inspect its failure before repairing the canonical candidate through the CLI.' : 'Loading the candidate…') : !doc.editable ? doc.blockedReason ?? 'This candidate is read-only.' : !source.trim() ? 'Enter a factor expression or author Python before running.' : sessionId && note.trim().length < 8 ? 'Describe this next trial in at least 8 characters.' : sessionId && source === doc.source && !savedForTrial ? 'Edit the candidate before spending another trial.' : null)
+  const reason = !b ? 'Studio is read-only. Enable actions to edit and run this factor.' : !idea ? 'Loading the idea…' : busyReason || (!idea.bound ? (!dataset ? 'Select a staged dataset package.' : !assets.length ? 'Select the assets this factor will predict.' : !accepted ? 'Confirm the prediction claim and evidence limits below.' : null) : !doc ? (latest && !sessionId ? 'The first Run failed without a Session. Inspect its failure before repairing the canonical candidate through the CLI.' : 'Loading the candidate…') : !doc.editable ? doc.blockedReason ?? 'This candidate is read-only.' : !source.trim() ? 'Enter a factor expression or author Python before running.' : latest && (note.trim().length < 8 || note.trim().length > 500) ? 'Describe this next trial in at least 8 characters.' : sessionId && source === doc.source && !savedForTrial ? 'Edit the candidate before spending another trial.' : null)
 
   const prepare = async () => {
     if (!b || !idea || reason) return
@@ -146,22 +153,35 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
       setDoc({ ...doc, source, ...saved }); setSavedForTrial(true)
     } catch (e) { setError(errorText(e)) } finally { setBusy('') }
   }
-  const primary: ActionButton = reason ? { label: !idea?.bound ? 'Use this dataset' : 'Run analysis', disabled: true, disabledReason: reason, showReason: false } : { label: !idea?.bound ? 'Use this dataset' : 'Run analysis', onClick: () => void prepare() }
+  const primary: ActionButton = reason ? { label: idea && !idea.bound ? 'Use this dataset' : 'Run analysis', disabled: true, disabledReason: reason, showReason: false } : { label: idea && !idea.bound ? 'Use this dataset' : 'Run analysis', onClick: () => void prepare() }
   const saveButton: ActionButton = saveReason ? { label: 'Save', disabled: true, disabledReason: saveReason } : { label: 'Save', onClick: () => void save() }
   const question = idea?.bindings[0]?.hypothesis ?? idea?.hypothesis ?? project.description
   const params = [
     { label: 'Dataset', value: evidence?.dataset.id ?? 'Study snapshot' },
-    { label: 'Horizon', value: `${idea?.request?.horizonPolicy.primaryForwardBars ?? '—'} bars` },
-    { label: 'Assets', value: idea?.request?.factorPolicy.predictionAssets.join(', ') ?? 'Study population' },
-    { label: 'Validation', value: evidence ? `${evidence.protocol.splits.splits.validation.start} – ${evidence.protocol.splits.splits.validation.end}` : 'Fixed by Study' },
+    { label: 'Horizon', value: `${idea?.request?.horizonPolicy.primaryForwardBars ?? evidence?.protocol.primaryHorizon ?? '—'}-bar` },
+    { label: 'Assets', value: (idea?.request?.factorPolicy.predictionAssets ?? evidence?.predictionUniverse.predictionAssets)?.join(', ') ?? 'Study population' },
+    { label: 'Validation window', value: evidence ? `${evidence.protocol.splits.splits.validation.start} – ${evidence.protocol.splits.splits.validation.end}` : 'Fixed by Study' },
     { label: 'Test role', value: evidence?.protocol.testRole ?? 'Study locked' },
     { label: 'Selection', value: 'Validation only' },
   ]
+  const frozen = !!latest || !!idea?.frozen
+  const recoveryReason = !b ? 'Studio is read-only. Enable actions to edit this candidate.' : doc && !doc.editable ? doc.blockedReason ?? 'The Session is inactive.' : latest && !sessionId ? 'There is no active Session for this retained Run.' : null
+  const restart = async () => {
+    if (!b || busyReason) return
+    setBusy('Preparing a fresh Session…'); setError(''); setSecond(false)
+    try { setPreview(await previewAction(b, 'session.start', project.id, { study: STUDY })) }
+    catch (e) { setError(errorText(e)) } finally { setBusy('') }
+  }
+  const assetCount = (idea?.request?.factorPolicy.predictionAssets ?? evidence?.predictionUniverse.predictionAssets ?? []).length
+  const currentIntegrity = session?.selectionIntegrity
+  const familyTrials = idea?.evidence?.researchFamily?.uniqueSourceTrials ?? currentIntegrity?.researchFamily?.uniqueSourceTrials ?? runs.length
+  const trialChip = `Trial ${latest ? Math.max(1, currentIntegrity?.candidateTrials ?? familyTrials) : 0} of ${familyTrials}`
+  const enableCommand = `aq studio serve '${(project.rootDir ?? '.').replaceAll("'", "''")}' --allow-actions --port ${window.location.port || '8881'}`
   return <div className="pg idea-workbench">
     <TitleCard title={project.name} subtitle={question} backHref={routeHref({ view: 'projects' })} type="Factor" />
-    <WorkbenchShell ratio={35} left={<PaneCard label="Factor idea editor" tabs={<TabList label="Idea editor" tabs={[{ id: 'hypothesis', label: 'Hypothesis' }, { id: 'history', label: 'History' }]} active={editorTab} onSelect={setEditorTab} />} actions={<ActionRow primary={primary} secondary={[saveButton]} />}>
-      <div className="idea-form" hidden={editorTab !== 'hypothesis'} role="tabpanel" aria-label="Hypothesis">
-        <div className="idea-question-line"><Icon name="lock" /><p className="idea-question" title={question}>{question}</p><Info label="Why is the question locked?">The original question is frozen at the first attempt. A new question needs a new Project; every trial remains in this history.<button className="linklike" onClick={() => setNewIdea(true)}>Test a different question</button></Info></div>
+    <WorkbenchShell ratio={35} left={<PaneCard label="Factor idea editor" tabs={<TabList label="Idea editor" tabs={[{ id: 'hypothesis', label: 'Factor' }, { id: 'history', label: 'History' }]} active={editorTab} onSelect={setEditorTab} />} actions={<ActionRow primary={primary} secondary={[saveButton]} chip={trialChip} />}>
+      <div className="idea-form" onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !reason) { e.preventDefault(); void prepare() } }} hidden={editorTab !== 'hypothesis'} role="tabpanel" aria-label="Factor">
+        <div className="idea-question-line"><Icon name="lock" /><p className={expandedQuestion ? 'idea-question is-expanded' : 'idea-question'}>{question}</p><Info label="About the frozen question">The original question is frozen at the first attempt. A new question needs a new Project; every trial stays in this history.<p>Supported requires Core's decision-signal-positive diagnosis and a passed trial-family adjustment. Otherwise valid evidence is Inconclusive. Core has no arbitrary-question refutation protocol; this flow never invents Refuted. Execution or protocol failure means Could not be tested.</p><button className="linklike" onClick={() => setNewIdea(true)}>Test a different question</button></Info><button className="linklike idea-question-expand" onClick={() => setExpandedQuestion(v => !v)} aria-expanded={expandedQuestion}>{expandedQuestion ? 'Less' : 'Expand question'}</button></div>
         {!idea?.bound ? <>
           <label className="afield">Staged dataset<select aria-label="Staged dataset" className="fe-input" value={dataset} onChange={e => { setDataset(e.target.value); setAssets([]); setAccepted(false) }}><option value="">Select a complete package</option>{packages?.datasets.map(d => <option key={d.path} value={d.path}>{d.id} · {d.provider}</option>)}</select></label>
           {selectedPackage && <><p className="small muted">{selectedPackage.path} · {selectedPackage.adjustment} · {selectedPackage.frequency}</p><fieldset className="idea-assets"><legend>Prediction assets</legend>{selectedPackage.assets.map(a => <label key={a}><input type="checkbox" checked={assets.includes(a)} onChange={e => { setAssets(e.target.checked ? [...assets, a] : assets.filter(x => x !== a)); setAccepted(false) }} />{a}</label>)}</fieldset><p className="small muted">Unselected assets supply context only.</p></>}
@@ -171,20 +191,18 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
           {packages?.datasets.length === 0 && <div className="apreview"><h3>No supported staged data</h3><p className="small">{packages.stagingNote}</p><pre className="cmd mono">{packages.stagingCommand}</pre><button className="abtn" onClick={() => void reload()}>Refresh staged data</button></div>}
           {packages?.unavailable.map(d => <p className="small" key={d.path}>{d.path}: {d.reason}</p>)}
         </> : <>
-          <ParamGrid params={params} />
-          <div className="idea-expression-field">
-            <div className="idea-expression-label"><label htmlFor="idea-expression">Factor expression</label><span className="idea-check-chip">{checkedSource === source ? 'Check passed' : 'Needs check'}</span></div>
-            <textarea id="idea-expression" aria-label="Factor expression" data-measure="expression" className="fe-input mono" value={expression} readOnly={advanced || !doc?.editable || !!busyReason} onChange={e => { setExpression(e.target.value); setTrialNoteOpen(true) }} placeholder={draft ? 'Python candidate · expand source below to inspect, or enter an expression to replace it.' : 'panel.groupby("asset")["close"].pct_change(5, fill_method=None)'} />
-          </div>
-          <AnimatedDetails open={advanced} onToggle={e => { const open = e.currentTarget.open; if (open && !advanced) setDraft(source); if (!open && advanced) setExpression(candidateExpression(draft)); setAdvanced(open) }}><summary>Advanced: Python source</summary>{advanced && <CodeField label="Candidate source" rows={10} value={draft} onChange={value => { setDraft(value); setTrialNoteOpen(true) }} readOnly={!doc?.editable || !!busyReason} />}</AnimatedDetails>
-          {sessionId && <AnimatedDetails open={trialNoteOpen} onToggle={e => setTrialNoteOpen(e.currentTarget.open)}><summary>Next trial hypothesis</summary><label className="afield idea-trial-note">Bounded change<textarea aria-label="Next trial hypothesis" className="fe-input" rows={2} value={note} maxLength={500} onChange={e => setNote(e.target.value)} placeholder="Declare one bounded change to this candidate" /><span className="small muted">Optional follow-up. This note never rewrites the frozen question or resets the trial ledger.</span></label></AnimatedDetails>}
-          {reason && <p className="small muted idea-run-reason" title={reason}>{doc && !doc.editable ? 'Candidate is read-only.' : reason} <Info label="Why can I not run?">{reason}</Info></p>}
-          <details><summary>Fixed support and refutation wording</summary><p className="small">Supported requires Core’s decision-signal-positive diagnosis and a passed trial-family adjustment. Otherwise valid evidence is Inconclusive. Core has no arbitrary-question refutation protocol; this flow never invents Refuted. Execution or protocol failure means Could not be tested.</p><p className="small">The first Session command runs preflight before its baseline. Later trials save, check, then ask for confirmation. Checks spend no trial.</p></details>
+          <section className="idea-parameters" aria-label="Frozen parameters"><div className="idea-parameter-summary"><span>{assetCount} assets · {idea?.request?.horizonPolicy.primaryForwardBars ?? evidence?.protocol.primaryHorizon ?? '—'}-bar · validation selects, test diagnostic</span><button className="linklike" onClick={() => setExpandedParams(v => !v)} aria-expanded={expandedParams}>{expandedParams ? 'Collapse' : 'Expand'}</button></div>{expandedParams && <dl className="idea-parameter-rows">{params.map(p => <div key={p.label}><dt>{p.label}:</dt><dd className={['Dataset', 'Assets'].includes(p.label) ? 'mono' : ''} data-param={p.label}>{p.value}</dd></div>)}</dl>}</section>
+          {recoveryReason && <SessionRecovery reason={recoveryReason} actions={!!b} command={enableCommand} onRestart={() => void restart()} busy={!!busyReason} />}
+          <section className="idea-source" aria-label="Candidate editor"><div className="idea-source-toolbar"><TabList label="Candidate language" tabs={[{ id: 'expression', label: 'Expression' }, { id: 'python', label: 'Python' }]} active={advanced ? 'python' : 'expression'} onSelect={tab => { if (tab === 'python') { setDraft(source); setAdvanced(true) } else { setExpression(candidateExpression(draft)); setAdvanced(false) } }} /><span className="idea-check-chip">{checkedSource === source ? 'Check passed' : source !== doc?.source ? 'Unsaved changes' : savedForTrial ? 'Needs check' : 'Saved'}</span>{(!doc?.editable || !b) && <span className="idea-readonly-label">Read-only</span>}</div>
+            {advanced ? <CodeField label="Candidate source" rows={12} value={draft} onChange={setDraft} readOnly={!b || !doc?.editable || !!busyReason} /> : <CodeField label="Factor expression" rows={12} value={expression} onChange={setExpression} readOnly={!b || !doc?.editable || !!busyReason} />}
+            {!advanced && !expression && draft && <p className="small muted">This Python candidate has no expression adapter. Open Python to edit its full source, or enter an expression to replace it.</p>}
+          </section>
+          {frozen && <label className="idea-trial-note"><input aria-label="What changes in this trial?" placeholder="What changes in this trial?" value={note} minLength={8} maxLength={500} readOnly={!b || !doc?.editable || !!busyReason} onChange={e => setNote(e.target.value)} /><span className="small muted">{note.length}/500</span></label>}
         </>}
         {error && <details open><summary className="sig">Action needs attention</summary><pre className="cmd small" role="alert">{error}</pre></details>}
       </div>
       {editorTab === 'history' && <div className="idea-history" role="tabpanel" aria-label="History"><h2 className="set-title">{runs.length} immutable Runs</h2>{runs.length ? <ol>{runs.map((r, i) => <li key={r.id}><button className="linklike" onClick={() => setSelectedRun(r.id)}>Trial {runs.length - i} · {r.status}</button><p className="small muted">{r.startedAt}</p><a className="small" href={routeHref({ view: 'run', id: project.id, run: r.id })}>{r.id}</a></li>)}</ol> : <p className="small muted">No trials yet. Preflight alone creates no Run.</p>}</div>}
-    </PaneCard>} right={idea ? <IdeaVerdict onDeclareTrial={latest && sessionId && doc?.editable && !busyReason ? () => { setEditorTab('hypothesis'); setTrialNoteOpen(true); requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>('[aria-label="Next trial hypothesis"]')?.focus()) } : undefined} project={project} idea={idea} study={evidenceRun === shownRun?.id ? evidence : null} run={shownRun} runs={runs} onSelectRun={setSelectedRun} params={params} job={shownRun?.id === latest?.id ? job : idea.jobs.find(j => j.createdRefs?.runId === shownRun?.id) ?? null} busy={busy || (shownRun?.status === 'succeeded' && evidenceRun !== shownRun.id ? 'Loading verified Run evidence…' : '')} /> : <PaneCard label="Idea verdict"><p>Loading the question…</p></PaneCard>} />
+    </PaneCard>} right={idea ? <IdeaVerdict onDeclareTrial={latest && sessionId && doc?.editable && !busyReason ? () => { setEditorTab('hypothesis'); requestAnimationFrame(() => document.querySelector<HTMLInputElement>('[aria-label="What changes in this trial?"]')?.focus()) } : undefined} project={project} idea={idea} study={evidenceRun === shownRun?.id ? evidence : null} run={shownRun} runs={runs} onSelectRun={setSelectedRun} params={params} job={shownRun?.id === latest?.id ? job : idea.jobs.find(j => j.createdRefs?.runId === shownRun?.id) ?? null} busy={busy || (shownRun?.status === 'succeeded' && evidenceRun !== shownRun.id ? 'Loading verified Run evidence…' : '')} /> : <PaneCard label="Idea verdict"><p>Loading the question…</p></PaneCard>} />
     <Modal open={!!preview} onClose={() => setPreview(null)} label="Confirm analysis" className="adialog">
       {preview && <div className="adialog-body"><header className="adialog-head"><h2>{preview.requiresSecondConfirm ? 'Confirm trial' : 'Confirm dataset'}</h2><p className="small">{idea?.hypothesis}</p></header>
         <div className="adialog-scroll">
