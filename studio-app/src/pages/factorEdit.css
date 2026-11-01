@@ -2,7 +2,7 @@
 .fe { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; }
 .fe p { margin: 0; }
 .fe-h { display: flex; align-items: center; gap: 6px; margin: 0; font: 500 11px/16px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.fe-trial-chip { display: inline-block; padding: 0 5px; border: 1px solid var(--line-strong); border-radius: 999px; font: 500 11px/18px var(--font-mono); color: var(--muted); white-space: nowrap; cursor: help; }
+.fe-trial-chip { display: inline-block; padding: 0 5px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: 500 11px/18px var(--font-mono); color: var(--muted); white-space: nowrap; cursor: help; }
 
 /* The editor header is a size container (the kit's pane head): in a narrow card the chip drops the word "Trial". */
 @container (max-width: 380px) {
