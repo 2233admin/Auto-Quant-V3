@@ -74,7 +74,8 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
       id: 'metric',
       label: 'Original question',
       render: (r) => {
-        return <span className="idea-next">{r.snap?.agentWorkBrief?.question?.text ?? r.snap?.description ?? r.p.description ?? 'Loading question…'}</span>
+        const question = r.snap?.agentWorkBrief?.question?.text ?? r.snap?.description ?? r.p.description ?? 'Loading question…'
+        return <span className="idea-table-question" title={question}>{question}</span>
       },
     },
     { id: 'last', label: 'Latest Run (UTC)', render: (r) => <span className="mono">{when(r.p.latestRunAt)}</span> },

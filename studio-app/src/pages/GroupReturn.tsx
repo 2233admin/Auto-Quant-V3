@@ -208,10 +208,10 @@ type View = 'group' | 'ic'
  * away in the card header; without them (single-asset Runs, older snapshots) it is the Rank IC chart. The long-short tiles
  * live under it with the other metrics (`spreadGroups`).
  */
-export function FactorHero({ study }: { study: FactorDiagnostics }) {
+export function FactorHero({ study, minHeight = 260 }: { study: FactorDiagnostics; minHeight?: number }) {
   const testShown = studyTestVisible(study)
   const [choice, setChoice] = useState<View | null>(null)
-  const quantiles = study.quantileEvidence.status === 'available'
+  const quantiles = study.quantileEvidence.status === 'available' && study.predictionUniverse.evaluationMode !== 'single-asset-temporal'
   const points = [...(study.quantilePath?.cumulative?.points ?? [])]
     .filter((p) => testShown || p.split !== 'test')
     .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
@@ -231,7 +231,7 @@ export function FactorHero({ study }: { study: FactorDiagnostics }) {
   ) : undefined
   if (view === 'group' && groups) {
     const cum = study.quantilePath?.cumulative
-    const desc = `Compounded growth multiple of the low, middle and high factor groups and of the long-short spread (high minus low), starting near 1.0. ${cum?.basis ?? ''} ${points.length} of ${int(cum?.totalRows ?? points.length)} bars are drawn. ${testShown ? '' : TEST_HIDDEN_NOTE + '.'}`.trim()
+    const desc = `Compounded growth multiple of the low, middle and high factor groups and of the long-short spread (high minus low), starting near 1.0. ${cum?.basis ?? ''} ${testShown ? `${points.length} of ${int(cum?.totalRows ?? points.length)}` : points.length} bars are drawn. ${testShown ? '' : TEST_HIDDEN_NOTE + '.'}`.trim()
     return (
       <ChartCard
         title="Group cumulative return"
@@ -244,7 +244,7 @@ export function FactorHero({ study }: { study: FactorDiagnostics }) {
         toggle={toggle}
         legend={<GroupLegend testShown={testShown} />}
         table={<GroupTable points={points} />}
-        minHeight={260}
+        minHeight={minHeight}
       >
         {({ width, height }) => (
           <GroupPlot
@@ -260,6 +260,7 @@ export function FactorHero({ study }: { study: FactorDiagnostics }) {
   return (
     <IcByHorizonCard
       study={study}
+      minHeight={minHeight}
       toggle={toggle}
       legendExtra={
         !quantiles ? (
