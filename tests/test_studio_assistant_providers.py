@@ -133,6 +133,20 @@ class ProviderTests(unittest.TestCase):
         self.assertNotIn("--dangerously-skip-permissions", argv)
         self.assertEqual(json.loads(process.stdin.getvalue())["message"]["content"], "Explain this factor.")
 
+    def test_only_the_exact_aq_mcp_tool_is_autoapproved(self):
+        _, _, start = self.run_claude([
+            init_message(), {"type": "result", "subtype": "success", "is_error": False},
+        ])
+        argv = start.call_args.args[0]
+        approval_index = argv.index("--allowedTools")
+        self.assertEqual(argv[approval_index + 1], "mcp__aq__aq")
+        self.assertTrue(argv[approval_index + 2].startswith("--"))
+        self.assertEqual(argv.count("--allowedTools"), 1)
+        self.assertNotIn("--permission-mode", argv)
+        self.assertNotIn("--dangerously-skip-permissions", argv)
+        self.assertNotIn("mcp__aq__*", argv)
+        self.assertEqual(argv[argv.index("--tools") + 1], "")
+
     def test_claude_refuses_unverified_startup(self):
         for first in [
             {"type": "assistant", "message": {"content": [{"type": "text", "text": "untrusted"}]}},

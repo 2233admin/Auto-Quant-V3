@@ -323,6 +323,7 @@ def _run_claude(
     config = _bridge_json(bridge_config)
     argv = [
         executable, "-p", "--restricted", "--tools", "",
+        "--allowedTools", "mcp__aq__aq",
         "--strict-mcp-config", "--mcp-config", config,
         "--settings", '{"disableAllHooks":true,"autoMemoryEnabled":false}',
         "--input-format", "stream-json", "--output-format", "stream-json",
