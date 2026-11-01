@@ -1,5 +1,6 @@
 import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import { hashWithJob, sectionOfHash } from '../actions/jobHash'
+import { AnimatedDetails } from '../components/motion/AnimatedDetails'
 
 /** Distance from the viewport top at which a heading counts as "current": top bar (52) + section nav (~40) + air. */
 const SPY_LINE = 52 + 44 + 24
@@ -38,13 +39,13 @@ export function Section({
   }
   return (
     <section className={cls} aria-labelledby={id}>
-      <details open={defaultOpen}>
+      <AnimatedDetails open={defaultOpen}>
         <summary>
           <h2 id={id}>{title}</h2>
           {caption && <span className="sec-cap">{caption}</span>}
         </summary>
         <div className="sec-body">{children}</div>
-      </details>
+      </AnimatedDetails>
     </section>
   )
 }

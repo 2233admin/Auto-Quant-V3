@@ -112,3 +112,21 @@ Put a `PaneCard` in each slot of a `WorkbenchShell`:
 - `VerdictBar` takes an optional `detail` prop: the one-line clause stays on the bar; the full sentence and reasons sit behind "More".
 - `MetricGrid` uses three columns from 1280px and two below, pads the last row, and keeps micro-hints inside each tile's "?".
 - `WorkbenchShell` caps content at 1800px and accepts an omitted `left` slot for single-pane pages such as Portfolio.
+
+## Motion kit (adapted from animate-ui)
+
+`components/motion/` holds the kit's motion: sliding tab, toggle, rail and table-row highlight (`useSlidingHighlight`),
+`Collapse` / `AutoHeight` / `AnimatedDetails` for height, `AnimatedValue` for numbers that count on change, `Progress`,
+`CopyIcon`, and `startThemeTransition`. The `Motion` tab of `?view=kit` shows each one.
+
+Adaptation rule. The behaviours come from [animate-ui](https://github.com/imskyleen/animate-ui) (MIT + Commons Clause). The
+licence lets us use and modify it as part of an application but not redistribute the components in their original form, so:
+
+- read their source for behaviour, then write our own version in plain CSS on our tokens (no Tailwind, Radix or Motion, no new
+  dependency), never paste a file;
+- start every adapted file with `Adapted from animate-ui (https://github.com/imskyleen/animate-ui, MIT + Commons Clause, Copyright (c) 2025 Elliot Sutton): <what we kept / what we changed>`;
+- keep the entry and permission notice in `THIRD_PARTY_NOTICES.md` at the repo root current;
+- every effect honours `prefers-reduced-motion: reduce` (CSS media query, or `prefersReducedMotion()` for script-driven ones),
+  adds no colour, font or radius of its own, and leaves semantics, keyboard behaviour and hash behaviour unchanged;
+- numbers keep their Core-formatted text: `AnimatedValue` only animates the display between two values of the same shape and
+  leaves exactly the published string at rest.

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { CopyIcon } from '../components/motion/CopyIcon'
 
 /** Copies text to the clipboard. Falls back to a hidden textarea where the async API is unavailable (plain http). */
 export function CopyButton({ text, label }: { text: string; label: string }) {
@@ -26,11 +27,13 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
     }
     setState(ok ? 'copied' : 'failed')
     window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setState('idle'), 2500)
+    // The check mark shows for 1.5 s; a failure keeps its explanation up a little longer.
+    timer.current = window.setTimeout(() => setState('idle'), ok ? 1500 : 2500)
   }
   return (
     <>
       <button type="button" className="abtn" onClick={copy}>
+        <CopyIcon copied={state === 'copied'} />
         {label}
       </button>
       <span className="small muted" role="status" aria-live="polite">

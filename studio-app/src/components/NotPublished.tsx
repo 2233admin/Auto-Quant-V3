@@ -1,3 +1,4 @@
+import { AnimatedDetails } from './motion/AnimatedDetails'
 import './components.css'
 
 /** Reference-product figures this lane does not publish, with the gap matrix's reason. Nothing here is computed or guessed. */
@@ -13,7 +14,7 @@ const ITEMS: { name: string; reason: string }[] = [
 
 export function NotPublished() {
   return (
-    <details className="np">
+    <AnimatedDetails className="np">
       <summary>Not published by this lane ({ITEMS.length})</summary>
       <ul>
         {ITEMS.map((i) => (
@@ -23,6 +24,6 @@ export function NotPublished() {
           </li>
         ))}
       </ul>
-    </details>
+    </AnimatedDetails>
   )
 }

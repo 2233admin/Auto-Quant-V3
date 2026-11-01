@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Swatch } from '../../pages/FactorCharts'
+import { MotionDemos } from '../motion/MotionDemos'
 import { ActionRow, ChartCard, FactChips, MetricGrid, PaneCard, SegmentedToggle, StatusLine, TabList, VerdictBar, WorkbenchShell, useHashTab, type StatusState } from '.'
 
-type Left = 'inputs' | 'status'
+type Left = 'inputs' | 'status' | 'motion'
 type Right = 'chart' | 'metrics'
 type Metric = 'group' | 'ic'
 type Mode = 'idle' | 'running' | 'indeterminate' | 'failed'
 
-const LEFT = [{ id: 'inputs', label: 'Inputs' }, { id: 'status', label: 'States', badge: '4' }] as const
+const LEFT = [{ id: 'inputs', label: 'Inputs' }, { id: 'status', label: 'States', badge: '4' }, { id: 'motion', label: 'Motion' }] as const
 const RIGHT = [{ id: 'chart', label: 'Chart' }, { id: 'metrics', label: 'Metrics' }] as const
 
 const SERIES = Array.from({ length: 60 }, (_, i) => Math.sin(i / 6) * 0.6 + Math.cos(i / 2.3) * 0.2 + i / 90)
@@ -30,7 +31,7 @@ function Plot({ width, height, alt }: { width: number; height: number; alt: bool
 
 /** `?view=kit`: every workbench component with sample content, laid out in a live WorkbenchShell. Not in the nav. */
 export function WorkbenchGallery() {
-  const [left, setLeft] = useHashTab<Left>(['inputs', 'status'], 'inputs')
+  const [left, setLeft] = useHashTab<Left>(['inputs', 'status', 'motion'], 'inputs')
   const [right, setRight] = useState<Right>('chart')
   const [metric, setMetric] = useState<Metric>('group')
   const [mode, setMode] = useState<Mode>('running')
@@ -61,7 +62,9 @@ export function WorkbenchGallery() {
       }
       status={status}
     >
-      {left === 'inputs' ? (
+      {left === 'motion' ? (
+        <MotionDemos />
+      ) : left === 'inputs' ? (
         <>
           <VerdictBar
             tone="bad"

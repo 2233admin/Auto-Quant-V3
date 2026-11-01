@@ -50,8 +50,8 @@
 .wb-tabs { display: grid; gap: var(--space-3); }
 .wb-tablist { scrollbar-width: none; display: flex; gap: var(--space-1); align-self: stretch; overflow-x: auto; overflow-y: hidden; min-width: 0; }
 .wb-tab { padding: 0 var(--space-3); background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted); font: var(--type-body); cursor: pointer; white-space: nowrap; }
-.wb-tab:hover { color: var(--text); background: var(--hover); }
-.wb-tab[aria-selected='true'] { color: var(--text); font-weight: 600; border-bottom-color: var(--text); }
+.wb-tab:hover { color: var(--text); }  /* the hover wash and the underline are the sliding indicators of .mo-hl--tabs */
+.wb-tab[aria-selected='true'] { color: var(--text); font-weight: 600; }
 .wb-tab:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
 .wb-tab-badge { margin-left: 6px; padding: 0 6px; border: 1px solid var(--signal); color: var(--signal); font: 500 11px/16px var(--font-mono); }
 .wb-tabpanel { display: grid; gap: var(--space-4); min-width: 0; }
@@ -64,8 +64,8 @@
 .wb-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--radius-control); overflow: hidden; }
 .wb-seg-opt { min-height: 26px; padding: 0 var(--space-3); border: 0; border-right: 1px solid var(--line-strong); background: transparent; color: var(--muted); font: var(--type-small); cursor: pointer; white-space: nowrap; }
 .wb-seg-opt:last-child { border-right: 0; }
-.wb-seg-opt:hover { color: var(--text); background: var(--hover); }
-.wb-seg-opt[aria-checked='true'] { background: var(--selected); color: var(--text); font-weight: 600; }
+.wb-seg-opt:hover { color: var(--text); }
+.wb-seg-opt[aria-checked='true'] { color: var(--text); font-weight: 600; }
 .wb-seg-opt:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
 
 /* ---- Action row ---- */
@@ -93,7 +93,6 @@
 .wb-link { flex: none; padding: 0; border: 0; background: none; color: var(--text); font: var(--type-small); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .wb-link:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .wb-verdict-more { padding: 0 var(--space-3) var(--space-3); font: var(--type-small); overflow-wrap: anywhere; }
-.wb-verdict-more[hidden] { display: none; }
 .wb-verdict-more p { margin: 0 0 var(--space-2); }
 .wb-verdict-more ul { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-1); }
 .wb-verdict-more li { display: flex; gap: var(--space-2); align-items: flex-start; }

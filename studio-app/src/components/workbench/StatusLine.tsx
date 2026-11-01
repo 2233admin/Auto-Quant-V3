@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../../design/icons'
 import '../../actions/actions.css'
+import { AnimatedDetails } from '../motion/AnimatedDetails'
+import { Progress } from '../motion/Progress'
 import './workbench.css'
 
 export type StatusState = 'idle' | 'running' | 'done' | 'failed'
@@ -33,19 +35,7 @@ export function StatusLine({
       <div className="wb-status-line" role="status" aria-live="polite">
         <Glyph kind={GLYPH[state]} signal={state === 'failed'} />
         <span className="wb-status-text" title={text}>{text}</span>
-        {bar && (
-          <div
-            className={`wb-bar${pct === null ? ' is-indeterminate' : ''}`}
-            role="progressbar"
-            aria-label={text}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={pct ?? undefined}
-            aria-valuetext={pct === null ? 'In progress, not measured' : `${pct} percent`}
-          >
-            <span style={pct === null ? undefined : { width: `${pct}%` }} />
-          </div>
-        )}
+        {bar && <Progress value={pct} label={text} />}
         {bar && <span className="wb-status-pct mono">{pct === null ? '—' : `${pct}%`}</span>}
         {elapsed && <span className="wb-status-time mono faint">{elapsed}</span>}
         {onCancel && state === 'running' && (
@@ -55,10 +45,10 @@ export function StatusLine({
         )}
       </div>
       {details && (
-        <details className="wb-status-more">
+        <AnimatedDetails className="wb-status-more">
           <summary>Stages and command</summary>
           {details}
-        </details>
+        </AnimatedDetails>
       )}
     </div>
   )

@@ -1,4 +1,6 @@
 import { useRef, type KeyboardEvent } from 'react'
+import { useSlidingHighlight } from '../motion/useSlidingHighlight'
+import '../motion/motion.css'
 import './workbench.css'
 
 export type SegmentOption<T extends string> = { id: T; label: string }
@@ -16,6 +18,8 @@ export function SegmentedToggle<T extends string>({
   onChange: (id: T) => void
 }) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const group = useRef<HTMLDivElement>(null)
+  useSlidingHighlight(group, { items: '.wb-seg-opt', active: '.wb-seg-opt[aria-checked="true"]', skipActiveHover: true })
   const move = (event: KeyboardEvent, index: number) => {
     const last = options.length - 1
     const key = event.key
@@ -26,7 +30,7 @@ export function SegmentedToggle<T extends string>({
     refs.current[options[next].id]?.focus()
   }
   return (
-    <div className="wb-seg" role="radiogroup" aria-label={label}>
+    <div ref={group} className="wb-seg mo-hl mo-hl--seg" role="radiogroup" aria-label={label}>
       {options.map((o, i) => (
         <button
           key={o.id}

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { AnimatedValue } from '../motion/AnimatedValue'
 import './workbench.css'
 
 /** `hint` is the tooltip: where the number comes from. */
@@ -16,7 +17,7 @@ export function StatChips({ stats, label, scope }: { stats: Stat[]; label: strin
       {stats.map((s) => (
         <div key={s.label} className="wb-stat" title={s.hint ? `${s.label}: ${s.hint}` : undefined}>
           <dt>{s.label}</dt>
-          <dd className="mono">{s.value}</dd>
+          <dd className="mono"><AnimatedValue value={s.value} /></dd>
         </div>
       ))}
     </dl>

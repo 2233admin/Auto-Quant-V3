@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../../design/icons'
+import { Collapse } from '../motion/Collapse'
 import './workbench.css'
 
 export type VerdictTone = 'bad' | 'ok' | 'warn'
@@ -26,7 +27,7 @@ export function VerdictBar({ tone, word, children, detail, reasons = [] }: { ton
           {open ? 'Less' : 'More'}
         </button>
       </div>
-      <div id={id} className="wb-verdict-more" hidden={!open}>
+      <Collapse open={open} id={id} className="wb-verdict-more">
         <p>{detail ?? children}</p>
         {reasons.length > 0 && (
           <ul>
@@ -41,7 +42,7 @@ export function VerdictBar({ tone, word, children, detail, reasons = [] }: { ton
             ))}
           </ul>
         )}
-      </div>
+      </Collapse>
     </div>
   )
 }

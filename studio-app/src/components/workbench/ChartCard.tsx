@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useState, type ReactNode } from 'react'
 import { useFitWidth } from '../../design/useFitWidth'
 import { Info } from '../Info'
+import { AnimatedDetails } from '../motion/AnimatedDetails'
 import './workbench.css'
 
 export type ChartSize = { width: number; height: number }
@@ -63,10 +64,10 @@ export function ChartCard({
         <div className="wb-chart-fill">{height > 0 && children({ width, height })}</div>
       </div>
       {table && (
-        <details className="wb-chart-table datatable">
+        <AnimatedDetails className="wb-chart-table datatable">
           <summary>Data table</summary>
           <div className="tablewrap">{table}</div>
-        </details>
+        </AnimatedDetails>
       )}
     </figure>
   )

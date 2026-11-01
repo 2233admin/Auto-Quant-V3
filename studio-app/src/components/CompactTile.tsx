@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../design/icons'
 import { Info } from './Info'
+import { AnimatedValue } from './motion/AnimatedValue'
 import type { Tone } from './MetricTile'
 import './compactTile.css'
 
@@ -48,7 +49,7 @@ export function CompactTile({
         )}
         {note && <span className="ct-note faint">{note}</span>}
         {delta && <span className="ct-delta mono">{delta}</span>}
-        <span className="ct-value mono">{value}</span>
+        <AnimatedValue className="ct-value mono" value={value} />
       </dd>
     </div>
   )

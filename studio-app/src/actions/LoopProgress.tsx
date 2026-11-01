@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ProjectSnapshot } from '../api'
 import { Glyph } from '../design/icons'
 import { StatusLine } from '../components/workbench'
+import { AnimatedDetails } from '../components/motion/AnimatedDetails'
 import { useActions } from './ActionsContext'
 import { actionCall, errorCopy } from './client'
 import { elapsed, useJob } from './JobPanel'
@@ -155,10 +156,10 @@ export function LoopResult({ outcome, project, onDismiss }: { outcome: LoopOutco
       <div className="lr-body">
         <p className="lr-line" title={line}>{line}</p>
         {outcome.status !== 'succeeded' && outcome.tail && (
-          <details className="lp-more">
+          <AnimatedDetails className="lp-more">
             <summary>Command output</summary>
             <pre className="cmd mono" translate="no">{outcome.tail}</pre>
-          </details>
+          </AnimatedDetails>
         )}
       </div>
       <button type="button" className="abtn abtn--quiet" onClick={onDismiss}>Dismiss</button>

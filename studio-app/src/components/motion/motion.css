@@ -1,0 +1,101 @@
+/*
+ * Motion kit styles. Adapted from animate-ui (https://github.com/imskyleen/animate-ui, MIT + Commons Clause, Copyright (c) 2025
+ * Elliot Sutton): kept the behaviours (sliding highlight, collapsible height, progress easing, copy confirmation, theme fade);
+ * the CSS is written for Studio's tokens and uses no colour, font or radius of its own. Everything here is switched off under
+ * prefers-reduced-motion: reduce.
+ */
+:root { --mo-ease: cubic-bezier(.22, 1, .36, 1); --mo-dur: .26s; }
+
+/* ---- Sliding highlight: indicators are the container's ::before (active) and ::after (hover). See useSlidingHighlight. ---- */
+:where(.mo-hl) { position: relative; }  /* :where keeps a host's own position (the sticky rail) */
+.mo-hl { isolation: isolate; }
+.mo-hl::before, .mo-hl::after {
+  content: ''; position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; opacity: 0;
+}
+.mo-hl::before {
+  width: var(--mo-a-w, 0px); height: var(--mo-a-h, 0px); border-radius: var(--mo-a-r, 0);
+  transform: translate(var(--mo-a-x, 0px), var(--mo-a-y, 0px));
+}
+.mo-hl::after {
+  width: var(--mo-h-w, 0px); height: var(--mo-h-h, 0px); border-radius: var(--mo-h-r, 0);
+  transform: translate(var(--mo-h-x, 0px), var(--mo-h-y, 0px)); background: var(--hover);
+  transition: opacity .14s linear;
+}
+.mo-hl[data-mo-a]::before { opacity: 1; }
+.mo-hl[data-mo-a='on']::before { transition: transform var(--mo-dur) var(--mo-ease), width var(--mo-dur) var(--mo-ease), height var(--mo-dur) var(--mo-ease); }
+.mo-hl[data-mo-h='enter']::after, .mo-hl[data-mo-h='on']::after { opacity: 1; }
+.mo-hl[data-mo-h='on']::after { transition: transform var(--mo-dur) var(--mo-ease), width var(--mo-dur) var(--mo-ease), height var(--mo-dur) var(--mo-ease), opacity .14s linear; }
+
+/* Tabs: the active indicator is the 3px underline. */
+.mo-hl--tabs::before { height: 3px; border-radius: 0; background: var(--text); transform: translate(var(--mo-a-x, 0px), calc(var(--mo-a-y, 0px) + var(--mo-a-h, 0px) - 3px)); }
+.mo-hl--tabs::after { border-radius: 0; }
+/* Segmented toggle: the active indicator is the selected fill. */
+.mo-hl--seg::before { background: var(--selected); border-radius: 0; }
+.mo-hl--seg::after { border-radius: 0; }
+/* Table rows: the hover bar is a faint wash drawn above the cells (sticky, opaque cells would hide it underneath). */
+.mo-hl--overlay::after { z-index: 3; background: color-mix(in srgb, var(--text) 6%, transparent); border-radius: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mo-hl::before, .mo-hl::after { transition: none !important; }
+}
+
+/* ---- Collapse / AutoHeight ---- */
+.mo-collapse { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows var(--mo-dur) var(--mo-ease), visibility 0s linear var(--mo-dur); }
+.mo-collapse[data-open] { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows var(--mo-dur) var(--mo-ease), visibility 0s; }
+.mo-collapse-clip { min-height: 0; overflow: hidden; }
+.mo-autoheight { overflow: hidden; }
+.info-body:not([hidden]) { animation: mo-pop .16s var(--mo-ease); }
+@keyframes mo-pop { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .mo-collapse, .mo-collapse[data-open] { transition: none; }
+  .info-body:not([hidden]) { animation: none; }
+}
+
+/* ---- Counting number: the final text for assistive technology while the visible digits count ---- */
+.mo-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- Progress ---- */
+.wb-bar.mo-progress > span { width: 100%; transform-origin: left center; transition: transform .6s var(--mo-ease); }
+.wb-bar.mo-progress.is-indeterminate > span {
+  width: 100%; transform: none; transition: none; background: linear-gradient(90deg, transparent 0%, var(--muted) 50%, transparent 100%);
+  background-size: 40% 100%; background-repeat: no-repeat; background-position: -40% 0; opacity: .7; animation: mo-shimmer 1.8s ease-in-out infinite;
+}
+@keyframes mo-shimmer { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .wb-bar.mo-progress > span { transition: none; }
+  .wb-bar.mo-progress.is-indeterminate > span { animation: none; background: var(--muted); opacity: .4; }
+}
+
+/* ---- Copy confirmation ---- */
+.mo-copy-icon { position: relative; display: inline-grid; width: 14px; height: 14px; flex: none; }
+.mo-copy-icon > svg { grid-area: 1 / 1; transition: opacity .18s linear, transform .22s var(--mo-ease); }
+.mo-copy-icon-check { opacity: 0; transform: scale(.5); }
+.mo-copy-icon[data-copied] .mo-copy-icon-copy { opacity: 0; transform: scale(.5); }
+.mo-copy-icon[data-copied] .mo-copy-icon-check { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .mo-copy-icon > svg { transition: none; } }
+
+/* ---- Theme switch: colours cross-fade for the length of one toggle (class set by startThemeTransition) ---- */
+.mo-theme-anim, .mo-theme-anim *, .mo-theme-anim *::before, .mo-theme-anim *::after {
+  transition: background-color .3s ease, color .3s ease, border-color .3s ease, fill .3s ease, stroke .3s ease !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mo-theme-anim, .mo-theme-anim *, .mo-theme-anim *::before, .mo-theme-anim *::after { transition: none !important; }
+}
+
+/* DataTable rows: opaque sticky row headers keep their own fill, the wash above does the hovering. */
+.mo-hl--overlay .lib-tbl tbody tr:not(.is-picked):hover th[scope='row'] { background: var(--bg); }
+.mo-hl--overlay .tbl tbody tr:not(.is-picked):hover { background: none; }
+
+/* ---- Kit gallery demos (?view=kit) ---- */
+.mo-demo { display: grid; gap: var(--space-4); }
+.mo-demo section { display: grid; gap: var(--space-2); justify-items: start; }
+.mo-demo-h { margin: 0; font: var(--type-section); }
+.mo-demo-sub { margin: 0; font: 600 12px/18px var(--font-sans); color: var(--muted); }
+.mo-demo-row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.mo-demo-list { list-style: none; margin: 0; padding: 0; width: min(100%, 22rem); }
+.mo-demo-list li { padding: var(--space-2) var(--space-3); border-radius: var(--radius-control); cursor: default; }
+.mo-demo-pad p, .mo-demo-pad { margin: 0; padding: 2px var(--space-3); font: var(--type-small); }
+.mo-demo-auto { width: min(100%, 22rem); border: 1px solid var(--line-strong); }
+.mo-demo-bar { width: min(100%, 22rem); }
+.mo-demo-details { border: 1px solid var(--line-strong); padding: var(--space-2) var(--space-3); }
+.mo-demo > section > * { max-width: 100%; }

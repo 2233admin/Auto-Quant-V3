@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { EndOfList } from '../components/States'
+import { useSlidingHighlight } from '../components/motion/useSlidingHighlight'
+import '../components/motion/motion.css'
 
 export type Col<T> = {
   id: string
@@ -28,6 +30,7 @@ export function DataTable<T>({
   initial,
   caption,
   selected,
+  slideHover = false,
 }: {
   rows: T[]
   cols: Col<T>[]
@@ -37,10 +40,13 @@ export function DataTable<T>({
   initial?: SortState
   caption: string
   selected?: (row: T) => boolean
+  /** Hover wash that glides between rows instead of jumping. Off by default. */
+  slideHover?: boolean
 }) {
   const [sort, setSort] = useState<SortState | null>(initial ?? null)
   const wrap = useRef<HTMLDivElement>(null)
   const [overflow, setOverflow] = useState(false)
+  useSlidingHighlight(wrap, { items: 'tbody tr', hover: slideHover })
   useEffect(() => {
     const el = wrap.current
     if (!el) return
@@ -77,7 +83,7 @@ export function DataTable<T>({
   return (
     <>
       {overflow && <p className="faint small lib-scrollhint" aria-hidden="true">Scroll sideways for more columns →</p>}
-      <div className="tablewrap lib-scroll" ref={wrap} tabIndex={0} role="region" aria-label={`${caption}, scrollable`}>
+      <div className={`tablewrap lib-scroll${slideHover ? ' mo-hl mo-hl--overlay' : ''}`} ref={wrap} tabIndex={0} role="region" aria-label={`${caption}, scrollable`}>
       <table className="tbl lib-tbl">
         <caption className="sr">{caption}</caption>
         <thead>

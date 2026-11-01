@@ -1,4 +1,5 @@
-import { useLayoutEffect, useState } from 'react'
+import { useCallback, useLayoutEffect, useState } from 'react'
+import { startThemeTransition } from '../components/motion/themeTransition'
 
 export type ThemeName = 'dark' | 'light'
 
@@ -28,5 +29,10 @@ export function useTheme(): [ThemeName, (theme: ThemeName) => void] {
   const [theme, setTheme] = useState<ThemeName>(storedTheme)
   // Layout effect: applied before children read token values in their passive effects.
   useLayoutEffect(() => applyTheme(theme), [theme])
-  return [theme, setTheme]
+  // Only a user's choice fades; the first applyTheme above (stored theme on load) stays instant.
+  const choose = useCallback((next: ThemeName) => {
+    startThemeTransition()
+    setTheme(next)
+  }, [])
+  return [theme, choose]
 }

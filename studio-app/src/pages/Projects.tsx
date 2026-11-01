@@ -121,6 +121,7 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
           href={hrefOf}
           go={go}
           caption={`${plural(projects.length, 'idea')}, needs attention first, then latest Run`}
+          slideHover
         />
         </div>
       )}

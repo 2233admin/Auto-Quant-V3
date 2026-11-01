@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { hashWithJob, sectionOfHash } from '../../actions/jobHash'
+import { useSlidingHighlight } from '../motion/useSlidingHighlight'
+import '../motion/motion.css'
 import './workbench.css'
 
 export type TabDef<T extends string> = { id: T; label: string; badge?: string }
@@ -47,6 +49,8 @@ export function TabList<T extends string>({
   onSelect: (id: T) => void
 }) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const list = useRef<HTMLDivElement>(null)
+  useSlidingHighlight(list, { items: '.wb-tab', active: '.wb-tab[aria-selected="true"]' })
   const move = (event: KeyboardEvent, index: number) => {
     const last = tabs.length - 1
     const next = event.key === 'ArrowRight' ? (index === last ? 0 : index + 1) : event.key === 'ArrowLeft' ? (index === 0 ? last : index - 1) : event.key === 'Home' ? 0 : event.key === 'End' ? last : -1
@@ -56,7 +60,7 @@ export function TabList<T extends string>({
     refs.current[tabs[next].id]?.focus()
   }
   return (
-    <div className="wb-tablist" role="tablist" aria-label={label}>
+    <div ref={list} className="wb-tablist mo-hl mo-hl--tabs" role="tablist" aria-label={label}>
       {tabs.map((t, i) => (
         <button
           key={t.id}

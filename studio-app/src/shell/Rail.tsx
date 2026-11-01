@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
+import { useSlidingHighlight } from '../components/motion/useSlidingHighlight'
+import '../components/motion/motion.css'
 import { Icon, Mark, type IconName } from '../design/icons'
 import { attentionItems, useRecentProjects } from '../ideas'
 import { routeHref, routeProjectId, type Route } from '../route'
@@ -24,12 +26,14 @@ export function verification(valid: boolean) {
 export function Rail({ route, data, narrow, onSearch }: RailProps) {
   const projects = data.workspace?.projects ?? []
   const open = routeProjectId(route)
+  const rail = useRef<HTMLElement>(null)
+  useSlidingHighlight(rail, { items: 'a.nav, a.railitem' })
   const harness = data.workspace?.harness
   const recent = useRecentProjects(open)
   const recentProjects = recent.map((id) => projects.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p)
   const attention = attentionItems(data.workspace).length
   return (
-    <aside className={narrow ? 'rail is-narrow' : 'rail'}>
+    <aside ref={rail} className={narrow ? 'rail is-narrow mo-hl' : 'rail mo-hl'}>
       <a className="brand" href={routeHref({ view: 'projects' })} aria-label={narrow ? 'AutoQuant Studio' : undefined}>
         <Mark />
         <span>AutoQuant Studio</span>
