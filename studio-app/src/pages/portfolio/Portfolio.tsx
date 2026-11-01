@@ -7,7 +7,9 @@ import { BookBlock, EpisodesTable, NeighborhoodBlock, TransitionsTable, Viabilit
 import type { PerfSummary, PortfolioDiagnostics } from './portfolioTypes'
 import { Block, day, finite, fn, Kv, NA, SplitToggle, sp, up } from './pfmt'
 import { Info } from '../../components/Info'
-import { ChartCard, FactChips, MetricGrid, PaneCard, Tabs, useHashTab, VerdictBar, WorkbenchShell, type Fact, type MetricGroup, type TabDef, type VerdictReason } from '../../components/workbench'
+import { ActionRow, ChartCard, FactChips, FactsDialog, MetricGrid, PaneCard, StatChips, StatusLine, Tabs, useHashTab, VerdictBar, WorkbenchShell, type ActionButton, type Fact, type MetricGroup, type Stat, type TabDef, type VerdictReason } from '../../components/workbench'
+import { downloadJson } from '../../download'
+import { when } from '../../format'
 import { RunSelect } from '../run/RunSelect'
 import { otherLaneOf } from '../run/runTypes'
 import './portfolio.css'
@@ -60,7 +62,7 @@ const SHORT: Record<string, string> = {
 
 const fmtMetric = (m: Metric, x: number | null | undefined) => (m.kind === 'pct' ? (m.key === 'maximumDrawdown' || m.key.endsWith('Return') ? sp(x) : up(x, 1)) : fn(x))
 
-/** The published headline metrics (Calmar and expected shortfall included) as compact tiles; the benchmark value rides beside the net value. */
+/** The published headline metrics (Calmar and expected shortfall included) as compact tiles; the benchmark value is in each tile's "?". */
 function metricGroups(pf: PortfolioDiagnostics, split: Split): MetricGroup[] | null {
   const v = pf.strategyViability?.[split]
   if (!v?.net) return null
@@ -76,8 +78,7 @@ function metricGroups(pf: PortfolioDiagnostics, split: Split): MetricGroup[] | n
           return {
             label: SHORT[m.key] ?? m.label,
             value: fmtMetric(m, v.net?.[m.key]),
-            note: m.vsBench && finite(bench) ? <span title="Benchmark value">bm {fmtMetric(m, bench)}</span> : undefined,
-            info: m.label,
+            info: m.vsBench && finite(bench) ? <p>{m.label}. Benchmark value: {fmtMetric(m, bench)}.</p> : m.label,
           }
         }),
         { label: '1-way turnover / yr', value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—', info: 'Annualized one-way turnover: traded notional per year, one way.' },
@@ -141,6 +142,7 @@ const ANCHOR_TAB: Record<string, TabId> = {
 export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: (href: string) => void }) {
   const pf = project.portfolioExplorer
   const [split, setSplit] = useState<Split>('validation')
+  const [paramsOpen, setParamsOpen] = useState(false)
   const [tab, selectTab, anchor] = useHashTab<TabId>(TAB_IDS, 'detail', ANCHOR_TAB)
   useEffect(() => {
     if (anchor) requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ block: 'start' }))
@@ -216,6 +218,8 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
       field: 'parameterNeighborhood.validation.aggregate',
     })
   }
+  const clause =
+    finite(vSharpe) && finite(vBench) ? `Validation net Sharpe ${fn(vSharpe)} vs benchmark ${fn(vBench)}` : 'No validation net Sharpe is published for this Run.'
   const sentence =
     finite(vSharpe) && finite(vBench)
       ? `Validation net Sharpe ${fn(vSharpe)}, ${vSharpe - vBench >= 0 ? 'above' : 'below'} benchmark by ${fn(Math.abs(vSharpe - vBench), 1)}.${d ? ` Stage ${d.stage}.` : ''}`
@@ -252,47 +256,86 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
     { id: 'path', label: 'Path data' },
   ]
 
-  const left = (
-    <PaneCard label="Study and Project">
-      <header className="pf-lhead">
-        <h1>Portfolio</h1>
-        <p className="muted small">
-          Research diagnostics of a mechanical strategy; no trading authority.
-          <Info label="About this page">
-            <p>
-              Selection uses the {pf.selection?.selectionSplit ?? 'validation'} split only. Test is <span className="mono">{pf.selection?.testRole ?? '—'}</span>
-              {pf.selection?.testEntersSelection === false ? ' and never enters selection' : ''}.
-              {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
-            </p>
-          </Info>
-        </p>
-      </header>
-      <FactChips label="What was run" locked facts={facts} info={<p>These values come from the Study and the Run. They are read-only here.</p>} />
-    </PaneCard>
-  )
+  const netSplit = pf.strategyViability?.[effective]?.net
+  const stats: Stat[] = netSplit
+    ? [
+        { label: 'Net Sharpe', value: fn(netSplit.sharpe), hint: `${effective} split, after costs` },
+        { label: 'Net return', value: sp(netSplit.totalReturn), hint: `Total return, ${effective} split, after costs` },
+        { label: 'Max drawdown', value: sp(netSplit.maximumDrawdown), hint: `${effective} split` },
+      ]
+    : []
+  const runRow = project.runs.find((r) => r.id === run?.id)
+  const duration = typeof runRow?.durationMs === 'number' ? `${(runRow.durationMs / 1000).toFixed(1)} s` : undefined
+  const exportButton: ActionButton = testVisible
+    ? { label: 'Export JSON', onClick: () => downloadJson(`${run?.id ?? 'portfolio'}-portfolio-evidence.json`, pf), title: 'Download the Portfolio evidence snapshot of this Run as JSON' }
+    : { label: 'Export JSON', disabled: true, disabledReason: 'No test audit is published for this Run: the raw snapshot is exported only when every number in it may be shown.' }
+  const resultActions: ActionButton[] = [
+    { label: 'Parameters', onClick: () => setParamsOpen(true), title: 'Show the parameters of the Study and the Run' },
+    { label: 'Open Project', href: routeHref({ view: 'project', id: project.id }) },
+    ...(run?.id ? [{ label: 'Run summary', href: routeHref({ view: 'run', id: project.id, run: run.id }) }] : []),
+    exportButton,
+  ]
 
   const selector =
     portfolioRuns.length > 0 ? (
-      <RunSelect bar label="Portfolio Run" runs={portfolioRuns} value={run?.id} onChange={(id) => go?.(routeHref({ view: 'run', id: project.id, run: id }))} />
+      <RunSelect bar compact label="Portfolio Run" runs={portfolioRuns} value={run?.id} onChange={(id) => go?.(routeHref({ view: 'run', id: project.id, run: id }))} />
     ) : (
       <span className="mono small faint">{run?.id?.replace(/^run-/, '') ?? '—'}</span>
     )
+  const splitControl = (
+    <span className="wb-split">
+      <span>Split:</span>
+      {toggle}
+    </span>
+  )
+  const chips: Fact[] = facts.filter((f) => ['Project', 'Run', 'Study', 'Universe'].includes(f.label))
+  const more: Fact[] = facts.filter((f) => !['Project', 'Run', 'Study', 'Universe'].includes(f.label))
 
   const right = (
     <PaneCard
       label="Results"
       actions={
-        <div className="pf-selrow">
+        <div className="wb-resultbar">
           {selector}
-          {toggle}
+          <StatChips label={`Headline numbers, ${effective} split`} scope={effective === 'test' ? 'Test' : 'Validation'} stats={stats} />
+        </div>
+      }
+      status={
+        <div className="fr-status">
+          <ActionRow align="start" secondary={resultActions} />
+          <VerdictBar tone={verdict === 'fail' ? 'bad' : 'warn'} word={WORD[verdict]} reasons={reasons.map((r) => ({ tone: r.tone, text: r.text, field: r.field }))} detail={sentence}>
+            {clause}
+          </VerdictBar>
+          {runRow && (
+            <StatusLine
+              state={runRow.status === 'succeeded' ? 'done' : 'failed'}
+              text={runRow.status === 'succeeded' ? `Run succeeded · ${when(runRow.startedAt)} UTC` : `Run ${runRow.status} · ${when(runRow.startedAt)} UTC`}
+              elapsed={duration}
+            />
+          )}
         </div>
       }
     >
-      <VerdictBar tone={verdict === 'fail' ? 'bad' : 'warn'} word={WORD[verdict]} reasons={reasons.map((r) => ({ tone: r.tone, text: r.text, field: r.field }))}>
-        {sentence}
-      </VerdictBar>
+      <h1 className="sr-only">Portfolio</h1>
+      <FactChips
+        label="What was run"
+        locked
+        variant="row"
+        facts={chips}
+        more={more}
+        info={
+          <>
+            <p>These values come from the Study and the Run. They are read-only here. Research diagnostics of a mechanical strategy; no trading authority.</p>
+            <p>
+              Selection uses the {pf.selection?.selectionSplit ?? 'validation'} split only. Test is <span className="mono">{pf.selection?.testRole ?? '—'}</span>
+              {pf.selection?.testEntersSelection === false ? ' and never enters selection' : ''}.
+              {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+            </p>
+          </>
+        }
+      />
       {points.length >= 2 ? (
-        <ChartCard title="Growth and drawdown" info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} minHeight={260}>
+        <ChartCard title="Growth and drawdown" info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} toggle={splitControl} minHeight={260}>
           {() => <PortfolioChart points={points} windows={windows} transitions={transitions.map((r) => r.timestamp)} totalRows={pf.path?.totalRows} sampledRows={pf.path?.sampledRows} />}
         </ChartCard>
       ) : (
@@ -300,6 +343,7 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
           <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a curve.</p>
         </Empty>
       )}
+      {points.length < 2 && splitControl}
       {groups ? <MetricGrid groups={groups} hiddenNote={testVisible ? undefined : hiddenNote} /> : <p><NA why={`strategyViability.${effective}.net is not in the payload`} /></p>}
       <Tabs
         label="Portfolio sections"
@@ -383,8 +427,9 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
           ),
         }}
       />
+      <FactsDialog open={paramsOpen} onClose={() => setParamsOpen(false)} title="Study and Run parameters" note="Read-only: they come from the Study and the Run." facts={facts} />
     </PaneCard>
   )
 
-  return <WorkbenchShell left={left} right={right} ratio={30} />
+  return <WorkbenchShell right={right} />
 }

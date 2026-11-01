@@ -11,10 +11,11 @@ import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
 import { FactorVerdict, FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictReasons } from './FactorEvidence'
 import { adjustmentOf, coreGroups } from './FactorWorkbench'
-import { MetricGrid, PaneCard, Tabs, useHashTab, WorkbenchShell, type TabDef } from '../components/workbench'
+import { ActionRow, FactsDialog, MetricGrid, PaneCard, StatChips, StatusLine, Tabs, useHashTab, WorkbenchShell, type ActionButton, type Stat, type TabDef } from '../components/workbench'
+import { downloadJson } from '../download'
 import { useActions } from '../actions/ActionsContext'
 import { LoopProgress, LoopResult, type LoopOutcome } from '../actions/LoopProgress'
-import { FactorEditor } from './FactorEditor'
+import { FactorEditor, lockedFacts } from './FactorEditor'
 import { otherLaneOf } from './run/runTypes'
 import { Info } from '../components/Info'
 import { HeadlineMetrics, type HeadlineSplit } from '../components/HeadlineMetrics'
@@ -240,7 +241,7 @@ function RunSelector({ project, shown, loading, go }: { project: ProjectSnapshot
         {!runs.some((r) => r.id === shown) && <option value="">Choose a Run…</option>}
         {runs.map((r) => (
           <option key={r.id} value={r.id}>
-            {when(r.startedAt)} UTC · {r.primaryMetric} {num(r.primaryValue, 4)} · {r.status}
+            {when(r.startedAt)} UTC · {r.status}
             {r.id === latest ? ' · latest' : ''}
             {r.id === shown && loading ? ' · loading' : ''}
           </option>
@@ -306,6 +307,29 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
     { id: 'stability', label: 'Stability' },
     { id: 'provenance', label: 'Provenance', badge: failing ? 'run error' : undefined },
   ]
+  const [paramsOpen, setParamsOpen] = useState(false)
+  const adjP = adjustment?.statistics?.familywiseAdjustedPValue
+  const stats: Stat[] = validation
+    ? [
+        { label: 'Rank IC', value: num(validation.meanRankIc, 4), hint: `Validation split, ${study.protocol.primaryHorizon}-bar horizon` },
+        { label: 'HAC t', value: num(validation.hacTStatistic, 2), hint: 'Validation split, HAC standard error' },
+        ...(typeof adjP === 'number' && Number.isFinite(adjP)
+          ? [{ label: 'Adj. p', value: num(adjP, 3), hint: `Family-wise adjusted p over ${adjustment?.statistics?.uniqueTrials ?? '?'} unique trials, from the Session ledger (not a property of this Run alone)` }]
+          : []),
+      ]
+    : []
+  const duration = typeof runRow?.durationMs === 'number' ? `${(runRow.durationMs / 1000).toFixed(1)} s` : undefined
+  const runState = runRow ? (runRow.status === 'succeeded' ? 'done' : 'failed') : null
+  const exportButton: ActionButton = testVisible
+    ? { label: 'Export JSON', onClick: () => downloadJson(`${study.run.id}-factor-evidence.json`, study), title: 'Download the Factor evidence snapshot of this Run as JSON' }
+    : { label: 'Export JSON', disabled: true, disabledReason: `${TEST_HIDDEN_NOTE}: the raw snapshot is exported only when every number in it may be shown.` }
+  const resultActions: ActionButton[] = [
+    { label: 'Parameters', onClick: () => setParamsOpen(true), title: 'Show the parameters fixed by the Study' },
+    { label: 'Compare', href: routeHref({ view: 'compare', id: project.id, a: study.run.id }) },
+    { label: 'Open Project', href: routeHref({ view: 'project', id: project.id }) },
+    { label: 'Run summary', href: routeHref({ view: 'run', id: project.id, run: study.run.id }) },
+    exportButton,
+  ]
   const metricGroups = [...coreGroups({ study, project, validation, testAudit: study.summary.testAudit, testVisible, defs: study.protocol.semantics }), ...(study.quantileEvidence.status === 'available' ? spreadGroups(study, testVisible) : [])]
   return (
     <WorkbenchShell
@@ -315,19 +339,23 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
         <PaneCard
           label="Factor evidence"
           actions={
-            <div className="fr-head">
+            <div className="wb-resultbar">
               <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />
-              <nav className="fr-links" aria-label="Related pages">
-                <a href={routeHref({ view: 'compare', id: project.id, a: study.run.id })}>Compare</a>
-                <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
-                <a href={routeHref({ view: 'run', id: project.id, run: study.run.id })}>Run summary</a>
-              </nav>
+              <StatChips label="Headline numbers of this Run" scope="Validation" stats={stats} />
             </div>
           }
           status={
             <div className="fr-status">
+              <ActionRow align="start" secondary={resultActions} />
               <LoopStatus loop={loop} project={project} />
               <FactorVerdict study={study} adjustment={adjustment} />
+              {runState && runRow && (
+                <StatusLine
+                  state={runState}
+                  text={runRow.status === 'succeeded' ? `Run succeeded · ${when(runRow.startedAt)} UTC` : `Run ${runRow.status} · ${when(runRow.startedAt)} UTC`}
+                  elapsed={duration}
+                />
+              )}
             </div>
           }
         >
@@ -428,6 +456,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
               </p>
             </Info>
           </p>
+          <FactsDialog open={paramsOpen} onClose={() => setParamsOpen(false)} title="Parameters fixed by the Study" note={<>Run <span className="mono" translate="no">{study.run.id}</span>. Read-only: the Study fixes them so results stay comparable.</>} facts={lockedFacts(study)} />
         </PaneCard>
       }
     />

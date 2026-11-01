@@ -104,3 +104,11 @@ Put a `PaneCard` in each slot of a `WorkbenchShell`:
 `/?view=kit` renders every component with sample content inside a live
 `WorkbenchShell`. It is not in the sidebar. The code is
 `components/workbench/Gallery.tsx`; `App.tsx` mounts it when `view=kit`.
+
+## Added after the design review
+
+- `StatChips`: headline numbers inside the run-selector row, driven from the published summary and the test gate.
+- `FactsDialog`: read-only dialog behind a "Parameters" button, for Study-locked facts.
+- `VerdictBar` takes an optional `detail` prop: the one-line clause stays on the bar; the full sentence and reasons sit behind "More".
+- `MetricGrid` uses three columns from 1280px and two below, pads the last row, and keeps micro-hints inside each tile's "?".
+- `WorkbenchShell` caps content at 1800px and accepts an omitted `left` slot for single-pane pages such as Portfolio.

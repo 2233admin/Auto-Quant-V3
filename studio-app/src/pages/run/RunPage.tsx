@@ -11,7 +11,7 @@ import { NotPublished } from '../../components/NotPublished'
 import { pickIntegrity, TrialCounter } from '../../components/TrialCounter'
 import { FactChips, MetricGrid, PaneCard, Tabs, useHashTab, VerdictBar, WorkbenchShell, type Fact, type MetricGroup, type TabDef } from '../../components/workbench'
 import { routeHref } from '../../route'
-import { buildVerdict, QualificationBlock, topReasons, VerdictReasons, verdictSentence } from '../FactorEvidence'
+import { buildVerdict, QualificationBlock, topReasons, VerdictReasons, verdictClause, verdictSentence } from '../FactorEvidence'
 import { adjustmentOf } from '../FactorWorkbench'
 import { SPLIT_LABEL, SPLITS } from '../factorMath'
 import { RunList } from './RunList'
@@ -72,13 +72,13 @@ function metricGroups(fe: RunDiagnostics, project: ProjectSnapshot, showTest: bo
       tiles: [
         { label: 'Mean rank IC', value: num(v.meanRankIc, 4), info: measure },
         { label: 'HAC t', value: num(v.hacTStatistic, 2), info: inference },
-        { label: 'HAC p', value: num(v.hacNormalPValue, 3), note: 'two-sided', info: inference },
+        { label: 'HAC p', value: num(v.hacNormalPValue, 3), info: <>{inference}<p>Two-sided.</p></> },
         { label: 'Hit rate', value: num(v.rankHitRate, 3), info: <p>Share of bars with rank IC above 0.</p> },
         { label: 'Rank IC IR', value: num(v.rankIcir, 3) },
         { label: 'Mean Pearson IC', value: num(v.meanPearsonIc, 4) },
         { label: 'Rank IC std', value: num(v.rankIcStandardDeviation, 3) },
-        { label: 'Observations', value: int(v.observations), note: `min ${int(v.minimumObservations)}`, tone: weak ? 'weak' : 'neutral', toneReason: weak ? 'below min' : undefined },
-        { label: 'Trials counted', value: fam ? int(fam.totalExecutions) : '—', note: fam ? `${fam.uniqueSourceTrials} unique` : 'no ledger' },
+        { label: 'Observations', value: int(v.observations), info: <p>Minimum required: {int(v.minimumObservations)} observations.</p>, tone: weak ? 'weak' : 'neutral', toneReason: weak ? 'below min' : undefined },
+        { label: 'Trials counted', value: fam ? int(fam.totalExecutions) : '—', info: <p>{fam ? `${int(fam.uniqueSourceTrials)} unique candidate sources among ${int(fam.totalExecutions)} executions.` : 'No Session ledger records the trials.'}</p> },
       ],
     })
   }
@@ -91,7 +91,7 @@ function metricGroups(fe: RunDiagnostics, project: ProjectSnapshot, showTest: bo
         { label: 'HAC t', value: num(t.hacTStatistic, 2) },
         { label: 'HAC p', value: num(t.hacNormalPValue, 3) },
         { label: 'Hit rate', value: num(t.rankHitRate, 3) },
-        { label: 'Observations', value: int(t.observations), note: `min ${int(t.minimumObservations)}` },
+        { label: 'Observations', value: int(t.observations), info: <p>Minimum required: {int(t.minimumObservations)} observations.</p> },
       ],
     })
   }
@@ -137,8 +137,8 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
   ]
   return (
     <>
-      <VerdictBar tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'} word={VERDICT_WORD[verdict]} reasons={topReasons(reasons).map((r) => ({ tone: r.tone === 'bad' ? 'bad' : 'info', text: r.text, field: r.field }))}>
-        {verdictSentence(fe, adjustment, verdict)}
+      <VerdictBar tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'} word={VERDICT_WORD[verdict]} reasons={topReasons(reasons).map((r) => ({ tone: r.tone === 'bad' ? 'bad' : 'info', text: r.text, field: r.field }))} detail={verdictSentence(fe, adjustment, verdict)}>
+        {verdictClause(fe, verdict)}
       </VerdictBar>
       <IcByHorizonCard study={fe} table={false} />
       <MetricGrid groups={metricGroups(fe, project, showTest)} hiddenNote={showTest ? undefined : TEST_HIDDEN_NOTE} />

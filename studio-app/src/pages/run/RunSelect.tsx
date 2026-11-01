@@ -6,7 +6,8 @@ export function runLabel(run: RunRow): string {
   return `${when(run.startedAt)} · ${run.subject.name} · ${run.primaryMetric} ${num(run.primaryValue, 4)} · ${run.status}`
 }
 
-export function RunSelect({ label, runs, value, onChange, allowEmpty, bar }: { label: string; runs: RunRow[]; value: string | undefined; onChange: (id: string) => void; allowEmpty?: boolean; bar?: boolean }) {
+/** `compact`: timestamp and status only. The headline number then sits in the page's stat chips, not in the option text. */
+export function RunSelect({ label, runs, value, onChange, allowEmpty, bar, compact }: { label: string; runs: RunRow[]; value: string | undefined; onChange: (id: string) => void; allowEmpty?: boolean; bar?: boolean; compact?: boolean }) {
   const ordered = [...runs].sort((x, y) => y.startedAt.localeCompare(x.startedAt))
   return (
     <label className={bar ? 'runsel runsel--bar' : 'runsel'}>
@@ -16,7 +17,7 @@ export function RunSelect({ label, runs, value, onChange, allowEmpty, bar }: { l
         {value && !ordered.some((run) => run.id === value) && <option value={value}>Not a Run of this Project</option>}
         {ordered.map((run) => (
           <option key={run.id} value={run.id}>
-            {runLabel(run)}
+            {compact ? `${when(run.startedAt)} UTC · ${run.status}` : runLabel(run)}
           </option>
         ))}
       </select>

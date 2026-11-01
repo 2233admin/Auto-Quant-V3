@@ -1,11 +1,12 @@
 /* Workbench component kit. Colours, type, spacing and radius come from design/tokens.css only. */
 
 /* ---- Shell ---- */
-.wb-shell { display: block; padding: var(--space-3); }
+.wb-shell { display: block; padding: var(--space-3); max-width: 1800px; margin-inline: auto; }
 .wb-col { min-width: 0; margin-bottom: var(--space-3); }
 @media (min-width: 1000px) {
   html:has(.wb-shell), body:has(.wb-shell) { overflow: hidden; }
   .wb-shell { display: grid; grid-template-columns: minmax(340px, var(--wb-l, 40fr)) minmax(0, var(--wb-r, 60fr)); gap: var(--space-3); height: calc(100dvh - 52px); }
+  .wb-shell.is-single { grid-template-columns: minmax(0, 1fr); }
   .wb-col { min-height: 0; margin-bottom: 0; display: flex; flex-direction: column; }
   .wb-col > .wb-pane { flex: 1; min-height: 0; }
 }
@@ -134,10 +135,17 @@
 .wb-metric-h { margin: 0 0 var(--space-2); font: 600 12px/18px var(--font-sans); color: var(--muted); }
 .wb-metric-note { margin: 0; }
 .wb-metrics .ct-label-text { white-space: normal; overflow-wrap: break-word; }
-.wb-metrics .ctg { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+/* Fixed columns: 2 below 1280px, 3 from 1280px; the last row is closed with empty pad cells (MetricGrid renders both sets, CSS shows one). */
+.wb-metrics .ctg, .wb-metrics .has-long .ctg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wb-metrics .ct-pad { background: var(--bg); }
+.wb-metrics .ct-pad3 { display: none; }
+@media (min-width: 1280px) {
+  .wb-metrics .ctg, .wb-metrics .has-long .ctg { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .wb-metrics .ct-pad3 { display: block; }
+  .wb-metrics .ct-pad2 { display: none; }
+}
 .wb-metrics .ct-right { max-width: none; }
 .wb-metrics .ct-label-text { overflow-wrap: normal; }
-.wb-metrics .has-long .ctg { grid-template-columns: repeat(auto-fit, minmax(max(260px, 48%), 1fr)); }
 
 /* ---- Fact chips ---- */
 .wb-facts-wrap { display: grid; gap: var(--space-2); min-width: 0; container-type: inline-size; }
@@ -154,3 +162,53 @@
 .is-compact .wb-fact dd { font: 500 12px/16px var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
 .is-compact .wb-fact dd.mono { font-family: var(--font-mono); font-size: 11.5px; }
 @container (max-width: 279px) { .is-compact .wb-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---- Stat chips: headline numbers beside the Run selector ---- */
+.wb-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--space-3); margin: 0; min-width: 0; font: var(--type-small); }
+.wb-stats-scope { font: 400 10px/16px var(--font-sans); text-transform: uppercase; letter-spacing: .04em; }
+.wb-stat { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; }
+.wb-stat dt { color: var(--muted); font: 400 11px/16px var(--font-sans); }
+.wb-stat dd { margin: 0; font: 600 13px/20px var(--font-mono); color: var(--text); }
+.wb-stat + .wb-stat { padding-left: var(--space-3); border-left: 1px solid var(--line-strong); }
+
+/* ---- Result bar: Run selector + stat chips in one row ---- */
+.wb-resultbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); width: 100%; min-width: 0; padding: var(--space-1) 0; }
+.wb-resultbar > .runsel { flex: 1 1 240px; min-width: 0; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
+.wb-resultbar > .runsel select { min-width: 0; width: 100%; }
+.wb-resultbar > .wb-stats { flex: 0 1 auto; }
+.wb-resultbar > .wb-split { flex: none; display: inline-flex; align-items: center; gap: var(--space-2); font: var(--type-small); color: var(--muted); }
+
+/* Result action row under the selector: left-aligned labelled buttons, links look like quiet buttons. */
+.wb-actions--start .wb-actions-row { margin-left: 0; justify-content: flex-start; }
+.wb-actions-row a.abtn { display: inline-flex; align-items: center; text-decoration: none; }
+.wb-actions-row a.abtn:hover { background: var(--hover); color: var(--text); }
+.wb-actions-row a.abtn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.wb-pane-status > .wb-actions { display: block; }
+.wb-pane-status > .wb-actions > .wb-actions-row { margin-bottom: 2px; }
+.wb-pane-status { display: grid; gap: var(--space-1); }
+
+/* A text label beside an icon appears only when the card is wide enough; the icon button keeps its aria-label either way. */
+.wb-btn-text { display: none; margin-left: 6px; }
+@container (min-width: 460px) { .wb-btn-text { display: inline; } }
+
+/* A disabled primary stays visibly the primary: solid outline and weight, not a dashed ghost. */
+.wb-actions .abtn--primary[aria-disabled='true'] { border-style: solid; border-color: var(--muted); color: var(--muted); font-weight: 600; }
+
+/* ---- Fact chips: row variant ---- */
+.wb-chiprow { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0; }
+.wb-chip { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 2px var(--space-2); border: 1px solid var(--line); background: var(--bg); min-width: 0; }
+.wb-chip dt { flex: none; font: 400 10px/16px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.wb-chip dd { margin: 0; min-width: 0; font: 500 12px/16px var(--font-sans); overflow-wrap: anywhere; }
+.wb-chip dd.mono { font-family: var(--font-mono); font-size: 11.5px; }
+.wb-chip dd a { color: inherit; }
+.wb-facts-more { display: grid; gap: var(--space-2); font: var(--type-small); }
+.wb-facts-more[hidden] { display: none; }
+.wb-facts-tools { margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-3); }
+.wb-facts-head .wb-link { font: var(--type-small); color: var(--muted); }
+.wb-facts-head .wb-link:hover { color: var(--text); }
+.wb-facts-more .wb-fact dd { overflow-wrap: anywhere; }
+.wb-facts-more .wb-fact { padding: 4px var(--space-2); }
+
+/* Result action row: visible button outlines so the links read as buttons. */
+.wb-actions--start .abtn--quiet { border-color: var(--line-strong); color: var(--text); }
+.wb-actions--start .abtn--quiet[aria-disabled='true'] { color: var(--faint); border-color: var(--line); }

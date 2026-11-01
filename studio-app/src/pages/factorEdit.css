@@ -52,3 +52,4 @@
   .fe-scroll { overflow: visible; }
   .fe-cand { min-height: 320px; }
 }
+.fe-sid { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-2) 0 0; overflow-wrap: anywhere; }

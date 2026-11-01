@@ -7,10 +7,11 @@ const GLYPH: Record<VerdictTone, GlyphKind> = { bad: 'error', ok: 'supported', w
 export type VerdictReason = { tone: 'good' | 'bad' | 'info'; text: ReactNode; field?: string }
 
 /**
- * One-line verdict: tone pill (word + glyph, never colour alone) and a sentence truncated to one line. "More" shows the
- * full sentence and the `reasons` list (same tones as VerdictBand / HeroLine).
+ * One-line verdict: tone pill (word + glyph, never colour alone) and a clause of about 60 characters (the numbers that
+ * decide it). "More" shows `detail` (the long explanation, default: the clause) and the `reasons` list (same tones as
+ * VerdictBand / HeroLine).
  */
-export function VerdictBar({ tone, word, children, reasons = [] }: { tone: VerdictTone; word: string; children: ReactNode; reasons?: VerdictReason[] }) {
+export function VerdictBar({ tone, word, children, detail, reasons = [] }: { tone: VerdictTone; word: string; children: ReactNode; detail?: ReactNode; reasons?: VerdictReason[] }) {
   const [open, setOpen] = useState(false)
   const id = useId()
   return (
@@ -20,13 +21,13 @@ export function VerdictBar({ tone, word, children, reasons = [] }: { tone: Verdi
           <Glyph kind={GLYPH[tone]} signal={tone === 'bad'} />
           {word}
         </span>
-        {!open && <span className="wb-verdict-text">{children}</span>}
+        <span className="wb-verdict-text" title={typeof children === 'string' ? children : undefined}>{children}</span>
         <button type="button" className="wb-link" aria-expanded={open} aria-controls={id} onClick={() => setOpen((v) => !v)}>
           {open ? 'Less' : 'More'}
         </button>
       </div>
       <div id={id} className="wb-verdict-more" hidden={!open}>
-        <p>{children}</p>
+        <p>{detail ?? children}</p>
         {reasons.length > 0 && (
           <ul>
             {reasons.map((r, i) => (

@@ -17,6 +17,7 @@ import { gatedSplits } from './testGate'
 import './factorEdit.css'
 
 const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '—')
+const btnText = (text: string) => <span className="wb-btn-text">{text}</span>
 const SAVE_ICON = (
   <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.5">
     <path d="M3 2h8l2 2v10H3z" />
@@ -37,7 +38,7 @@ const HYP_MAX = 500
 type Tested = Pick<FactorDiagnostics, 'run' | 'dataset' | 'predictionUniverse' | 'protocol' | 'summary'>
 
 /** The Study-locked inputs as read-only facts (shown under one lock and one "?"). */
-function lockedFacts(study: Tested): Fact[] {
+export function lockedFacts(study: Tested): Fact[] {
   const { protocol } = study
   const windows = protocol.splits.splits
   const context = protocol.horizons.filter((h) => h !== protocol.primaryHorizon).sort((a, b) => a - b)
@@ -50,6 +51,33 @@ function lockedFacts(study: Tested): Fact[] {
     ...gatedSplits(study, SPLITS).map((sp) => ({ label: SPLIT_LABEL[sp], value: range(windows[sp].start, windows[sp].end) })),
   ]
 }
+
+/** The study card's chip row (what a reader needs at a glance) and the rest behind "Details". The full list is `lockedFacts`. */
+function studyFacts(study: Tested): { chips: Fact[]; more: Fact[] } {
+  const { protocol } = study
+  const windows = protocol.splits.splits
+  const context = protocol.horizons.filter((h) => h !== protocol.primaryHorizon).sort((a, b) => a - b)
+  const assets = study.predictionUniverse.predictionAssets ?? []
+  const shown = gatedSplits(study, SPLITS)
+  const range = (a: string | null | undefined, b: string | null | undefined) => `${day(a)} → ${day(b)}`
+  const chips: Fact[] = [
+    { label: 'Study', value: study.run.studyId, mono: true },
+    { label: 'Horizon', value: `${protocol.primaryHorizon}-bar${context.length > 0 ? ` (+${context.join(', ')})` : ''}` },
+    { label: 'Universe', value: `${assets.length || '—'} ${assets.length === 1 ? 'asset' : 'assets'}` },
+    shown.includes('test')
+      ? { label: 'Val / test from', value: `${day(windows.validation.start)} / ${day(windows.test.start)}`, mono: true }
+      : { label: 'Validation from', value: day(windows.validation.start), mono: true },
+  ]
+  const more: Fact[] = [
+    { label: 'Assets', value: `${assets.join(', ') || '—'}${study.predictionUniverse.evaluationMode ? ` · ${study.predictionUniverse.evaluationMode}` : ''}`, mono: true },
+    { label: 'Dataset', value: study.dataset.id, mono: true },
+    ...shown.map((sp) => ({ label: SPLIT_LABEL[sp], value: range(windows[sp].start, windows[sp].end) })),
+  ]
+  return { chips, more }
+}
+
+/** "Blocked: Session session-2026... candidate does not differ from the leader" -> "Blocked: candidate does not differ from the leader". The id stays in the tooltip and behind Details. */
+const shortBlock = (text: string) => text.replace(/(Session )\S+ /, '')
 
 /** A line of text that never wraps: the full text sits in the tooltip, and "more" opens it in place. */
 function OneLine({ kind, children, text, action }: { kind?: 'error' | 'ok' | 'info'; children?: ReactNode; text: string; action?: ReactNode }) {
@@ -267,11 +295,14 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
   const trialM = (fam?.uniqueSourceTrials ?? 0) + 1
   const trialTitle = 'Each run counts as a trial and cannot be removed. The confirm step shows the exact trial N of M and the selection adjustment.'
   const mainReason = noSession ? startBlock : reason
+  const { chips, more } = studyFacts(study)
   const on = state.mode === 'on'
 
   /** An enabled button, or one disabled WITH its reason (the kit's ActionButton contract). */
   const button = (label: ReactNode, onClick: () => void, blocked: string | null, title?: string, ariaLabel?: string): ActionButton =>
-    blocked === null ? { label, onClick, title, ariaLabel } : { label, title, ariaLabel, disabled: true, disabledReason: blocked }
+    blocked === null
+      ? { label, onClick, title, ariaLabel }
+      : { label, title, ariaLabel, disabled: true, disabledReason: shortBlock(blocked), ...(shortBlock(blocked) !== blocked ? { reasonTitle: blocked } : {}) }
   const primary = button(
     noSession ? 'Start session' : phase === 'saving' ? 'Saving…' : phase === 'checking' ? 'Checking…' : 'Run analysis',
     () => (noSession ? setStartOpen(true) : void runAnalysis()),
@@ -288,8 +319,8 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
           : null
   const checkReason = !editable ? 'Nothing to check: the candidate is read-only.' : busy ? 'Wait for the current step to finish.' : null
   const secondary: ActionButton[] = [
-    button(SAVE_ICON, () => void save(), saveReason, 'Save the candidate', 'Save'),
-    button(CHECK_ICON, () => void checkAfterSave(), checkReason, dirty ? 'Check saves your edits first, then checks the saved file.' : 'Check the saved candidate', 'Check'),
+    button(<>{SAVE_ICON}{btnText('Save')}</>, () => void save(), saveReason, 'Save the candidate', 'Save'),
+    button(<>{CHECK_ICON}{btnText('Check')}</>, () => void checkAfterSave(), checkReason, dirty ? 'Check saves your edits first, then checks the saved file.' : 'Check the saved candidate', 'Check'),
     ...(retry && !noSession ? [button('Retry', catalog.reload, null)] : []),
     ...(!noSession && activeJob && activeJobId !== activeJob ? [button('Progress', () => setActiveJobId(activeJob), null, 'Show the progress of the running job')] : []),
   ]
@@ -315,16 +346,6 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
             <ActionRow
               primary={primary}
               secondary={noSession ? [] : secondary}
-              chip={
-                noSession ? undefined : (
-                  <span className="fe-trial-chip" title={trialTitle} aria-label={`Trial ${trialN} of ${trialM}. ${trialTitle}`}>
-                    <span aria-hidden="true">
-                      <span className="fe-trial-lbl">Trial </span>
-                      {trialN}/{trialM}
-                    </span>
-                  </span>
-                )
-              }
             />
           ) : undefined
         }
@@ -347,8 +368,25 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
                 <FactChips
                   label="Fixed by the Study"
                   locked
+                  variant="row"
                   info={<p>Fixed by the Study so results stay comparable. The analysis window, horizon, splits and universe cannot be changed here; only the candidate source and the hypothesis can.</p>}
-                  facts={lockedFacts(study)}
+                  facts={chips}
+                  more={more}
+                  aside={
+                    on && !noSession ? (
+                      <span className="fe-trial-chip" title={trialTitle} aria-label={`Trial ${trialN} of ${trialM}. ${trialTitle}`}>
+                        <span aria-hidden="true">Trial {trialN}/{trialM}</span>
+                      </span>
+                    ) : undefined
+                  }
+                  moreExtra={
+                    (sessionId ?? loadSession) ? (
+                      <p className="fe-sid small">
+                        <span className="muted">Session</span> <span className="mono" translate="no">{sessionId ?? loadSession}</span>{' '}
+                        <CopyButton text={sessionId ?? loadSession ?? ''} label="Copy id" />
+                      </p>
+                    ) : undefined
+                  }
                 />
 
                 <section className="fe-cand" aria-labelledby="fe-cand">

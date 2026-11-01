@@ -159,6 +159,22 @@ export function verdictSentence(study: FactorDiagnostics, adjustment: Adjustment
   return `${out}.`
 }
 
+const ic3 = (v: number) => `${v < 0 ? '-' : '+'}${Math.abs(v).toFixed(3)}`
+
+/**
+ * The one-line form of the verdict, about 60 characters: the two numbers that decide it and the line they are held to
+ * ("Not established: validation rank IC +0.077, HAC t 1.52 < 1.96"). The long explanation is `verdictSentence`.
+ */
+export function verdictClause(study: FactorDiagnostics, verdict: Verdict): string {
+  const v = study.summary.validation
+  const line = study.factorQualification.semantics?.diagnosticThresholds?.minimumPositiveHacTStatistic
+  const lead = verdict === 'fail' ? 'Does not hold' : verdict === 'pass' ? 'Holds' : 'Not established'
+  if (!v || !finite(v.meanRankIc)) return `${lead}: no validation summary published`
+  const t = v.hacTStatistic
+  const tPart = finite(t) ? `HAC t ${num(t, 2)}${finite(line) ? ` ${t >= line ? '≥' : '<'} ${num(line, 2)}` : ''}` : 'HAC t undefined'
+  return `${lead}: validation rank IC ${ic3(v.meanRankIc)}, ${tPart}`
+}
+
 const TONE_RANK = { bad: 0, info: 1, good: 2 } as const
 
 /** At most three bullets: the server's own explanation first, then failing reasons, then the rest. The full list lives in the Checks tab. */
@@ -192,8 +208,8 @@ const KIT_TONE = { pass: 'ok', fail: 'bad', inconclusive: 'warn' } as const
 export function FactorVerdict({ study, adjustment }: { study: FactorDiagnostics; adjustment: Adjustment | undefined }) {
   const { verdict, reasons } = buildVerdict(study, adjustment)
   return (
-    <VerdictBar tone={KIT_TONE[verdict]} word={VERDICT_WORD[verdict]} reasons={topReasons(reasons)}>
-      {verdictSentence(study, adjustment, verdict)}
+    <VerdictBar tone={KIT_TONE[verdict]} word={VERDICT_WORD[verdict]} reasons={topReasons(reasons)} detail={verdictSentence(study, adjustment, verdict)}>
+      {verdictClause(study, verdict)}
     </VerdictBar>
   )
 }
