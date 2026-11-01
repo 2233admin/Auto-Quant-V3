@@ -4,6 +4,8 @@ import { useTheme } from './design/theme'
 import { useWidth } from './design/useWidth'
 import { Notice } from './Notice'
 import { Projects } from './pages/Projects'
+import { AttentionPage } from './pages/Attention'
+import { SettingsPage } from './pages/Settings'
 import { EventStudyPage } from './pages/EventStudy'
 import { FactorPage } from './pages/Factor'
 import { ProjectPage, useProject } from './pages/Project'
@@ -49,40 +51,40 @@ export default function App() {
   const projectCrumb = (id: string) => ({ label: known?.name ?? id, data: true })
   const crumbs: Crumb[] =
     route.view === 'project'
-      ? [{ label: 'Projects', href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
+      ? [{ label: 'Ideas', href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
       : route.view === 'event-study'
         ? [
-            { label: 'Projects', href: routeHref({ view: 'projects' }) },
+            { label: 'Ideas', href: routeHref({ view: 'projects' }) },
             { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
             { label: 'Price event study' },
           ]
         : route.view === 'run' || route.view === 'compare'
           ? [
-              { label: 'Projects', href: routeHref({ view: 'projects' }) },
+              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'run' ? 'Run' : 'Compare Runs' },
             ]
         : route.view === 'allocation' || route.view === 'rl'
           ? [
-              { label: 'Projects', href: routeHref({ view: 'projects' }) },
+              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'rl' ? 'Governed RL policy' : 'Strategic allocation' },
             ]
         : route.view === 'bookrisk' || route.view === 'bookstress'
           ? [
-              { label: 'Projects', href: routeHref({ view: 'projects' }) },
+              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'bookrisk' ? 'Book Risk' : 'Reported-book path stress' },
             ]
         : route.view === 'portfolio'
           ? [
-              { label: 'Projects', href: routeHref({ view: 'projects' }) },
+              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: 'Portfolio' },
             ]
         : route.view === 'factor'
           ? [
-              { label: 'Projects', href: routeHref({ view: 'projects' }) },
+              { label: 'Ideas', href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: 'Factor evidence' },
             ]
@@ -90,10 +92,16 @@ export default function App() {
             ? route.view === 'tuning' && route.id
               ? [{ label: LIBRARY_TITLE.tuning, href: routeHref({ view: 'tuning' }) }, { label: (data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id), data: true }]
               : [{ label: LIBRARY_TITLE[route.view] }]
-            : [{ label: 'Projects' }]
+            : route.view === 'attention'
+              ? [{ label: 'Attention' }]
+              : route.view === 'settings'
+                ? [{ label: 'Settings' }]
+                : [{ label: 'Ideas' }]
   document.title =
     route.view === 'projects'
       ? 'AutoQuant Studio'
+      : route.view === 'attention' || route.view === 'settings'
+        ? `${route.view === 'attention' ? 'Attention' : 'Settings'} · AutoQuant Studio`
       : isLibraryRoute(route)
         ? `${LIBRARY_TITLE[route.view]} · AutoQuant Studio`
       : `${route.view === 'event-study' ? 'Price event study · ' : route.view === 'factor' ? 'Factor evidence · ' : route.view === 'portfolio' ? 'Portfolio · ' : route.view === 'bookrisk' ? 'Book Risk · ' : route.view === 'bookstress' ? 'Reported-book path stress · ' :route.view === 'allocation' ? 'Strategic allocation · ' : route.view === 'rl' ? 'Governed RL policy · ' : route.view === 'run' ? 'Run · ' : route.view === 'compare' ? 'Compare Runs · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
@@ -103,9 +111,13 @@ export default function App() {
     page = <WorkbenchGallery />
   } else if (isLibraryRoute(route)) {
     page = <LibraryPage route={route} workspace={data.workspace} go={go} />
+  } else if (route.view === 'attention') {
+    page = <AttentionPage workspace={data.workspace} />
+  } else if (route.view === 'settings') {
+    page = <SettingsPage workspace={data.workspace} />
   } else if (route.view === 'projects') {
     page = data.workspace ? (
-      <Projects workspace={data.workspace} freshness={<Updated data={data} />} error={data.error} />
+      <Projects workspace={data.workspace} freshness={<Updated data={data} />} error={data.error} go={go} />
     ) : (
       <div className="pg">{data.error ? <Notice kind="error" label="Error" title="Could not load the Workspace." subtitle={data.error} /> : <Loading label="Loading Workspace…" minHeight={240} />}</div>
     )
@@ -137,7 +149,7 @@ export default function App() {
       <div className="pg">
         <Notice kind="error" label="Error" title="Could not load this Project." subtitle={project.message} />
         <p>
-          <a href={routeHref({ view: 'projects' })}>Back to Projects</a>
+          <a href={routeHref({ view: 'projects' })}>Back to Ideas</a>
         </p>
       </div>
     )

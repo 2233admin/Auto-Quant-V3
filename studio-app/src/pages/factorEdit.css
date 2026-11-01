@@ -53,3 +53,11 @@
   .fe-cand { min-height: 320px; }
 }
 .fe-sid { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-2) 0 0; overflow-wrap: anywhere; }
+
+/* Hypothesis first: a labelled two-line field with the same border weight as the code field. */
+.fe-hypo { flex: none; display: grid; gap: 4px; }
+.fe-hypo-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+.fe-hypo-t { display: block; width: 100%; resize: none; padding: 6px var(--space-3); line-height: 20px; font: var(--type-body); }
+.fe-expand { flex: none; font: var(--type-small); color: var(--muted); }
+.fe-scroll.is-expanded .fe-cand { min-height: 0; }
+.fe-cand-head .fe-h { flex: none; white-space: nowrap; }

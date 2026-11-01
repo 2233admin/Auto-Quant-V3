@@ -155,6 +155,25 @@ const ICONS = {
       </>
     ),
   },
+  attention: {
+    box: 16,
+    body: (
+      <>
+        <path d="M8 2.5l6 10.5H2z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+        <path d="M8 6.8v3M8 11.4v.1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      </>
+    ),
+  },
+  settings: {
+    box: 16,
+    body: (
+      <>
+        <path d="M2.5 5h6M12 5h1.5M2.5 11h1.5M7.5 11h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        <circle cx="10.2" cy="5" r="1.7" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <circle cx="5.8" cy="11" r="1.7" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      </>
+    ),
+  },
   lock: {
     box: 14,
     body: (

@@ -97,6 +97,32 @@ probes Git or package metadata independently. See
 The default bind is intentionally loopback-only. V1 has no authentication.
 Binding `--host` to a non-loopback address is an explicit operator decision.
 
+## Navigation and home
+
+The sidebar is organised by task. At the top is **Ideas** (the home page, with a
+count), then the libraries **Factors**, **Strategies**, **Runs** and **Tuning**.
+Under Ideas the sidebar lists up to three recently opened Projects; the list is
+kept in the browser's local storage and is never sent to the server. Fixed at the
+bottom are **Attention** (with a count) and **Settings**. The theme toggle stays
+in the top bar. One Project is one idea, so a card or row title is the Project
+name; the route key `?view=projects` is unchanged so existing links still work.
+
+**Ideas** shows a one-row status strip (ideas, need attention, immutable Runs,
+last Run) above a table with one row per Project: verdict, headline metric,
+latest Run, trials counted and the next step from the Project brief. Projects
+that need attention come first, then the most recent Run. **New idea** opens a
+dialog that explains what it would create; its Create button stays disabled
+until a `project.create` action exists, and the dialog gives the
+`aq project create` command to copy.
+
+**Attention** (`?view=attention`) lists Projects that do not verify and any
+Workspace diagnostics, with the reason; with none it says nothing needs
+attention. **Settings** (`?view=settings`) is read-only: whether actions are on
+and how to enable them (`aq studio serve --allow-actions`), the action catalog,
+the token state (the token itself is never shown) and the audit log location;
+the Workspace path and Harness identity; the fixed research rules; and a link
+to the Legacy Studio.
+
 ## What the page shows
 
 The first viewport prioritizes:

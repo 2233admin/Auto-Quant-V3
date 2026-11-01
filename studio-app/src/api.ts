@@ -18,13 +18,13 @@ export type ProjectSummary = {
   externalHoldout: HoldoutState
 }
 
-export type Harness = { id: string; version: string; commit: string | null; dirty: boolean }
+export type Harness = { id: string; version: string; commit: string | null; dirty: boolean; sourceHash?: string; python?: string; buildProvenance?: string }
 
 export type WorkspaceSummary = {
   kind: 'autoquant-studio-workspace-summary'
   generatedAt: string
   harness: Harness
-  source: { scope: string; rootDir: string; workspace: { name: string } | null }
+  source: { scope: string; rootDir: string; workspace: { name: string; rootDir?: string; projectsDir?: string; defaultProject?: string; configurationPath?: string } | null }
   valid: boolean
   diagnostics: { path?: string; code?: string; message?: string }[]
   projects: ProjectSummary[]

@@ -112,12 +112,12 @@ export function TopBar({ crumbs, data, theme, onTheme, onSearch }: Props) {
         <Icon name="search" />
       </button>
       <button type="button" className="top-button top-settings" aria-haspopup="dialog" onClick={() => setSettings(true)}>
-        Settings
+        Display
       </button>
-      <Modal open={settings} onClose={() => setSettings(false)} label="Settings" className="sheet">
+      <Modal open={settings} onClose={() => setSettings(false)} label="Display" className="sheet">
         <div className="sheet-body">
           <div className="sheet-head">
-            <h2>Settings</h2>
+            <h2>Display</h2>
             <button type="button" className="top-button" onClick={() => setSettings(false)}>
               Close
             </button>

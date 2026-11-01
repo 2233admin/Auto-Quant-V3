@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { type FactorDiagnostics, type ProjectSnapshot } from '../api'
 import { ACTIONS_OFF_COPY, useActions } from '../actions/ActionsContext'
 import { errorCopy } from '../actions/client'
@@ -171,7 +171,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
   const [conflict, setConflict] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [startOpen, setStartOpen] = useState(false)
-  const hypRef = useRef<HTMLInputElement>(null)
+  const hypRef = useRef<HTMLTextAreaElement>(null)
   const ids = { hyp: useId(), hypNote: useId() }
 
   const wantsLoad = state.mode === 'off' ? !!loadSession : state.mode === 'on' && !!sessionId
@@ -290,6 +290,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
   const canStart = noSession && startBlock === null
 
   const [tab, setTab] = useState<'candidate' | 'history'>('candidate')
+  const [expanded, setExpanded] = useState(false)
   const integrity = project.sessions.find((x) => (x.session?.id ?? x.id) === (sessionId ?? loadSession))?.selectionIntegrity
   const trialN = (integrity?.candidateTrials ?? fam?.totalExecutions ?? 0) + 1
   const trialM = (fam?.uniqueSourceTrials ?? 0) + 1
@@ -297,6 +298,15 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
   const mainReason = noSession ? startBlock : reason
   const { chips, more } = studyFacts(study)
   const on = state.mode === 'on'
+  const canRun = on && !noSession && reason === null && !busy
+  /** Ctrl+Enter (or Cmd+Enter) in the hypothesis or the editor starts the same flow as Run analysis, when that button is enabled. */
+  const runShortcut = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey)) return
+    event.preventDefault()
+    event.stopPropagation()
+    if (canRun) void runAnalysis()
+  }
+  const hypoVisible = on && !noSession
 
   /** An enabled button, or one disabled WITH its reason (the kit's ActionButton contract). */
   const button = (label: ReactNode, onClick: () => void, blocked: string | null, title?: string, ariaLabel?: string): ActionButton =>
@@ -359,12 +369,39 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
           </>
         }
       >
-        <div className="fe">
-          <div className="fe-scroll" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        <div className="fe" onKeyDown={(e) => { if (e.key === 'Escape' && expanded) setExpanded(false) }}>
+          <div className={`fe-scroll${expanded ? ' is-expanded' : ''}`} role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
             {tab === 'history' ? (
               <History project={project} sessionId={sessionId ?? loadSession} />
             ) : (
               <>
+                {hypoVisible && !expanded && (
+                  <div className="fe-hypo">
+                    <div className="fe-hypo-head">
+                      <label className="fe-h" htmlFor={ids.hyp}>What are you testing?</label>
+                      <span id={ids.hypNote} className={`fe-count small ${showHypProblem ? 'sig' : 'faint'}`} aria-live="polite">
+                        {hypothesis.length} / {HYP_MAX}
+                      </span>
+                    </div>
+                    <textarea
+                      id={ids.hyp}
+                      ref={hypRef}
+                      className="fe-input fe-hypo-t"
+                      rows={2}
+                      value={hypothesis}
+                      maxLength={HYP_MAX + 50}
+                      placeholder="A 20-bar lookback ranks next-bar returns better than 10-bar"
+                      title={showHypProblem ? hypProblem ?? undefined : `${HYP_MIN} to ${HYP_MAX} characters. Ctrl+Enter runs the analysis.`}
+                      aria-invalid={showHypProblem ? true : undefined}
+                      aria-describedby={ids.hypNote}
+                      onChange={(event) => setHypothesis(event.target.value)}
+                      onBlur={() => setTouched(true)}
+                      onKeyDown={runShortcut}
+                    />
+                  </div>
+                )}
+
+                {!expanded && (
                 <FactChips
                   label="Fixed by the Study"
                   locked
@@ -388,14 +425,20 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
                     ) : undefined
                   }
                 />
+                )}
 
                 <section className="fe-cand" aria-labelledby="fe-cand">
                   <div className="fe-cand-head">
-                    <h2 className="fe-h" id="fe-cand">Candidate</h2>
+                    <h2 className="fe-h" id="fe-cand">Candidate factor</h2>
                     {doc && editable && <span className={`fe-chip${dirty ? ' is-dirty' : ''}`} role="status">{dirty ? 'Unsaved changes' : 'Saved'}</span>}
                     {doc && editable && dirty && (
                       <button type="button" className="abtn abtn--quiet fe-reset" onClick={() => { setDraft(doc.source); setConflict(false) }}>
                         Reset to saved
+                      </button>
+                    )}
+                    {doc && (
+                      <button type="button" className="linklike fe-expand" aria-pressed={expanded} title={expanded ? 'Show the hypothesis and Study facts again (Esc)' : 'Give the editor the whole card'} onClick={() => setExpanded((v) => !v)}>
+                        {expanded ? 'Collapse' : 'Expand'}
                       </button>
                     )}
                     {doc && (
@@ -419,7 +462,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
                   )}
 
                   {doc ? (
-                    <div className="fe-code">
+                    <div className="fe-code" onKeyDownCapture={runShortcut}>
                       <CodeField rows={9} label="Candidate source" value={draft} onChange={setDraft} readOnly={!editable} />
                     </div>
                   ) : load.state === 'loading' ? (
@@ -436,34 +479,6 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
             )}
           </div>
 
-          {state.mode === 'on' && !noSession && tab === 'candidate' && (
-            <div className="fe-hyp">
-              <label className="fe-hyp-l" htmlFor={ids.hyp}>Hypothesis</label>
-              <input
-                id={ids.hyp}
-                ref={hypRef}
-                className="fe-input"
-                type="text"
-                value={hypothesis}
-                maxLength={HYP_MAX + 50}
-                placeholder="Hypothesis: what this candidate is meant to test"
-                title={showHypProblem ? hypProblem ?? undefined : `${HYP_MIN} to ${HYP_MAX} characters`}
-                aria-invalid={showHypProblem ? true : undefined}
-                aria-describedby={ids.hypNote}
-                onChange={(event) => setHypothesis(event.target.value)}
-                onBlur={() => setTouched(true)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    if (!reason && !busy) void runAnalysis()
-                  }
-                }}
-              />
-              <span id={ids.hypNote} className={`fe-count small ${showHypProblem ? 'sig' : 'faint'}`} aria-live="polite">
-                {hypothesis.length} / {HYP_MAX}
-              </span>
-            </div>
-          )}
         </div>
       </PaneCard>
 

@@ -19,13 +19,14 @@ export function Palette({ open, onClose, projects, go }: Props) {
   }, [open])
   const items = useMemo<Item[]>(() => {
     const all: Item[] = [
-      { group: 'Pages', label: 'Projects', detail: 'Overview', href: routeHref({ view: 'projects' }) },
+      { group: 'Pages', label: 'Ideas', detail: 'Home', href: routeHref({ view: 'projects' }) },
+      { group: 'Pages', label: 'Attention', detail: 'Needs a look', href: routeHref({ view: 'attention' }) },
+      { group: 'Pages', label: 'Settings', detail: 'Actions and Workspace', href: routeHref({ view: 'settings' }) },
       { group: 'Pages', label: 'Factor library', detail: 'Factors', href: routeHref({ view: 'factors' }) },
       { group: 'Pages', label: 'Strategy library', detail: 'Portfolio, RL, Allocation', href: routeHref({ view: 'strategies' }) },
       { group: 'Pages', label: 'Run history', detail: 'Runs', href: routeHref({ view: 'runs' }) },
       { group: 'Pages', label: 'Tuning tasks', detail: 'Sessions and trials', href: routeHref({ view: 'tuning' }) },
-      { group: 'Pages', label: 'Legacy Studio', detail: 'Only for lanes without a native page', href: '/legacy' },
-      ...projects.map((p) => ({ group: 'Projects', label: p.name, detail: p.id, href: routeHref({ view: 'project', id: p.id }) })),
+      ...projects.map((p) => ({ group: 'Ideas', label: p.name, detail: p.id, href: routeHref({ view: 'project', id: p.id }) })),
     ]
     const needle = query.trim().toLowerCase()
     return needle ? all.filter((i) => `${i.label} ${i.detail}`.toLowerCase().includes(needle)) : all

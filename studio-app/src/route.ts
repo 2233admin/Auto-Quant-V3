@@ -10,6 +10,8 @@ export type Route =
   | { view: 'factors' }
   | { view: 'runs' }
   | { view: 'strategies' }
+  | { view: 'attention' }
+  | { view: 'settings' }
   | { view: 'tuning'; id?: string }
   | { view: 'bookrisk'; id: string }
   | { view: 'bookstress'; id: string }
@@ -34,6 +36,8 @@ export function parseRoute(search: string, pathname = '/'): Route {
   if (p.get('view') === 'factors') return { view: 'factors' }
   if (p.get('view') === 'runs') return { view: 'runs' }
   if (p.get('view') === 'strategies') return { view: 'strategies' }
+  if (p.get('view') === 'attention') return { view: 'attention' }
+  if (p.get('view') === 'settings') return { view: 'settings' }
   if (p.get('view') === 'tuning') return id ? { view: 'tuning', id } : { view: 'tuning' }
   if (p.get('view') === 'bookrisk' && id) return { view: 'bookrisk', id }
   if (p.get('view') === 'bookstress' && id) return { view: 'bookstress', id }
@@ -57,7 +61,7 @@ export function parseRoute(search: string, pathname = '/'): Route {
 export function routeHref(route: Route): string {
   if (route.view === 'project') return `/?${new URLSearchParams({ view: 'project', id: route.id })}`
   if (route.view === 'portfolio') return `/?${new URLSearchParams({ view: 'portfolio', id: route.id })}`
-  if (route.view === 'factors' || route.view === 'runs' || route.view === 'strategies') return `/?${new URLSearchParams({ view: route.view })}`
+  if (route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'attention' || route.view === 'settings') return `/?${new URLSearchParams({ view: route.view })}`
   if (route.view === 'tuning') return `/?${new URLSearchParams(route.id ? { view: 'tuning', id: route.id } : { view: 'tuning' })}`
   if (route.view === 'bookrisk' || route.view === 'bookstress') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`
   if (route.view === 'allocation' || route.view === 'rl') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`
@@ -80,5 +84,5 @@ export function routeHref(route: Route): string {
 
 /** The Project a route belongs to, if any. */
 export function routeProjectId(route: Route): string | null {
-  return route.view === 'projects' || route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'tuning' ? null : route.id
+  return route.view === 'projects' || route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'tuning' || route.view === 'attention' || route.view === 'settings' ? null : route.id
 }

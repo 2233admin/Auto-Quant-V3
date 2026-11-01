@@ -319,6 +319,10 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
       ]
     : []
   const duration = typeof runRow?.durationMs === 'number' ? `${(runRow.durationMs / 1000).toFixed(1)} s` : undefined
+  // Which candidate this Run came from: the candidate source hash the Run publishes, and its trial number in the Session ledger (omitted when the ledger has no Experiment for this Run).
+  const trialOfRun = project.sessions.flatMap((x) => x.experiments ?? []).find((e) => e.runId === study.run.id)?.sequence
+  const sourceSha = study.run.sourceHash ? study.run.sourceHash.slice(0, 7) : null
+  const candidateNote = `${sourceSha ? ` · Candidate ${sourceSha}` : ''}${trialOfRun !== undefined ? ` · Trial ${trialOfRun}` : ''}`
   const runState = runRow ? (runRow.status === 'succeeded' ? 'done' : 'failed') : null
   const exportButton: ActionButton = testVisible
     ? { label: 'Export JSON', onClick: () => downloadJson(`${study.run.id}-factor-evidence.json`, study), title: 'Download the Factor evidence snapshot of this Run as JSON' }
@@ -352,7 +356,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
               {runState && runRow && (
                 <StatusLine
                   state={runState}
-                  text={runRow.status === 'succeeded' ? `Run succeeded · ${when(runRow.startedAt)} UTC` : `Run ${runRow.status} · ${when(runRow.startedAt)} UTC`}
+                  text={`${runRow.status === 'succeeded' ? 'Run succeeded' : `Run ${runRow.status}`} · ${when(runRow.startedAt)} UTC${candidateNote}`}
                   elapsed={duration}
                 />
               )}

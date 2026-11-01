@@ -37,7 +37,7 @@ kbd { font: 500 11px/16px var(--font-mono); color: var(--muted); border: 1px sol
 .brand { display: flex; align-items: center; gap: 9px; height: 32px; padding: 0 8px; font: 600 14px/1 var(--font-sans); color: var(--text); }
 .ws { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 8px 0 35px; margin-top: -4px; font-size: 12px; line-height: 18px; color: var(--faint); min-width: 0; }
 .demo { flex: none; font: 500 10px/16px var(--font-mono); letter-spacing: .04em; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 3px; padding: 0 4px; }
-.railfoot { margin-top: auto; display: grid; gap: 8px; padding: 10px; color: var(--faint); font-size: 12px; line-height: 18px; }
+.railfoot { margin-top: 0; display: grid; gap: 8px; padding: 10px; color: var(--faint); font-size: 12px; line-height: 18px; }
 .railfoot-demo { display: flex; gap: 8px; align-items: center; }
 .railgit { justify-self: start; color: var(--faint); text-decoration: none; }
 .railgit:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
@@ -61,6 +61,11 @@ kbd { font: 500 11px/16px var(--font-mono); color: var(--muted); border: 1px sol
 .nav .count { margin-left: auto; font-size: 12px; color: var(--faint); }
 .nav-short { display: none; }
 .pending { font-size: 11px; line-height: 16px; padding: 0 4px; border: 1px solid var(--line-strong); border-radius: 4px; color: var(--muted); }
+.raildirs { list-style: none; margin: 0 0 4px; padding: 0; }
+.raildirs .railitem { height: 26px; padding-left: 35px; font-size: 12.5px; }
+.railbottom { margin-top: auto; display: grid; gap: 2px; padding-top: 8px; border-top: 1px solid var(--line); }
+.railbottom + .railfoot { margin-top: 0; }
+.nav .count.is-alert { color: var(--signal); font-weight: 600; }
 .railhead { margin: 20px 10px 6px; font: 400 12px/18px var(--font-sans); color: var(--faint); }
 .raildirs ul { list-style: none; margin: 0; padding: 0; }
 .railitem { display: flex; gap: 9px; align-items: center; height: 30px; padding: 0 10px; border-radius: var(--radius-control); color: var(--muted); min-width: 0; font-size: 13px; }
