@@ -352,12 +352,15 @@ class JobRunner:
         output_cap: int = OUTPUT_CAP_BYTES,
         poll_interval: float = 0.05,
         environment: Callable[[], dict[str, str]] = scrubbed_environment,
+        project_lease: Callable[[str], Any] | None = None,
     ) -> None:
         self._audit = audit
         self._spawn = spawn
         self._cap = output_cap
         self._poll = poll_interval
         self._environment = environment
+        self._project_lease = project_lease
+        self._leases: dict[str, Any] = {}
         self._lock = threading.Lock()
         self._jobs: dict[str, Job] = {}
         self._order: list[str] = []
@@ -405,6 +408,8 @@ class JobRunner:
                     "studio.busy",
                     f"Project {project} already has active job {active}",
                 )
+            if self._project_lease is not None:
+                self._leases[project] = self._project_lease(project)
             self._active[project] = job.id
             self._jobs[job.id] = job
             self._order.append(job.id)
@@ -456,12 +461,17 @@ class JobRunner:
                     "studio.busy",
                     f"Project {project} already has active job {active}",
                 )
+            if self._project_lease is not None:
+                self._leases[project] = self._project_lease(project)
             self._active[project] = marker
         try:
             yield
         finally:
             with self._lock:
                 if self._active.get(project) == marker:
+                    lease = self._leases.pop(project, None)
+                    if lease is not None:
+                        lease.close()
                     del self._active[project]
 
     def cancel(self, job_id: str) -> Job | None:
@@ -476,6 +486,9 @@ class JobRunner:
     def _release(self, job: Job) -> None:
         with self._lock:
             if self._active.get(job.project) == job.id:
+                lease = self._leases.pop(job.project, None)
+                if lease is not None:
+                    lease.close()
                 del self._active[job.project]
 
     def _pump(self, stream: Any, buffer: bytearray, job: Job) -> None:
@@ -1038,8 +1051,19 @@ class ActionService:
             output_cap=output_cap,
             poll_interval=poll_interval,
             environment=environment,
+            project_lease=self._project_lease,
         )
         self.allowed_hosts: set[str] = set()
+
+    def _project_lease(self, identity: str):
+        from .project_leases import LeaseBusy, acquire_file_lease
+        project = self._load_projects().get(identity)
+        root = project.root_dir if project is not None else self.root
+        try:
+            return acquire_file_lease(root / ".autoquant" / "studio-research.lock", root)
+        except LeaseBusy:
+            raise ActionError(409, "studio.busy",
+                              "Another Studio job or candidate writer owns this Project") from None
 
     # -- request gates -------------------------------------------------------
 
@@ -1409,6 +1433,10 @@ class ActionService:
             return self.save_candidate(body)
         prepared = self._prepare(body)
         project, action_id, argv = prepared.project, prepared.action_id, prepared.argv
+        active = self.runner.active_job(project.manifest.id)
+        if active is not None:
+            raise ActionError(409, "studio.busy",
+                              f"Project {project.manifest.id} already has active job {active}")
         if body.get("confirm") is not True:
             raise ActionError(400, "studio.confirm-required", "confirm must be true")
         expected = self.command_hash(

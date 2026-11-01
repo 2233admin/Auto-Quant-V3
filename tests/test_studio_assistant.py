@@ -240,6 +240,27 @@ class AssistantTests(unittest.TestCase):
             service.bridge_tool({"sessionId": chat["id"], "bridgeToken": "known",
                                  "arguments": {"operation": "catalog", "params": {}}})
 
+    def test_close_cancels_turn_and_refuses_new_work(self):
+        entered = threading.Event()
+        def run(provider, prompt, cwd, emit, tool, stop, bridge):
+            entered.set()
+            stop.wait(3)
+        service = self.service(run)
+        chat = self.chat(service)
+        service.message({"sessionId": chat["id"], "content": "Start"})
+        self.assertTrue(entered.wait(2))
+        service.close(timeout=2)
+        self.assertFalse(service._active)
+        self.assertEqual("cancelled", service.view(chat["id"])["status"])
+        with self.assertRaisesRegex(ActionError, "closed"):
+            service.message({"sessionId": chat["id"], "content": "Again"})
+
+    def test_stale_lock_file_is_not_an_active_lock(self):
+        service = self.service()
+        chat = self.chat(service)
+        service._path(chat["id"]).with_suffix(".lock").write_bytes(b"0")
+        self.assertEqual(chat["id"], service.view(chat["id"])["id"])
+
     def test_mcp_unknown_tool_cannot_call_http(self):
         result = dispatch({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
                            "params": {"name": "shell", "arguments": {}}})
@@ -300,6 +321,32 @@ class AssistantHTTPTests(unittest.TestCase):
 
 
 class CandidateCommandTests(unittest.TestCase):
+    def test_cli_candidate_save_conflicts_with_studio_project_lease(self):
+        from autoquant.candidate_commands import candidate_access
+        from autoquant.studio import create_studio_server
+        from autoquant.sessions import start_session
+        from autoquant.studies import create_study
+        from tests.study_helpers import make_project, study_definition
+        with tempfile.TemporaryDirectory(prefix="aq-candidate-lock-") as directory:
+            workspace, project = make_project(directory)
+            create_study(project, study_definition())
+            session = start_session(project, "factor-quality")
+            server = create_studio_server(workspace.root_dir, port=0, allow_actions=True)
+            try:
+                previous = candidate_access(str(workspace.root_dir), project.manifest.id,
+                                            session.manifest["id"])
+                with server.actions.runner.hold(project.manifest.id):
+                    with self.assertRaisesRegex(ActionError, "Another Studio"):
+                        candidate_access(str(workspace.root_dir), project.manifest.id,
+                                         session.manifest["id"], source=previous["source"] + "\n",
+                                         base_sha256=previous["sha256"])
+                saved = candidate_access(str(workspace.root_dir), project.manifest.id,
+                                         session.manifest["id"], source=previous["source"] + "\n",
+                                         base_sha256=previous["sha256"])
+                self.assertTrue(saved["changed"])
+            finally:
+                server.server_close()
+
     def test_candidate_public_cli_uses_existing_confined_editor(self):
         import hashlib
         import io

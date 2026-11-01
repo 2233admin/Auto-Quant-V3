@@ -6,6 +6,7 @@ import { Notice } from './Notice'
 import { FactorLibrary } from './library/FactorLibrary'
 import { AttentionPage } from './pages/Attention'
 import { SettingsPage } from './pages/Settings'
+import { AssistantPage, AssistantDrawer, type AssistantContext } from './pages/Assistant'
 import { EventStudyPage } from './pages/EventStudy'
 import { FactorPage } from './pages/Factor'
 import { IdeaWorkbench } from './pages/IdeaWorkbench'
@@ -33,10 +34,16 @@ export default function App() {
   const data = useShellData()
   const [theme, setTheme] = useTheme()
   const [palette, setPalette] = useState(false)
+  const [askAssistant, setAskAssistant] = useState(false)
   const [ref, width] = useWidth<HTMLDivElement>()
   const compact = width > 0 && width < 1024
   const projectId = routeProjectId(route)
   const project = useProject(projectId ?? '', projectId ? data.updated : null)
+  const assistantContext: AssistantContext | null = route.view === 'factor'
+    ? { project: route.id, page: 'factor', ...(route.study ? { study: route.study } : {}), ...(route.run ? { run: route.run } : {}) }
+    : route.view === 'portfolio' ? { project: route.id, page: 'portfolio' } : null
+
+  useEffect(() => setAskAssistant(false), [route.view, projectId])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -52,7 +59,9 @@ export default function App() {
   const known = data.workspace?.projects.find((p) => p.id === projectId)
   const projectCrumb = (id: string) => ({ label: known?.name ?? id, data: true })
   const crumbs: Crumb[] =
-    route.view === 'project'
+    route.view === 'assistant'
+      ? [{ label: 'Assistant' }]
+      : route.view === 'project'
       ? [{ label: 'Factors', href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
       : route.view === 'event-study'
         ? [
@@ -100,7 +109,9 @@ export default function App() {
                 ? [{ label: 'Settings' }]
                 : [{ label: 'Factors' }]
   document.title =
-    route.view === 'projects'
+    route.view === 'assistant'
+      ? 'Assistant · AutoQuant Studio'
+      : route.view === 'projects'
       ? 'AutoQuant Studio'
       : route.view === 'attention' || route.view === 'settings'
         ? `${route.view === 'attention' ? 'Attention' : 'Settings'} · AutoQuant Studio`
@@ -111,6 +122,8 @@ export default function App() {
   let page
   if (new URLSearchParams(window.location.search).get('view') === 'kit') {
     page = <WorkbenchGallery />
+  } else if (route.view === 'assistant') {
+    page = <AssistantPage workspace={data.workspace} go={go} />
   } else if (isLibraryRoute(route)) {
     page = <LibraryPage route={route} workspace={data.workspace} go={go} />
   } else if (route.view === 'attention') {
@@ -176,6 +189,8 @@ export default function App() {
           </main>
       </FloatingShell>
       <TabBar route={route} data={data} />
+      {assistantContext && <button className="abtn assistant-ask" type="button" onClick={() => setAskAssistant(true)}>Ask Assistant</button>}
+      {askAssistant && assistantContext && <AssistantDrawer key={JSON.stringify(assistantContext)} workspace={data.workspace} context={assistantContext} onClose={() => setAskAssistant(false)} />}
       <Palette open={palette} onClose={() => setPalette(false)} projects={data.workspace?.projects ?? []} go={go} />
     </div>
     </ActionsProvider>

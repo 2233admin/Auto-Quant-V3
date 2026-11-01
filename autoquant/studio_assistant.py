@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+from .project_leases import LeaseBusy, acquire_file_lease
 from .holdouts import has_holdout_binding
 from .studio_actions import ActionError, _PopenHandle, scrubbed_environment
 
@@ -81,9 +82,12 @@ class AssistantService:
         self._lock = threading.RLock()
         self._active: dict[str, threading.Event] = {}
         self._leases: dict[str, Any] = {}
+        self._threads: dict[str, threading.Thread] = {}
+        self._closed = False
         self._bridges: dict[str, str] = {}
         self._ready: set[str] = set()
         self.origin: str | None = None
+        self._provider_cache: tuple[float, list] | None = None
 
     def _safe_path(self, path: Path) -> None:
         if not path.is_relative_to(self.root):
@@ -120,11 +124,10 @@ class AssistantService:
             lock = path.with_suffix(".lock")
             self._safe_path(lock)
             try:
-                fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-            except FileExistsError:
+                lease = acquire_file_lease(lock, self.root)
+            except LeaseBusy:
                 raise refuse("busy", "Conversation is being updated; retry") from None
             try:
-                os.close(fd)
                 if path.stat().st_size > MAX_STATE:
                     raise refuse("state-size", "Conversation exceeds its size limit")
                 state = json.loads(path.read_text(encoding="utf-8"))
@@ -133,7 +136,7 @@ class AssistantService:
                 if json.dumps(state, sort_keys=True) != before:
                     self._save(path, state)
             finally:
-                lock.unlink(missing_ok=True)
+                lease.close()
 
     def _save(self, path: Path, state: dict) -> None:
         self._safe_path(path)
@@ -162,12 +165,24 @@ class AssistantService:
             raise refuse("holdout", "Sealed holdout Projects are unavailable to Assistant", 403)
         return project
 
+    def provider_specs(self):
+        with self._lock:
+            if self._provider_cache is None or time.monotonic() - self._provider_cache[0] > 30:
+                self._provider_cache = (time.monotonic(), self._providers())
+            return self._provider_cache[1]
+
     def catalogue(self) -> dict:
         sessions = []
         self._safe_path(self.directory)
         if self.directory.is_dir():
-            for path in sorted(self.directory.glob("*.json"),
-                               key=lambda p: p.name, reverse=True)[:200]:
+            candidates = []
+            for path in self.directory.glob("*.json"):
+                try:
+                    self._safe_path(path)
+                    candidates.append((path.stat().st_mtime_ns, path))
+                except (ActionError, OSError):
+                    continue
+            for _, path in sorted(candidates, reverse=True)[:200]:
                 try:
                     state = self.view(path.stem)
                     sessions.append({key: state[key] for key in (
@@ -176,12 +191,12 @@ class AssistantService:
                 except (ActionError, OSError, ValueError):
                     continue
         sessions.sort(key=lambda s: s["updatedAt"], reverse=True)
-        return {"providers": self._providers(), "sessions": sessions,
+        return {"providers": self.provider_specs(), "sessions": sessions,
                 "executionBlockedReason": ISOLATION_REASON}
 
     def create(self, body: dict) -> dict:
         provider = body.get("provider")
-        spec = next((p for p in self._providers() if p["id"] == provider), None)
+        spec = next((p for p in self.provider_specs() if p["id"] == provider), None)
         if spec is None or not spec["available"]:
             raise refuse("provider-unavailable",
                          (spec or {}).get("reason") or "Unknown provider")
@@ -211,35 +226,14 @@ class AssistantService:
     def _take_lease(self, identity):
         path = self._path(identity).with_suffix(".turn")
         self._safe_path(path)
-        stream = path.open("a+b")
-        if stream.seek(0, 2) == 0:
-            stream.write(b"0")
-            stream.flush()
-        stream.seek(0)
         try:
-            if os.name == "nt":
-                import msvcrt
-                msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
-            else:
-                import fcntl
-                fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except (OSError, IOError):
-            stream.close()
+            return acquire_file_lease(path, self.root)
+        except LeaseBusy:
             raise refuse("busy", "Another Studio process owns this turn") from None
-        return stream
 
     @staticmethod
-    def _release_lease(stream):
-        try:
-            stream.seek(0)
-            if os.name == "nt":
-                import msvcrt
-                msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
-        finally:
-            stream.close()
+    def _release_lease(lease):
+        lease.close()
 
     def _turn_exists(self, identity):
         try:
@@ -254,8 +248,8 @@ class AssistantService:
             if state["status"] in {"running", "awaiting-confirmation"} and session_id not in self._active and not self._turn_exists(session_id):
                 state["status"] = "error"
                 state["pendingAction"] = None
-                self._event(state, "error", {"message":
-                    "Studio restarted. The previous turn was interrupted; no trials were refunded."})
+                state["error"] = {"message": "Studio restarted. The previous turn was interrupted; no trials were refunded."}
+                self._event(state, "error", state["error"])
             return json.loads(json.dumps(state))
 
     def message(self, body: dict) -> dict:
@@ -263,6 +257,10 @@ class AssistantService:
         if not isinstance(content, str) or not content.strip() or len(content) > MAX_PROMPT:
             raise refuse("message", "Message must contain 1–16000 characters", 400)
         with self._lock:
+            if self._closed:
+                raise refuse("closed", "Studio Assistant is closed")
+            if not self._path(identity).is_file():
+                raise refuse("unknown-session", "Unknown conversation", 404)
             if identity in self._active:
                 raise refuse("busy", "This conversation already has an active turn")
             lease = self._take_lease(identity)
@@ -275,6 +273,7 @@ class AssistantService:
                     stop = threading.Event()
                     state["status"] = "running"
                     state["pendingAction"] = None
+                    state["error"] = None
                     state["messages"].append({"id": str(uuid.uuid4()), "role": "user",
                                               "content": content.strip(), "at": now()})
                     if state["title"] == "New chat":
@@ -284,11 +283,14 @@ class AssistantService:
                     self._event(state, "turn.started", {"provider": state["provider"]})
                 self._active[identity] = stop
                 self._leases[identity] = lease
-                threading.Thread(target=self._turn, args=(identity, stop),
-                                 daemon=True, name="aq-assistant").start()
+                worker = threading.Thread(target=self._turn, args=(identity, stop),
+                                          daemon=True, name="aq-assistant")
+                self._threads[identity] = worker
+                worker.start()
             except Exception:
                 self._active.pop(identity, None)
                 self._leases.pop(identity, None)
+                self._threads.pop(identity, None)
                 self._release_lease(lease)
                 raise
         return self.view(identity)
@@ -322,9 +324,9 @@ class AssistantService:
                 "Candidate execution may be unavailable; disclose the reason. "
                 "Use the user's language. Context identifiers: " +
                 json.dumps({"project": state["project"], **state["context"]}) +
-                "\nConversation:\n" + "\n".join(
+                "\nRecent conversation (older content may be omitted):\n" + "\n".join(
                     message["role"] + ": " + message["content"]
-                    for message in state["messages"][-21:-1]))
+                    for message in state["messages"][-21:-1])[-64000:])
             config = {"mcpServers": {"aq": {
                 "command": sys.executable,
                 "args": ["-m", "autoquant.studio_assistant_bridge"],
@@ -345,15 +347,31 @@ class AssistantService:
             with self._state(identity) as current:
                 current["status"] = "cancelled" if stop.is_set() else "error"
                 current["pendingAction"] = None
-                self._event(current, "error", {"message": str(error)[:2000]})
+                current["error"] = {"message": str(error)[:2000],
+                                    "code": getattr(error, "code", "assistant.failed")}
+                self._event(current, "error", current["error"])
         finally:
             with self._lock:
                 self._bridges.pop(identity, None)
                 self._ready.discard(identity)
                 self._active.pop(identity, None)
+                self._threads.pop(identity, None)
                 lease = self._leases.pop(identity, None)
                 if lease is not None:
                     self._release_lease(lease)
+
+    def close(self, timeout: float = 20) -> None:
+        with self._lock:
+            self._closed = True
+            for stop in self._active.values():
+                stop.set()
+            workers = list(self._threads.values())
+        deadline = time.monotonic() + timeout
+        for worker in workers:
+            if worker is not threading.current_thread():
+                worker.join(max(0, deadline - time.monotonic()))
+        if any(worker.is_alive() for worker in workers):
+            raise RuntimeError("Assistant did not stop before Studio shutdown")
 
     def cancel(self, body: dict) -> dict:
         identity = body.get("sessionId")
@@ -479,6 +497,9 @@ class AssistantService:
         elif project_id:
             self._guard(project_id)
         self.emit(identity, "tool.completed", {"operation": operation})
+        if isinstance(params.get("run"), str):
+            self.emit(identity, "artifact", {"project": project_id,
+                      "createdRefs": {"runId": params["run"]}})
         return result
 
     def _action(self, identity, state, params, stop):
@@ -550,6 +571,9 @@ class AssistantService:
             result = job.to_dict() if job else created
         else:
             result = created
+        if isinstance(result, dict) and result.get("createdRefs"):
+            self.emit(identity, "artifact", {"project": body.get("project"),
+                      "createdRefs": result["createdRefs"]})
         self.emit(identity, "tool.completed", {"operation": action_id, "result": result})
         return clean_result(result)
 

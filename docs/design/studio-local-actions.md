@@ -4,6 +4,9 @@ The developing Assistant broker is specified in [[docs/design/studio-assistant]]
 It reuses these action gates and does not authorize unrestricted candidate
 execution. Public aq candidate show/save now expose the existing confined
 editor contract to standalone callers; source persistence does not execute code.
+Studio jobs and candidate writers now acquire a shared crash-released Project
+lease in addition to the in-process job slot; separate CLI writers cannot both
+save over the same base hash while a Studio job owns that Project.
 
 The idea-first Factor slice is described in [[docs/design/idea-verdict-card]].
 It adds `project.create` (id, name, description, allowlisted blank/Factor

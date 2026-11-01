@@ -6,7 +6,7 @@ import json
 import os
 import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
 from autoquant import studio_assistant_providers as providers
 
@@ -32,6 +32,9 @@ class FakeProcess:
         self.pid = 987654321
 
     def poll(self):
+        return 0
+
+    def wait(self, timeout=None):
         return 0
 
 
@@ -133,6 +136,20 @@ class ProviderTests(unittest.TestCase):
         self.assertNotIn("--dangerously-skip-permissions", argv)
         self.assertEqual(json.loads(process.stdin.getvalue())["message"]["content"], "Explain this factor.")
 
+    def test_only_the_exact_aq_mcp_tool_is_autoapproved(self):
+        _, _, start = self.run_claude([
+            init_message(), {"type": "result", "subtype": "success", "is_error": False},
+        ])
+        argv = start.call_args.args[0]
+        approval_index = argv.index("--allowedTools")
+        self.assertEqual(argv[approval_index + 1], "mcp__aq__aq")
+        self.assertTrue(argv[approval_index + 2].startswith("--"))
+        self.assertEqual(argv.count("--allowedTools"), 1)
+        self.assertNotIn("--permission-mode", argv)
+        self.assertNotIn("--dangerously-skip-permissions", argv)
+        self.assertNotIn("mcp__aq__*", argv)
+        self.assertEqual(argv[argv.index("--tools") + 1], "")
+
     def test_claude_refuses_unverified_startup(self):
         for first in [
             {"type": "assistant", "message": {"content": [{"type": "text", "text": "untrusted"}]}},
@@ -201,6 +218,110 @@ class ProviderTests(unittest.TestCase):
         cancel.set()
         with self.assertRaises(providers.ProviderCancelled):
             next(providers._messages(FakeProcess(), cancel))
+
+    def test_posix_cleanup_signals_group_after_leader_exit(self):
+        process = FakeProcess()
+        with (
+            patch.object(providers.os, "name", "posix"),
+            patch.object(providers.os, "killpg", create=True) as killpg,
+            patch.object(providers.signal, "SIGKILL", 9, create=True),
+        ):
+            providers._stop_process(process)
+        self.assertEqual(killpg.call_args_list, [
+            call(process.pid, providers.signal.SIGTERM), call(process.pid, 9),
+        ])
+
+    def test_windows_cleanup_closes_job_after_leader_exit(self):
+        process = FakeProcess()
+        job = Mock()
+        process._studio_job = job
+        with patch.object(providers.os, "name", "nt"):
+            providers._stop_process(process)
+        job.close.assert_called_once_with()
+
+    def test_windows_bootstrap_is_assigned_before_gate_release(self):
+        process, job = FakeProcess(), Mock()
+        gate_values = []
+        job.assign.side_effect = lambda p: gate_values.append(p.stdin.getvalue())
+        with (
+            patch.object(providers.os, "name", "nt"),
+            patch.object(providers, "_WindowsJob", return_value=job),
+            patch.object(providers.subprocess, "Popen", return_value=process) as popen,
+            patch.object(providers.subprocess, "CREATE_NO_WINDOW", 0, create=True),
+            patch.object(providers.subprocess, "CREATE_NEW_PROCESS_GROUP", 0, create=True),
+        ):
+            result = providers._start_process(["agent.exe", "--restricted"], ".")
+        self.assertIs(result, process)
+        self.assertEqual(gate_values, [""])
+        self.assertEqual(process.stdin.getvalue(), "\0")
+        self.assertIs(process._studio_job, job)
+        launched = popen.call_args.args[0]
+        self.assertEqual(launched[0], providers.sys.executable)
+        self.assertEqual(json.loads(launched[-1]), ["agent.exe", "--restricted"])
+
+    def test_windows_job_assignment_failure_never_releases_gate(self):
+        process, job = FakeProcess(), Mock()
+        process.kill = Mock()
+        process.poll = Mock(return_value=None)
+        job.assign.side_effect = OSError("nested job assignment rejected")
+        gate_values = []
+        job.close.side_effect = lambda: gate_values.append(process.stdin.getvalue())
+        with (
+            patch.object(providers.os, "name", "nt"),
+            patch.object(providers, "_WindowsJob", return_value=job),
+            patch.object(providers.subprocess, "Popen", return_value=process),
+            patch.object(providers.subprocess, "CREATE_NO_WINDOW", 0, create=True),
+            patch.object(providers.subprocess, "CREATE_NEW_PROCESS_GROUP", 0, create=True),
+            self.assertRaises(providers.ProviderError) as caught,
+        ):
+            providers._start_process(["agent.exe"], ".")
+        self.assertEqual(caught.exception.code, "assistant.provider.confinement")
+        self.assertEqual(gate_values, [""])
+        process.kill.assert_called_once_with()
+
+    @unittest.skipUnless(os.name == "nt", "Windows JobObject regression")
+    def test_windows_job_kills_descendant_after_provider_parent_exit(self):
+        import ctypes
+        import queue
+        from ctypes import wintypes
+
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        kernel.OpenProcess.restype = wintypes.HANDLE
+        kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        kernel.WaitForSingleObject.restype = wintypes.DWORD
+        kernel.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        kernel.TerminateProcess.restype = wintypes.BOOL
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle.restype = wintypes.BOOL
+        producer = (
+            "import subprocess,sys; "
+            "p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)'],"
+            "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);"
+            "print(p.pid,flush=True)"
+        )
+        process = providers._start_process(
+            [providers.sys.executable, "-c", producer], os.getcwd(),
+        )
+        child_handle = None
+        try:
+            lines = queue.Queue()
+            threading.Thread(target=lambda: lines.put(process.stdout.readline()), daemon=True).start()
+            child_pid = int(lines.get(timeout=5))
+            child_handle = kernel.OpenProcess(0x00100000 | 0x0001, False, child_pid)
+            self.assertTrue(child_handle, "Cannot observe disposable child")
+            process.wait(timeout=5)
+            self.assertEqual(kernel.WaitForSingleObject(child_handle, 0), 258)
+            providers._stop_process(process)
+            self.assertEqual(kernel.WaitForSingleObject(child_handle, 3000), 0)
+        finally:
+            providers._stop_process(process)
+            if child_handle:
+                # Even a failed assertion must leave no disposable process behind.
+                if kernel.WaitForSingleObject(child_handle, 0) == 258:
+                    kernel.TerminateProcess(child_handle, 1)
+                    kernel.WaitForSingleObject(child_handle, 3000)
+                kernel.CloseHandle(child_handle)
 
     def test_codex_transport_routes_only_structured_aq(self):
         process, events, called = FakeProcess(), [], []

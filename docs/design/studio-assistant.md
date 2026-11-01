@@ -64,9 +64,12 @@ itself is streamed.
 
 Conversation JSON lives below .autoquant/assistant/. It is operational state,
 not a Report, Run or selection claim. Atomic replacement, link/reparse checks,
-bounded messages/state, exclusive update locks and OS-held per-turn leases
-protect persistence and concurrent Studio instances. A process crash releases
-its turn lease; a recovered interrupted turn is explicit.
+bounded messages/state, crash-released OS update/turn leases and shared Project leases
+protect persistence, candidate CLI writers and concurrent Studio jobs. A process crash releases
+its leases; a recovered interrupted turn is explicit. Server shutdown cancels
+and joins Assistant turns. Windows providers start behind a bootstrap gate
+inside a kill-on-close Job Object; POSIX providers own a process group. A native
+Windows parent-exit cleanup canary passed without starting an agent.
 
 ## aq broker and sealed data
 
@@ -109,7 +112,9 @@ transitions; no public environment flag bypasses this gate.
 Bounded fake-provider tests cover persistence, HTTP authentication, source
 optimistic locking, cancellation, cross-instance ownership, indirect holdout
 projection, private bridge capability, confirmation and budgets. Provider
-tests cover startup closure, protocol framing and process cleanup.
+tests cover startup closure, exact MCP autoapproval, protocol framing and
+process cleanup. Provider readiness is cached for 30 seconds so normal polling
+does not repeatedly start CLI probes.
 
 Outstanding: live CLI login/streaming and sealed canaries; Codex tool closure;
 candidate-process isolation; complete Portfolio construction actions;

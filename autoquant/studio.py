@@ -2610,6 +2610,14 @@ class AutoQuantStudioServer(ThreadingHTTPServer):
     allow_reuse_address = True
     actions: ActionService | None = None
 
+    def server_close(self) -> None:
+        try:
+            assistant = getattr(self.actions, "assistant", None)
+            if assistant is not None:
+                assistant.close()
+        finally:
+            super().server_close()
+
 
 def create_studio_server(
     directory: str | Path,

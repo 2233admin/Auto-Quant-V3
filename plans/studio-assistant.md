@@ -36,7 +36,7 @@ does not gain research-evidence or trading authority.
 - [x] Implement provider adapters and fail-closed availability.
 - [x] Implement conversation persistence, HTTP integration and aq broker.
 - [x] Add aq candidate show/save using the existing editor contract.
-- [ ] Integrate and build Assistant UI and contextual drawer.
+- [x] Integrate and build Assistant UI and contextual drawer.
 - [ ] Verify actual Codex native tool closure.
 - [ ] Add candidate-process isolation; enable guarded research execution.
 - [ ] Run live streaming/login/isolation canaries without research trials.
@@ -61,12 +61,21 @@ does not gain research-evidence or trading authority.
 
 ## Verification
 
-- 2026-11-02 — 15 root tests passed with in-memory source overlays using the
-  existing Python environment: includes stdlib HTTP authentication/routes and
-  public candidate CLI read/save/conflict over disposable fixtures.
-- 2026-11-02 — 17 provider fake-transport tests passed independently.
-- Pending: branch checkout full tests, document links, production frontend
-  build, live provider streaming and isolation canaries.
+- 2026-11-02 — 87 tests passed using the repository Python 3.11 environment
+  and in-memory source overlays: 18 Assistant/HTTP/candidate CLI tests,
+  46 existing Studio action regressions and 23 provider cases. Includes a real
+  Windows parent-exit/descendant-cleanup canary with disposable Python
+  processes; no provider inference or research trials.
+- 2026-11-02 — Full frontend TypeScript check: 339 files, zero diagnostics.
+  Standard Vite production build passed; generated served assets committed.
+  Six route and eight SSR assertions passed; browser visual review is unrun.
+- 2026-11-02 — Independent review found and prompted fixes for cross-process
+  writes, crash-stale state locks, exact MCP tool approval and server shutdown.
+  Provider readiness is cached and recent sessions are ordered by update time.
+- 2026-11-02 — 1838 documentation double-links resolve with remote changes
+  overlaid in memory; no document failures.
+- Pending: actual branch checkout full unittest discovery, live provider
+  streaming/login/tool-isolation canaries, browser interaction acceptance.
 
 ## Progress log
 
