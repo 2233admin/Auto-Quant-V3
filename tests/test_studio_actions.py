@@ -1436,5 +1436,62 @@ class StudioActionsTests(unittest.TestCase):
             self.assertEqual(started["trialHypothesisSha256"], hashlib.sha256(HYPOTHESIS.encode()).hexdigest())
 
 
+class LibraryRecoveryTests(unittest.TestCase):
+    def test_library_uses_lane_metric_and_never_borrows_an_older_success(self):
+        from autoquant.studio_library import library_projection
+        with tempfile.TemporaryDirectory() as directory:
+            project = SimpleNamespace(root_dir=Path(directory), manifest=SimpleNamespace(id="fixture", description="Frozen question"))
+            snapshot = {"studies": [
+                {"id": "factor", "subjectKind": "factor", "primaryMetric": "validation_mean_ic"},
+                {"id": "portfolio", "subjectKind": "factor", "primaryMetric": "validation_net_sharpe"},
+            ], "runs": [{"id": "failed-new", "studyId": "factor", "startedAt": "2026-11-01", "status": "failed"}],
+                "factorExplorer": {"run": {"id": "old-success"}, "summary": {"validation": {"meanRankIc": 999}},
+                                   "quantilePath": {"cumulative": {"points": [{"split": "validation", "spread": 999}]}}}}
+            with mock.patch("autoquant.studio_library.load_run"), \
+                 mock.patch("autoquant.studio_library.build_research_family", return_value=SimpleNamespace(projection={"totalExecutions": 2})), \
+                 mock.patch("autoquant.studio_library.build_selection_adjustment", return_value={"passes": True}):
+                data = library_projection(project, snapshot, directory)
+            self.assertEqual(data["factor"]["studyId"], "factor")
+            self.assertEqual(data["factor"]["verdict"], "Could not be tested")
+            self.assertIsNone(data["factor"]["validation"])
+            self.assertEqual(data["factor"]["points"], [])
+            self.assertEqual(data["strategy"]["state"], "Defined")
+
+    def test_canonical_candidate_read_never_grants_write_permission(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "factors").mkdir()
+            (root / "factors/candidate.py").write_text("def compute_factor(panel):\n    return panel.close\n", encoding="utf-8")
+            project = SimpleNamespace(root_dir=root, manifest=SimpleNamespace(id="fixture"))
+            for service in (None, mock.Mock()):
+                data = studio_actions.candidate_view(project, "canonical", root, service)
+                self.assertFalse(data["editable"])
+                self.assertIn("return panel.close", data["source"])
+                self.assertIn("start a Session", data["blockedReason"])
+
+    def test_stale_session_allows_fresh_start_but_valid_active_session_blocks(self):
+        service = object.__new__(studio_actions.ActionService)
+        item = SimpleNamespace(id="retained", status="active", study_id="factor")
+        study = SimpleNamespace(definition=SimpleNamespace(editable={"paths": ["factors/candidate.py"]}))
+        with mock.patch.object(studio_actions, "list_sessions", return_value=[item]), \
+             mock.patch.object(studio_actions, "load_session"), \
+             mock.patch.object(studio_actions, "load_study", return_value=study), \
+             mock.patch.object(studio_actions, "session_snapshot", return_value={"authority": {"valid": False}}) as snapshot:
+            service._start_block(mock.Mock(), "factor")
+            snapshot.return_value = {"authority": {"valid": True}}
+            with self.assertRaisesRegex(ActionError, "already has active Session"):
+                service._start_block(mock.Mock(), "factor")
+
+    def test_library_sampling_gates_before_selection_and_keeps_endpoints(self):
+        from autoquant.studio_library import _points
+        points = [{"split": "validation", "spread": i} for i in range(100)]
+        hidden = points + [{"split": "test", "spread": 9999}] * 100
+        actual = _points(hidden, "spread", False)
+        self.assertEqual(actual, _points(points, "spread", False))
+        self.assertEqual(len(actual), 64)
+        self.assertEqual((actual[0]["value"], actual[-1]["value"]), (0, 99))
+        self.assertEqual(_points(hidden, "spread", True)[-1]["value"], 9999)
+
+
 if __name__ == "__main__":
     unittest.main()

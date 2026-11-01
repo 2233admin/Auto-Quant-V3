@@ -34,7 +34,8 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
   useSlidingHighlight(rail, { items: 'a.nav, a.railitem' })
   const harness = data.workspace?.harness
   const recent = useRecentProjects(open)
-  const recentProjects = recent.map((id) => projects.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p)
+  const factors = projects.filter(p => p.library?.factor)
+  const recentProjects = [...recent.map(id => factors.find(p => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p), ...[...factors].sort((a,b) => (b.latestRunAt ?? '').localeCompare(a.latestRunAt ?? ''))].filter((p,i,a) => a.findIndex(q => q.id === p.id) === i).slice(0,3)
   const attention = attentionItems(data.workspace).length
   return (
     <aside ref={rail} data-measure="sidebar" className={narrow ? 'rail is-narrow mo-hl' : 'rail mo-hl'}>
@@ -48,20 +49,14 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
         </div>
       )}
       <nav aria-label="Sections">
-        <a className={route.view === 'projects' ? 'nav is-on' : 'nav'} href={routeHref({ view: 'projects' })} aria-current={route.view === 'projects' ? 'page' : undefined}>
-          <Icon name="directions" />
-          <span className="nav-label">Ideas</span>
-          <span className="nav-short">Ideas</span>
-          <span className="count mono">{data.workspace ? projects.length : '—'}</span>
-        </a>
-        <button type="button" className="rail-new" onClick={() => setNewIdea(true)} aria-label="New idea">+<span>New idea</span></button>
+        <button type="button" className="rail-new" onClick={() => setNewIdea(true)} aria-label="New factor">+<span>New factor</span></button>
         {(
           <ul className="raildirs" aria-label="Open recent">
             {recentProjects.map((p) => (
               <li key={p.id}>
                 <a
                   className={p.id === open ? 'railitem is-on' : 'railitem'}
-                  href={p.studies.length === 1 && p.studies[0].id === 'ohlcv-factor-quality' ? `${routeHref({ view: 'factor', id: p.id })}&idea=1` : routeHref({ view: 'project', id: p.id })}
+                  href={`${routeHref({ view: 'factor', id: p.id })}&idea=1`}
                   aria-current={p.id === open && route.view === 'project' ? 'page' : undefined}
                   title={`Open ${p.name}`}
                 >
@@ -123,7 +118,6 @@ export function TabBar({ route, data }: { route: Route; data: ShellData }) {
   )
   return (
     <nav className="tabbar" aria-label="Sections">
-      {tab('projects', 'Ideas', 'directions')}
       {LIBRARY_NAV.map((item) => tab(item.view, item.label, item.icon))}
       {tab('attention', 'Attention', 'attention', attention > 0 ? <span className="pending mono">{attention}</span> : null)}
       {tab('settings', 'Settings', 'settings')}

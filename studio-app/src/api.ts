@@ -4,7 +4,24 @@ import type { PortfolioDiagnostics } from './pages/portfolio/portfolioTypes'
 
 export type HoldoutState = { present: boolean; status: string | null }
 
+export type LibraryPoint = { split: string; value: number }
+export type FactorSummary = {
+  studyId: string; verdict: 'Supported' | 'Inconclusive' | 'Not tested' | 'Could not be tested'
+  question: string; expression: string; bound: boolean
+  request: { horizonPolicy: { primaryForwardBars: number }; factorPolicy: { predictionAssets: string[] } } | null
+  evidence: { runId: string; researchFamily: SelectionIntegrity['researchFamily']; selectionAdjustment: SelectionIntegrity['selectionAdjustment'] } | null
+  validation: { meanRankIc?: number | null; hacTStatistic?: number | null } | null
+  trials: number; updatedAt: string | null; points: LibraryPoint[]
+  protocol: { testRole?: string }; testAudit: boolean
+}
+export type StrategySummary = {
+  state: 'Backtested' | 'Defined'; updatedAt: string | null; points: LibraryPoint[]
+  net: { totalReturn?: number | null; sharpe?: number | null; maximumDrawdown?: number | null } | null
+}
+export type LibrarySummary = { factor: FactorSummary | null; strategy: StrategySummary | null }
+
 export type ProjectSummary = {
+  library?: LibrarySummary
   id: string
   name: string
   description: string | null
@@ -66,6 +83,8 @@ export type TimelineRow = {
 }
 
 export type ProjectSnapshot = {
+  rootDir?: string
+  library?: LibrarySummary
   id: string
   name: string
   description: string
@@ -404,6 +423,7 @@ export type ResearchAgenda = {
 }
 
 export type SessionSnapshot = {
+  authority?: { valid: boolean }
   session?: { id?: string; status?: string; studyId?: string; createdAt?: string; updatedAt?: string; leader?: { runId?: string } }
   /** Older snapshots: kept so a flat shape still renders. */
   id?: string

@@ -150,3 +150,33 @@
   .idea-run-selector .wb-stats { display: none; }
   .idea-status { margin-inline: 0; }
 }
+
+/* Persistent source editor: full authority text above, bounded trial note below. */
+.idea-workbench .wb-pane[aria-label='Factor idea editor'] > .wb-pane-body { display: flex; flex-direction: column; padding-top: 12px; }
+.idea-workbench .idea-form { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 10px; }
+.idea-workbench .idea-form[hidden] { display: none; }
+.idea-workbench .idea-question-line { display: flex; align-items: flex-start; flex-wrap: wrap; height: auto; margin: 0; gap: 6px; flex: none; }
+.idea-workbench .idea-question { flex: 1; min-width: 0; font: var(--type-body); white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.idea-workbench .idea-question.is-expanded { display: block; }
+.idea-workbench .idea-question-expand { margin-left: 20px; font: var(--type-small); }
+.idea-parameters { flex: none; padding: 8px 0; border-block: 1px solid var(--line); }
+.idea-parameter-summary { display: flex; gap: 8px; align-items: flex-start; font: var(--type-small); color: var(--muted); }
+.idea-parameter-summary > span { flex: 1; }.idea-parameter-summary > button { flex: none; }
+.idea-parameter-rows { margin: 8px 0 0; display: grid; gap: 6px; font: var(--type-small); }
+.idea-parameter-rows > div { display: grid; grid-template-columns: 106px minmax(0,1fr); gap: 8px; }
+.idea-parameter-rows dt { color: var(--muted); }.idea-parameter-rows dd { margin: 0; white-space: normal; overflow-wrap: anywhere; min-width: 0; }
+.idea-source { display: flex; flex-direction: column; flex: 1 1 180px; min-height: 140px; gap: 8px; }
+.idea-source-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; flex: none; }
+.idea-source-toolbar .idea-check-chip { margin-left: auto; font: var(--type-small); }.idea-readonly-label { font: var(--type-small); color: var(--warn); }
+.idea-source .cf { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 4px; }.idea-source .cf-box { flex: 1; min-height: 0; border-radius: 8px; }.idea-source .cf-area { height: 100%; }.idea-source .cf-hint { flex: none; font-size: 10px; }
+.idea-source .cf.is-readonly .cf-box { border-style: dashed; background: var(--rail); }
+.idea-workbench .idea-trial-note { display: flex; flex: none; gap: 6px; align-items: center; border-top: 1px solid var(--line); padding-top: 8px; margin-top: auto; }
+.idea-trial-note input { flex: 1; min-width: 0; height: 32px; padding: 0 8px; font: var(--type-small); border: 1px solid var(--line-strong); border-radius: 8px; color: var(--text); background: var(--bg); }
+.idea-session-recovery { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.idea-session-recovery > p { flex: 1; min-width: 120px; max-height: 38px; overflow: auto; font: var(--type-small); color: var(--warn); overflow-wrap: anywhere; }
+.idea-session-recovery .abtn { font: var(--type-small); }.idea-enable { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }.idea-enable code { font-size: 10px; overflow-wrap: anywhere; }
+.idea-workbench .wb-pane[aria-label='Factor idea editor'] .wb-actions-chip { font-size: 10px; white-space: nowrap; padding-inline: 3px; }
+.idea-workbench .wb-pane[aria-label='Factor idea editor'] .wb-actions-row { gap: 4px; }
+.idea-workbench .wb-pane[aria-label='Factor idea editor'] .wb-pane-actions .abtn { padding-inline: 7px; }
+.idea-workbench .wb-pane[aria-label='Factor idea editor'] .wb-tab { padding-inline: 6px; }
+@media (max-width: 999px) { .idea-source { min-height: 350px; }.idea-source .cf-area { min-height: 300px; } }

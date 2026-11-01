@@ -54,16 +54,30 @@ the original question nor resets or removes any Core trial. The operational
 audit is not immutable research evidence and cannot authorize a verdict.
 
 The desktop workbench keeps a full-width title card above two floating cards.
-The title contains the Ideas return link, idea name, frozen question and Factor
+The title contains the Factors return link, idea name, frozen question and Factor
 badge. The left card remains an editor after an answer exists. Its fixed header
-contains Hypothesis and History tabs, a quiet Save and the only primary Run
-analysis action. The question's lock explanation precedes six read-only Study
-parameters in two columns and three rows. A short expression box reports Needs
-check until this exact draft passes preflight. Advanced Python and the optional
-next-trial hypothesis are disclosures. Save alone does not spend a trial; Run
+contains Factor and History tabs, a quiet Save, the primary Run analysis action
+and a small Trial N of M chip. The question wraps to three lines and can expand;
+its lock Info holds the frozen-question rule and support/refutation wording.
+Parameters default to a compact population/horizon/selection summary. Expand
+reveals six label/value rows: Dataset, Horizon, Assets, Validation window, Test
+role and Selection. Values wrap completely, with identifiers in monospace.
+The line-numbered CodeField fills the remaining pane height. Expression and
+Python are always visible tabs because the expression adapter produces the
+candidate Python. Arbitrary Python remains Python rather than being guessed
+back into an expression. The source status distinguishes Saved, Unsaved changes,
+Needs check and Check passed. After the first attempt a pinned one-line trial
+note accepts 8–500 characters; the first attempt uses the frozen question.
+Ctrl+Enter in either editor or note invokes the enabled Run action.
+Save alone does not spend a trial; Run
 still saves, checks and opens the counted confirmation. Cancelling confirmation
 does not discard the saved candidate. A blocked or stale Session remains visibly
-read-only, with its actual reason available beside the disabled action.
+read-only, with its exact reason and a Restart session action above the editor.
+The action previews session.start and discloses Trial N of M before confirmation.
+It starts from the canonical candidate, preserving old Session worktrees and
+every immutable Run; it does not migrate unsaved stale candidate edits. An active
+Session with valid authority still blocks another start. With actions disabled,
+the same area displays the exact enable command and a copy button.
 
 The right card orders the Run selector and facts, action chips, progress line,
 one-line verdict, existing FactorHero chart and MetricGrid. The chart uses the published
@@ -92,7 +106,7 @@ facts dialog; Open diagnostics links to the exact Run. Export JSON downloads
 the selected development evidence and validation summary, without exporting a
 hidden test payload. Declare another trial appears only when the existing
 active Session has an editable candidate and no analysis is running; it focuses
-the trial-note disclosure and never executes a trial. All result actions are
+the pinned trial note and never executes a trial. All result actions are
 secondary. Run analysis always owns the sole primary action in the editor.
 The status line uses recorded stages and duration; absent stage counts are
 explicitly unknown, and whole-action jobs never imply measured stage progress.
@@ -103,13 +117,13 @@ reference: an 8px canvas margin, 240px sidebar, 56px title, 16px column gap,
 35:65 editor/result split and 22px card corners. The chart occupies 49 percent
 of viewport height. Metrics follow with an 11px gap and three-column tiles;
 their remaining rows and the small conclusion scroll inside the result card.
-The frozen-question row adds 15px above the parameter grid relative to the
-reference. The action-chip row is naturally shorter when fewer operations are
+The editor's expanded authority rows trade code height for fully readable values.
+The action-chip row is naturally shorter when fewer operations are
 available; it contains no placeholder actions. Chart and metric sizing are local
-to the idea page and preserve shared colours, typography and tokens. The Ideas
-table uses bounded columns, a single-line question with its full text in the
-tooltip, and omits the redundant Next step column below 1200px. Its idea link
-still opens the same workbench.
+to the idea page and preserve shared colours, typography and tokens. Factors
+is now the landing library; its compact Project cards open this same workbench.
+The library projection and visibility contract are defined in
+[[docs/design/studio-information-architecture]].
 
 The flow never opens a holdout, and explicitly says
 that sealed-tail intake and confirmation are not built. The full H1-H17 Core

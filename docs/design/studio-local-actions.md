@@ -486,13 +486,20 @@ as blocked. The Project's canonical `factors/candidate.py` is never touched.
 
 Blocked reasons (`409 studio.blocked`, also in the catalog `blockedBy`):
 
-- `Blocked: Study <study> already has active Session <sid>`
+- `Blocked: Study <study> already has active Session <sid>` when that Session's authority is valid.
 - `Blocked: Study <study> has no editable research surface and does not support iterative Sessions`
 - unknown Study: `422 validation.failed`, issue `params/study` `study.missing`.
 
 The server does not predict whether the baseline can be established; Core
 refuses a failing first-candidate preflight and the job fails with the Core
 message in `stderrTail` and `result`.
+
+A retained active Session whose authority is stale does not block a fresh
+session.start. The Factor editor exposes this as Restart session, with the
+same preview, command fingerprint, trial counts and second confirmation.
+The new Session starts from the current canonical candidate. No prior Session,
+candidate worktree or Run is rewritten or removed, and the family ledger remains
+intact. A different valid active Session for the Study still blocks the start.
 
 ### `session.check`
 
@@ -552,6 +559,12 @@ cannot start mid-write.
 ### `GET /api/v1/candidate?project=<id>&session=<sid>`
 
 Works with or without `--allow-actions`. It needs no token (it is a read like
+other observation routes). The reserved `session=canonical` reference reads the
+Project candidate for retained Runs without a Session. It is always read-only,
+even with actions enabled, enforces the same byte limit and refuses linked or
+escaped paths. It never authorizes a canonical save after a Run exists.
+
+Session references work with or without actions (the route is a read like
 `/api/v1/snapshot`); when actions are enabled the Host allowlist applies like
 for every other route.
 

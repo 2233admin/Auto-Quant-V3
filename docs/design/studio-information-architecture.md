@@ -1,6 +1,6 @@
 # Studio information architecture: objects and lifecycles
 
-Status: proposed, owner direction 2026-11-01. This document decides where each Studio function lives. It supersedes the
+Status: build step 2 implemented for supervised visual acceptance, owner direction 2026-11-01. This document decides where each Studio function lives. It supersedes the
 lane-per-page layout described in [[docs/design/studio-observation-surface]] for navigation purposes; evidence contracts
 and visibility rules there stay in force.
 
@@ -71,9 +71,9 @@ library; `?view=projects` keeps working as an alias.
 
 | Route | Page |
 | --- | --- |
-| `?view=factors` | Factor library: one row per factor with state, answer, headline metric, latest trial, trial count |
+| `?view=factors` | Default landing library: one compact card per Factor Project with verdict, validation headline, latest Run curve and retained trial count |
 | `?view=factor&id=…` | Factor workbench: left editor (frozen question, locked parameters, expression, Run analysis), right result (run selector, action chips, status line, chart, metrics) |
-| `?view=strategies` | Strategy library: one row per strategy with its source factor, state, net headline metrics |
+| `?view=strategies` | Portfolio Project cards with Defined/Backtested state, validation net headline metrics and development net-growth curve |
 | `?view=portfolio&id=…` | Strategy workbench: tabs Backtest, Versions, Tuning, Analyses |
 | `?view=runs` | Run history across objects and lanes |
 | `?view=run&id=…` | Run page, lane-aware |
@@ -98,11 +98,40 @@ library; `?view=projects` keeps working as an alias.
 
 1. Shell and factor workbench skeleton (in progress: floating-card shell, editor and result layout measured against the
    reference).
-2. Factors library replaces the Ideas home; sidebar rework; alias for `?view=projects`.
-3. Strategy library and Strategy workbench tabs, moving the Portfolio page content; the New strategy action needs the
+2. Implemented for supervised acceptance: Factors replaces Ideas and is the first-load route; `?view=projects` is an alias.
+   The sidebar places New factor, three recent factors and the four object libraries below the brand. Attention, Settings
+   and the search hint remain at the bottom. The factor editor now has complete expandable authority rows, persistent
+   source tabs, a pinned trial note and a stale-session recovery action.
+3. The Strategy library skeleton is implemented; Strategy workbench tabs and moving the Portfolio page content remain pending. The New strategy action needs the
    `project.create` family of actions for Portfolio Projects.
 4. Run history gains object and lane filters; lane pages become reachable only from Runs and from their object.
 5. Tuning tasks attach to objects.
+
+## Library card contract
+
+The desktop libraries use a 240px sidebar, a 56px full-width title card, a 32px toolbar, and a three-column grid with
+8px gaps at 1440 by 900. Factor cards are 137px high; Strategy cards are 188px high to include the description. Wider
+desktops can show four columns. The toolbar uses the one creation flow each object actually has, rather than copying
+venue-specific creation buttons. English five-state Factor filters consequently occupy more width than the reference.
+
+A Factor card's title is the Project name, never the generic Study name. Its badge uses Supported, Inconclusive,
+Not tested or Could not be tested. Its one metric line names validation rank IC, HAC t and retained trials. The small
+curve is the latest Run's published cumulative high-minus-low spread, not a history of scalar metrics across Runs.
+The footer identifies Factor expression and the latest Run timestamp; missing timestamps say Not run. Search matches
+the name, frozen question and authored expression. Filter counts describe the entire library, independently of search.
+
+Strategy cards represent Portfolio Projects only; RL and Allocation remain reachable through Runs. Their net return,
+net Sharpe and maximum drawdown come from the Portfolio validation summary. The curve contains train and validation
+net-growth observations. Defined means there is no current successful Portfolio Run; Backtested does not imply a
+positive result. New strategy remains visibly disabled with its actual missing-action reason and a copyable CLI
+Portfolio-scaffold command. The UI explicitly distinguishes scaffold creation from binding a source factor and its
+caller-owned construction policy.
+
+The Workspace summary carries bounded library projections, including at most 64 curve observations per card. No
+card fetches full Project or Run diagnostics. Factor test points are removed before sampling unless both the actual
+audit and visible-diagnostic role exist; the browser applies the shared test gate again. Portfolio cards conservatively
+omit test points. Missing curves remain absent. Metric text is a single clipped line with its full text available in
+the DOM and tooltip, matching the compact reference rhythm. Colours and typography remain the workbench tokens.
 
 ## Non-goals
 

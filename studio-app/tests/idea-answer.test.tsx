@@ -10,6 +10,56 @@ import { IcByHorizonPlot } from '../src/pages/FactorCharts'
 import { studyTestVisible } from '../src/pages/testGate'
 import { candidateExpression, expressionSource } from '../src/pages/ideaEditor'
 import { ParamGrid, StatusLine, TitleCard } from '../src/components/workbench'
+import type { FactorSummary, StrategySummary } from '../src/api'
+import { FACTOR_FILTERS, factorMetricLine, factorPoints, filterCounts, LibraryCard, strategyMetricLine } from '../src/library/LibraryCards'
+import { SessionRecovery } from '../src/pages/FactorEditorState'
+import { parseRoute } from '../src/route'
+
+test('landing and legacy projects alias both open Factors', () => {
+  for (const query of ['', '?view=projects', '?view=factors']) assert.equal(parseRoute(query).view, 'factors')
+})
+
+test('library filter counts include every verdict and zero-result categories', () => {
+  assert.deepEqual(filterCounts(['Supported', 'Supported', 'Inconclusive', 'Could not be tested'], FACTOR_FILTERS, x => x), {
+    All: 4, Supported: 2, Inconclusive: 1, 'Not tested': 0, 'Could not be tested': 1,
+  })
+})
+
+test('Factor card uses the idea name, a single validation metric line, and retained trials', () => {
+  const summary = { validation: { meanRankIc: 0.8086, hacTStatistic: 17.42 }, trials: 1 } as FactorSummary
+  const metric = factorMetricLine(summary)
+  assert.equal(metric, 'Validation rank IC +0.809 · HAC t 17.4 · Trials 1')
+  const html = renderToStaticMarkup(<LibraryCard name="Five-day momentum" badge="Supported" metric={metric} points={[]} updated={null} href="/?view=factor&id=momentum&idea=1" go={() => {}} />)
+  assert.match(html, /Five-day momentum/)
+  assert.match(html, /Factor expression/)
+  assert.match(html, /Last updated: Not run/)
+  assert.doesNotMatch(html, /OHLCV Factor Quality|Across Runs/)
+})
+
+test('library sparkline uses the shared two-part test gate', () => {
+  for (const audit of [false,true]) for (const role of ['sealed','visible-diagnostic']) {
+    const summary = { protocol: { testRole: role }, testAudit: audit, points: [{ split: 'train', value: 1 }, { split: 'validation', value: 1.2 }, { split: 'test', value: 999 }] } as FactorSummary
+    assert.equal(factorPoints(summary).some(p => p.value === 999), audit && role === 'visible-diagnostic')
+  }
+})
+
+test('strategy line preserves net metrics and missing values', () => {
+  assert.equal(strategyMetricLine({ net: { totalReturn: -.08265, sharpe: -2.656, maximumDrawdown: -.08016 } } as StrategySummary), 'Net total return -8.27% · Net Sharpe -2.66 · Max drawdown -8.02%')
+  assert.equal(strategyMetricLine({ net: null } as StrategySummary), 'No Portfolio Run metrics yet')
+})
+
+test('stale recovery exposes exact reason and restart, while read-only supplies a copyable enable command', () => {
+  const reason = 'Blocked: Session retained is stale (Installed Harness differs from the Session baseline)'
+  const command = "aq studio serve 'D:/tmp/example' --allow-actions --port 8881"
+  const stale = renderToStaticMarkup(<SessionRecovery reason={reason} actions command={command} onRestart={() => {}} />)
+  assert.match(stale, /Restart session/)
+  assert.match(stale, /Installed Harness differs from the Session baseline/)
+  assert.doesNotMatch(stale, /Candidate is read-only/)
+  const off = renderToStaticMarkup(<SessionRecovery reason="Actions are off" actions={false} command={command} onRestart={() => {}} />)
+  assert.match(off, /Copy enable command/)
+  assert.match(off, /--allow-actions --port 8881/)
+  assert.doesNotMatch(off, /Restart session/)
+})
 
 const rank = { meanRankIc: 0.12, meanPearsonIc: 0.11, hacTStatistic: 2.5, hacNormalPValue: 0.01, rankHitRate: 0.6, rankIcir: 0.5, rankIcStandardDeviation: 0.2, observations: 30, minimumObservations: 20, sufficient: true }
 const testRank = { ...rank, meanRankIc: 876.5432 }
