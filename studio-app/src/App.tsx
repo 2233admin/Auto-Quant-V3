@@ -26,6 +26,7 @@ import { useRouter } from './useRouter'
 import { useShellData } from './useShellData'
 import { Loading } from './components/States'
 import { WorkbenchGallery } from './components/workbench/Gallery'
+import { FloatingShell } from './components/workbench'
 
 export default function App() {
   const { route, go } = useRouter()
@@ -168,15 +169,12 @@ export default function App() {
     <ActionsProvider workspace={data.workspace} routeKey={JSON.stringify(route)} go={go} refresh={data.refresh}>
     <div ref={ref}>
       <a className="skip" href="#content">Skip to content</a>
-      <div className="shell">
-        <Rail route={route} data={data} narrow={compact} onSearch={() => setPalette(true)} />
-        <div className="main">
+      <FloatingShell sidebar={<Rail route={route} data={data} narrow={compact} onSearch={() => setPalette(true)} />}>
           <TopBar crumbs={crumbs} data={data} theme={theme} onTheme={setTheme} onSearch={() => setPalette(true)} />
           <main id="content" className="page" tabIndex={-1}>
             {page}
           </main>
-        </div>
-      </div>
+      </FloatingShell>
       <TabBar route={route} data={data} />
       <Palette open={palette} onClose={() => setPalette(false)} projects={data.workspace?.projects ?? []} go={go} />
     </div>

@@ -1,4 +1,5 @@
-import { useRef, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
+import { NewIdeaDialog } from '../pages/NewIdeaDialog'
 import { useSlidingHighlight } from '../components/motion/useSlidingHighlight'
 import '../components/motion/motion.css'
 import { Icon, Mark, type IconName } from '../design/icons'
@@ -23,7 +24,10 @@ export function verification(valid: boolean) {
     : ({ glyph: 'error', word: 'Needs attention', signal: true } as const)
 }
 
-export function Rail({ route, data, narrow, onSearch }: RailProps) {
+export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
+  const [collapsed, setCollapsed] = useState(false)
+  const [newIdea, setNewIdea] = useState(false)
+  const narrow = compact || collapsed
   const projects = data.workspace?.projects ?? []
   const open = routeProjectId(route)
   const rail = useRef<HTMLElement>(null)
@@ -33,7 +37,7 @@ export function Rail({ route, data, narrow, onSearch }: RailProps) {
   const recentProjects = recent.map((id) => projects.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p)
   const attention = attentionItems(data.workspace).length
   return (
-    <aside ref={rail} className={narrow ? 'rail is-narrow mo-hl' : 'rail mo-hl'}>
+    <aside ref={rail} data-measure="sidebar" className={narrow ? 'rail is-narrow mo-hl' : 'rail mo-hl'}>
       <a className="brand" href={routeHref({ view: 'projects' })} aria-label={narrow ? 'AutoQuant Studio' : undefined}>
         <Mark />
         <span>AutoQuant Studio</span>
@@ -43,11 +47,6 @@ export function Rail({ route, data, narrow, onSearch }: RailProps) {
           <span className="trunc mono" translate="no">{data.workspace.source.workspace.name}</span>
         </div>
       )}
-      <button type="button" className="search" onClick={onSearch} aria-keyshortcuts="Control+K" aria-label={narrow ? 'Search' : undefined}>
-        <Icon name="search" />
-        <span>Search</span>
-        <kbd>Ctrl K</kbd>
-      </button>
       <nav aria-label="Sections">
         <a className={route.view === 'projects' ? 'nav is-on' : 'nav'} href={routeHref({ view: 'projects' })} aria-current={route.view === 'projects' ? 'page' : undefined}>
           <Icon name="directions" />
@@ -55,7 +54,8 @@ export function Rail({ route, data, narrow, onSearch }: RailProps) {
           <span className="nav-short">Ideas</span>
           <span className="count mono">{data.workspace ? projects.length : '—'}</span>
         </a>
-        {recentProjects.length > 0 && (
+        <button type="button" className="rail-new" onClick={() => setNewIdea(true)} aria-label="New idea">+<span>New idea</span></button>
+        {(
           <ul className="raildirs" aria-label="Open recent">
             {recentProjects.map((p) => (
               <li key={p.id}>
@@ -79,6 +79,7 @@ export function Rail({ route, data, narrow, onSearch }: RailProps) {
           </a>
         ))}
       </nav>
+      <button type="button" className="rail-collapse" onClick={() => setCollapsed(v => !v)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-expanded={!narrow} disabled={compact} title={compact ? 'The sidebar is compact at this viewport width.' : undefined}>{narrow ? '»' : '«'}<span>Collapse</span></button>
       <nav className="railbottom" aria-label="Workspace">
         <a className={route.view === 'attention' ? 'nav is-on' : 'nav'} href={routeHref({ view: 'attention' })} aria-current={route.view === 'attention' ? 'page' : undefined}>
           <Icon name="attention" />
@@ -92,6 +93,9 @@ export function Rail({ route, data, narrow, onSearch }: RailProps) {
           <span className="nav-short">Settings</span>
         </a>
       </nav>
+      <button type="button" className="search" onClick={onSearch} aria-keyshortcuts="Control+K" aria-label="Search">
+        <Icon name="search" /><span>Search</span><kbd>Ctrl K</kbd>
+      </button>
       <div className="railfoot">
         {harness && (
           <span className="mono" translate="no">
@@ -101,6 +105,7 @@ export function Rail({ route, data, narrow, onSearch }: RailProps) {
           </span>
         )}
       </div>
+      <NewIdeaDialog open={newIdea} onClose={() => setNewIdea(false)} />
     </aside>
   )
 }
