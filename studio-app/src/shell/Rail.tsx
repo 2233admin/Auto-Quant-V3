@@ -9,11 +9,16 @@ import type { ShellData } from '../useShellData'
 
 /** Task-named libraries, below Ideas (home). */
 const LIBRARY_NAV = [
+  { view: 'assistant', label: 'Assistant', icon: 'directions' },
   { view: 'factors', label: 'Factors', icon: 'factors' },
   { view: 'strategies', label: 'Strategies', icon: 'strategies' },
   { view: 'runs', label: 'Runs', icon: 'runs' },
   { view: 'tuning', label: 'Tuning', icon: 'tuning' },
 ] as const
+
+function AssistantGlyph() {
+  return <svg className="icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 3.5h12v9H9l-5 4v-13Z" stroke="currentColor" strokeWidth="1.3" /><path d="M7 7h6M7 9.5h4" stroke="currentColor" strokeWidth="1.3" /></svg>
+}
 
 type RailProps = { route: Route; data: ShellData; narrow: boolean; onSearch: () => void }
 
@@ -49,6 +54,11 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
         </div>
       )}
       <nav aria-label="Sections">
+        <a className={route.view === 'assistant' ? 'nav is-on' : 'nav'} href={routeHref({ view: 'assistant' })} aria-current={route.view === 'assistant' ? 'page' : undefined}>
+          <AssistantGlyph />
+          <span className="nav-label">Assistant</span>
+          <span className="nav-short">Assistant</span>
+        </a>
         <button type="button" className="rail-new" onClick={() => setNewIdea(true)} aria-label="New factor">+<span>New factor</span></button>
         {(
           <ul className="raildirs" aria-label="Open recent">
@@ -66,7 +76,7 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
             ))}
           </ul>
         )}
-        {LIBRARY_NAV.map((item) => (
+        {LIBRARY_NAV.filter((item) => item.view !== 'assistant').map((item) => (
           <a key={item.view} className={route.view === item.view ? 'nav is-on' : 'nav'} href={routeHref({ view: item.view })} aria-current={route.view === item.view ? 'page' : undefined}>
             <Icon name={item.icon} />
             <span className="nav-label">{item.label}</span>
@@ -110,7 +120,7 @@ export function TabBar({ route, data }: { route: Route; data: ShellData }) {
   const attention = attentionItems(data.workspace).length
   const tab = (view: 'projects' | 'attention' | 'settings' | (typeof LIBRARY_NAV)[number]['view'], label: string, icon: IconName, badge?: ReactNode) => (
     <a key={view} className={route.view === view ? 'tab is-on' : 'tab'} href={routeHref({ view })} aria-current={route.view === view ? 'page' : undefined}>
-      <Icon name={icon} />
+      {view === 'assistant' ? <AssistantGlyph /> : <Icon name={icon} />}
       <span className="nav-label">{label}</span>
       <span className="nav-short">{label}</span>
       {badge}

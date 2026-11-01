@@ -1,5 +1,6 @@
 /** One page and its state, exactly as the URL says. Plain functions, no imports. */
 export type Route =
+  | { view: 'assistant' }
   | { view: 'projects' }
   | { view: 'project'; id: string }
   | { view: 'event-study'; id: string }
@@ -31,6 +32,7 @@ export function parseRoute(search: string, pathname = '/'): Route {
   }
   const p = new URLSearchParams(search)
   const id = p.get('id')
+  if (p.get('view') === 'assistant') return { view: 'assistant' }
   if (p.get('view') === 'project' && id) return { view: 'project', id }
   if (p.get('view') === 'portfolio' && id) return { view: 'portfolio', id }
   if (p.get('view') === 'factors') return { view: 'factors' }
@@ -59,6 +61,7 @@ export function parseRoute(search: string, pathname = '/'): Route {
 }
 
 export function routeHref(route: Route): string {
+  if (route.view === 'assistant') return '/?view=assistant'
   if (route.view === 'project') return `/?${new URLSearchParams({ view: 'project', id: route.id })}`
   if (route.view === 'portfolio') return `/?${new URLSearchParams({ view: 'portfolio', id: route.id })}`
   if (route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'attention' || route.view === 'settings') return `/?${new URLSearchParams({ view: route.view })}`
@@ -84,5 +87,5 @@ export function routeHref(route: Route): string {
 
 /** The Project a route belongs to, if any. */
 export function routeProjectId(route: Route): string | null {
-  return route.view === 'projects' || route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'tuning' || route.view === 'attention' || route.view === 'settings' ? null : route.id
+  return route.view === 'assistant' || route.view === 'projects' || route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'tuning' || route.view === 'attention' || route.view === 'settings' ? null : route.id
 }
