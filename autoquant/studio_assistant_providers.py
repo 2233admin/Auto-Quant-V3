@@ -17,6 +17,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import threading
 import time
 from typing import Any, Callable, Iterator
@@ -154,58 +155,182 @@ def _bridge_json(config: dict[str, Any] | None) -> str:
     return encoded
 
 
+class _WindowsJob:
+    """Own every provider descendant, including after the CLI leader exits."""
+
+    def __init__(self) -> None:
+        import ctypes
+        from ctypes import wintypes
+
+        class BasicLimits(ctypes.Structure):
+            _fields_ = [
+                ("PerProcessUserTimeLimit", ctypes.c_longlong),
+                ("PerJobUserTimeLimit", ctypes.c_longlong),
+                ("LimitFlags", wintypes.DWORD),
+                ("MinimumWorkingSetSize", ctypes.c_size_t),
+                ("MaximumWorkingSetSize", ctypes.c_size_t),
+                ("ActiveProcessLimit", wintypes.DWORD),
+                ("Affinity", ctypes.c_size_t),
+                ("PriorityClass", wintypes.DWORD),
+                ("SchedulingClass", wintypes.DWORD),
+            ]
+
+        class IoCounters(ctypes.Structure):
+            _fields_ = [(name, ctypes.c_ulonglong) for name in (
+                "ReadOperationCount", "WriteOperationCount", "OtherOperationCount",
+                "ReadTransferCount", "WriteTransferCount", "OtherTransferCount",
+            )]
+
+        class ExtendedLimits(ctypes.Structure):
+            _fields_ = [
+                ("BasicLimitInformation", BasicLimits), ("IoInfo", IoCounters),
+                ("ProcessMemoryLimit", ctypes.c_size_t),
+                ("JobMemoryLimit", ctypes.c_size_t),
+                ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                ("PeakJobMemoryUsed", ctypes.c_size_t),
+            ]
+
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+        kernel.CreateJobObjectW.restype = wintypes.HANDLE
+        kernel.SetInformationJobObject.argtypes = [
+            wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD,
+        ]
+        kernel.SetInformationJobObject.restype = wintypes.BOOL
+        kernel.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        kernel.AssignProcessToJobObject.restype = wintypes.BOOL
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle.restype = wintypes.BOOL
+        self._kernel, self._ctypes = kernel, ctypes
+        self._handle = kernel.CreateJobObjectW(None, None)
+        if not self._handle:
+            raise ctypes.WinError(ctypes.get_last_error())
+        limits = ExtendedLimits()
+        limits.BasicLimitInformation.LimitFlags = 0x00002000  # KILL_ON_JOB_CLOSE
+        if not kernel.SetInformationJobObject(
+            self._handle, 9, ctypes.byref(limits), ctypes.sizeof(limits),
+        ):
+            error = ctypes.WinError(ctypes.get_last_error())
+            self.close()
+            raise error
+
+    def assign(self, process: subprocess.Popen[str]) -> None:
+        if not self._kernel.AssignProcessToJobObject(self._handle, int(process._handle)):
+            raise self._ctypes.WinError(self._ctypes.get_last_error())
+
+    def close(self) -> None:
+        if self._handle:
+            if not self._kernel.CloseHandle(self._handle):
+                raise self._ctypes.WinError(self._ctypes.get_last_error())
+            self._handle = None
+
+
+# The bootstrap cannot create a provider/MCP child before Studio assigns its
+# process to the job. os.read consumes exactly one byte without buffering away
+# later JSON messages. Descendants inherit the job; no breakaway flag is used.
+_WINDOWS_BOOTSTRAP = (
+    "import json,os,subprocess,sys; argv=json.loads(sys.argv[1]); "
+    "gate=os.read(0,1); "
+    "sys.exit(1) if gate != b'\\0' else None; "
+    "sys.exit(subprocess.call(argv,stdin=sys.stdin,stdout=sys.stdout,stderr=sys.stderr))"
+)
+
+
 def _start_process(argv: list[str], cwd: str) -> subprocess.Popen[str]:
     options: dict[str, Any] = {}
+    job: _WindowsJob | None = None
     if os.name == "nt":
+        try:
+            job = _WindowsJob()
+        except OSError as exc:
+            raise ProviderError(
+                "assistant.provider.confinement", "Provider process ownership could not be established.",
+            ) from exc
+        launch = [sys.executable, "-c", _WINDOWS_BOOTSTRAP, json.dumps(argv)]
         options["creationflags"] = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
     else:
+        launch = argv
         options["start_new_session"] = True
     try:
-        return subprocess.Popen(
-            argv, cwd=cwd, env=_process_environment(), shell=False,
+        process = subprocess.Popen(
+            launch, cwd=cwd, env=_process_environment(), shell=False,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True, encoding="utf-8", errors="replace", bufsize=1, **options,
         )
     except OSError as exc:
+        if job is not None:
+            job.close()
         raise ProviderError("assistant.provider.start", "The local agent could not be started.") from exc
+    if job is not None:
+        try:
+            job.assign(process)
+            process._studio_job = job
+            assert process.stdin is not None
+            process.stdin.write("\0")
+            process.stdin.flush()
+        except (OSError, ValueError, AssertionError) as exc:
+            # Until the gate is released, this trusted bootstrap has no children.
+            job.close()
+            if process.poll() is None:
+                process.kill()
+            process.wait(timeout=2)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                if stream is not None:
+                    stream.close()
+            raise ProviderError(
+                "assistant.provider.confinement", "Provider process ownership could not be established.",
+            ) from exc
+    return process
 
 
 def _stop_process(process: subprocess.Popen[str]) -> None:
-    if process.poll() is None:
+    cleanup_error: Exception | None = None
+    try:
         if os.name == "nt":
-            try:
-                subprocess.run(
-                    ["taskkill.exe", "/PID", str(process.pid), "/T", "/F"],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                    timeout=5, shell=False, creationflags=subprocess.CREATE_NO_WINDOW,
+            job = getattr(process, "_studio_job", None)
+            if job is None:
+                cleanup_error = ProviderError(
+                    "assistant.provider.cleanup", "Provider process ownership is missing; cleanup is unverified.",
                 )
-            except (OSError, subprocess.SubprocessError):
-                process.kill()
+                if process.poll() is None:
+                    process.kill()
+            else:
+                # Closing a job kills descendants even if process.poll() != None.
+                job.close()
         else:
+            # A process group outlives its leader. Always signal the owned group.
             try:
                 os.killpg(process.pid, signal.SIGTERM)
-            except (OSError, ProcessLookupError):
-                process.terminate()
+            except ProcessLookupError:
+                pass
         try:
             process.wait(timeout=2)
         except subprocess.TimeoutExpired:
-            if os.name != "nt":
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except (OSError, ProcessLookupError):
-                    process.kill()
-            else:
+            if os.name == "nt":
                 process.kill()
+        if os.name != "nt":
+            # Remaining descendants can ignore SIGTERM after the leader exits.
             try:
-                process.wait(timeout=2)
-            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
                 pass
-    for stream in (process.stdin, process.stdout, process.stderr):
-        if stream is not None:
-            try:
-                stream.close()
-            except OSError:
-                pass
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired as exc:
+            cleanup_error = exc
+    except OSError as exc:
+        cleanup_error = exc
+    finally:
+        for stream in (process.stdin, process.stdout, process.stderr):
+            if stream is not None:
+                try:
+                    stream.close()
+                except (OSError, ValueError):
+                    pass
+    if cleanup_error is not None:
+        raise ProviderError(
+            "assistant.provider.cleanup", "The provider process tree could not be verified as stopped.",
+        ) from cleanup_error
 
 
 def _send(process: subprocess.Popen[str], message: dict[str, Any]) -> None:
