@@ -9,8 +9,15 @@
 .idea-question { margin: 0; font: var(--type-section); }
 .idea-assets { display: flex; flex-wrap: wrap; gap: var(--space-3); border: 1px solid var(--line); }
 .idea-assets label { display: flex; align-items: center; gap: var(--space-1); }
-.idea-answer { display: grid; gap: var(--space-4); }
+.idea-answer { display: grid; gap: var(--space-3); min-width: 0; }
+.idea-answer > * { min-width: 0; }
 .idea-answer h2, .idea-answer p { margin: 0; }
+.idea-answer .wb-chart { height: auto; }
+.idea-answer .wb-chart-body { flex: 0 0 200px; }
+.idea-next-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.idea-next-actions .wb-actions-row { margin-left: 0; }
+.idea-evidence > :not(summary) { margin-top: var(--space-3); }
+.idea-failure { white-space: pre-wrap; overflow-wrap: anywhere; }
 .idea-original { margin: 0; padding-left: var(--space-3); border-left: 2px solid var(--line); }
 .idea-hash { overflow-wrap: anywhere; }
 .idea-conclusion { font: var(--type-section); }
@@ -20,6 +27,32 @@
 .idea-table .lib-tbl th[scope='row'] { min-width: 9rem; }
 .idea-flag { display: inline-flex; align-items: center; gap: 4px; margin-left: var(--space-2); }
 .idea-next { display: block; max-width: 34rem; min-width: 9rem; white-space: normal; color: var(--muted); }
+/* Desktop answer has enough width for three compact metric columns, even at 1083px. */
+@media (min-width: 1000px) {
+  .idea-workbench .wb-shell { grid-template-columns: minmax(260px, 30fr) minmax(0, 70fr); height: calc(100dvh - 128px); }
+  .idea-answer .wb-metrics .ctg { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .idea-answer .wb-metrics .ct-pad2 { display: none; }
+  .idea-answer .wb-metrics .ct-pad3 { display: block; }
+  .idea-table .lib-tbl { table-layout: fixed; width: 100%; }
+  .idea-table .lib-tbl th, .idea-table .lib-tbl td { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+  .idea-table .lib-tbl th:nth-child(1) { width: 19%; }
+  .idea-table .lib-tbl th:nth-child(2) { width: 15%; }
+  .idea-table .lib-tbl th:nth-child(3) { width: 29%; }
+  .idea-table .lib-tbl th:nth-child(4) { width: 17%; }
+  .idea-table .lib-tbl th:nth-child(5) { width: 6%; }
+  .idea-table .lib-tbl th:nth-child(6) { width: 14%; }
+  .idea-table .idea-next { min-width: 0; }
+  .idea-table .idea-flag { display: flex; margin-left: 0; max-width: 100%; }
+  .idea-table-question { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); }
+}
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .idea-table .lib-tbl th:nth-child(6), .idea-table .lib-tbl td:nth-child(6) { display: none; }
+  .idea-table .lib-tbl th:nth-child(1) { width: 23%; }
+  .idea-table .lib-tbl th:nth-child(2) { width: 19%; }
+  .idea-table .lib-tbl th:nth-child(3) { width: 28%; }
+  .idea-table .lib-tbl th:nth-child(4) { width: 22%; }
+  .idea-table .lib-tbl th:nth-child(5) { width: 8%; }
+}
 @media (max-width: 767px) { .idea-strip .ctg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .att-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }

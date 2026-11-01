@@ -124,7 +124,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
   const primary: ActionButton = reason ? { label: !idea?.bound ? 'Use this dataset' : 'Run analysis', disabled: true, disabledReason: reason } : { label: !idea?.bound ? 'Use this dataset' : 'Run analysis', onClick: () => void prepare() }
   return <div className="pg idea-workbench">
     <header className="pg-head"><h1>{project.name}</h1><span className="small muted">Factor idea · {idea?.bound ? 'Data bound' : 'Project created · choose data next'}</span></header>
-    <WorkbenchShell ratio={48} left={<PaneCard label="Factor idea editor" tabs={<h2 className="set-title">Your hypothesis</h2>} actions={latest && !iterating ? undefined : <ActionRow primary={primary} />}>
+    <WorkbenchShell ratio={30} left={<PaneCard label="Factor idea editor" tabs={<h2 className="set-title">Your hypothesis</h2>} actions={latest && !iterating ? undefined : <ActionRow primary={primary} />}>
       <div className="idea-form">
         <p className="idea-question">{idea?.bindings[0]?.hypothesis ?? idea?.hypothesis ?? project.description}</p>
         {idea?.frozen && <p className="small muted">Original question frozen at the first attempt. <button className="linklike" onClick={() => setNewIdea(true)}>Test a different question</button> in a new Project; this history remains.</p>}
@@ -138,7 +138,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
           {packages?.unavailable.map(d => <p className="small" key={d.path}>{d.path}: {d.reason}</p>)}
         </> : <>
           <p className="small muted">{idea.request?.factorPolicy.predictionAssets.join(', ')} · {idea.request?.horizonPolicy.primaryForwardBars}-bar forward return · Validation selects; test is diagnostic.</p>
-          {latest && <><p className="small">This attempt is complete. Read the answer; another trial is optional.</p><button className="linklike" onClick={() => setIterating(v => !v)}>{iterating ? 'Close optional follow-up' : 'Optional: declare another trial'}</button></>}
+          {latest && <><p className="small">This attempt is complete. Read the answer; another trial is optional.</p>{iterating && <button className="linklike" onClick={() => setIterating(false)}>Close optional follow-up</button>}</>}
           <div className="idea-form" hidden={!!latest && !iterating}>
           {sessionId && <label className="afield">Next trial hypothesis<textarea aria-label="Next trial hypothesis" className="fe-input" rows={2} value={note} maxLength={500} onChange={e => setNote(e.target.value)} placeholder="Declare one bounded change to this candidate" /><span className="small muted">A changed hypothesis is a new trial-family note, not a rewrite of the original question or a reset of Core’s trial ledger.</span></label>}
           {!advanced && <label className="afield">Factor expression<textarea aria-label="Factor expression" className="fe-input mono" rows={3} value={expression} onChange={e => setExpression(e.target.value)} placeholder={'panel.groupby("asset")["close"].pct_change(5, fill_method=None)'} /><span className="small muted">Enter a pandas Series using the observed panel. The example is a syntax hint; no candidate runs until you author it.</span></label>}
@@ -150,7 +150,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
         {error && <details open><summary className="sig">Action needs attention</summary><pre className="cmd small" role="alert">{error}</pre></details>}
         {runs.length > 0 && <details><summary>Trial history · {runs.length} immutable Runs</summary><ul className="small">{runs.map(r => <li key={r.id}>{r.id} · {r.status}</li>)}</ul></details>}
       </div>
-    </PaneCard>} right={idea ? <IdeaVerdict project={project} idea={idea} study={evidence} run={latest} job={job} busy={busy || (latest?.status === 'succeeded' && evidenceRun !== latest.id ? 'Loading verified Run evidence…' : '')} /> : <PaneCard label="Idea verdict"><p>Loading the question…</p></PaneCard>} />
+    </PaneCard>} right={idea ? <IdeaVerdict editing={iterating} onDeclareTrial={latest && sessionId && doc?.editable && !iterating && !busyReason ? () => setIterating(true) : undefined} project={project} idea={idea} study={evidence} run={latest} job={job} busy={busy || (latest?.status === 'succeeded' && evidenceRun !== latest.id ? 'Loading verified Run evidence…' : '')} /> : <PaneCard label="Idea verdict"><p>Loading the question…</p></PaneCard>} />
     <Modal open={!!preview} onClose={() => setPreview(null)} label="Confirm analysis" className="adialog">
       {preview && <div className="adialog-body"><header className="adialog-head"><h2>{preview.requiresSecondConfirm ? 'Confirm trial' : 'Confirm dataset'}</h2><p className="small">{idea?.hypothesis}</p></header>
         <div className="adialog-scroll">

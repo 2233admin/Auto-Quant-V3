@@ -324,11 +324,13 @@ export function IcByHorizonCard({
   toggle,
   legendExtra,
   table = true,
+  minHeight = 260,
 }: {
   study: FactorDiagnostics
   toggle?: ReactNode
   legendExtra?: ReactNode
   table?: boolean
+  minHeight?: number
 }) {
   return (
     <ChartCard
@@ -349,7 +351,7 @@ export function IcByHorizonCard({
         </>
       }
       table={table ? <IcByHorizonTable study={study} /> : undefined}
-      minHeight={260}
+      minHeight={minHeight}
     >
       {({ width, height }) => <IcByHorizonPlot study={study} width={width} height={height} label={IC_BY_HORIZON_SHORT} />}
     </ChartCard>
