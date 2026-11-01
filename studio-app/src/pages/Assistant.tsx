@@ -245,7 +245,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
 
   async function send(event: FormEvent) {
     event.preventDefault()
-    if (!bootstrap || busy || working || !draft.trim() || sealed || selectedProvider?.available !== true) return
+    if (!bootstrap || busy || working || (selected !== null && !session) || !draft.trim() || sealed || selectedProvider?.available !== true) return
     const text = draft.trim()
     const turn = ++sequence.current
     setBusy(true)
@@ -300,7 +300,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
   }
 
   const sessionError = typeof session?.error === 'string' ? session.error : session?.error?.message
-  const canSend = !!bootstrap && !!index && !loading && !busy && !working && !sealed && selectedProvider?.available === true && !!draft.trim()
+  const canSend = !!bootstrap && !!index && !loading && (selected === null || !!session) && !busy && !working && !sealed && selectedProvider?.available === true && !!draft.trim()
   return (
     <div className={'assistant' + (drawer ? ' assistant--drawer' : '')}>
       <header className="assistant-head">
