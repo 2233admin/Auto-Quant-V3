@@ -573,6 +573,8 @@ Read the relevant linked document before changing a subsystem:
 - Read-only Workspace observation, local HTTP, browser presentation, and
   mutable-versus-immutable research state:
   [[docs/design/studio-observation-surface]]
+- Idea-first Factor entry, staged intake, question hashes and conservative
+  development-evidence conclusions: [[docs/design/idea-verdict-card]]
 - Agent-native request/report collaboration, professional quantitative
   evidence, causal portfolio construction, governed RL, and human/Agent
   interaction:

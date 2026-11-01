@@ -385,6 +385,7 @@ class JobRunner:
         command_hash: str,
         timeout: float,
         cwd: str,
+        audit_fields: dict[str, Any] | None = None,
     ) -> Job:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         job = Job(
@@ -425,6 +426,7 @@ class JobRunner:
                     "project": project,
                     "tokenId": self._audit.token_id,
                     "startedAt": job.started_at,
+                    **(audit_fields or {}),
                 }
             )
         except OSError as error:
@@ -676,7 +678,9 @@ START_NOTICE = (
     "source trial unless an identical successful one is reused"
 )
 SAVE_CONFLICT = "The candidate on disk changed since it was loaded; reload before saving"
-STAGES_BY_ACTION = {START_ID: START_STAGES, CHECK_ID: CHECK_STAGES}
+STAGES_BY_ACTION = {START_ID: START_STAGES, CHECK_ID: CHECK_STAGES,
+                    "project.create": (("project-created", "Project created"),),
+                    "project.intake": (("dataset-bound", "Dataset bound"),)}
 ACTION_ORDER = (EVALUATE_ID, START_ID, CHECK_ID, SAVE_ID)
 ACTION_SPECS: dict[str, dict[str, Any]] = {
     EVALUATE_ID: {
@@ -1005,6 +1009,7 @@ class ActionService:
         self.token_id = hashlib.sha256(self.token.encode()).hexdigest()[:6]
         self._load_projects = load_projects
         self._fingerprint = fingerprint
+        self._idea_launch_lock = threading.Lock()
         self._timeouts = {
             EVALUATE_ID: float(EVALUATE_TIMEOUT_SECONDS),
             START_ID: float(START_TIMEOUT_SECONDS),
@@ -1061,6 +1066,9 @@ class ActionService:
         return project
 
     def candidate(self, project_id: Any, session_id: Any) -> dict[str, Any]:
+        if session_id == "initial":
+            from .studio_ideas import initial_candidate
+            return initial_candidate(self, self._project(project_id))
         return candidate_view(self._project(project_id), session_id, self.root, self)
 
     def _evaluate(self, project: ProjectContext, session_id: str, check_only: bool = False) -> Evaluation:
@@ -1171,6 +1179,8 @@ class ActionService:
             "studyId": study_id,
             "familyId": family_id,
             "currentFamilyTrials": count,
+            "n": count + 1,
+            "m": count + 1,
             "notice": START_NOTICE,
         }
 
@@ -1278,6 +1288,20 @@ class ActionService:
                     "targets": targets[action_id],
                 }
             )
+        if self.scope == "workspace" and project_id is None:
+            actions.extend([
+                {"id": "project.create", "label": "New idea", "command": "aq project create",
+                 "classification": "writes-working-file", "writes": "Creates a dedicated Project with its question.",
+                 "requiresSecondConfirm": False, "timeoutSeconds": 120, "targets": [],
+                 "params": {"id": {"type": "string"}, "name": {"type": "string"},
+                            "description": {"type": "string", "minLength": 8, "maxLength": 500},
+                            "template": {"enum": ["blank", "ohlcv-factor-lab"]}}},
+                {"id": "project.intake", "label": "Bind staged dataset", "command": "aq project intake",
+                 "classification": "writes-working-file", "writes": "Binds a caller-selected daily V1 package through Core intake.",
+                 "requiresSecondConfirm": False, "timeoutSeconds": 120, "targets": [],
+                 "params": {"dataset": {"type": "string"}, "horizon": {"type": "integer", "minimum": 1, "maximum": 60},
+                            "predictionAssets": {"type": "array"}}},
+            ])
         return {"actions": actions}
 
     # -- preview / create ----------------------------------------------------
@@ -1326,6 +1350,9 @@ class ActionService:
         )
 
     def preview(self, body: Any) -> dict[str, Any]:
+        if isinstance(body, dict) and body.get("actionId") in {"project.create", "project.intake"}:
+            from .studio_ideas import prepare
+            return prepare(self, body)
         if isinstance(body, dict) and body.get("actionId") == SAVE_ID:
             return self._save_preview(body)
         prepared = self._prepare(body)
@@ -1351,7 +1378,14 @@ class ActionService:
         }
 
     def create(self, body: Any) -> dict[str, Any]:
+        if isinstance(body, dict) and body.get("actionId") in {"project.create", "project.intake"}:
+            from .studio_ideas import launch
+            with self._idea_launch_lock:
+                return launch(self, body)
         if isinstance(body, dict) and body.get("actionId") == SAVE_ID:
+            if isinstance(body.get("params"), dict) and body["params"].get("session") == "initial":
+                from .studio_ideas import save_initial
+                return save_initial(self, body)
             return self.save_candidate(body)
         prepared = self._prepare(body)
         project, action_id, argv = prepared.project, prepared.action_id, prepared.argv
@@ -1377,6 +1411,7 @@ class ActionService:
             )
         from shlex import join
 
+        from .studio_ideas import binding
         job = self.runner.create(
             action_id=action_id,
             project=project.manifest.id,
@@ -1385,6 +1420,7 @@ class ActionService:
             command_hash=expected,
             timeout=self._timeouts[action_id],
             cwd=str(self.root),
+            audit_fields=binding(self, project, prepared.params.get("hypothesis")),
         )
         return {"jobId": job.id, "status": job.status, "commandHash": expected}
 

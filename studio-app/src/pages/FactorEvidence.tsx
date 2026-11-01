@@ -23,7 +23,8 @@ export type Verdict = 'pass' | 'fail' | 'inconclusive'
 type Reason = { tone: 'good' | 'bad' | 'info'; text: ReactNode; field: string }
 
 /** diagnosis.stage values that mean "no edge found". Every other unqualified stage means "evidence not yet sufficient". */
-const FAIL_STAGES = new Set(['raw-predictive-edge-absent', 'style-neutral-edge-absent', 'blend-uplift-absent', 'known-style-identity-mismatch'])
+// A failed qualification is not a falsification of the caller's idea.
+const FAIL_STAGES = new Set<string>()
 
 type Adjustment = SelectionIntegrity['selectionAdjustment']
 
@@ -137,7 +138,7 @@ const ic4 = (v: number) => `${v < 0 ? '-' : ''}${Math.abs(v).toFixed(4)}`
 export function verdictSentence(study: FactorDiagnostics, adjustment: Adjustment | undefined, verdict: Verdict): string {
   const v = study.summary.validation
   const line = study.factorQualification.semantics?.diagnosticThresholds?.minimumPositiveHacTStatistic
-  const lead = verdict === 'fail' ? 'Does not hold' : verdict === 'pass' ? 'Holds on validation' : 'Not established'
+  const lead = verdict === 'fail' ? 'Qualification not met' : verdict === 'pass' ? 'Qualifies on validation' : 'Not established'
   if (!v || !finite(v.meanRankIc)) {
     const d = study.factorQualification.diagnosis
     return `${lead}: ${d ? d.explanation : 'this Run publishes no validation summary and no server verdict.'}`
@@ -168,7 +169,7 @@ const ic3 = (v: number) => `${v < 0 ? '-' : '+'}${Math.abs(v).toFixed(3)}`
 export function verdictClause(study: FactorDiagnostics, verdict: Verdict): string {
   const v = study.summary.validation
   const line = study.factorQualification.semantics?.diagnosticThresholds?.minimumPositiveHacTStatistic
-  const lead = verdict === 'fail' ? 'Does not hold' : verdict === 'pass' ? 'Holds' : 'Not established'
+  const lead = verdict === 'fail' ? 'Qualification not met' : verdict === 'pass' ? 'Qualifies' : 'Not established'
   if (!v || !finite(v.meanRankIc)) return `${lead}: no validation summary published`
   const t = v.hacTStatistic
   const tPart = finite(t) ? `HAC t ${num(t, 2)}${finite(line) ? ` ${t >= line ? '≥' : '<'} ${num(line, 2)}` : ''}` : 'HAC t undefined'

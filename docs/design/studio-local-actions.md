@@ -1,5 +1,18 @@
 # Studio local actions
 
+The idea-first Factor slice is described in [[docs/design/idea-verdict-card]].
+It adds `project.create` (id, name, description, allowlisted blank/Factor
+template) and `project.intake` (confined staged V1 dataset, explicit prediction
+assets and horizon). Both preview exact argv and execute the existing CLI.
+Intake writes its displayed strict caller request under `.autoquant/idea-inputs`
+before invoking Core. GET `/api/v1/idea-datasets` and `/api/v1/idea` require the
+action token. The controlled candidate write also accepts `session=initial`
+only after strict intake and before any Run/Session; afterwards the existing
+Session gates apply. Started research jobs record the original question and
+its hash as operational metadata. None of these records changes Judge or Run
+authority. These narrow working-file writes supersede the older blanket
+“only the audit log” and “no browser-side code editing” non-goals below.
+
 Status: slice S1 implemented (server side: flag, security layer, JobRunner,
 audit log, the `experiment.evaluate` action); the S3 subset `session.start` and
 `session.check` plus the controlled write `candidate.save` and the read route

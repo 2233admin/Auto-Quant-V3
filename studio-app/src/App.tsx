@@ -8,6 +8,7 @@ import { AttentionPage } from './pages/Attention'
 import { SettingsPage } from './pages/Settings'
 import { EventStudyPage } from './pages/EventStudy'
 import { FactorPage } from './pages/Factor'
+import { IdeaWorkbench } from './pages/IdeaWorkbench'
 import { ProjectPage, useProject } from './pages/Project'
 import { ComparePage } from './pages/compare/ComparePage'
 import { PortfolioPage } from './pages/portfolio/Portfolio'
@@ -140,7 +141,9 @@ export default function App() {
       ) : route.view === 'rl' ? (
         <RlPage project={project.project} />
       ) : route.view === 'factor' ? (
-        <FactorPage project={project.project} study={route.study} run={route.run} go={go} />
+        new URLSearchParams(window.location.search).get('idea') === '1' || project.project.runs.length === 0
+          ? <IdeaWorkbench key={project.project.id} project={project.project} />
+          : <FactorPage project={project.project} study={route.study} run={route.run} go={go} />
       ) : (
         <ProjectPage project={project.project} />
       )

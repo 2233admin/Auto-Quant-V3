@@ -402,7 +402,7 @@ class StudioActionsTests(unittest.TestCase):
                 server, "POST", url, {**self._params(session), "actionId": "holdout.run"}
             )
             self.assertEqual((status, payload["error"]["code"]), (404, "studio.unknown-action"))
-            for action_id in ("report.publish", "project.create", "session.complete", "candidate.delete", "", None):
+            for action_id in ("report.publish", "session.complete", "candidate.delete", "", None):
                 status, payload = self._request(
                     server, "POST", url, {**self._params(session), "actionId": action_id}
                 )
@@ -887,7 +887,7 @@ class StudioActionsTests(unittest.TestCase):
             self.assertIn("opens a trial family", data["trial"]["notice"])
             catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
             ids = [item["id"] for item in catalog["data"]["actions"]]
-            self.assertEqual(ids, ["experiment.evaluate", "session.start", "session.check", "candidate.save"])
+            self.assertEqual(ids, ["experiment.evaluate", "session.start", "session.check", "candidate.save", "project.create", "project.intake"])
             start = catalog["data"]["actions"][1]
             self.assertEqual(
                 start["targets"][0]["studies"],
@@ -1304,6 +1304,136 @@ class StudioActionsTests(unittest.TestCase):
                 if factors.exists():
                     os.rmdir(factors)
                 backup.rename(factors)
+
+
+    def test_idea_project_create_preview_security_and_exact_argv(self) -> None:
+        from autoquant.workspace import initialize_workspace
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = initialize_workspace(Path(directory) / "workspace")
+            spawn = FakeSpawn()
+            server = self._serve(workspace, spawn=spawn)
+            body = {"actionId": "project.create", "project": "my-idea", "params": {
+                "id": "my-idea", "name": "A quote ' stays literal", "description": HYPOTHESIS,
+                "template": "ohlcv-factor-lab"}}
+            _, catalog = self._request(server, "GET", "/api/v1/actions")
+            self.assertIn("project.create", [a["id"] for a in catalog["data"]["actions"]])
+            status, _ = self._request(server, "POST", "/api/v1/actions/preview", body, token=False)
+            self.assertEqual(status, 403)
+            status, payload = self._request(server, "POST", "/api/v1/actions/preview", body)
+            self.assertEqual(status, 200, payload)
+            preview = payload["data"]
+            self.assertEqual(preview["argv"][3:5], ["project", "create"])
+            self.assertIn(body["params"]["name"], preview["argv"])
+            self.assertFalse((workspace.root_dir / "projects/my-idea").exists())
+            status, _ = self._request(server, "POST", "/api/v1/actions", {**body, "confirm": True, "commandHash": "stale"})
+            self.assertEqual(status, 409)
+            status, launched = self._request(server, "POST", "/api/v1/actions", {**body, "confirm": True, "commandHash": preview["commandHash"]})
+            self.assertEqual(status, 202, launched)
+            server.actions.runner.get(launched["data"]["jobId"]).done.wait(5)
+            self.assertEqual(spawn.calls[0][0], preview["argv"])
+
+    def test_idea_create_rejects_traversal_options_unknown_fields_and_templates(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, _ = self._setup(directory)
+            server = self._serve(workspace, spawn=FakeSpawn())
+            good = {"id": "new-idea", "name": "Idea", "description": HYPOTHESIS, "template": "ohlcv-factor-lab"}
+            for override in ({"id": "../escape"}, {"id": "--help"}, {"name": "--help"},
+                             {"template": "ohlcv-research-desk"}, {"shell": "echo bad"}, {"description": "a\nb"}):
+                status, body = self._request(server, "POST", "/api/v1/actions/preview", {
+                    "actionId": "project.create", "params": {**good, **override}})
+                self.assertEqual(status, 422, body)
+
+    def test_idea_dataset_discovery_and_stale_data_confirmation(self) -> None:
+        from tests.intake_helpers import write_intake_inputs
+        from autoquant.workspace import initialize_workspace
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = initialize_workspace(Path(directory) / "workspace")
+            create_project(workspace.root_dir, "new-idea", description=HYPOTHESIS, template="ohlcv-factor-lab")
+            server = self._serve(workspace, spawn=FakeSpawn())
+            status, empty = self._request(server, "GET", "/api/v1/idea-datasets")
+            self.assertEqual(status, 200)
+            self.assertEqual(empty["data"]["datasets"], [])
+            self.assertIn("Copy-Item", empty["data"]["stagingCommand"])
+            staging = workspace.root_dir / "staging"
+            staging.mkdir()
+            _, package = write_intake_inputs(staging, observations=180)
+            status, choices = self._request(server, "GET", "/api/v1/idea-datasets")
+            self.assertEqual(len(choices["data"]["datasets"]), 1, choices)
+            params = {"dataset": package.relative_to(workspace.root_dir).as_posix(), "horizon": 1, "predictionAssets": ["AAPL", "MSFT"]}
+            body = {"actionId": "project.intake", "project": "new-idea", "params": params}
+            status, result = self._request(server, "POST", "/api/v1/actions/preview", body)
+            self.assertEqual(status, 200, result)
+            self.assertEqual(result["data"]["request"]["question"], HYPOTHESIS)
+            self.assertEqual(result["data"]["request"]["source"]["system"], "local")
+            self.assertFalse((workspace.root_dir / ".autoquant/idea-inputs/new-idea.json").exists())
+            with (package.parent / "AAPL.csv").open("a") as file:
+                file.write("\n")
+            status, _ = self._request(server, "POST", "/api/v1/actions", {**body, "confirm": True, "commandHash": result["data"]["commandHash"]})
+            self.assertEqual(status, 409)
+            for path in ("../outside.json", str(Path(directory) / "outside.json")):
+                status, _ = self._request(server, "POST", "/api/v1/actions/preview", {**body, "params": {**params, "dataset": path}})
+                self.assertEqual(status, 422)
+
+    def test_idea_dataset_rejects_asset_escape(self) -> None:
+        from tests.intake_helpers import write_intake_inputs
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, _ = self._setup(directory)
+            staging = workspace.root_dir / "staging"
+            staging.mkdir()
+            _, package = write_intake_inputs(staging)
+            data = json.loads(package.read_text())
+            data["assets"][0]["path"] = "../../outside.csv"
+            package.write_text(json.dumps(data))
+            server = self._serve(workspace)
+            status, listing = self._request(server, "GET", "/api/v1/idea-datasets")
+            self.assertEqual(status, 200)
+            self.assertEqual(listing["data"]["datasets"], [])
+            self.assertIn("package directory", listing["data"]["unavailable"][0]["reason"])
+
+    def test_idea_first_candidate_compare_and_swap_then_run_freeze(self) -> None:
+        from autoquant.intake import prepare_project_intake
+        from autoquant.workspace import initialize_workspace
+        from tests.intake_helpers import write_intake_inputs
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request, package = write_intake_inputs(root, observations=180)
+            prepared = prepare_project_intake(request, package, "ohlcv-factor-lab")
+            workspace = initialize_workspace(root / "workspace")
+            project = create_project(workspace.root_dir, "new-idea", template=prepared.template, template_intake=prepared)
+            server = self._serve(workspace)
+            status, result = self._request(server, "GET", "/api/v1/candidate?project=new-idea&session=initial")
+            self.assertEqual(status, 200, result)
+            path = project.root_dir / "factors/candidate.py"
+            source = path.read_text() + "\n# Authored first candidate\n"
+            body = {"actionId": "candidate.save", "project": "new-idea", "confirm": True,
+                    "params": {"session": "initial", "source": source, "baseSha256": result["data"]["sha256"]}}
+            status, saved = self._request(server, "POST", "/api/v1/actions", body)
+            self.assertEqual(status, 200, saved)
+            self.assertEqual(path.read_text(), source)
+            status, _ = self._request(server, "POST", "/api/v1/actions", body)
+            self.assertEqual(status, 409)
+            with mock.patch("autoquant.studio_ideas.list_runs", return_value=[object()]):
+                status, _ = self._request(server, "GET", "/api/v1/candidate?project=new-idea&session=initial")
+                self.assertEqual(status, 409)
+            records = [json.loads(line) for line in (workspace.root_dir / ".autoquant/studio-actions.jsonl").read_text().splitlines()]
+            self.assertIn("hypothesisSha256", records[-1])
+            self.assertEqual(records[-1]["sourceSha256"], hashlib.sha256(source.encode()).hexdigest())
+
+    def test_idea_started_audit_binds_original_and_trial_hypotheses(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, project, session = self._setup(directory)
+            spawn = FakeSpawn(out=EVALUATE_JSON)
+            server = self._serve(workspace, spawn=spawn)
+            preview = self._preview(server, session)
+            result = self._create(server, session, preview)
+            self.assertEqual(result[0], 202, result)
+            self._wait(server, result[1]["data"]["jobId"])
+            # Existing helper returns the HTTP envelope; audit is durable independently of UI state.
+            records = [json.loads(line) for line in (workspace.root_dir / ".autoquant/studio-actions.jsonl").read_text().splitlines()]
+            started = next(row for row in records if row["event"] == "started")
+            self.assertEqual(started["hypothesisSha256"], hashlib.sha256(project.manifest.description.encode()).hexdigest())
+            self.assertEqual(started["trialHypothesis"], HYPOTHESIS)
+            self.assertEqual(started["trialHypothesisSha256"], hashlib.sha256(HYPOTHESIS.encode()).hexdigest())
 
 
 if __name__ == "__main__":

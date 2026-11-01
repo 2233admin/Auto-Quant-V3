@@ -404,7 +404,7 @@ export type ResearchAgenda = {
 }
 
 export type SessionSnapshot = {
-  session?: { id?: string; status?: string; studyId?: string; createdAt?: string; updatedAt?: string }
+  session?: { id?: string; status?: string; studyId?: string; createdAt?: string; updatedAt?: string; leader?: { runId?: string } }
   /** Older snapshots: kept so a flat shape still renders. */
   id?: string
   status?: string
