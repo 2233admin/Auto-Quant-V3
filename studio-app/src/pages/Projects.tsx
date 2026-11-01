@@ -1,17 +1,15 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import type { ProjectSnapshot, ProjectSummary, WorkspaceSummary } from '../api'
-import { CompactTile, CompactTileGrid } from '../components/CompactTile'
 import { Empty } from '../components/States'
 import { pickIntegrity } from '../components/TrialCounter'
 import { Glyph } from '../design/icons'
-import { num, plural, when } from '../format'
-import { attentionItems, sortIdeas } from '../ideas'
+import { plural, when } from '../format'
+import { sortIdeas } from '../ideas'
 import { DataTable, type Col } from '../library/DataTable'
 import { useAllProjects, byNewest, type Loaded } from '../library/data'
-import { VerdictBadge } from '../library/parts'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
-import { buildVerdict } from './FactorEvidence'
+import { ideaVerdict } from './IdeaVerdict'
 import { NewIdeaDialog } from './NewIdeaDialog'
 import './ideas.css'
 
@@ -26,9 +24,15 @@ function latestOf(r: Row) {
 }
 
 function verdictOf(r: Row) {
-  if (!r.snap?.factorExplorer) return null
-  return buildVerdict(r.snap.factorExplorer, pickIntegrity(r.snap)?.selectionAdjustment).verdict
+  const latest = latestOf(r)
+  if (!latest) return 'Not tested'
+  if (latest.status !== 'succeeded') return 'Could not be tested'
+  if (r.snap?.factorExplorer?.run.id !== latest.id) return 'No current Factor conclusion'
+  const exactLeader = r.snap.sessions.find(s => s.session?.leader?.runId === latest.id)
+  return ideaVerdict(r.snap.factorExplorer, exactLeader?.selectionIntegrity?.selectionAdjustment?.passes)
 }
+
+const hrefOf = (r: Row) => r.p.studies.length === 1 && r.p.studies[0].id === 'ohlcv-factor-quality' ? `${routeHref({ view: 'factor', id: r.p.id })}&idea=1` : routeHref({ view: 'project', id: r.p.id })
 
 /** Home, called "Ideas": one Project is one idea. Status strip on top, then one row per Project. */
 export function Projects({ workspace, freshness, error, go }: { workspace: WorkspaceSummary; freshness: ReactNode; error: string | null; go: (href: string) => void }) {
@@ -39,9 +43,6 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
     const byId = new Map(all.map((l) => [l.summary.id, l]))
     return sortIdeas(projects).map((p) => rowOf(p, byId.get(p.id)))
   }, [projects, all])
-  const attention = attentionItems(workspace).length
-  const runs = projects.reduce((sum, p) => sum + p.runCount, 0)
-  const last = projects.reduce<string | null>((m, p) => (p.latestRunAt && (!m || p.latestRunAt > m) ? p.latestRunAt : m), null)
 
   const cols: Col<Row>[] = [
     {
@@ -50,7 +51,7 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
       rowHeader: true,
       render: (r) => (
         <>
-          <a href={routeHref({ view: 'project', id: r.p.id })} translate="no">{r.p.name}</a>
+          <a href={hrefOf(r)} translate="no">{r.p.name}</a>
           <span className="faint small">
             <span className="mono" translate="no">{r.p.id}</span>
             {!r.p.valid && (
@@ -67,21 +68,13 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
       id: 'verdict',
       label: 'Verdict',
       title: 'Factor verdict from the server qualification stage.',
-      render: (r) => <VerdictBadge verdict={verdictOf(r)} none={r.loading ? 'Loading…' : 'No verdict'} />,
+      render: (r) => <span>{r.loading ? 'Loading…' : verdictOf(r)}</span>,
     },
     {
       id: 'metric',
-      label: 'Headline metric',
+      label: 'Original question',
       render: (r) => {
-        const run = latestOf(r)
-        if (r.p.runCount === 0) return <span className="faint small">No Runs yet</span>
-        if (!run) return <span className="faint small">{r.loading ? 'Loading…' : 'Not available'}</span>
-        return (
-          <>
-            <span className="mono small" translate="no">{run.primaryMetric}</span>
-            <span className="mono"> {num(run.primaryValue, 4)}</span>
-          </>
-        )
+        return <span className="idea-next">{r.snap?.agentWorkBrief?.question?.text ?? r.snap?.description ?? r.p.description ?? 'Loading question…'}</span>
       },
     },
     { id: 'last', label: 'Latest Run (UTC)', render: (r) => <span className="mono">{when(r.p.latestRunAt)}</span> },
@@ -98,7 +91,7 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
     {
       id: 'next',
       label: 'Next step',
-      render: (r) => (r.p.brief.headline ? <span className="idea-next">{r.p.brief.headline}</span> : <span className="faint small">None recorded</span>),
+      render: (r) => <span className="idea-next">{r.p.runCount ? 'Read the conclusion' : 'Continue this idea'}</span>,
     },
   ]
 
@@ -115,29 +108,17 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
           New idea
         </button>
       </header>
-      <div className="idea-strip">
-        <CompactTileGrid label="Workspace status">
-          <CompactTile label="Ideas" value={String(projects.length)} />
-          <CompactTile
-            label="Need attention"
-            value={String(attention)}
-            tone={attention > 0 ? 'weak' : 'neutral'}
-            note={attention > 0 ? <a href={routeHref({ view: 'attention' })}>Review</a> : 'none'}
-          />
-          <CompactTile label="Immutable Runs" value={String(runs)} />
-          <CompactTile label="Last Run (UTC)" value={when(last)} />
-        </CompactTileGrid>
-      </div>
+      <p className="muted">Bring a factor idea. Test it on staged data. Keep an honest answer, including an inconclusive one.</p>
       {error && <Notice kind="error" label="Error" title="Could not refresh." subtitle={error} />}
       {projects.length === 0 ? (
-        <Empty title="No ideas yet">Use New idea to see how to create the first one.</Empty>
+        <Empty title="What would you like to test?">Choose New idea to write your first question. No analysis runs until you confirm a trial.</Empty>
       ) : (
         <div className="idea-table">
         <DataTable
           rows={rows}
           cols={cols}
           rowKey={(r) => r.p.id}
-          href={(r) => routeHref({ view: 'project', id: r.p.id })}
+          href={hrefOf}
           go={go}
           caption={`${plural(projects.length, 'idea')}, needs attention first, then latest Run`}
         />

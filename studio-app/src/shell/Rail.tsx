@@ -57,7 +57,7 @@ export function Rail({ route, data, narrow, onSearch }: RailProps) {
               <li key={p.id}>
                 <a
                   className={p.id === open ? 'railitem is-on' : 'railitem'}
-                  href={routeHref({ view: 'project', id: p.id })}
+                  href={p.studies.length === 1 && p.studies[0].id === 'ohlcv-factor-quality' ? `${routeHref({ view: 'factor', id: p.id })}&idea=1` : routeHref({ view: 'project', id: p.id })}
                   aria-current={p.id === open && route.view === 'project' ? 'page' : undefined}
                   title={`Open ${p.name}`}
                 >

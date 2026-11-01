@@ -2242,12 +2242,19 @@ def _handler(
             """Serve GET action/job routes; False when path is not one."""
             assert actions is not None
             job_match = re.fullmatch(r"/api/v1/jobs/([A-Za-z0-9-]+)", path)
-            if path not in {"/api/v1/actions", "/api/v1/jobs"} and not job_match:
+            if path not in {"/api/v1/actions", "/api/v1/jobs", "/api/v1/idea", "/api/v1/idea-datasets"} and not job_match:
                 return False
             if not self._token_ok():
                 return True
             try:
-                if path == "/api/v1/actions":
+                if path == "/api/v1/idea-datasets":
+                    from .studio_ideas import datasets
+                    data = datasets(actions)
+                elif path == "/api/v1/idea":
+                    from .studio_ideas import idea_view
+                    ids = parse_qs(urlsplit(self.path).query).get("project") or []
+                    data = idea_view(actions, ids[0] if ids else None)
+                elif path == "/api/v1/actions":
                     ids = parse_qs(urlsplit(self.path).query).get("project") or []
                     data = actions.catalog(ids[0] if ids else None)
                 elif path == "/api/v1/jobs":
