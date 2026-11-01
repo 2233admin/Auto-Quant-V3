@@ -150,6 +150,26 @@ def descriptor(
 
 CLI_COMMANDS = [
     descriptor(
+        "candidate.show",
+        "aq candidate show <directory> --project ID --session ID [--json]",
+        "Read confined candidate source and exact optimistic source hash; initial denotes a pristine intake.",
+        "read-only",
+        [PATH_ARGUMENT, argument("project", "option", "string", True, "Exact Project id."),
+         argument("session", "option", "string", True, "Session id or initial."),
+         JSON_ARGUMENT],
+    ),
+    descriptor(
+        "candidate.save",
+        "aq candidate save <directory> --project ID --session ID --base-sha256 HASH --source-stdin [--json]",
+        "Atomically save UTF-8 candidate source from stdin using existing source, path, Session and audit gates. Does not execute candidate code.",
+        "mutates-project",
+        [PATH_ARGUMENT, argument("project", "option", "string", True, "Exact Project id."),
+         argument("session", "option", "string", True, "Session id or initial."),
+         argument("base-sha256", "option", "string", True, "Exact current source SHA256."),
+         argument("source-stdin", "option", "boolean", True, "Read at most 200000 source bytes from stdin."),
+         JSON_ARGUMENT],
+    ),
+    descriptor(
         "version",
         "aq version [--json]",
         "Report the current Harness version, exact build commit, dirty state, runtime closure hash, Python version, and provenance source.",

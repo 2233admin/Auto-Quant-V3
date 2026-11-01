@@ -20,6 +20,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/studio-assistant]] | Add local Claude/Codex conversations with governed aq writes, safe context and explicit isolation completion gates. | 2026-11-02 |
 | [[plans/measured-factor-strategy-libraries]] | Measure and implement the Factor/Strategy libraries, navigation and persistent factor editor for supervised acceptance. | 2026-11-01 |
 | [[plans/measured-idea-workbench-shell]] | Reproduce measured floating shell and persistent Idea editor/result geometry with existing evidence gates. | 2026-11-01 |
 | [[plans/idea-answer-charts]] | Put the existing gated Factor chart and validation metrics beside the idea verdict on desktop. | 2026-11-01 |

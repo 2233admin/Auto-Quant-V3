@@ -319,6 +319,20 @@ def build_parser() -> RaisingArgumentParser:
     )
     subcommands = parser.add_subparsers(dest="command", required=True)
 
+
+    candidate = subcommands.add_parser("candidate", help="inspect or save confined candidate source")
+    candidate_actions = candidate.add_subparsers(dest="candidate_action", required=True)
+    for verb in ("show", "save"):
+        candidate_action = candidate_actions.add_parser(verb)
+        candidate_action.add_argument("directory")
+        candidate_action.add_argument("--project", required=True)
+        candidate_action.add_argument("--session", required=True)
+        if verb == "save":
+            candidate_action.add_argument("--base-sha256", required=True)
+            candidate_action.add_argument("--source-stdin", required=True, action="store_true")
+        candidate_action.set_defaults(command_id="candidate." + verb)
+        _json_argument(candidate_action)
+
     version_command = subcommands.add_parser(
         "version",
         help="report exact installed or source Harness identity",
@@ -5824,6 +5838,18 @@ def _orient(args: argparse.Namespace) -> CommandResult:
 
 
 def dispatch(args: argparse.Namespace) -> CommandResult:
+    if args.command_id in {"candidate.show", "candidate.save"}:
+        from .candidate_commands import candidate_access
+        source = None
+        if args.command_id == "candidate.save":
+            raw = sys.stdin.buffer.read(200001)
+            if len(raw) > 200000:
+                raise CliUsageError("Candidate source exceeds 200000 bytes")
+            source = raw.decode("utf-8")
+        data = candidate_access(
+            args.directory, args.project, args.session,
+            source=source, base_sha256=getattr(args, "base_sha256", None))
+        return CommandResult(args.command_id, data, json.dumps(data, indent=2) + "\n")
     if args.command_id == "version":
         harness = harness_identity()
         state = "dirty" if harness["dirty"] else "clean"
@@ -6091,6 +6117,7 @@ def _command_id(argv: Sequence[str]) -> str:
         return "help"
     if argv[0] in {
         "workspace",
+        "candidate",
         "project",
         "study",
         "run",

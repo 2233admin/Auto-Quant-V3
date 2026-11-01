@@ -570,6 +570,8 @@ Read the relevant linked document before changing a subsystem:
   delegated source promotion: [[docs/design/research-session-loop]]
 - Provider-neutral external Researcher turns, budgets, restoration, and
   immutable Campaign evidence: [[docs/design/external-researcher-driver]]
+- Local Assistant conversations, provider tool closure, governed aq broker, budgets
+  and candidate-isolation completion gates: [[docs/design/studio-assistant]]
 - Read-only Workspace observation, local HTTP, browser presentation, and
   mutable-versus-immutable research state:
   [[docs/design/studio-observation-surface]]

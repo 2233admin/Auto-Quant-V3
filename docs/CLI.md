@@ -1475,3 +1475,17 @@ uv run python -m unittest \
   tests.test_cli tests.test_studies tests.test_runs tests.test_sessions \
   tests.test_research tests.test_reports tests.test_studio -v
 ```
+
+## Candidate source editor
+
+The public candidate commands use the same path, Session writability, size,
+UTF-8, exact base SHA256 and audit gates as the Studio editor. They do not run
+the candidate. Use session initial only for a pristine strictly intaken Project.
+
+~~~bash
+aq candidate show <workspace> --project ID --session SESSION --json
+aq candidate save <workspace> --project ID --session SESSION --base-sha256 HASH --source-stdin --json
+~~~
+
+Save reads at most 200000 UTF-8 bytes from stdin and refuses a stale hash.
+See [[docs/design/studio-local-actions]] and [[docs/design/studio-assistant]].

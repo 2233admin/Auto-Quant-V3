@@ -601,3 +601,15 @@ The durable boundary and known gaps are in
 Shared page building blocks (two-pane workbench shell, tabs, action row, chart card,
 metric grid) and the `?view=kit` gallery are described in
 [[docs/design/studio-workbench-kit]].
+
+## Assistant (in development)
+
+The developing Assistant page and current-object drawer use local authenticated
+Claude Code/Codex adapters, persistent conversations and inspectable aq actions.
+They require local actions to be enabled. No provider API key is collected.
+
+This is not yet an accepted full-automation release. Codex remains unavailable
+until its tool closure is verified; arbitrary Python candidate execution is
+blocked until process isolation exists. Supported candidate source writes use
+aq candidate show/save. Live streaming/login/isolation canaries are still
+pending. See [[docs/design/studio-assistant]] and [[plans/studio-assistant]].

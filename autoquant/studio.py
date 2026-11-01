@@ -2246,12 +2246,19 @@ def _handler(
             """Serve GET action/job routes; False when path is not one."""
             assert actions is not None
             job_match = re.fullmatch(r"/api/v1/jobs/([A-Za-z0-9-]+)", path)
-            if path not in {"/api/v1/actions", "/api/v1/jobs", "/api/v1/idea", "/api/v1/idea-datasets"} and not job_match:
+            if path not in {"/api/v1/actions", "/api/v1/jobs", "/api/v1/idea", "/api/v1/idea-datasets", "/api/v1/assistant", "/api/v1/assistant/session"} and not job_match:
                 return False
             if not self._token_ok():
                 return True
             try:
-                if path == "/api/v1/idea-datasets":
+                if path == "/api/v1/assistant":
+                    data = actions.assistant.catalogue()
+                elif path == "/api/v1/assistant/session":
+                    ids = parse_qs(urlsplit(self.path).query).get("id") or []
+                    if len(ids) != 1:
+                        raise ActionError(400, "assistant.session", "One conversation id is required")
+                    data = actions.assistant.view(ids[0])
+                elif path == "/api/v1/idea-datasets":
                     from .studio_ideas import datasets
                     data = datasets(actions)
                 elif path == "/api/v1/idea":
@@ -2325,7 +2332,7 @@ def _handler(
             """Serve POST action/job routes; False when path is not one."""
             assert actions is not None
             cancel = re.fullmatch(r"/api/v1/jobs/([A-Za-z0-9-]+)/cancel", path)
-            if path not in {"/api/v1/actions/preview", "/api/v1/actions"} and not cancel:
+            if path not in {"/api/v1/actions/preview", "/api/v1/actions", "/api/v1/assistant/sessions", "/api/v1/assistant/message", "/api/v1/assistant/cancel", "/api/v1/assistant/confirm", "/api/v1/assistant/tool"} and not cancel:
                 return False
             if not self._gate(mutating=True) or not self._token_ok():
                 return True
@@ -2345,7 +2352,19 @@ def _handler(
                     raise ActionError(
                         400, "studio.bad-request", "Body must be valid JSON"
                     ) from None
-                if cancel:
+                if path.startswith("/api/v1/assistant/"):
+                    if not isinstance(body, dict):
+                        raise ActionError(400, "assistant.request", "Body must be an object")
+                    method = {
+                        "/api/v1/assistant/sessions": actions.assistant.create,
+                        "/api/v1/assistant/message": actions.assistant.message,
+                        "/api/v1/assistant/cancel": actions.assistant.cancel,
+                        "/api/v1/assistant/confirm": actions.assistant.confirm,
+                        "/api/v1/assistant/tool": actions.assistant.bridge_tool,
+                    }[path]
+                    self._json(HTTPStatus.ACCEPTED if path.endswith("/message") else HTTPStatus.OK,
+                               success(method(body)))
+                elif cancel:
                     job = actions.runner.cancel(cancel.group(1))
                     if job is None:
                         raise ActionError(
@@ -2642,6 +2661,10 @@ def create_studio_server(
     server.actions = actions
     if actions is not None:
         actions.bind_port(server.server_port)
+        from .studio_assistant import AssistantService
+        actions.assistant = AssistantService(actions)
+        bridge_host = "[::1]" if ":" in host else "127.0.0.1"
+        actions.assistant.origin = f"http://{bridge_host}:{server.server_port}"
     return server
 
 

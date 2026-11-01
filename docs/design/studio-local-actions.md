@@ -1,5 +1,10 @@
 # Studio local actions
 
+The developing Assistant broker is specified in [[docs/design/studio-assistant]].
+It reuses these action gates and does not authorize unrestricted candidate
+execution. Public aq candidate show/save now expose the existing confined
+editor contract to standalone callers; source persistence does not execute code.
+
 The idea-first Factor slice is described in [[docs/design/idea-verdict-card]].
 It adds `project.create` (id, name, description, allowlisted blank/Factor
 template) and `project.intake` (confined staged V1 dataset, explicit prediction
