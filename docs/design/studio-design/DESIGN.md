@@ -1,0 +1,295 @@
+---
+version: alpha
+name: AutoQuant Studio
+description: Dark-instrument research workbench; one focal point per screen, state colour only on state, sign colour only on the focal row of numbers.
+colors:
+  bg: "#0a0a0b"
+  rail: "#0e0e10"
+  raised: "#16161a"
+  hover: "#1c1c21"
+  selected: "#232329"
+  line: "rgba(255, 255, 255, 0.08)"
+  line-strong: "rgba(255, 255, 255, 0.16)"
+  text: "#ededef"
+  muted: "#a1a1aa"
+  faint: "#8a8a93"
+  signal: "#f2622e"
+  signal-graphic: "#f2622e"
+  stroke: "#6d6d76"
+  grid: "#34343b"
+  notice-error-bg: "#262626"
+  ramp-0: "#606066"
+  ramp-1: "#f1f1f3"
+  ok: "#9cd1ac"
+  warn: "#e5c06f"
+  err: "#ffa095"
+  primary: "#ededef"
+typography:
+  headline:
+    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontSize: 28px
+    fontWeight: 600
+    lineHeight: 40px
+  title:
+    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontSize: 26px
+    fontWeight: 590
+    lineHeight: 34px
+  page-title:
+    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontSize: 20px
+    fontWeight: 600
+    lineHeight: 28px
+  section:
+    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontSize: 15px
+    fontWeight: 590
+    lineHeight: 22px
+  body:
+    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 20px
+  small:
+    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontSize: 12px
+    fontWeight: 400
+    lineHeight: 18px
+  label:
+    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontSize: 11px
+    fontWeight: 400
+    lineHeight: 16px
+  value:
+    fontFamily: "'IBM Plex Mono', 'PingFang SC', 'Microsoft YaHei', monospace"
+    fontSize: 13px
+    fontWeight: 500
+    lineHeight: 20px
+  value-focal:
+    fontFamily: "'IBM Plex Mono', 'PingFang SC', 'Microsoft YaHei', monospace"
+    fontSize: 20px
+    fontWeight: 600
+    lineHeight: 28px
+rounded:
+  radius-control: 6px
+  radius-float: 8px
+spacing:
+  space-1: 4px
+  space-2: 8px
+  space-3: 12px
+  space-4: 16px
+  space-5: 20px
+  space-6: 24px
+  space-8: 32px
+  space-10: 40px
+---
+
+# AutoQuant Studio
+
+Status: DRAFT foundation, revised after the owner's rejection of the first extraction (type scale and radii confirmed; number colouring, motion licence and two further references changed; sign option C and the Settings convention switch decided). The owner has not confirmed this revision. The values live in `design-system/tokens.json`; the usage rules live in `design-system/README.md`. This file holds product identity, hierarchy, templates and wording, and points at the package instead of repeating it.
+
+## Overview
+
+AutoQuant Studio has one job: a quantitative factor researcher puts a factor idea in and honestly sees whether it holds, how strong the evidence is, what is uncertain and what the next step is. Verdicts come only from Core; the interface never invents one and there is no Refuted state.
+
+The posture is a dark instrument: flat matte panes, hairline borders, no shadow, no gradient, no decoration. The page earns trust by being quiet and exact. Signal orange is the only chromatic hue and it means state. The one other use of colour is sign colour on the focal row of numbers (option C), mapped onto existing tokens.
+
+Hierarchy and tension rules, and the page templates, are below and are the main new decisions of this extraction.
+
+## Colors
+
+The colour system is the existing Studio token set (dark default, light theme), recorded unchanged in `design-system/tokens.json`: ground `bg`, surfaces `rail` / `raised` / `hover` / `selected`, hairlines `line` / `line-strong`, text `text` / `muted` / `faint`, state `signal` (text) and `signal-graphic` (marks), `stroke` and `grid` for chart marks, plus `notice-error-bg`, the lineage ramp and the legacy `ok` / `warn` / `err`. No colour was added, removed or changed. The primary action and the selected state share one inverted treatment (`text` fill on `bg`), not an orange fill. Sign colour is allowed on focal numbers only, through the roles in "Signed numbers" below; this reverses the first draft, which forbade it. Nothing is added to the token set: the sign roles are aliases of existing tokens.
+
+## Typography
+
+Fonts are unchanged: Inter Variable for text and IBM Plex Mono for values (the owner did not choose a different set; this is an open question, not a decision to change). Existing steps are kept; two are proposed.
+
+| Step | Size / line | Weight | Status | Role |
+| --- | --- | --- | --- | --- |
+| headline | 28 / 40 | 600 | existing | home statement or full-page empty state only |
+| title | 26 / 34 | 590 | existing, unused | candidate to merge into headline |
+| page-title | 20 / 28 | 600 | proposed | page header title, the anchor of each page |
+| section | 15 / 22 | 590 | existing | pane, card and block headings |
+| body | 13 / 20 | 400 | existing | evidence sentences, form text |
+| small | 12 / 18 | 400 | existing | descriptions, status, buttons in dense rows |
+| label | 11 / 16 | 400 | proposed (formalises the 11px already in use) | metric labels, muted |
+| value | 13 / 20 mono | 500 | existing in code | numbers and ids in cells |
+| value-focal | 20 / 28 mono | 600 | proposed | the one headline number of a card or run bar |
+
+Four visible tiers per page: page-title 20, section 15, body 13 / small 12, label 11. Ratio title to section is 1.33, section to body 1.15, body to label 1.18.
+
+## Layout
+
+Desktop only, 1280 to 1920 wide, no mobile. A 4px baseline (`space-1` to `space-10`); `space-3` (12px) is the rhythm between cards and the pane padding, `space-4` between sections. The shell is a left rail (240 expanded, 68 collapsed) and a page area on `bg`, 8px outer margin and 8px gaps. Workbenches are two panes, 40fr left (minimum 340px) and 60fr right. Maximum width 1800px, centred beyond. Below 1000px the panes stack and the page scrolls.
+
+## Elevation & Depth
+
+None. Depth is a fill step (`bg` to `raised` to `selected`) and a 1px hairline. No shadow, blur or gradient. The only decoration is the 1px dashed outline of an empty state and the dashed rule of an Inconclusive verdict.
+
+## Shapes
+
+Radius `radius-control` 6px for panes, cards, chips and controls; `radius-float` 8px for menus, popovers and dialogs only. The reference's large rounded floating-card look is rejected by the owner. The current code still gives the rail, header and page 22px radii in `floating.css`; those 22px radii are to be replaced: rail, header and page by `radius-control` (6px), any menu or dialog by `radius-float` (8px). The 22px floating cards are removed, with no shadow and no gradient. Type scale and these radii are confirmed by the owner.
+
+## Components
+
+The kit is recorded in `design-system/components/`: FloatingShell, PaneCard, Tabs, SegmentedToggle, ActionRow, VerdictBar, StatusLine, ChartCard, MetricGrid, FactChips, ProjectCard (the library card) and StateBlock (empty, loading, error). Each has a README with states and a live preview. The `ProjectCard` layout (name, small tag, one headline metric line, sparkline, footer with object type and update time) is the card structure adopted from the reference; it is a proposal to be built, not the current card.
+
+## Hierarchy and tension rules
+
+1. One focal point per screen. Everything else recedes. The focal point is the thing the researcher came to decide.
+2. What may be the focal point, by page type:
+   - Library: the card grid as a whole has no single focus; within a card the focal point is the headline metric (`value-focal`). The page title anchors the page; the create action is the only inverted button in the toolbar.
+   - Factor workbench: the verdict line, then the chart. On a fresh factor with no run, the Run action in the left pane head.
+   - Strategy workbench: the verdict line and the headline metrics bar of the selected run; the inspector tabs are chrome.
+   - Evidence page: the verdict word and its one-sentence reason, then the evidence strength.
+   - Settings: none; a plain list with the page title as the only anchor.
+3. What must recede: navigation, tabs not selected, derived actions (save as version, export), labels (`label`, muted), hairlines, provenance facts, the second and later runs.
+4. Tension is made by size and weight steps, not by colour. Allowed contrast devices: the inverted primary or selected treatment (once per region) and one step of type size. Not allowed: a second accent colour, a fill behind a coloured number, filled coloured badges, sign colour outside the focal row (rule 5a).
+5. Two colour roles exist and never merge. State colour appears only on state: `signal` on Could not be tested and on failure words, a tab badge for a count needing attention. A normal number, label or chart series is never state-coloured, and state colour never colours a number for its sign.
+5a. Sign colour (option C, decided) appears only on the focal row of numbers in the verdict area, with a +/- glyph on each; every other number is neutral. See "Signed numbers".
+6. A uncertain result must look uncertain: Inconclusive uses a dashed rule and the word, never a softer green. Evidence strength is shown as a sentence and facts, not as a score badge that looks like a verdict.
+7. At most one primary (inverted) button per card or pane head.
+
+## Signed numbers
+
+DECIDED (owner): option C, hybrid. Sign colour appears only on the focal row of numbers in the verdict area, for example the headline stat chips next to the run selector and the long-short headline numbers. All other numbers are neutral. The paired-figure pattern (see "Data figure anatomy") applies to figures: baseline grey, subject one accent, value labels at bar ends, a caption stating the takeaway. This replaces the first draft's rule that values are never coloured by sign, and it narrows the owner's earlier choice of colouring every signed number: only the focal row is coloured. State colour (verdict words, failure) is a separate role and stays as before.
+
+Sign roles (aliases of existing tokens in `tokens.css`; no hue is added):
+
+| Role | Meaning | Applies to (focal row only) |
+| --- | --- | --- |
+| `sign-positive` | value above zero | headline return, excess return, rank IC, long-short spread, delta vs leader in a figure caption |
+| `sign-negative` | value below zero | headline drawdown, negative return, negative IC or spread, negative delta |
+| `sign-neutral` | zero, or no sign | exact zero; maps to `text` |
+
+Rules:
+1. Colour the VALUE text only. Never a cell, row, badge, bar or card fill.
+2. Sign-independent cue (accessibility): every coloured number carries a leading `+` or a leading minus glyph (−, U+2212), so the sign reads without colour. Colour never carries the sign alone. Zero shows `0.00` with no sign. Non-focal signed numbers keep their glyph and stay neutral.
+3. Statistics without a direction stay neutral (`text`) everywhere, including inside the focal row's neighbours: HAC t, p-values, observation counts, trial counts, hit rates, turnover, ids, dates.
+4. Coloured numbers must never imply certainty. Development evidence keeps its "development" tag (or the "development evidence" caption) next to the numbers; a sign colour does not replace the verdict line, and the verdict word (state colour role) is never derived from a number's colour.
+5. Sign colour never combines with state colour on one value. A failed or hidden value is "Hidden" or absent, not a coloured number.
+6. Chart series and bars are not coloured by sign; only printed focal values are.
+7. A card headline number (`ProjectCard` `value-focal`) is the card's focal number and takes the sign role; other numbers on the card stay neutral.
+
+### DECIDED: up/down convention is a Settings switch
+
+The mapping of sign to hue is a setting with the default red up / green down (A-share convention). A Settings-page switch flips it to green up / red down. The switch changes presentation only, never data: values, the +/- glyphs, copied text, exports and API payloads are identical in both settings.
+
+| Role | Default: red up / green down | Switched: green up / red down |
+| --- | --- | --- |
+| `sign-positive` | `err` (dark `#ffa095`, light `#b3261e`) | `ok` (dark `#9cd1ac`, light `#2f7a4a`) |
+| `sign-negative` | `ok` | `err` |
+| `sign-neutral` | `text` | `text` |
+
+Settings control spec (component `SignConventionSetting`): one row in a "Display" group on the Settings page. Label "Price colours"; a `SegmentedToggle` with "Red up, green down" (default, selected on first run) and "Green up, red down"; helper sentence "Changes colours only. Numbers, signs and exports stay the same." A per-user preference, applied at once without reload or confirm, implemented as `data-sign-convention="red-up" | "green-up"` on the document root, which re-maps `sign-positive` and `sign-negative` in `bundle.css`. Read-only session: the control stays visible and disabled with a reason line. Keyboard: arrow keys move, space or enter selects. The design-system previews render both: `MetricGrid/preview.html` and `FigureCard/preview.html` show the two conventions side by side, `MetricGrid/preview-c-red-up.html`, `MetricGrid/preview-c-green-up.html`, `FigureCard/preview-c-red-up.html`, `FigureCard/preview-c-green-up.html` show each alone, `SignConventionSetting/preview.html` has a live toggle, and `?convention=red-up|green-up` on any preview URL switches it.
+
+Assumptions flagged: `ok` and `err` are the existing legacy state colours in `tokens.css` and are the only existing green-family and red-family tokens, so they are reused instead of adding hues; their contrast on `bg` and `raised` is checked at 4.5:1 in both themes. Which numbers count as "the focal row" per page is listed in "Hierarchy and tension rules" (the verdict-area numbers); the exact list per template is for the build to follow.
+
+### Considered and not chosen (appendix)
+
+Option A (colour every signed value, two convention variants) and option B (neutral grey plus one subject accent, sign by glyph only, no red or green) were prototyped for comparison: `MetricGrid/preview-a-red-up.html`, `MetricGrid/preview-a-green-up.html`, `MetricGrid/preview-b.html`, the same names under `FigureCard/`, and all together with option C in `preview-considered.html` of each. They are kept as record only. The tension that was weighed: the owner's favourite data-reading page is neutral grey plus one accent and never red/green by sign, while the QUBE-style reference colours signed numbers; option C takes sign colour on the focal row and the grey-plus-accent figure pattern elsewhere.
+
+## Data figure anatomy
+
+Source: the owner's favourite data-reading page, the Anthropic code-review blog post (captures `reference/code-review-*.png`). Structure and patterns only. Never borrow its mascot, imagery, copy, fonts, colours or logo. Observations and the Studio use of each:
+
+1. A figure is a quiet bordered panel: bold title plus a muted one-line subtitle, the data, a small mono `FIG A` label whose caption states the takeaway in ONE sentence, and a tiny `PNG` export tag. Studio: evidence figure cards (`FigureCard`) on the factor workbench and run pages; the caption sentence is the takeaway, with the "development" tag when the data is development evidence.
+2. Paired comparison bars: baseline in neutral grey, subject in ONE accent, value labels at the bar ends, no gridlines or axes, the key number bold, a minimal two-item legend. Studio: candidate vs leader, validation vs test, trial N vs N-1. Baseline `stroke`, subject `text` (not orange: `signal` is state).
+3. Small uppercase mono group labels with generous spacing instead of boxes; each row is a bold name plus a muted description in a second column. Studio: grouping on the evidence page and in the metadata block instead of nested cards.
+4. A terminal-style tree table of contents with a reading-progress bar and a "MIN READ" line, sticky on the left. Studio: the section navigation of the evidence page (sticky left, current section marked, progress bar; "MIN READ" not needed).
+5. A metadata block with tiny mono labels (AUTHOR / CATEGORY / PUBLISHED) and tree glyphs. Studio: the run and study metadata block (study id, split, trial count, data window, created).
+6. Tables with no borders between cells, only a header row and group spacing. Studio: evidence tables and the library list view; `MetricGrid` keeps its hairlines (a grid of cells, not a table).
+7. Tension: neutral by default, ONE accent for the thing being claimed, bold only on the number that matters. Studio: the library card headline line takes the single bold focal number; this is the same logic as option C.
+
+Mapping summary: evidence/figure cards (1, 2, 7), run/study metadata block (5), evidence-page section navigation (4), library card headline line (7).
+
+## Dense data patterns
+
+Source: the Arknights: Endfield wiki on Bilibili Wiki (https://wiki.biligame.com/zmd), captured read-only (`reference/endfield-wiki-*.png`). Structure and patterns only, for the library and evidence pages. Never borrow its imagery, game assets, colours, fonts, copy or logos. Only what the captures show is recorded:
+
+- Filter bar with facets: the roster page puts a full-width facet table above the list. Each facet is a labelled row (rarity, class, element, weapon) of toggle chips, plus a "view all" reset chip and a collapsible "more options" row. Studio: library filter bar with one labelled row per facet (object type, verdict, split, status) and a reset chip. Counts: the captures show no facet counts; the Studio toolbar keeps its counts (a Studio addition, not borrowed).
+- Roster density: a tight grid of compact tiles, each with small attribute chips on a corner (class glyph and element glyph). Studio: card or table row with attribute chips (object type, split, verdict) in a corner or a fixed column.
+- Two-tier navigation: a global section row and a second row of siblings of the current catalog, with a breadcrumb and a meta line (reads, updated date, last editor). Studio: breadcrumb plus a meta line (updated, editor) on library and evidence pages.
+- Sticky section navigation: the section bar re-appears fixed at the top after scrolling (visible in the scrolled capture). Studio: sticky evidence-page section navigation.
+- Many numbers without losing legibility: chips and small tiles instead of prose; numbers in labelled cells. Studio: label-left value-right cells (`MetricGrid`) and chips for attributes.
+- NOT captured: a detail page. The detail URL (https://wiki.biligame.com/zmd/莱万汀) returned the site's own security block page (567) in this session, and so did the roster and home on later loads (`reference/endfield-wiki-blocked.png`). The block was not worked around. The detail-page section order, sticky section navigation and number tables are therefore unobserved and are NOT recorded as borrowed patterns. The guessed roster URL 干员一览 does not exist; the roster is 干员图鉴.
+
+## Page templates
+
+Each template lists regions in reading order and what is on the first screen (1440x900 reference) versus folded.
+
+1. Library (factors, strategies, runs): title bar (page-title, one description line) then toolbar (create actions left; filter with counts, search, sort right) then a 3-column card grid of `ProjectCard`, 8px gaps; footer "End of list". First screen: title, toolbar and the first two rows of cards. Folded: later cards, card actions (hover or quiet footer link).
+2. Factor workbench: header (back, page-title with description, object-type tag). Left pane (editor): tabs (Definition, Versions) with the Run action top-right, parameter grid, then the expression editor with formula or Python toggle and a validation chip. Right pane (result): run selector with headline stats, status line, verdict line, chart card, metric grid. First screen: definition, the Run action, verdict, chart, first metric row. Folded: older runs, progress stages, versions, provenance facts, derived actions. The action chip row (save as version, build strategy, export) is NOT adopted yet: the owner has not decided it; until then derived actions live in the pane head overflow.
+3. Strategy workbench: header as above. Left pane: object definition. Right pane: multi-tab inspector (Params, Versions, Backtest runs, Tuning, Notes) with the run selector, verdict line and headline metrics always above the tab content. First screen: header, definition, selected tab content, verdict. Folded: other tabs, holdings table, older runs.
+4. Evidence page: title bar, verdict line (focal), evidence-strength sentence, uncertainty list, the test-split status, the next step, then the full metric grid and provenance facts. Single column up to 960px, centred. Folded: raw tables.
+5. Settings: title bar, grouped lists of label-and-control rows under section headings, one primary button per group at most. No cards.
+
+## Copy and state catalogue
+
+One wording per state, used on every page. Verdict words are fixed terms, sentence case elsewhere.
+
+| State | Word or sentence | Notes |
+| --- | --- | --- |
+| Supported | "Supported" | pill; the sentence after it names the evidence |
+| Inconclusive | "Inconclusive" | pill with dashed rule; sentence says what is missing |
+| Could not be tested | "Could not be tested" | pill in `signal`; sentence says why the run failed |
+| Not tested | "Not tested" | muted word, no rule colour; action "Run study" is offered |
+| Stale session | "Stale session" | status line word; body: "This view was loaded before the workspace changed." Action: "Refresh" |
+| Read-only | "Read-only session" | actions stay visible but disabled, reason line: "Read-only session: actions are off." |
+| Hidden test split | "Hidden" | in the value cell; line: "Test split is hidden until the study is frozen." |
+| Empty | "No evidence in this Project" | one next-step sentence, no icon |
+| Loading | "Loading…" | box already at content size; no skeleton and spinner together |
+| Error | "Could not load this Project" + cause + "Retry" | outline `signal-graphic` on `notice-error-bg` |
+| Long values | truncate with ellipsis in rows, wrap in detail, full text copyable | ids and expressions |
+
+The wording for stale session, read-only, hidden test split and the error title is proposed here (the existing code has "No evidence in this Project", "Loading…", "End of list" and the verdict words). Treat the proposed sentences as drafts for the owner.
+
+## Interaction conventions
+
+- One primary button per card or pane head; others are outline or quiet.
+- A disabled control keeps its label and shows a visible reason sentence next to it; a tooltip is not a reason.
+- Trial counting: any action that spends a trial (a run on a held-out split) asks for a confirm that states how many trials will be counted; cancelling spends nothing.
+- A frozen question cannot be edited: its fields are read-only with the lock glyph and the sentence "This question is frozen"; the way forward is "Start a new question".
+- No dead buttons: every enabled control produces a visible change or a visible refusal reason. A control that cannot work yet is not rendered.
+- Motion confirms an action and never delays it (see `MOTION.md`).
+
+## Do's and Don'ts
+
+- Do keep one focal point per screen and the type tiers to four.
+- Do use only tokens from `design-system/tokens.json`; do set numbers in mono; do give every coloured number a leading + or minus glyph; do keep the up/down convention a Settings switch.
+- Do show the reason beside every disabled control.
+- Don't colour a number for anything but its sign, and only on the focal row; don't fill a cell or badge with sign colour; don't signal sign by colour alone; don't colour HAC t, p-values, counts or hit rates; don't add an accent colour or a new hue.
+- Don't use shadows, gradients, blur or the large rounded floating-card look.
+- Don't use any colour, font, icon, copy or brand mark from a reference product.
+- Don't show a Refuted state or compute a verdict in the interface.
+- Don't ship a screen without its empty, loading, error, stale, read-only, hidden-split and long-value states.
+
+## Product Context
+
+- Product: AutoQuant Studio, a research workbench for quantitative factors.
+- Audience: the owner and their agent first; planned open source for external users.
+- Surface: desktop browser 1280 to 1920 wide, dark primary with a light theme, no mobile.
+- Content: real verified Workspace snapshot data; verdicts only from Core.
+- Required states: empty, loading, error, stale session, read-only (actions off), test split hidden, long values (ids and expressions).
+- Assets: no brand logo, built-in line icons, existing fonts (Inter + IBM Plex Mono), colour tokens unchanged.
+- Intake record: `brief.md` and `.design-pipeline/state.json`. Real brands: none.
+
+## Source Decisions
+
+Change id: `studio-design-foundation` (design/changes/studio-design-foundation). Reference: `reference.md` and `reference-evidence.json` (PandaAI structure study, role primary-target, fidelity directional-inspiration). Owner decisions recorded in the reference approval.
+
+Adopted (the owner answered yes to all three):
+- (a) Hierarchy and type-scale gradient: a large title, a medium section heading, a small metric label, one focal point per screen. Applied as the type table and the hierarchy rules above, with our own sizes.
+- (b) Page skeleton and function distribution: left editor plus right result for the factor workbench; library pages with title bar, toolbar and compact cards; strategy workbench with a multi-tab inspector; the first-screen versus folded split. Applied as the page templates above.
+- (c) Card internal structure: name, small tag, one headline metric line, sparkline, footer with object type and update time. Applied as `ProjectCard`.
+
+Rejected (first extraction):
+- The reference's content (all text and data), copy, colours, fonts, icons, brand marks and logos.
+- The large rounded-corner floating-card look: the owner does not want rounded corners; our existing smaller radius stays.
+- Red-up and green-down colour semantics: the first draft rejected them; the owner has since decided sign colour on the focal row with a Settings switch, default red up / green down (see "Signed numbers"). The QUBE hues themselves are still not adopted.
+
+Undecided: the action-chip row (save as version, build strategy, export) was not selected by the owner and is left out of the adopted list. Fonts: the owner did not answer, so Inter and IBM Plex Mono stay.
+
+Existing system: colour, spacing and radius tokens are recorded unchanged from `studio-app/src/design/tokens.css`; the workbench kit is recorded from `studio-app/src/components/workbench`. The design-system package is `design-system/`. The graybox comparison and Spec Reconciliation are deliver-stage work (they need a running build with a graybox mode).
+
+Revision after owner rejection: (1) type scale and radii confirmed unchanged; (2) number colouring changed to sign colour (first chosen as every signed number, then decided as option C: focal row only), with the red-up / green-down convention a Settings switch (default red up); (3) two further references added as supporting evidence: the Arknights: Endfield wiki (dense data patterns; detail page not capturable, blocked by the site) and the Anthropic code-review blog (data figure anatomy), structure and patterns only; (4) motion licence: see MOTION.md Source Decisions.
