@@ -6,6 +6,7 @@ import { compareReason, deltaText, fieldLabel } from '../src/pages/compare/compa
 import { comparisonMetrics } from '../src/pages/compare/comparisonMetrics'
 import { ComparisonResults, ProtocolFacts } from '../src/pages/compare/ComparisonResults'
 import { PairedCurve } from '../src/pages/compare/PairedCurve'
+import { protocolFactRows, shortHash, splitWindowsText } from '../src/pages/compare/protocolFacts'
 import { emptyFilters, matchesRun } from '../src/library/RunFilters'
 import type { Comparison, HistoryRun, FactorComparison } from '../src/library/runHistoryApi'
 import { setLanguage } from '../src/i18n'
@@ -87,4 +88,68 @@ test('paired curve uses grey baseline and one accent without sign-coloured marks
 test('cross-Project compare route preserves both exact Run owners', () => {
   const route = { view: 'compare', id: 'p-a', projectB: 'p-b', a: 'run-a', b: 'run-b' } as const
   assert.deepEqual(parseRoute(routeHref(route).slice(1)), route)
+})
+
+const H = (c: string) => c.repeat(64)
+const windows = { train: { start: '2024-01-02', end: '2024-05-30' }, validation: { start: '2024-05-31', end: '2024-07-19' }, test: { start: '2024-07-22', end: '2024-09-09' } }
+const fullProtocol = {
+  objectKind: 'factor', lane: 'Factor', study: { id: 'ohlcv-factor-quality', hash: H('a'), judgeHash: H('b'), programHash: H('c'), dependenciesHash: H('d') },
+  datasetId: 'demo', datasetHash: 'sha256:' + H('e'), splitWindows: windows,
+  horizon: { primaryForwardBars: 1, diagnosticForwardBars: [1, 5] }, costModel: null, objective: { direction: 'maximize', metric: 'validation_mean_ic', minimumImprovement: 0.01 },
+}
+const factRun = { ...row, sourceHash: H('f'), testAuditVisible: true, protocol: fullProtocol } as HistoryRun
+
+test('protocol fact formatter: short hashes, readable split windows, horizon and objective in both locales', () => {
+  assert.equal(shortHash(H('a')), 'aaaaaaaa')
+  assert.equal(shortHash('sha256:' + H('e')), 'eeeeeeee')
+  assert.equal(shortHash(null), '—')
+  assert.equal(splitWindowsText(windows, true), 'Train 2024-01-02 → 2024-05-30 · Validation 2024-05-31 → 2024-07-19 · Test 2024-07-22 → 2024-09-09')
+  const c = { ...decision, a: factRun, b: { ...factRun, id: 'run-b', sourceHash: H('0') } } as Comparison
+  const rows = Object.fromEntries(protocolFactRows(c).map(r => [r.key, r]))
+  assert.equal(rows['study.id'].a.text, 'ohlcv-factor-quality')
+  assert.equal(rows['study.hash'].a.text, 'aaaaaaaa')
+  assert.equal(rows['study.hash'].a.full, H('a'))
+  assert.equal(rows.datasetHash.a.full, 'sha256:' + H('e'))
+  assert.equal(rows.horizon.a.text, '1 bars primary · diagnostic 5')
+  assert.equal(rows.costModel.a.text, 'None (Factor measurement)')
+  assert.equal(rows.objective.a.text, 'Maximize validation_mean_ic · minimum improvement 0.01')
+  assert.equal(rows.sourceHash.state, 'Intended change')
+  assert.ok(protocolFactRows(c).filter(r => r.key !== 'sourceHash').every(r => r.state === 'Same'))
+  const html = renderToStaticMarkup(<ProtocolFacts comparison={c} />)
+  assert.match(html, /title="aaaaaaaaaaaaaaaa/)
+  assert.match(html, />aaaaaaaa</)
+  assert.doesNotMatch(html, /<pre/)
+  assert.doesNotMatch(html, /cmp-different/)
+  assert.equal((html.match(/Copy hash/g) ?? []).length, 12)
+  setLanguage('zh')
+  assert.equal(splitWindowsText(windows, true), '训练 2024-01-02 → 2024-05-30 · 验证 2024-05-31 → 2024-07-19 · 测试 2024-07-22 → 2024-09-09')
+  assert.match(renderToStaticMarkup(<ProtocolFacts comparison={c} />), /研究标识.*复制哈希/s)
+  setLanguage('en')
+})
+
+test('hidden test split never discloses its window, in rows, hover or expanded values', () => {
+  const hiddenB = { ...factRun, id: 'run-b', testAuditVisible: false, protocol: { ...fullProtocol, splitWindows: { ...windows, test: { start: '2024-07-23', end: '2024-09-10' } } } } as HistoryRun
+  const c = { ...decision, status: 'not-comparable', a: { ...factRun, testAuditVisible: false }, b: hiddenB, differences: [{ field: 'splitWindows', reason: 'different', a: null, b: null }] } as Comparison
+  const html = renderToStaticMarkup(<ProtocolFacts comparison={c} initiallyOpen={['splitWindows']} />)
+  assert.doesNotMatch(html, /2024-07-2[23]|2024-09-(09|10)/)
+  assert.match(html, /Test Hidden/)
+  assert.match(html, /Test split is hidden/)
+  // A visible-diagnostic factor payload with a published audit opens the window through testGate.
+  assert.match(splitWindowsText(windows, true), /2024-07-22/)
+})
+
+test('differing facts are highlighted, expandable and show both complete values', () => {
+  const b = { ...factRun, id: 'run-b', protocol: { ...fullProtocol, datasetHash: H('9'), study: { ...fullProtocol.study, judgeHash: H('8') } } } as HistoryRun
+  const c = { ...decision, status: 'not-comparable', a: factRun, b, differences: [{ field: 'study', reason: 'different', a: null, b: null }, { field: 'datasetHash', reason: 'different', a: null, b: null }] } as Comparison
+  const different = protocolFactRows(c).filter(r => r.state === 'Different').map(r => r.key)
+  assert.deepEqual(different, ['study.judgeHash', 'datasetHash'])
+  const closed = renderToStaticMarkup(<ProtocolFacts comparison={c} />)
+  assert.equal((closed.match(/<tr class="cmp-different" data-fact/g) ?? []).length, 2)
+  assert.equal((closed.match(/aria-expanded="false"/g) ?? []).length, 2)
+  assert.match(closed, /data-fact="study.id"/)
+  assert.doesNotMatch(closed, /class="cmp-different" data-fact="study.id"/)
+  const open = renderToStaticMarkup(<ProtocolFacts comparison={c} initiallyOpen={['datasetHash']} />)
+  assert.match(open, /aria-expanded="true"/)
+  assert.ok(open.includes(`<pre translate="no">sha256:${H('e')}</pre>`))
+  assert.ok(open.includes(`<pre translate="no">${H('9')}</pre>`))
 })

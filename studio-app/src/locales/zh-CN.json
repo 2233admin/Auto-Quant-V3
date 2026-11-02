@@ -2337,5 +2337,18 @@
   "Compare:": "参考：",
   "Wording is AutoQuant’s own.": "释义为 AutoQuant 自行撰写。",
   "What these numbers mean": "这些数字的含义",
-  "How to read this answer": "如何阅读这个结论"
+  "How to read this answer": "如何阅读这个结论",
+  "Study id": "研究标识",
+  "Judge hash": "评审器哈希",
+  "Program hash": "程序哈希",
+  "Dependencies hash": "依赖哈希",
+  "Copy hash": "复制哈希",
+  "Intended change": "预期变更",
+  "{0} bars primary": "主要 {0} 根 K 线",
+  "diagnostic {0}": "诊断 {0}",
+  "None (Factor measurement)": "无（因子测量）",
+  "no-trade band {0}": "不交易带 {0}",
+  "Maximize": "最大化",
+  "Minimize": "最小化",
+  "minimum improvement {0}": "最小改进 {0}"
 }
