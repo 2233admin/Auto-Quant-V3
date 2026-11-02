@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RunRow } from '../api'
 import { Glyph } from '../design/icons'
+import { signedNumber } from '../design/signConvention'
 import { num, plural, when } from '../format'
 import { Section } from '../design/layout'
 import { Notice } from '../Notice'
@@ -60,7 +61,7 @@ function buildChecks(study: FactorDiagnostics, frontier: FrontierResult, project
       id: 'test-role',
       group: 'Research integrity',
       state: 'info',
-      label: showTest ? 'Test split is a visible diagnostic' : 'Test split is hidden until its audit exists',
+      label: showTest ? 'Test split is a visible diagnostic' : 'Test split is hidden until the study is frozen.',
       detail: `Test role ${protocol.testRole}. ${
         integrity?.externalHoldoutRequired
           ? 'The Session ledger requires a new external holdout before a fresh production-grade claim.'
@@ -311,7 +312,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
   const adjP = adjustment?.statistics?.familywiseAdjustedPValue
   const stats: Stat[] = validation
     ? [
-        { label: 'Rank IC', value: num(validation.meanRankIc, 4), hint: `Validation split, ${study.protocol.primaryHorizon}-bar horizon` },
+        { label: 'Rank IC', value: signedNumber(validation.meanRankIc, 4), signed: true, focal: true, hint: `Validation split, ${study.protocol.primaryHorizon}-bar horizon` },
         { label: 'HAC t', value: num(validation.hacTStatistic, 2), hint: 'Validation split, HAC standard error' },
         ...(typeof adjP === 'number' && Number.isFinite(adjP)
           ? [{ label: 'Adj. p', value: num(adjP, 3), hint: `Family-wise adjusted p over ${adjustment?.statistics?.uniqueTrials ?? '?'} unique trials, from the Session ledger (not a property of this Run alone)` }]
@@ -345,7 +346,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
           actions={
             <div className="wb-resultbar">
               <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />
-              <StatChips label="Headline numbers of this Run" scope="Validation" stats={stats} />
+              <StatChips label="Headline numbers of this Run" scope="Validation · development" stats={stats} />
             </div>
           }
           status={
@@ -535,7 +536,7 @@ export function FactorPage({ project, study, run, go }: { project: ProjectSnapsh
           This Run belongs to the {other.lane} lane. <a href={otherHref}>Open {other.lane}</a>
         </p>
       ) : pending ? (
-        <p className="muted">Loading Run…</p>
+        <p className="muted">Loading…</p>
       ) : fetched?.error ? (
         <Notice kind="error" label="Error" title={`Could not load Run ${wanted}.`} subtitle={fetched.error} />
       ) : (

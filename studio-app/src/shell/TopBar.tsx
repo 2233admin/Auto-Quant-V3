@@ -35,7 +35,7 @@ export function Updated({ data }: { data: ShellData }) {
     ) : (
       <button type="button" className="updated is-stale" onClick={data.refresh}>
         <Glyph kind="error" signal />
-        <span className="sig">Stale</span>
+        <span className="sig">Stale session</span>
         <span>Refresh</span>
       </button>
     )
@@ -50,7 +50,7 @@ export function Updated({ data }: { data: ShellData }) {
   return (
     <button type="button" className={stale ? 'updated is-stale' : 'updated'} onClick={data.refresh} title={hint}>
       {stale && <Glyph kind="error" signal />}
-      {stale && <span className="sig">Stale</span>}
+      {stale && <span className="sig">Stale session</span>}
       {!data.live && (
         <span className="paused">
           <Icon name="pause" />

@@ -10,5 +10,8 @@ import './pages/pages.css'
 import './design/layout.css'
 import './actions/actions.css'
 import App from './App'
+import './design/foundation.css'
+import { applySignConvention, storedSignConvention } from './design/signConvention'
 
+applySignConvention(storedSignConvention())
 createRoot(document.getElementById('root')!).render(<App />)

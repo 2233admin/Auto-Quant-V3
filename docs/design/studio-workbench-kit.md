@@ -12,8 +12,10 @@ metric grid. It follows the shape of the PandaAI result workbench studied in
 The kit lives in `studio-app/src/components/workbench/` and is imported from
 `components/workbench` (`index.ts`). It reuses colours and fonts from
 `design/tokens.css`. Shared controls use token spacing; measured layout geometry
-in `floating.css` and the Idea composition may specify pixel dimensions and
-corner radii without changing the visual tokens. It
+in `floating.css` and the Idea composition may specify pixel dimensions.
+Panes and controls use the confirmed 6px radius; floating layers use 8px.
+The owner-confirmed [[docs/design/studio-design/DESIGN]] governs hierarchy,
+sign roles and figure anatomy. It
 computes no statistic; values arrive formatted from Core, as everywhere else
 in Studio (see [[docs/design/studio-observation-surface]]).
 
@@ -51,8 +53,8 @@ in Studio (see [[docs/design/studio-observation-surface]]).
 - `ActionRow` has one `primary` button, any number of quiet `secondary` buttons
   and a trailing `chip`. `primary` is a single object, so a second primary does
   not type-check. A button that is `disabled` must carry `disabledReason`; the
-  first disabled reason is shown as one truncated line under the row, with the
-  full text as a tooltip. Disabled buttons stay focusable through
+  disabled reasons are shown together under the row and wrap without clipping.
+  Disabled buttons stay focusable through
   `aria-disabled` and point at the reason with `aria-describedby`.
 - `VerdictBar` shows a tone pill (word and glyph, `bad`, `ok` or `warn`) and
   one sentence truncated to one line. "More" shows the whole sentence and the
@@ -79,9 +81,10 @@ body gives independent scrolling.
 
 1. One primary button per card. Everything else is secondary or quiet.
 2. A disabled button always says why, on the line under the row.
-3. Colours and typography stay on existing tokens. Measured layout dimensions
-   and radii may be local to a composition; generic component defaults remain
-   unchanged unless the capability is explicitly additive.
+3. Colours and font families stay on existing tokens. The type roles are
+   page title 20/28 at 600, section 15/22 at 590, body 13/20, small 12/18,
+   label 11/16, value 13/20 mono at 500 and focal value 20/28 mono at 600.
+   The older headline and title tokens remain reserved, unused on these templates.
 4. State is carried by words and glyph shapes, never by colour alone.
 5. Every control is reachable and operable from the keyboard, and a scroll
    container that has no focusable child is itself focusable.
@@ -131,6 +134,11 @@ Put a `PaneCard` in each slot of a `WorkbenchShell`:
 
 ## Motion kit (adapted from animate-ui)
 
+This kit is interim. The owner requires an independent rewrite before open
+sourcing; [[docs/design/studio-design/MOTION]] owns that release restriction.
+The adaptation history below describes the retained implementation, not
+permission to publish it.
+
 `components/motion/` holds the kit's motion: sliding tab, toggle, rail and table-row highlight (`useSlidingHighlight`),
 `Collapse` / `AutoHeight` / `AnimatedDetails` for height, `AnimatedValue` for numbers that count on change, `Progress`,
 `CopyIcon`, and `startThemeTransition`. The `Motion` tab of `?view=kit` shows each one.
@@ -146,3 +154,50 @@ licence lets us use and modify it as part of an application but not redistribute
   adds no colour, font or radius of its own, and leaves semantics, keyboard behaviour and hash behaviour unchanged;
 - numbers keep their Core-formatted text: `AnimatedValue` only animates the display between two values of the same shape and
   leaves exactly the published string at rest.
+
+## Confirmed foundation
+
+`FigureCard` adds a muted subtitle, a development marker and a mono figure
+label with a one-sentence takeaway to the measured `ChartCard` host. Group
+growth, Rank IC and Portfolio growth/drawdown use it. Captions read a published
+split summary, never endpoints spanning several splits. `exportAction` requires
+a real callback; these figures have no PNG export, so no PNG tag appears.
+`ComparisonFigure` uses neutral grey baseline bars, text-colour subject bars
+and direct signed labels without axes. Candidate versus previous trial requires
+both exact immutable Run summaries; validation versus test additionally requires
+the shared audit gate. A missing comparison stays absent.
+
+`foundation.css` applies the type roles across templates. Signed values use
+explicit `sign-positive`, `sign-negative` and `sign-neutral` aliases. The default
+maps positive to `err`, negative to `ok`, and neutral to `text`. Green-up exchanges
+the first two aliases. Only library headlines and verdict-area headline rows opt
+in. Labels, counts, HAC statistics, hit rates, comparison bars and ordinary metric
+tiles stay neutral. Coloured numbers retain a leading plus or U+2212 minus;
+rounded zero is unsigned. Chart series use neutral strokes.
+
+`SignConventionSetting` lives in the plain Settings Display group. Its two
+keyboard-operable options update `data-sign-convention` on the document root
+and a guarded viewer-local browser preference. Denied storage leaves the
+in-memory choice usable. A read-only server disables the control and shows the
+catalogue reason. The preference changes no payload, export or numerical text.
+
+`stateCopy.ts` owns fixed state wording. The hidden-split sentence is presentation
+copy: freezing alone never grants access to test numbers. The existing audit plus
+visible-diagnostic gate remains authoritative. Disabled `ActionRow` reasons are
+always visible; the retained legacy `showReason` prop cannot hide them.
+`?view=kit&catalogue=states` displays labelled component examples.
+
+Libraries retain the measured tile dimensions and add counted facets and reset.
+The Run evidence template is a reading column with sticky tree navigation,
+reading progress and Study / Run / Dataset / Window metadata. Tables use headings
+and spacing rather than cell borders. Settings uses plain groups instead of
+two nested panes.
+
+The native Edge investigation on 2026-11-01 reported reduced motion false.
+The shared kit ran tab and collapse transitions at 260ms, copy opacity at 180ms
+and scale at 220ms, theme transitions at 300ms and number updates for about 520ms.
+Animated data-table disclosure uses the interim 220ms adapter. Earlier local
+screenshot scripts explicitly requested reduced motion. The predicate did not
+misread the native preference. The interim implementation remains unchanged;
+the caller's selected-tab background was made transparent so it cannot cover
+the existing indicator.

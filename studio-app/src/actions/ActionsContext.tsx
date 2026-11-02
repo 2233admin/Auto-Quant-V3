@@ -4,7 +4,7 @@ import { JobPanel } from './JobPanel'
 import { readJobHash, writeJobHash } from './jobHash'
 import type { ActionsBootstrap } from './types'
 
-export const ACTIONS_OFF_COPY = 'Actions are off. Start Studio with --allow-actions'
+export const ACTIONS_OFF_COPY = 'Read-only session: actions are off.. Start Studio with --allow-actions'
 
 export type ActionsState =
   /** The Workspace summary has not arrived, so nothing is known yet. */

@@ -16,7 +16,7 @@ export type ActionButton = {
   | {
       disabled: true
       disabledReason: string
-      /** Show the reason as the one-line row under the buttons. Default: yes for the primary button (a real blocker), no for the others (quiet state; the reason stays in the tooltip and the accessible text). */
+      /** Legacy compatibility only. Every disabled reason is now visible regardless of this flag. */
       showReason?: boolean
       /** Full text for the tooltip when the one-line `disabledReason` is a shortened form of it. */
       reasonTitle?: string
@@ -25,8 +25,7 @@ export type ActionButton = {
 
 /**
  * One `primary` button (a single object, so a second one cannot be passed), quiet `secondary` buttons and a trailing `chip`.
- * Every disabled button carries its reason as tooltip and accessible text. The reason of the first disabled button that
- * asks for it (`showReason`, on by default for `primary`) also shows as one truncated line under the row.
+ * Every disabled button carries its reason as tooltip, accessible text and a visible wrapping sentence below the row.
  * Disabled buttons stay focusable (aria-disabled) so keyboard users reach the reason.
  */
 export function ActionRow({
@@ -43,8 +42,9 @@ export function ActionRow({
   align?: 'start' | 'end'
 }) {
   const reasonId = useId()
-  const shown = [primary, ...secondary].find((b) => b && b.disabled && (b.showReason ?? b === primary))
-  const reason = shown?.disabled ? shown.disabledReason : undefined
+  const disabled = [primary, ...secondary].filter((b): b is ActionButton => !!b?.disabled)
+  const shown = disabled[0]
+  const reason = [...new Set(disabled.map(b => b.disabledReason))].join(' ')
   const button = (b: ActionButton, cls: string, key?: number) =>
     b.href && !b.disabled ? (
       <a key={key} className={`abtn ${cls}`} href={b.href} aria-label={b.ariaLabel} title={b.title ?? b.ariaLabel}>
@@ -57,7 +57,7 @@ export function ActionRow({
       className={`abtn ${cls}`}
       aria-label={b.ariaLabel}
       aria-disabled={b.disabled || undefined}
-      aria-describedby={b === shown ? reasonId : undefined}
+      aria-describedby={b.disabled ? reasonId : undefined}
       title={b.disabled ? `${b.ariaLabel ? `${b.ariaLabel}: ` : ''}${b.reasonTitle ?? b.disabledReason}` : b.title ?? b.ariaLabel}
       onClick={b.disabled ? undefined : b.onClick}
     >

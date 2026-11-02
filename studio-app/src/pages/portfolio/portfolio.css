@@ -3,7 +3,7 @@
 .pf-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--space-3); margin: 0; }
 .pf-tile { display: grid; gap: 2px; align-content: start; border: 1px solid var(--line); background: var(--bg); padding: var(--space-3) var(--space-4); }
 .pf-tile dt { font: var(--type-small); color: var(--muted); }
-.pf-tile dd { margin: 0; font: 500 22px/30px var(--font-mono); font-variant-numeric: tabular-nums; }
+.pf-tile dd { margin: 0; font: var(--type-value-focal); font-variant-numeric: tabular-nums; }
 .pf-sub { font: var(--type-small); color: var(--muted); font-variant-numeric: tabular-nums; }
 .pf-delta { font-weight: 500; color: var(--text); }
 .pf-na { color: var(--muted); font: var(--type-small); font-style: italic; }
@@ -29,11 +29,11 @@
 .pf-matrix-fig { margin: 0; display: grid; gap: var(--space-2); }
 .pf-matrix { border-collapse: separate; border-spacing: 3px; width: 100%; font: var(--type-small); }
 .pf-matrix th { font-weight: 500; text-align: left; color: var(--muted); padding: 4px 6px 4px 0; white-space: nowrap; }
-.pf-matrix thead th { text-align: center; font: 500 11px/16px var(--font-mono); letter-spacing: .04em; }
+.pf-matrix thead th { text-align: center; font: var(--type-label-mono); letter-spacing: .04em; }
 .pf-matrix td { border: 1px solid var(--line); padding: 8px 6px; text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; min-width: 84px; }
 .pf-matrix td.is-base { outline: 2px solid var(--text); outline-offset: 1px; }
-.pf-cell-v { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; }
-.pf-cell-tag { display: block; font: 500 10px/14px var(--font-mono); letter-spacing: .04em; text-transform: uppercase; color: var(--text); margin-top: 2px; }
+.pf-cell-v { display: inline-flex; align-items: center; gap: 5px; font-size: var(--size-body); }
+.pf-cell-tag { display: block; font: var(--type-label-mono); letter-spacing: .04em; text-transform: uppercase; color: var(--text); margin-top: 2px; }
 
 .pf .tbl td > .faint.small { display: block; }
 .pf .nowrap { white-space: nowrap; }

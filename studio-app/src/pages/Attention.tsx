@@ -11,7 +11,7 @@ export function AttentionPage({ workspace }: { workspace: WorkspaceSummary | nul
   if (!workspace) {
     return (
       <div className="pg">
-        <Loading label="Loading Workspace…" minHeight={240} />
+        <Loading label="Loading…" minHeight={240} />
       </div>
     )
   }

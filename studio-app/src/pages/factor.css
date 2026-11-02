@@ -29,7 +29,7 @@
 .datatable summary:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .datatable[open] .tablewrap { max-height: 320px; overflow: auto; margin-top: var(--space-2); }
 
-.empty { border: 1px dashed var(--line-strong); background: repeating-linear-gradient(135deg, transparent 0 8px, var(--hover) 8px 9px); padding: var(--space-5); display: grid; gap: var(--space-2); justify-items: start; }
+.empty { border: 1px dashed var(--line-strong); background: none; padding: var(--space-5); display: grid; gap: var(--space-2); justify-items: start; }
 .empty p { margin: 0; font: var(--type-body); max-width: 70ch; }
 
 .ledger th[scope='row'] { font-weight: 500; }
@@ -38,7 +38,7 @@
 .ledger td:nth-child(2) { white-space: nowrap; }
 
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--space-6); }
-.h-small { font: 500 11px/16px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 var(--space-2); }
+.h-small { font: var(--type-label-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 var(--space-2); }
 .bullets { list-style: disc; padding-left: 1.2em; display: grid; gap: var(--space-2); font: var(--type-body); }
 .plot .val { paint-order: stroke; stroke: var(--raised); stroke-width: 3px; stroke-linejoin: round; }
 
@@ -47,7 +47,7 @@
 .kv dd { margin: 0; overflow-wrap: anywhere; }
 .kv .kv-row { display: contents; }
 .box { border: 1px solid var(--line); background: var(--raised); padding: var(--space-4); }
-.hash { font-size: 11px; word-break: break-all; }
+.hash { font-size: var(--size-label); word-break: break-all; }
 .stack { display: grid; gap: var(--space-6); }
 .stack .tbl caption { padding-top: 0; }
 @media (max-width: 800px) { .kv { grid-template-columns: 1fr; } }

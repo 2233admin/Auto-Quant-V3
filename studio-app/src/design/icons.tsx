@@ -14,12 +14,6 @@ const GLYPHS = {
       <path d="M4.4 7.2l1.8 1.8 3.4-3.6" style={CUT} strokeWidth="1.5" fill="none" />
     </>
   ),
-  refuted: (
-    <>
-      <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M3.6 10.4l6.8-6.8" stroke="currentColor" strokeWidth="1.4" />
-    </>
-  ),
   inconclusive: (
     <>
       <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.4" />

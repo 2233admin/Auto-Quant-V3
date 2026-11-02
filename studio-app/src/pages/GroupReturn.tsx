@@ -1,6 +1,8 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { FactorCumulativePoint, FactorDiagnostics, FactorSpreadSplit } from '../api'
-import { ChartCard, SegmentedToggle, type MetricGroup } from '../components/workbench'
+import { FigureCard, SegmentedToggle, StatChips, type MetricGroup } from '../components/workbench'
+import { signedNumber } from '../design/signConvention'
+import { groupReturnCaption } from './figureEvidence'
 import { num, pct } from '../format'
 import { IcByHorizonCard } from './FactorCharts'
 import { niceTicks, SPLIT_LABEL } from './factorMath'
@@ -14,12 +16,12 @@ const spct = (v: number | null | undefined, digits = 2) =>
   typeof v === 'number' && Number.isFinite(v) ? `${v >= 0 ? '+' : '−'}${Math.abs(v * 100).toFixed(digits)}%` : '—'
 
 type LineKey = 'high' | 'middle' | 'low' | 'spread'
-/** Monochrome by design: the four lines differ in weight and dash, and the spread alone takes the signal colour. */
+/** Monochrome by design: the four lines differ in weight and dash, and the spread is the strongest neutral line. */
 const LINES: { key: LineKey; label: string; stroke: string; width: number; dash?: string; round?: boolean }[] = [
-  { key: 'high', label: 'High group', stroke: 'var(--text)', width: 1.8 },
+  { key: 'high', label: 'High group', stroke: 'var(--muted)', width: 1.8 },
   { key: 'middle', label: 'Middle group', stroke: 'var(--muted)', width: 1.4, dash: '6 3' },
   { key: 'low', label: 'Low group', stroke: 'var(--stroke)', width: 1.6, dash: '1.5 3', round: true },
-  { key: 'spread', label: 'Long-short (high minus low)', stroke: 'var(--signal-graphic)', width: 2.2 },
+  { key: 'spread', label: 'Long-short (high minus low)', stroke: 'var(--text)', width: 2.2 },
 ]
 
 const m = { l: 56, r: 16, t: 22, b: 40 }
@@ -233,7 +235,7 @@ export function FactorHero({ study, minHeight = 260 }: { study: FactorDiagnostic
     const cum = study.quantilePath?.cumulative
     const desc = `Compounded growth multiple of the low, middle and high factor groups and of the long-short spread (high minus low), starting near 1.0. ${cum?.basis ?? ''} ${testShown ? `${points.length} of ${int(cum?.totalRows ?? points.length)}` : points.length} bars are drawn. ${testShown ? '' : TEST_HIDDEN_NOTE + '.'}`.trim()
     return (
-      <ChartCard
+      <><StatChips label="Long-short headline" scope="Long-short · validation · development" stats={(study.spreadSummary?.splits ?? []).filter(s => s.split === "validation").flatMap(s => [{ label: "Total return", value: signedNumber(s.totalReturn == null ? null : s.totalReturn * 100, 1, "%"), signed: true }, { label: "Max drawdown", value: signedNumber(s.maximumDrawdown == null ? null : s.maximumDrawdown * 100, 1, "%"), signed: true }])} /><FigureCard label="FIG A" subtitle="Published group growth, before costs." caption={groupReturnCaption(study)} development
         title="Group cumulative return"
         info={
           <>
@@ -254,7 +256,7 @@ export function FactorHero({ study, minHeight = 260 }: { study: FactorDiagnostic
             label={`Low, middle and high factor groups compounded at ${cum?.horizon ?? 1}-bar horizon, gross of costs, plus the high-minus-low long-short curve.`}
           />
         )}
-      </ChartCard>
+      </FigureCard></>
     )
   }
   return (

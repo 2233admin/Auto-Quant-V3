@@ -37,7 +37,7 @@
 
 .lib-counters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: 0 0 var(--space-3); max-width: 40rem; }
 .lib-matrix { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.lib-cell { display: inline-flex; align-items: center; gap: 6px; min-width: 44px; height: 30px; padding: 0 8px; border: 1px solid var(--line-strong); background: var(--raised); color: var(--text); text-decoration: none; font-size: 12px; }
+.lib-cell { display: inline-flex; align-items: center; gap: 6px; min-width: 44px; height: 30px; padding: 0 8px; border: 1px solid var(--line-strong); background: var(--raised); color: var(--text); text-decoration: none; font-size: var(--size-small); }
 .lib-cell:hover { background: var(--hover); }
 .lib-cell:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .lib-cell.is-failed { border-style: dashed; }
@@ -55,13 +55,9 @@
 .lib-after { margin-top: var(--space-3) !important; }
 
 /* Wide tables: sticky first column, edge shadows that show there is more to scroll, a visible hint. */
-.lib-scroll { background:
-  linear-gradient(to right, var(--bg) 30%, transparent) 0 0 / 40px 100% no-repeat local,
-  linear-gradient(to left, var(--bg) 30%, transparent) 100% 0 / 40px 100% no-repeat local,
-  linear-gradient(to right, var(--line-strong), transparent) 0 0 / 12px 100% no-repeat scroll,
-  linear-gradient(to left, var(--line-strong), transparent) 100% 0 / 12px 100% no-repeat scroll; }
+.lib-scroll { background: none; }
 .lib-scroll:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
-.lib-tbl thead th:first-child, .lib-tbl tbody th[scope='row'] { position: sticky; left: 0; z-index: 1; background: var(--bg); box-shadow: 1px 0 0 var(--line); }
+.lib-tbl thead th:first-child, .lib-tbl tbody th[scope='row'] { position: sticky; left: 0; z-index: 1; background: var(--bg); box-shadow: none; }
 .lib-tbl thead th:first-child { z-index: 2; }
 .lib-tbl tbody tr:hover th[scope='row'] { background: var(--hover); }
 .lib-tbl tbody tr.is-picked th[scope='row'] { background: var(--selected); }

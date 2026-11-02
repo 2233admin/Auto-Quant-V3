@@ -1,8 +1,9 @@
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import type { FactorDiagnostics, FactorQuantileRow, FactorSplit } from '../api'
+import { rankIcCaption } from './figureEvidence'
 import { num, ret } from '../format'
 import { Info } from '../components/Info'
-import { ChartCard } from '../components/workbench'
+import { FigureCard } from '../components/workbench'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import {
   expectedMaxZ,
@@ -333,7 +334,7 @@ export function IcByHorizonCard({
   minHeight?: number
 }) {
   return (
-    <ChartCard
+    <FigureCard label="FIG B" subtitle="Published horizon and split summaries." caption={rankIcCaption(study)} development
       title="Rank IC by horizon and split"
       info={
         <>
@@ -354,7 +355,7 @@ export function IcByHorizonCard({
       minHeight={minHeight}
     >
       {({ width, height }) => <IcByHorizonPlot study={study} width={width} height={height} label={IC_BY_HORIZON_SHORT} />}
-    </ChartCard>
+    </FigureCard>
   )
 }
 

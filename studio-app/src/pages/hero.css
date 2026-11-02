@@ -1,5 +1,5 @@
 /* First-screen hero pieces shared by the pages: headline line, core-number tiles, caption row. Tokens only. */
-.hero-line { display: flex; align-items: flex-start; gap: var(--space-3); margin: 0; padding: var(--space-2) var(--space-4); border: 1px solid var(--line-strong); border-left: 4px solid var(--line-strong); background: var(--raised); font: 500 14px/20px var(--font-sans); }
+.hero-line { display: flex; align-items: flex-start; gap: var(--space-3); margin: 0; padding: var(--space-2) var(--space-4); border: 1px solid var(--line-strong); border-left: 4px solid var(--line-strong); background: var(--raised); font: var(--type-body); }
 .hero-line > .glyph { margin-top: 2px; flex: none; }
 .hero-line[data-tone='bad'] { border-left-color: var(--signal); }
 .hero-line[data-tone='ok'] { border-left-color: var(--text); }

@@ -1,15 +1,17 @@
+import { EvidenceNavigation } from '../../components/workbench/EvidenceNavigation'
+import { MetadataTree } from '../../components/workbench/MetadataTree'
+import { FactorComparisons } from '../FactorComparisons'
 import { useEffect } from 'react'
 import type { ProjectSnapshot, RankSummary } from '../../api'
 import { num, plural, when } from '../../format'
 import { Section } from '../../design/layout'
 import { LaunchedLabel } from '../../actions/LaunchedLabel'
-import { RunAnalysisButton } from '../../actions/RunAnalysisButton'
 import { Notice } from '../../Notice'
 import { HeadlineMetrics, type HeadlineSplit } from '../../components/HeadlineMetrics'
 import { Info } from '../../components/Info'
 import { NotPublished } from '../../components/NotPublished'
 import { pickIntegrity, TrialCounter } from '../../components/TrialCounter'
-import { FactChips, MetricGrid, PaneCard, Tabs, useHashTab, VerdictBar, WorkbenchShell, type Fact, type MetricGroup, type TabDef } from '../../components/workbench'
+import { FactChips, MetricGrid, Tabs, useHashTab, VerdictBar, type Fact, type MetricGroup, type TabDef } from '../../components/workbench'
 import { routeHref } from '../../route'
 import { buildVerdict, QualificationBlock, topReasons, VerdictReasons, verdictClause, verdictSentence } from '../FactorEvidence'
 import { adjustmentOf } from '../FactorWorkbench'
@@ -21,6 +23,8 @@ import { gatedSplits, TEST_HIDDEN_NOTE } from '../testGate'
 import { otherLaneOf, short, testAuditVisible, type RunDiagnostics } from './runTypes'
 import { useRun } from './useRun'
 import './run.css'
+
+const EVIDENCE_SECTIONS = [{ id: 'evidence-metadata', label: 'Run / study' }, { id: 'evidence-verdict', label: 'Verdict' }, { id: 'evidence-figures', label: 'Figures' }, { id: 'evidence-strength', label: 'Strength' }, { id: 'evidence-details', label: 'Details' }]
 
 const day = (iso: string | undefined) => (iso ? iso.slice(0, 10) : '—')
 
@@ -52,7 +56,7 @@ const ANCHOR_TAB: Record<string, TabId> = {
   'run-all': 'runs',
 }
 
-const VERDICT_WORD = { pass: 'Pass', fail: 'Fail', inconclusive: 'Inconclusive' } as const
+const VERDICT_WORD = { pass: 'Supported', fail: 'Inconclusive', inconclusive: 'Inconclusive' } as const
 const int = (v: number) => v.toLocaleString('en-US')
 
 /** The published validation (and, only when its audit is visible, test) numbers as compact tiles. */
@@ -137,13 +141,13 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
   ]
   return (
     <>
-      <VerdictBar tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'} word={VERDICT_WORD[verdict]} reasons={topReasons(reasons).map((r) => ({ tone: r.tone === 'bad' ? 'bad' : 'info', text: r.text, field: r.field }))} detail={verdictSentence(fe, adjustment, verdict)}>
+      <section id="evidence-verdict"><VerdictBar tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'} word={VERDICT_WORD[verdict]} reasons={topReasons(reasons).map((r) => ({ tone: r.tone === 'bad' ? 'bad' : 'info', text: r.text, field: r.field }))} detail={verdictSentence(fe, adjustment, verdict)}>
         {verdictClause(fe, verdict)}
-      </VerdictBar>
-      <IcByHorizonCard study={fe} table={false} />
-      <MetricGrid groups={metricGroups(fe, project, showTest)} hiddenNote={showTest ? undefined : TEST_HIDDEN_NOTE} />
+      </VerdictBar><p className="small muted">Development evidence; the published diagnosis and trial adjustment do not provide independent confirmation.</p></section>
+      <section id="evidence-figures"><IcByHorizonCard study={fe} table={false} /><FactorComparisons study={fe} runs={project.runs.filter(r => r.studyId === fe.run.studyId)} projectId={project.id} /></section>
+      <section id="evidence-strength"><MetricGrid groups={metricGroups(fe, project, showTest)} hiddenNote={showTest ? undefined : TEST_HIDDEN_NOTE} /></section>
       <TrialCounter project={project} />
-      <Tabs
+      <section id="evidence-details"><Tabs
         label="Run sections"
         tabs={tabs}
         active={tab}
@@ -261,7 +265,7 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
           ),
         }}
       />
-      {fe.warning && <p className="small muted">{fe.warning}</p>}
+      </section>{fe.warning && <p className="small muted">{fe.warning}</p>}
     </>
   )
 }
@@ -289,7 +293,7 @@ export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runI
   }
   const runLabelId = runId.replace(/^run-/, '')
   const left = (
-    <PaneCard label="What was tested" actions={<RunAnalysisButton project={project} preferStudyId={study} />}>
+    <section id="evidence-metadata">
       <header className="rp-lhead">
         <h1>
           Run <span className="mono" translate="no">{runLabelId}</span>
@@ -304,12 +308,13 @@ export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runI
         <a href={routeHref({ view: 'compare', id: project.id, a: runId })}>Compare</a>
         <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
       </nav>
-      {fe && <FactChips label="What was tested" locked facts={testedFacts(fe)} info={<p>These values come from the Study and the Run. They are read-only here.</p>} />}
-    </PaneCard>
+      {fe && <MetadataTree study={fe.run.studyId} run={fe.run.id} dataset={fe.dataset.id} window={`${day(fe.protocol.splits.splits.validation.start)} to ${day(fe.protocol.splits.splits.validation.end)}`} />}
+      <details><summary className="small muted">Study details</summary>{fe && <FactChips label="What was tested" locked facts={testedFacts(fe)} info={<p>These values come from the Study and the Run. They are read-only here.</p>} />}</details>
+    </section>
   )
   const right = (
-    <PaneCard label="Run result">
-      {load.state === 'loading' && <p className="muted">Loading Run…</p>}
+    <section aria-label="Run result">
+      {load.state === 'loading' && <p className="muted">Loading…</p>}
       {load.state === 'error' &&
         (load.unsupported ? (
           <Notice
@@ -319,7 +324,7 @@ export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runI
             subtitle="The Run route serves Factor Runs only. Open the Project to find the page for this Run's lane."
           />
         ) : (
-          <Notice kind="error" label="Error" title="Could not load this Run." subtitle={load.message} />
+          <Notice kind="error" label="Error" title="Could not load this Project" subtitle={load.message} />
         ))}
       {load.state === 'error' && load.unsupported && (
         <p className="small">
@@ -332,7 +337,7 @@ export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runI
           <RunList project={project} />
         </Section>
       )}
-    </PaneCard>
+    </section>
   )
-  return <WorkbenchShell left={left} right={right} ratio={34} />
+  return <div className="evidence-layout"><EvidenceNavigation sections={EVIDENCE_SECTIONS} /><div className="evidence-content">{left}{right}</div></div>
 }

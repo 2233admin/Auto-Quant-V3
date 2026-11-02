@@ -53,7 +53,7 @@
 .wb-tab:hover { color: var(--text); }  /* the hover wash and the underline are the sliding indicators of .mo-hl--tabs */
 .wb-tab[aria-selected='true'] { color: var(--text); font-weight: 600; }
 .wb-tab:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
-.wb-tab-badge { margin-left: 6px; padding: 0 6px; border: 1px solid var(--signal); color: var(--signal); font: 500 11px/16px var(--font-mono); }
+.wb-tab-badge { margin-left: 6px; padding: 0 6px; border: 1px solid var(--signal); color: var(--signal); font: var(--type-label-mono); }
 .wb-tabpanel { display: grid; gap: var(--space-4); min-width: 0; }
 .wb-tabpanel:focus-visible { outline: var(--focus-ring); outline-offset: 4px; }
 .wb-tabpanel > * { min-width: 0; }
@@ -86,7 +86,7 @@
 .wb-verdict[data-tone='ok'] { border-left-color: var(--text); }
 .wb-verdict[data-tone='warn'] { border-left-color: var(--stroke); border-left-style: dashed; }
 .wb-verdict-line { display: flex; align-items: center; gap: var(--space-3); min-height: 32px; padding: 0 var(--space-3); min-width: 0; font: var(--type-small); }
-.wb-pill { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; padding: 0 var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: 600 12px/20px var(--font-sans); }
+.wb-pill { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; padding: 0 var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: var(--type-small); }
 .wb-verdict[data-tone='bad'] .wb-pill { color: var(--signal); border-color: var(--signal); }
 .wb-verdict-text { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wb-verdict-line .wb-link { margin-left: auto; }
@@ -131,7 +131,7 @@
 
 /* ---- Metric grid ---- */
 .wb-metrics { display: grid; gap: var(--space-3); min-width: 0; }
-.wb-metric-h { margin: 0 0 var(--space-2); font: 600 12px/18px var(--font-sans); color: var(--muted); }
+.wb-metric-h { margin: 0 0 var(--space-2); font: var(--type-small); color: var(--muted); }
 .wb-metric-note { margin: 0; }
 .wb-metrics .ct-label-text { white-space: normal; overflow-wrap: break-word; }
 /* Fixed columns: 2 below 1280px, 3 from 1280px; the last row is closed with empty pad cells (MetricGrid renders both sets, CSS shows one). */
@@ -148,26 +148,26 @@
 
 /* ---- Fact chips ---- */
 .wb-facts-wrap { display: grid; gap: var(--space-2); min-width: 0; container-type: inline-size; }
-.wb-facts-head { display: flex; align-items: center; gap: var(--space-2); margin: 0; font: 600 12px/18px var(--font-sans); color: var(--muted); }
+.wb-facts-head { display: flex; align-items: center; gap: var(--space-2); margin: 0; font: var(--type-small); color: var(--muted); }
 .wb-lock { display: inline-flex; color: var(--muted); }
 .wb-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .wb-fact { display: grid; gap: 0; padding: 4px var(--space-3); min-width: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg); }
-.wb-fact dt { font: 400 11px/16px var(--font-sans); color: var(--muted); }
-.wb-fact dd { margin: 0; font: 500 13px/20px var(--font-sans); overflow-wrap: anywhere; }
+.wb-fact dt { font: var(--type-label); color: var(--muted); }
+.wb-fact dd { margin: 0; font: var(--type-body); overflow-wrap: anywhere; }
 .wb-fact dd.mono { font-family: var(--font-mono); }
 .is-compact .wb-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .is-compact .wb-fact { padding: 2px var(--space-2); min-height: 34px; align-content: center; }
-.is-compact .wb-fact dt { font: 400 10px/14px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.is-compact .wb-fact dd { font: 500 12px/16px var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
-.is-compact .wb-fact dd.mono { font-family: var(--font-mono); font-size: 11.5px; }
+.is-compact .wb-fact dt { font: var(--type-label); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.is-compact .wb-fact dd { font: var(--type-small); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+.is-compact .wb-fact dd.mono { font-family: var(--font-mono); font-size: var(--size-small); }
 @container (max-width: 279px) { .is-compact .wb-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ---- Stat chips: headline numbers beside the Run selector ---- */
 .wb-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--space-3); margin: 0; min-width: 0; font: var(--type-small); }
-.wb-stats-scope { font: 400 10px/16px var(--font-sans); text-transform: uppercase; letter-spacing: .04em; }
+.wb-stats-scope { font: var(--type-label); text-transform: uppercase; letter-spacing: .04em; }
 .wb-stat { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; }
-.wb-stat dt { color: var(--muted); font: 400 11px/16px var(--font-sans); }
-.wb-stat dd { margin: 0; font: 600 13px/20px var(--font-mono); color: var(--text); }
+.wb-stat dt { color: var(--muted); font: var(--type-label); }
+.wb-stat dd { margin: 0; font: var(--type-value); color: var(--text); }
 .wb-stat + .wb-stat { padding-left: var(--space-3); border-left: 1px solid var(--line-strong); }
 
 /* ---- Result bar: Run selector + stat chips in one row ---- */
@@ -196,9 +196,9 @@
 /* ---- Fact chips: row variant ---- */
 .wb-chiprow { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0; }
 .wb-chip { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 2px var(--space-2); border: 1px solid var(--line); background: var(--bg); min-width: 0; }
-.wb-chip dt { flex: none; font: 400 10px/16px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
-.wb-chip dd { margin: 0; min-width: 0; font: 500 12px/16px var(--font-sans); overflow-wrap: anywhere; }
-.wb-chip dd.mono { font-family: var(--font-mono); font-size: 11.5px; }
+.wb-chip dt { flex: none; font: var(--type-label); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.wb-chip dd { margin: 0; min-width: 0; font: var(--type-small); overflow-wrap: anywhere; }
+.wb-chip dd.mono { font-family: var(--font-mono); font-size: var(--size-small); }
 .wb-chip dd a { color: inherit; }
 .wb-facts-more { display: grid; gap: var(--space-2); font: var(--type-small); }
 .wb-facts-more[hidden] { display: none; }
