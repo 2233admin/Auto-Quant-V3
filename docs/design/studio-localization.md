@@ -2,7 +2,9 @@
 
 Studio supports English and Simplified Chinese through its sidebar language
 control and narrow-screen navigation. The choice is retained in the browser's
-`aq-language` storage entry and applied to `html.lang`. Switching language
+`aq-language` storage entry and applied to `html.lang`. Simplified Chinese is
+the default in the browser (owner decision, 2026-11-03); a stored `en` choice
+keeps English, and server rendering and tests stay in English. Switching language
 rerenders the shell and its current research page without issuing a research
 action or rewriting an artifact.
 

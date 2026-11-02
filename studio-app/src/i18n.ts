@@ -2,7 +2,8 @@ import { useSyncExternalStore } from 'react'
 import catalog from './locales/zh-CN.json'
 
 type Language = 'en' | 'zh'
-let language: Language = (() => { try { return typeof window !== 'undefined' && localStorage.getItem('aq-language') === 'zh' ? 'zh' : 'en' } catch { return 'en' } })()
+// Owner decision 2026-11-03: Chinese is the default in the browser; English stays the server-render and test default.
+let language: Language = (() => { if (typeof window === 'undefined') return 'en'; try { return localStorage.getItem('aq-language') === 'en' ? 'en' : 'zh' } catch { return 'zh' } })()
 if (typeof document !== 'undefined') document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en'
 const listeners = new Set<() => void>()
 export function getLanguage(): Language { return language }
