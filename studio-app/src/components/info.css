@@ -1,6 +1,6 @@
 /* "?" disclosure: long text behind a button. Colours and type come from design/tokens.css. */
 .info { position: relative; display: inline-flex; vertical-align: middle; }
-.info-btn { display: inline-grid; place-items: center; width: 16px; height: 16px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: none; color: var(--muted); font: 500 10px/1 var(--font-mono); cursor: pointer; }
+.info-btn { display: inline-grid; place-items: center; width: 16px; height: 16px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: none; color: var(--muted); font: var(--type-label-mono); cursor: pointer; }
 .info-btn:hover, .info-btn[aria-expanded='true'] { color: var(--text); border-color: var(--text); background: var(--hover); }
 .info-btn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .info-body { position: absolute; z-index: 20; top: 22px; width: min(400px, 82vw); padding: var(--space-3) var(--space-4); background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); font: var(--type-small); text-align: left; text-transform: none; letter-spacing: 0; white-space: normal; display: grid; gap: var(--space-2); }

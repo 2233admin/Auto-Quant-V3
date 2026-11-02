@@ -17,6 +17,7 @@ const ICONS = {
 /** A one-line notice (design-system Notice): what is wrong or missing, then what to do. No close button, no action. */
 export function Notice({ kind, label, title, subtitle, children }: Props) {
   const icon = ICONS[kind]
+  const loadError = kind === 'error' && /^Could not load/i.test(title)
   return (
     <div className={`notice notice--${kind}`} role="status">
       <div className="notice-details">
@@ -24,9 +25,10 @@ export function Notice({ kind, label, title, subtitle, children }: Props) {
           <path d={icon.d} />
         </svg>
         <div className="notice-text">
-          <div className="notice-title">{title}</div>
+          <div className="notice-title">{loadError ? 'Could not load this Project' : title}</div>
           {subtitle && <div className="notice-sub">{subtitle}</div>}
           {children}
+          {loadError && <button className="wb-link" onClick={() => window.location.reload()}>Retry</button>}
         </div>
       </div>
     </div>

@@ -127,7 +127,7 @@ export function buildVerdict(study: FactorDiagnostics, adjustment: Adjustment | 
   return { verdict, reasons }
 }
 
-const VERDICT_WORD: Record<Verdict, string> = { pass: 'Pass', fail: 'Fail', inconclusive: 'Inconclusive' }
+const VERDICT_WORD: Record<Verdict, string> = { pass: 'Supported', fail: 'Inconclusive', inconclusive: 'Inconclusive' }
 
 const ic4 = (v: number) => `${v < 0 ? '-' : ''}${Math.abs(v).toFixed(4)}`
 

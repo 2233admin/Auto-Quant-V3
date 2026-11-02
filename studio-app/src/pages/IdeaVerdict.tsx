@@ -9,14 +9,17 @@ import { routeHref } from '../route'
 import { testVisible } from './testGate'
 import { coreGroups } from './FactorWorkbench'
 import { FactorHero, spreadGroups } from './GroupReturn'
+import { signedNumber } from '../design/signConvention'
+import { FactorComparisons } from './FactorComparisons'
+import { TEST_HIDDEN_NOTE } from './testGate'
 
-export type IdeaVerdictState = 'Supported' | 'Refuted' | 'Inconclusive' | 'Could not be tested'
+export type IdeaVerdictState = 'Supported' | 'Inconclusive' | 'Could not be tested'
 
 /** Translate an existing Core diagnosis, never statistical thresholds or portfolio admission. */
 export function ideaVerdict(study: FactorDiagnostics | null, adjustmentPass: boolean | null | undefined): IdeaVerdictState {
   const q = study?.factorQualification
   if (!q?.available || !q.diagnosis || q.claim?.claim !== 'decision-signal' || q.claim.outcome !== 'forward-return') return 'Could not be tested'
-  // The current Judge has no falsification protocol for a caller's prose. Refuted is reserved, never synthesized.
+  // The current Judge has no falsification protocol for a caller's prose.
   return q.diagnosis.stage === 'decision-signal-positive' && adjustmentPass === true ? 'Supported' : 'Inconclusive'
 }
 
@@ -76,7 +79,10 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
           {!runs.length && <option value="">{word}</option>}
           {runs.map((r, i) => <option key={r.id} value={r.id}>{r.startedAt?.replace('T', ' ').slice(0, 19) ?? r.id} · {r.id === run?.id ? word : r.status === 'succeeded' ? 'Completed' : 'Could not be tested'} · Trial {runs.length - i}</option>)}
         </select>
-        <StatChips label="Run facts" stats={[{ label: 'Trials', value: String(count) }, { label: 'Scope', value: 'Development' }]} />
+        <StatChips label="Run facts" scope="development" stats={[
+          ...(showEvidence && !pending && study.summary.validation ? [{ label: 'Rank IC', value: signedNumber(study.summary.validation.meanRankIc, 4), signed: true, focal: true }] : []),
+          { label: 'Trials', value: String(count) },
+        ]} />
       </div>
       <div className="idea-action-chips" data-measure="chips"><ActionRow align="start" secondary={[
         { label: 'Parameters', onClick: () => setParameters(true) },
@@ -88,13 +94,13 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
       {pending ? <div className="idea-empty"><h2>Analysis in progress</h2><p>{busy || 'The fixed Judge is running.'}</p><p className="small muted">Preflight → baseline or candidate Run → validation evidence. Trial records are retained even if execution fails.</p><p className="small">The original question and verdict wording are fixed for this attempt.</p></div>
       : !hasAttempt ? <div className="idea-empty"><h2>Not tested</h2><p>Define the factor on the left, then run one bounded analysis.</p><p className="small muted">You will confirm the exact command and trial count before execution. Inconclusive is a valid stopping point.</p></div>
       : <><VerdictBar tone={status === 'Supported' ? 'ok' : status === 'Could not be tested' ? 'bad' : 'warn'} word={status} detail={sentence}>{status === 'Supported' ? 'Development evidence only' : status === 'Inconclusive' ? 'Not established, not disproved' : 'No scientific conclusion'}</VerdictBar>
-        {showEvidence && <><FactorHero key={study.run.id} study={study} minHeight={200} /><section className="idea-core-metrics" data-measure="metrics" aria-label="Core metrics"><h2 className="set-title">Core metrics</h2><MetricGrid groups={ideaMetricGroups(study, project)} /><p className="small muted idea-conclusion">{sentence}</p></section></>}
+        {showEvidence && <><FactorHero key={study.run.id} study={study} minHeight={200} /><section className="idea-core-metrics" data-measure="metrics" aria-label="Core metrics"><h2 className="set-title">Core metrics</h2><MetricGrid groups={ideaMetricGroups(study, project)} /><p className="small muted idea-conclusion">{sentence}</p></section><FactorComparisons study={study} runs={runs} projectId={project.id} /></>}
         {study && status === 'Could not be tested' && !failedJob && !failedRun && <p className="small">{study.factorQualification.diagnosis?.explanation ?? 'Core publishes no applicable qualification protocol.'}</p>}
         {(failedJob || failedRun) && <p className="small idea-failure">{failedRun ? run.summary : failure}</p>}
         <dl className="set-kv">
           <dt>Evidence range</dt><dd>{failedJob || failedRun ? 'No completed evidence for this attempt' : `Validation · ${range}`}</dd>
           <dt>Trials retained</dt><dd>{count} {count === 1 ? 'execution' : 'executions'} · {family?.uniqueSourceTrials ?? count} distinct sources</dd>
-          <dt>Test audit</dt><dd>{study && !failedJob && !failedRun && testVisible(study.protocol, study.summary) ? 'Published diagnostic only; never independent confirmation' : 'Hidden until its audit exists'}</dd>
+          <dt>Test audit</dt><dd>{study && !failedJob && !failedRun && testVisible(study.protocol, study.summary) ? 'Published diagnostic only; never independent confirmation' : TEST_HIDDEN_NOTE}</dd>
           <dt>Sealed holdout</dt><dd>Not opened by this flow. Sealed-tail intake is not implemented.</dd>
         </dl>
         <details className="idea-evidence"><summary>Question identity and evidence</summary>

@@ -8,6 +8,36 @@ hosted Workspaces render the same Core snapshot. An operator can opt in to a
 small local action layer with `--allow-actions` (see "Local actions" below);
 without that flag Studio is strictly read-only.
 
+Studio uses a shared hierarchy: 20px page titles and focal values, 15px section
+headings, 13px body and numerical values, 12px secondary text and 11px labels.
+Inter and IBM Plex Mono and both theme palettes are unchanged. Panes and controls
+have 6px corners; floating layers have 8px corners, without shadows or gradients.
+
+Settings has a Display group with **Price colours**. Red up, green down is the
+default; Green up, red down changes only the viewer's presentation. The choice
+is remembered in browser storage when available and works for the current page
+when storage is unavailable. Read-only sessions show a disabled control and its
+reason. Only focal headline values in verdict areas and library cards receive
+sign colour, always with a plus or minus glyph and the development context.
+HAC statistics, counts, hit rates and ordinary metric tables stay neutral.
+
+Figures include a title, a subtitle, a figure identifier and a sentence describing
+their published evidence. Group growth captions quote validation long-short
+returns before costs; Portfolio captions quote the selected permitted split
+after costs. A plot covering several splits never supplies its endpoints as a
+validation caption. Previous-trial comparisons require the exact previous Run;
+test comparisons require the existing audit and visible-diagnostic role. No
+export tag appears unless that figure has a working export.
+
+Libraries have counted facets and a reset control. Run pages provide tree
+section navigation with reading progress, compact provenance metadata and
+borderless evidence tables. Supported, Inconclusive, Could not be tested and
+Not tested are the fixed verdict terms. The hidden-split catalogue says “Test
+split is hidden until the study is frozen.” This wording does not weaken the
+audit gate: freezing alone cannot expose test data. Disabled actions keep a
+visible reason, and counted execution still asks for confirmation of trial N
+of M. More detail is in [[docs/design/studio-workbench-kit]].
+
 ## Open a Workspace
 
 ```bash

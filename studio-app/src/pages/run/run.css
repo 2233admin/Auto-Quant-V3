@@ -9,7 +9,7 @@
 .headlines { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); margin: var(--space-3) 0 0; }
 .headline { display: grid; gap: 2px; }
 .headline dt { font: var(--type-small); color: var(--muted); }
-.headline dd { margin: 0; font: 500 24px/32px var(--font-mono); }
+.headline dd { margin: 0; font: var(--type-value-focal); }
 .kv { display: grid; grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr); gap: 6px var(--space-4); margin: 0; font: var(--type-body); }
 .kv dt { color: var(--muted); }
 .kv dd { margin: 0; overflow-wrap: anywhere; }

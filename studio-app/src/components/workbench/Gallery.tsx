@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { StateCatalogue } from './StateCatalogue'
 import { Swatch } from '../../pages/FactorCharts'
 import { MotionDemos } from '../motion/MotionDemos'
 import { ActionRow, ChartCard, FactChips, MetricGrid, PaneCard, SegmentedToggle, StatusLine, TabList, VerdictBar, WorkbenchShell, useHashTab, type StatusState } from '.'
@@ -68,7 +69,7 @@ export function WorkbenchGallery() {
         <>
           <VerdictBar
             tone="bad"
-            word="Refuted"
+            word="Inconclusive"
             reasons={[
               { tone: 'bad', text: 'Validation HAC p is above 0.05.', field: 'summary.hacNormalPValue' },
               { tone: 'info', text: 'Test split is hidden by the protocol.', field: 'protocol.splits.testVisible' },
@@ -166,5 +167,6 @@ export function WorkbenchGallery() {
     </PaneCard>
   )
 
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('catalogue') === 'states') return <StateCatalogue />
   return <WorkbenchShell left={leftPane} right={rightPane} ratio={40} />
 }

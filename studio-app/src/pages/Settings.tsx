@@ -7,7 +7,7 @@ import type { Catalog, CatalogAction } from '../actions/types'
 import { Loading } from '../components/States'
 import { Glyph } from '../design/icons'
 import { Notice } from '../Notice'
-import { PaneCard, WorkbenchShell } from '../components/workbench'
+import { SignConventionSetting } from '../components/workbench'
 import './ideas.css'
 
 const ENABLE_COMMAND = 'aq studio serve --allow-actions'
@@ -58,7 +58,7 @@ function ActionsSection({ workspace }: { workspace: WorkspaceSummary }) {
     <section className="set-sec" aria-labelledby="set-actions">
       <h2 id="set-actions">Actions</h2>
       <p>
-        <Glyph kind={on ? 'supported' : 'empty'} /> {on ? 'On: Studio can start local jobs from the Project pages.' : 'Off: Studio is read-only.'}
+        <Glyph kind={on ? 'supported' : 'empty'} /> {on ? 'On: Studio can start local jobs from the Project pages.' : 'Read-only session: actions are off.'}
       </p>
       {!on && (
         <>
@@ -75,7 +75,7 @@ function ActionsSection({ workspace }: { workspace: WorkspaceSummary }) {
           ['Audit log', auditPath(root), true],
         ]}
       />
-      {on && catalog.state === 'loading' && <Loading label="Loading actions…" minHeight={60} />}
+      {on && catalog.state === 'loading' && <Loading label="Loading…" minHeight={60} />}
       {on && catalog.state === 'error' && <Notice kind="error" label="Error" title="Could not load the action catalog." subtitle={catalog.error} />}
       {on && catalog.state === 'ready' && (
         <ul className="set-actions" aria-label="Available actions">
@@ -119,7 +119,7 @@ function WorkspaceSection({ workspace }: { workspace: WorkspaceSummary }) {
 const RULES = [
   'Trials are counted per research family and never removed.',
   'The holdout is sealed and can be opened once.',
-  'Test numbers stay hidden until their audit exists.',
+  'Test split is hidden until the study is frozen.',
   'Verdicts come from the fixed Judge, not from Studio.',
 ]
 
@@ -128,23 +128,18 @@ export function SettingsPage({ workspace }: { workspace: WorkspaceSummary | null
   if (!workspace) {
     return (
       <div className="pg">
-        <Loading label="Loading Workspace…" minHeight={240} />
+        <Loading label="Loading…" minHeight={240} />
       </div>
     )
   }
   const h = workspace.harness
   const version = `AQ ${h.version}${h.commit ? `@${h.commit.slice(0, 7)}` : ''}${h.dirty ? '+dirty' : ''}`
   return (
-    <WorkbenchShell
-      ratio={50}
-      left={
-        <PaneCard label="Actions and Workspace" tabs={<h1 className="set-title">Settings</h1>}>
+    <div className="settings-page">
+          <h1>Settings</h1>
+          <SignConventionSetting readOnly={!workspace.actions?.enabled} />
           <ActionsSection workspace={workspace} />
           <WorkspaceSection workspace={workspace} />
-        </PaneCard>
-      }
-      right={
-        <PaneCard label="Research rules and About" tabs={<h2 className="set-title">Rules and About</h2>}>
           <section className="set-sec" aria-labelledby="set-rules">
             <h2 id="set-rules">Research rules</h2>
             <p className="small muted">Fixed by the Judge. Read-only.</p>
@@ -161,8 +156,6 @@ export function SettingsPage({ workspace }: { workspace: WorkspaceSummary | null
               <a href="/legacy">Open Legacy Studio</a> <span className="muted">for lanes that have no native page yet.</span>
             </p>
           </section>
-        </PaneCard>
-      }
-    />
+    </div>
   )
 }

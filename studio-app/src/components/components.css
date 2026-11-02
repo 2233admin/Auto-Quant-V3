@@ -1,11 +1,11 @@
 /* Shared headline components. Colours and type come from design/tokens.css. */
 .mt { display: grid; align-content: start; gap: 2px; min-width: 0; }
 .mt-label { font: var(--type-small); color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.mt-value { margin: 0; font: 500 20px/28px var(--font-mono); }
+.mt-value { margin: 0; font: var(--type-value-focal); }
 .mt-delta { color: var(--muted); }
 .mt-tone { display: inline-flex; align-items: center; gap: 6px; }
 .mt-note { overflow-wrap: anywhere; }
-.mt-def { position: relative; display: inline-grid; place-items: center; width: 14px; height: 14px; border: 1px solid var(--line-strong); border-radius: 50%; font: 500 9px/1 var(--font-mono); color: var(--muted); cursor: help; }
+.mt-def { position: relative; display: inline-grid; place-items: center; width: 14px; height: 14px; border: 1px solid var(--line-strong); border-radius: 50%; font: var(--type-label-mono); color: var(--muted); cursor: help; }
 .mt-def:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .mt-tip { display: none; position: absolute; z-index: 5; left: 0; top: 18px; width: 260px; padding: var(--space-2) var(--space-3); background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); font: var(--type-small); text-align: left; white-space: normal; }
 .mt-def:hover .mt-tip, .mt-def:focus .mt-tip { display: block; }
@@ -13,7 +13,7 @@
 .hm { display: grid; gap: var(--space-5); }
 .hm-split { display: grid; gap: var(--space-2); }
 .hm-split + .hm-split { padding-top: var(--space-4); border-top: 1px solid var(--line); }
-.hm-title { margin: 0; font: 500 11px/16px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.hm-title { margin: 0; font: var(--type-label-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .hm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-4); margin: 0; }
 
 .trial { margin: 0; display: flex; align-items: center; gap: var(--space-2); padding: 4px var(--space-3); border: 1px solid var(--line-strong); border-left: 4px solid var(--warn); background: var(--raised); font: var(--type-small); }
@@ -36,9 +36,9 @@
 .pc-top { display: grid; gap: 0; }
 .pc-name { font: var(--type-section); color: var(--text); text-underline-offset: 3px; overflow-wrap: anywhere; }
 .pc-badges { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.pc-badge { display: inline-flex; align-items: center; gap: 6px; padding: 0 8px; border: 1px solid var(--line-strong); font: 500 11px/18px var(--font-mono); letter-spacing: .04em; text-transform: uppercase; }
+.pc-badge { display: inline-flex; align-items: center; gap: 6px; padding: 0 8px; border: 1px solid var(--line-strong); font: var(--type-label-mono); letter-spacing: .04em; text-transform: uppercase; }
 .pc-metric { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
-.pc-metric .mt-value { font-size: 20px; line-height: 26px; }
+.pc-metric .mt-value { font-size: var(--size-page-title); line-height: 26px; }
 .pc-spark { color: var(--stroke); flex: none; }
 .pc-spark path { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
 .pc-spark .last { fill: var(--accent); stroke: var(--raised); stroke-width: 1.5; }

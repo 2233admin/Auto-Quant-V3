@@ -7,8 +7,11 @@ import { BookBlock, EpisodesTable, NeighborhoodBlock, TransitionsTable, Viabilit
 import type { PerfSummary, PortfolioDiagnostics } from './portfolioTypes'
 import { Block, day, finite, fn, Kv, NA, SplitToggle, sp, up } from './pfmt'
 import { Info } from '../../components/Info'
-import { ActionRow, ChartCard, FactChips, FactsDialog, MetricGrid, PaneCard, StatChips, StatusLine, Tabs, useHashTab, VerdictBar, WorkbenchShell, type ActionButton, type Fact, type MetricGroup, type Stat, type TabDef, type VerdictReason } from '../../components/workbench'
+import { ActionRow, FigureCard, FactChips, FactsDialog, MetricGrid, PaneCard, StatChips, StatusLine, Tabs, useHashTab, VerdictBar, WorkbenchShell, type ActionButton, type Fact, type MetricGroup, type Stat, type TabDef, type VerdictReason } from '../../components/workbench'
 import { downloadJson } from '../../download'
+import { signedNumber } from '../../design/signConvention'
+import { portfolioCaption } from '../figureEvidence'
+import { TEST_HIDDEN_NOTE } from '../testGate'
 import { when } from '../../format'
 import { RunSelect } from '../run/RunSelect'
 import { otherLaneOf } from '../run/runTypes'
@@ -24,7 +27,7 @@ type Verdict = 'fail' | 'inconclusive'
  * external holdout, so this lane has no "pass" state to show.
  */
 const FAIL_STAGES = new Set(['factor-edge-absent', 'factor-not-monetized', 'cost-fragile'])
-const WORD: Record<Verdict, string> = { fail: 'Fail', inconclusive: 'Inconclusive' }
+const WORD: Record<Verdict, string> = { fail: 'Inconclusive', inconclusive: 'Inconclusive' }
 
 function verdictOf(pf: PortfolioDiagnostics): Verdict {
   const stage = pf.strategyViability?.diagnosis?.stage
@@ -173,7 +176,7 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
   const effective: Split = testVisible ? split : 'validation'
   const testStart = testWindow?.start
   const outsideTest = (date: string | undefined) => testVisible || !testStart || !date || date < testStart
-  const hiddenNote = testVisible ? '' : 'Dates inside the test split are not drawn because no test audit is published for this Run.'
+  const hiddenNote = testVisible ? '' : TEST_HIDDEN_NOTE
 
   const allPoints = (pf.path?.points ?? []).filter((p) => p.timestamp)
   const points = testVisible ? allPoints : allPoints.filter((p) => p.split !== 'test' && outsideTest(p.timestamp))
@@ -259,9 +262,9 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
   const netSplit = pf.strategyViability?.[effective]?.net
   const stats: Stat[] = netSplit
     ? [
-        { label: 'Net Sharpe', value: fn(netSplit.sharpe), hint: `${effective} split, after costs` },
-        { label: 'Net return', value: sp(netSplit.totalReturn), hint: `Total return, ${effective} split, after costs` },
-        { label: 'Max drawdown', value: sp(netSplit.maximumDrawdown), hint: `${effective} split` },
+        { label: 'Net Sharpe', value: signedNumber(netSplit.sharpe), signed: true, hint: `${effective} split, after costs` },
+        { label: 'Net return', value: signedNumber(netSplit.totalReturn == null ? null : netSplit.totalReturn * 100, 2, '%'), signed: true, focal: true, hint: `Total return, ${effective} split, after costs` },
+        { label: 'Max drawdown', value: signedNumber(netSplit.maximumDrawdown == null ? null : netSplit.maximumDrawdown * 100, 2, '%'), signed: true, hint: `${effective} split` },
       ]
     : []
   const runRow = project.runs.find((r) => r.id === run?.id)
@@ -297,13 +300,13 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
       actions={
         <div className="wb-resultbar">
           {selector}
-          <StatChips label={`Headline numbers, ${effective} split`} scope={effective === 'test' ? 'Test' : 'Validation'} stats={stats} />
+          <StatChips label={`Headline numbers, ${effective} split`} scope={effective === 'test' ? 'Test · development' : 'Validation · development'} stats={stats} />
         </div>
       }
       status={
         <div className="fr-status">
           <ActionRow align="start" secondary={resultActions} />
-          <VerdictBar tone={verdict === 'fail' ? 'bad' : 'warn'} word={WORD[verdict]} reasons={reasons.map((r) => ({ tone: r.tone, text: r.text, field: r.field }))} detail={sentence}>
+          <VerdictBar tone="warn" word={WORD[verdict]} reasons={reasons.map((r) => ({ tone: r.tone, text: r.text, field: r.field }))} detail={sentence}>
             {clause}
           </VerdictBar>
           {runRow && (
@@ -316,7 +319,7 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
         </div>
       }
     >
-      <h1 className="sr-only">Portfolio</h1>
+      <h1 className="type-page-title">Portfolio</h1>
       <FactChips
         label="What was run"
         locked
@@ -335,9 +338,9 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
         }
       />
       {points.length >= 2 ? (
-        <ChartCard title="Growth and drawdown" info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} toggle={splitControl} minHeight={260}>
+        <FigureCard label="FIG A" subtitle="Published net growth and drawdown." caption={portfolioCaption(netSplit?.totalReturn, effective, testVisible)} development title="Growth and drawdown" info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} toggle={splitControl} minHeight={260}>
           {() => <PortfolioChart points={points} windows={windows} transitions={transitions.map((r) => r.timestamp)} totalRows={pf.path?.totalRows} sampledRows={pf.path?.sampledRows} />}
-        </ChartCard>
+        </FigureCard>
       ) : (
         <Empty title="Not available">
           <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a curve.</p>

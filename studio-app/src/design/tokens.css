@@ -54,6 +54,20 @@
   /* Type scale: size / line height, weight on the role. */
   --type-headline: 600 28px/40px var(--font-sans);
   --type-title: 590 26px/34px var(--font-sans);
+  --type-page-title: 600 20px/28px var(--font-sans);
+  --type-label: 400 11px/16px var(--font-sans);
+  --type-value: 500 13px/20px var(--font-mono);
+  --type-value-focal: 600 20px/28px var(--font-mono);
+  --type-label-mono: 400 11px/16px var(--font-mono);
+  --type-small-mono: 400 12px/18px var(--font-mono);
+  --size-page-title: 20px;
+  --size-section: 15px;
+  --size-body: 13px;
+  --size-small: 12px;
+  --size-label: 11px;
+  --sign-positive: var(--err);
+  --sign-negative: var(--ok);
+  --sign-neutral: var(--text);
   --type-section: 590 15px/22px var(--font-sans);
   --type-body: 400 13px/20px var(--font-sans);
   --type-small: 400 12px/18px var(--font-sans);
@@ -68,7 +82,7 @@
   --space-8: 32px;
   --space-10: 40px;
 
-  /* Controls 6px, floating layers 8px; panels, tables, cards and code blocks stay square. */
+  /* Panes and controls 6px; floating layers 8px. */
   --radius-control: 6px;
   --radius-float: 8px;
 

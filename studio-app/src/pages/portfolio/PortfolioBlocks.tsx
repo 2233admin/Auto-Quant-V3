@@ -282,7 +282,7 @@ export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; spl
                     return (
                       <td key={b} className={isBase ? 'is-base' : undefined} style={{ background: bg }} title={`${c.id}: net Sharpe ${fn(v)}, total return ${sp(c.totalReturn)}, turnover ${fn(c.annualizedOneWayTurnover, 1)}x`}>
                         <span className="pf-cell-v">
-                          <Glyph kind={!finite(v) || Number(v.toFixed(2)) === 0 ? 'empty' : v > 0 ? 'supported' : 'refuted'} />
+                          <Glyph kind={!finite(v) || Number(v.toFixed(2)) === 0 ? 'empty' : v > 0 ? 'supported' : 'error'} />
                           {sn(v)}
                         </span>
                         {isBase && <span className="pf-cell-tag">selected (base)</span>}

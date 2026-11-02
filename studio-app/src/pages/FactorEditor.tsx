@@ -276,7 +276,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
     retry = true
   } else if (activeJob) reason = `Blocked: job ${activeJob} is already running in this Project.`
   else if (picked && !picked.available && !(dirty && STALE_DISK_BLOCK.test(picked.blockedBy ?? ''))) reason = picked.blockedBy ?? 'Blocked: this Session cannot take a candidate right now.'
-  else if (load.state === 'loading') reason = 'Loading the candidate…'
+  else if (load.state === 'loading') reason = 'Loading…'
   else if (load.state === 'error') reason = `Could not read the candidate: ${load.message}`
   else if (doc && !doc.editable) reason = doc.blockedReason ?? 'Blocked: the candidate is not editable.'
   else if (conflict) reason = 'Resolve the save conflict above first.'
@@ -412,7 +412,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
                   aside={
                     on && !noSession ? (
                       <span className="fe-trial-chip" title={trialTitle} aria-label={`Trial ${trialN} of ${trialM}. ${trialTitle}`}>
-                        <span aria-hidden="true">Trial {trialN}/{trialM}</span>
+                        <span aria-hidden="true">Trial {trialN} of {trialM}</span>
                       </span>
                     ) : undefined
                   }
@@ -466,7 +466,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
                       <CodeField rows={9} label="Candidate source" value={draft} onChange={setDraft} readOnly={!editable} />
                     </div>
                   ) : load.state === 'loading' ? (
-                    <p className="small muted">Loading the candidate…</p>
+                    <p className="small muted">Loading…</p>
                   ) : load.state === 'error' ? (
                     <p className="small sig" role="alert">Could not read the candidate: {load.message}</p>
                   ) : (
