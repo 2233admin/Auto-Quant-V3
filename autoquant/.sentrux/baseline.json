@@ -24,7 +24,7 @@
     },
     {
       "functions": 2,
-      "loc": 1429,
+      "loc": 1446,
       "path": "capabilities.py",
       "rule": "loc>800"
     },
@@ -36,7 +36,7 @@
     },
     {
       "functions": 88,
-      "loc": 5937,
+      "loc": 5944,
       "path": "cli.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -95,8 +95,8 @@
       "rule": "loc>800"
     },
     {
-      "functions": 63,
-      "loc": 10393,
+      "functions": 48,
+      "loc": 9690,
       "path": "portfolio_explorer.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -186,7 +186,7 @@
     },
     {
       "functions": 31,
-      "loc": 2166,
+      "loc": 2170,
       "path": "runs.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -204,13 +204,13 @@
     },
     {
       "functions": 56,
-      "loc": 2832,
+      "loc": 2846,
       "path": "studio.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
     {
       "functions": 78,
-      "loc": 1493,
+      "loc": 1525,
       "path": "studio_actions.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -252,21 +252,21 @@
     }
   ],
   "metrics": {
-    "branch_density_per_fn": 657,
+    "branch_density_per_fn": 656,
     "complex_fn_count": 3,
-    "coupling_score": 119.39,
-    "cross_module_edges": 1182,
+    "coupling_score": 116.51,
+    "cross_module_edges": 1270,
     "cycle_count": 0,
-    "files": 99,
-    "functions": 1882,
+    "files": 109,
+    "functions": 1926,
     "god_file_count": 41,
-    "import_modeled_files": 99,
-    "max_complexity": 657,
+    "import_modeled_files": 109,
+    "max_complexity": 656,
     "quality_signal": 0,
-    "total_import_edges": 1182
+    "total_import_edges": 1270
   },
-  "savedAt": 1793653386,
+  "savedAt": 1793663456,
   "schema": "code-intel-sentrux-baseline.v5",
   "scope": ".",
-  "sourceCommit": "b27f773347388ed77df752ed22f4ff43e29fb78f"
+  "sourceCommit": "37da0a5276f788521973ffa5040d319db62c108f"
 }
