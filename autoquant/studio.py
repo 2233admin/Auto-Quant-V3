@@ -1160,9 +1160,12 @@ def _project_snapshot(project: ProjectContext) -> dict[str, Any]:
             )
         studies.append(summary)
     runs: list[dict[str, Any]] = []
+    from .run_history import history_row
     for item in runs_raw:
         summary = item.to_dict()
-        run_result = load_run(project, item.id).result
+        verified_run = load_run(project, item.id)
+        summary["history"] = history_row(verified_run)
+        run_result = verified_run.result
         summary["summary"] = run_result["summary"]
         summary["errors"] = run_result["errors"]
         summary["failureDisposition"] = run_failure_disposition(run_result)
@@ -2409,6 +2412,11 @@ def _handler(
             if self._candidate_get(path, head_only):
                 return
             try:
+                from .studio_compare import serve_history
+                if serve_history(self, path, directory, project_id,
+                                 lambda: cache.get("snapshot", None, lambda: build_studio_snapshot(directory, project_id=project_id)).payload,
+                                 head_only):
+                    return
                 if path == "/api/v1/health":
                     body = json.dumps(
                         {

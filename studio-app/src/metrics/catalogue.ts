@@ -45,6 +45,12 @@ const PORTFOLIO_LEDGER: Bi = {
 }
 
 export const METRIC_CATALOGUE = {
+  primaryObjective: {
+    label: { en: 'Primary validation objective', zh: '验证集主目标' },
+    definition: { en: 'The immutable Study objective measured on validation, when explicitly declared.', zh: '固定研究明确声明的验证集主目标数值。' },
+    read: { en: 'Read the Study direction and protocol; a difference does not grant selection or trading authority.', zh: '请结合研究的优化方向和协议阅读；差值不授予选择或交易权限。' },
+    core: { en: 'The verified RunResult objective metric. An objective without an explicit validation scope is unavailable here.', zh: '来自已验证 RunResult 的目标指标；未明确声明验证集范围的目标在此不展示。' },
+  },
   // ---------------------------------------------------------------- Factor: rank-IC summary
   meanRankIc: {
     label: { en: 'Mean rank IC', zh: '平均秩 IC' },

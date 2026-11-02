@@ -38,6 +38,31 @@ audit gate: freezing alone cannot expose test data. Disabled actions keep a
 visible reason, and counted execution still asks for confirmation of trial N
 of M. More detail is in [[docs/design/studio-workbench-kit]].
 
+## Run history and comparison
+
+Open `?view=runs` for every verified immutable Run across the Workspace. Filter
+by object kind, lane, retained Core verdict, Project and inclusive UTC date range;
+search Run/Study/subject/metric/Project/source identities and sort table columns.
+History loads bounded pages rather than fetching every Project's diagnostic tree.
+Workspace diagnostics remain available alongside verified measurements.
+
+Select exactly two Runs to enable **Compare 2 Runs**. A visible reason explains
+an incomplete selection, pending verification or every differing protocol field.
+The server requires matching object kind, lane, exact Study authority, dataset
+identity and bytes, split windows, horizon, cost policy and objective. Different
+candidate sources are allowed. Missing authority refuses comparison. Old Runs
+keep their own Experiment verdict or direct-run status, never the latest object's
+scientific verdict.
+
+Compare displays baseline and subject metrics with subject-minus-baseline deltas,
+catalogue help, a paired primary-metric figure and paired Factor cumulative group
+curves. Grey identifies baseline and accent identifies subject; only the primary
+validation delta has sign colour. Both protocols remain inspectable and differences
+are highlighted even on a refused comparison. Test values require the published
+audit and visible-diagnostic role; test metric pairs require both Runs to pass the
+gate. Comparison is read-only development evidence, without selection, promotion
+or trading authority. See [[docs/design/run-comparability]].
+
 ## Staged data intake wizard
 
 Use **Import data** in the Factors library or the link in **New factor** to

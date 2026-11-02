@@ -16,6 +16,8 @@ import { runMetricGroups } from '../src/pages/run/RunPage'
 import { MetricDetail, portfolioMetricGroups, portfolioStats } from '../src/pages/portfolio/Portfolio'
 import type { PortfolioDiagnostics } from '../src/pages/portfolio/portfolioTypes'
 import { LibraryCard } from '../src/library/LibraryCards'
+import { ComparisonResults } from '../src/pages/compare/ComparisonResults'
+import type { Comparison, HistoryRun } from '../src/library/runHistoryApi'
 
 const CJK = /[㐀-鿿]/
 const HIDDEN = /876\.5432|9876|99999/
@@ -97,6 +99,7 @@ const pages = () => {
   const runRow = { id: 'run-one', studyId: 'ohlcv-factor-quality', status: 'succeeded' } as RunRow
   const idea = { hypothesis: 'Does this ranking help?', hypothesisSha256: 'q', verdictPolicy: 'factor-idea-development-v1', bindings: [], evidence: { runId: 'run-one', selectionAdjustment: { passes: true } } } as unknown as Idea
   return {
+    'Custom Run comparison': renderToStaticMarkup(<ComparisonResults comparison={{ status: 'comparable', differences: [], a: { primaryMetric: 'validation_custom', primaryValue: 0.1 } as HistoryRun, b: { primaryMetric: 'validation_custom', primaryValue: 0.2 } as HistoryRun } as Comparison} />),
     'Factor answer card': renderToStaticMarkup(<IdeaVerdict project={project} idea={idea} study={sealed} run={runRow} job={null} busy="" />),
     'Factor workbench': renderToStaticMarkup(<>
       <StatChips label="Headline" stats={factorStats(s.summary.validation, 1, adjustment)} />

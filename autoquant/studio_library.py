@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 
 from .runs import load_run
+from .run_history import audit_visible
 from .selection import build_research_family, build_selection_adjustment
 from .studio_actions import _is_link, confine_workspace_path
 from .workspace import AutoQuantValidationError
@@ -94,7 +95,7 @@ def library_projection(project, snapshot, workspace_root):
             pass
         protocol = explorer.get("protocol") or {}
         summary = explorer.get("summary") or {}
-        visible = bool(summary.get("testAudit")) and protocol.get("testRole") == "visible-diagnostic"
+        visible = audit_visible(protocol, summary)
         result["factor"] = {
             "studyId": latest["studyId"] if latest else sorted(factor_ids)[0],
             "verdict": verdict, "evidence": evidence,

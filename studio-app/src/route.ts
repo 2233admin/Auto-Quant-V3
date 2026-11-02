@@ -6,7 +6,7 @@ export type Route =
   | { view: 'project'; id: string }
   | { view: 'event-study'; id: string }
   | { view: 'run'; id: string; run: string }
-  | { view: 'compare'; id: string; a?: string; b?: string }
+  | { view: 'compare'; id: string; a?: string; b?: string; projectB?: string }
   | { view: 'factor'; id: string; study?: string; run?: string }
   | { view: 'portfolio'; id: string }
   | { view: 'factors' }
@@ -50,7 +50,7 @@ export function parseRoute(search: string, pathname = '/'): Route {
   if (p.get('view') === 'compare' && projectParam) {
     const a = p.get('a')
     const b = p.get('b')
-    return { view: 'compare', id: projectParam, ...(a ? { a } : {}), ...(b ? { b } : {}) }
+    return { view: 'compare', id: projectParam, ...(a ? { a } : {}), ...(b ? { b } : {}), ...(p.get('projectB') ? { projectB: p.get('projectB')! } : {}) }
   }
   if (p.get('view') === 'factor' && id) {
     const study = p.get('study')
@@ -80,6 +80,7 @@ export function routeHref(route: Route): string {
     const params = new URLSearchParams({ view: 'compare', project: route.id })
     if (route.a) params.set('a', route.a)
     if (route.b) params.set('b', route.b)
+    if (route.projectB) params.set('projectB', route.projectB)
     return `/?${params}`
   }
   if (route.view === 'event-study') return `/projects/${encodeURIComponent(route.id)}/event-study`

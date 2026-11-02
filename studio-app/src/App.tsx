@@ -142,7 +142,7 @@ export default function App() {
       ) : route.view === 'run' ? (
         <RunPage project={project.project} runId={route.run} go={go} />
       ) : route.view === 'compare' ? (
-        <ComparePage project={project.project} a={route.a} b={route.b} go={go} />
+        <ComparePage project={project.project} a={route.a} b={route.b} projectB={route.projectB} go={go} />
       ) : route.view === 'portfolio' ? (
         <PortfolioPage project={project.project} go={go} />
       ) : route.view === 'bookrisk' ? (

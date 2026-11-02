@@ -6,6 +6,7 @@ div.basis--open { border-left-color: var(--faint); }
 div.basis > .basis-title { font: var(--type-body); }
 div.basis p { margin: var(--space-2) 0 0; }
 .cmp td, .cmp th { vertical-align: baseline; }
+.cmp th[scope='row'] { display: table-cell; }
 .cmp-head { display: grid; gap: var(--space-2); }
 .cmp-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-3); }
 .cmp-title h1 { font-size: var(--size-page-title); line-height: 28px; margin: 0; }
@@ -14,3 +15,19 @@ div.basis p { margin: var(--space-2) 0 0; }
 .cmp-pick .runsel { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: var(--space-2); margin: 0; max-width: none; }
 .cmp-pick .runsel .sr-only { position: static; width: auto; height: auto; clip: auto; overflow: visible; font: var(--type-small); color: var(--muted); white-space: nowrap; }
 .cmp-pick .runsel select { min-width: 0; width: 100%; }
+.cmp-identities { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); padding: var(--space-3); background: var(--raised); border-radius: var(--radius-control); }
+.cmp-identities p { margin: var(--space-1) 0; overflow-wrap: anywhere; }
+.cmp-figures { display: grid; grid-template-columns: 1fr 1.4fr; gap: var(--space-3); }
+.cmp-figures > * { min-width: 0; }
+.cmp-primary-figure { position: relative; }
+.cmp-figure-help { position: absolute; top: var(--space-3); right: var(--space-3); }
+.cmp-figures .comparison-bar.is-subject { background: var(--signal-graphic); }
+.cmp-facts { table-layout: fixed; width: 100%; }
+.cmp-facts th:first-child { width: 16%; }
+.cmp-facts th:last-child { width: 8%; }
+.cmp-facts pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; font: var(--type-small); }
+.cmp-facts td { overflow-wrap: anywhere; }
+.cmp-different th { border-left: 3px solid var(--text); padding-left: var(--space-2); }
+.cmp-different { background: var(--hover); }
+.cmp-figures select { background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); }
+@media (max-width: 1100px) { .cmp-figures { grid-template-columns: 1fr; } }
