@@ -1351,6 +1351,45 @@ available with or without the flag. The flag is refused with a non-loopback
 the action and job routes do not exist and the server stays read-only. See [[docs/STUDIO]] and
 [[docs/design/studio-local-actions]].
 
+## Data quality inspection
+
+```bash
+aq data check <csv-file-or-folder-or-package.json> --json
+aq data check staging/daily --calendar XNYS --timezone America/New_York \
+  --frequency 1d --jump-threshold 0.30 --long-gap-bars 5 \
+  --universe-status unknown --json
+aq data check staging/daily --options quality-options.json --json
+```
+
+`data.check` is read-only and network-free. It emits the ordinary success
+envelope with `command=data.check` and a V1 `autoquant-data-quality-report` in
+`data`. A successfully produced diagnostic report exits 0 even if its verdict
+is `warn` or `fail`; invalid command-line syntax exits 2 and unreadable/invalid sources
+exit 1 in the ordinary error envelope. A report does not replace strict intake.
+
+Each asset includes rows, observed range, missing-bar rate and checks for
+parsing, duplicates, original timestamp order, non-positive/non-finite prices,
+OHLC bounds, invalid and zero volume, missing scheduled bars, long gaps,
+price jumps, calendar/session alignment, timezone and declared delisted-asset
+coverage. Checks contain verdict, count and up to five first examples; summary
+checks include cross-asset timestamp alignment. Unknown calendar authority
+leaves the missing rate null. No data is downloaded, filled or repaired.
+
+Options may declare `mapping` (canonical timestamp/open/high/low/close/volume/
+asset keys to exact source columns), `calendar`, `timezone`, `frequency`,
+`start`, `end`, `jumpThreshold` (default 0.3), `longGapBars` (default 5),
+`universeStatus` (`unknown`, `currently-listed-only`, `contains-delisted`) and
+per-asset `assetMarkets`. `--options-json` accepts the same JSON inline and is
+mutually exclusive with `--options`. Explicit flags override file options.
+Package frequency and top-level market metadata retain package authority.
+Diagnostic per-asset declarations never rewrite that package.
+
+Calendar ids use the installed exchange calendar library, or explicit
+`weekdays` / `24/7`. Missing-rate bounds otherwise use each asset's observed
+span, not inferred listing dates. Long gaps do not prove suspensions, and
+coverage/adjustment declarations are unauthenticated. See
+[[docs/design/studio-data-intake]] for the Studio counterpart.
+
 ## Success envelope
 
 ```json

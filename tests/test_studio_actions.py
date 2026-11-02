@@ -696,9 +696,9 @@ class StudioActionsTests(unittest.TestCase):
             if os.name == "nt":
                 out = subprocess.run(
                     ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
-                    capture_output=True, text=True,
+                    capture_output=True,
                 ).stdout
-                return str(pid) in out
+                return str(pid).encode("ascii") in out
             try:
                 os.kill(pid, 0)
             except OSError:
@@ -887,7 +887,7 @@ class StudioActionsTests(unittest.TestCase):
             self.assertIn("opens a trial family", data["trial"]["notice"])
             catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
             ids = [item["id"] for item in catalog["data"]["actions"]]
-            self.assertEqual(ids, ["experiment.evaluate", "session.start", "session.check", "candidate.save", "project.create", "project.intake"])
+            self.assertEqual(ids, ["experiment.evaluate", "session.start", "session.check", "candidate.save", "project.create", "project.intake", "data.check"])
             start = catalog["data"]["actions"][1]
             self.assertEqual(
                 start["targets"][0]["studies"],

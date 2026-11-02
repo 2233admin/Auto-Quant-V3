@@ -12,8 +12,11 @@ class OhlcvValidationError(ValueError):
     """Raised when caller-supplied OHLCV cannot enter a V2 Project."""
 
 
-def normalize_ohlcv(frame: pd.DataFrame, *, source: str = "<dataframe>") -> pd.DataFrame:
-    """Normalize one conventional OHLCV table to the V2 intake surface."""
+def coerce_ohlcv(frame: pd.DataFrame, *, source: str = "<dataframe>") -> pd.DataFrame:
+    """Parse conventional columns without sorting or discarding invalid observations.
+
+    Shared by strict intake and diagnostic readers which must retain original order.
+    """
 
     frame = frame.copy()
     frame.columns = [str(column).strip().lower() for column in frame.columns]
@@ -39,7 +42,12 @@ def normalize_ohlcv(frame: pd.DataFrame, *, source: str = "<dataframe>") -> pd.D
     for column in OHLCV_COLUMNS[1:]:
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
 
-    frame = frame.loc[:, list(OHLCV_COLUMNS)].sort_values("date").reset_index(drop=True)
+    return frame.loc[:, list(OHLCV_COLUMNS)].reset_index(drop=True)
+
+
+def normalize_ohlcv(frame: pd.DataFrame, *, source: str = "<dataframe>") -> pd.DataFrame:
+    """Normalize one conventional OHLCV table to the V2 intake surface."""
+    frame = coerce_ohlcv(frame, source=source).sort_values("date").reset_index(drop=True)
     if frame.empty:
         raise OhlcvValidationError(f"{source}: OHLCV table is empty")
     if frame.isna().any().any():

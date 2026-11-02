@@ -406,6 +406,8 @@ Read the relevant linked document before changing a subsystem:
   [[docs/design/agent-native-quant-workbench]]
 - Documentation ownership and update protocol:
   [[docs/design/documentation-system]]
+- Confined staged CSV mapping, deterministic quality diagnostics and confirmed
+  strict Studio data intake: [[docs/design/studio-data-intake]]
 - Public end-to-end Workspace operation and task routing:
   [[docs/OPERATOR_GUIDE]]
 - Version increments, compatibility boundary, release audit, tagging, and host

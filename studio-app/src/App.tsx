@@ -5,6 +5,7 @@ import { useTheme } from './design/theme'
 import { useWidth } from './design/useWidth'
 import { Notice } from './Notice'
 import { FactorLibrary } from './library/FactorLibrary'
+import { DataIntake } from './pages/intake/DataIntake'
 import { AttentionPage } from './pages/Attention'
 import { SettingsPage } from './pages/Settings'
 import { AssistantPage, AssistantDrawer, type AssistantContext } from './pages/Assistant'
@@ -60,7 +61,9 @@ export default function App() {
   const known = data.workspace?.projects.find((p) => p.id === projectId)
   const projectCrumb = (id: string) => ({ label: known?.name ?? id, data: true })
   const crumbs: Crumb[] =
-    route.view === 'assistant'
+    route.view === 'data-intake'
+      ? [{ label: uiText('Import data') }]
+      : route.view === 'assistant'
       ? [{ label: uiText("Assistant") }]
       : route.view === 'project'
       ? [{ label: uiText("Factors"), href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
@@ -110,11 +113,14 @@ export default function App() {
                 ? [{ label: uiText("Settings") }]
                 : [{ label: uiText("Factors") }]
   const routeTitles: Record<string, string> = { assistant: 'Assistant', projects: 'Factors', factors: 'Factor library', strategies: 'Strategy library', runs: 'Run history', tuning: 'Tuning tasks', attention: 'Attention', settings: 'Settings', 'event-study': 'Price event study', factor: 'Factor evidence', portfolio: 'Portfolio', bookrisk: 'Book Risk', bookstress: 'Reported-book path stress', allocation: 'Strategic allocation', rl: 'Governed RL policy', run: 'Run', compare: 'Compare Runs', project: 'Project' }
+  routeTitles['data-intake'] = 'Import data'
   document.title = [uiText(routeTitles[route.view] ?? 'AutoQuant Studio'), ...(projectId ? [known?.name ?? projectId] : []), 'AutoQuant Studio'].join(' · ')
 
   let page
   if (new URLSearchParams(window.location.search).get('view') === 'kit') {
     page = <WorkbenchGallery />
+  } else if (route.view === 'data-intake') {
+    page = <DataIntake workspace={data.workspace} />
   } else if (route.view === 'assistant') {
     page = <AssistantPage workspace={data.workspace} go={go} />
   } else if (isLibraryRoute(route)) {

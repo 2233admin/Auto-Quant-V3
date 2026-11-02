@@ -1165,6 +1165,9 @@ class AgentCliTests(unittest.TestCase):
         self.assertEqual(
             [command["id"] for command in commands],
             [
+                "data.check",
+                "candidate.show",
+                "candidate.save",
                 "version",
                 "capabilities",
                 "schema",

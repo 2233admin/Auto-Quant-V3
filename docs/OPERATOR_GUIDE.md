@@ -149,6 +149,34 @@ fixed-study policies. Those are immutable research assumptions, never live
 position or execution authority. Exact intake and snapshot semantics live in
 [[docs/design/research-intake-and-dataset-snapshots]].
 
+### Inspect staged data in Studio
+
+Open **Import data** in the Factors library, or the intake-wizard link in
+**New factor**. Start Studio with `--allow-actions` to enable this flow.
+Place complete CSV sets or an existing dataset package under the Workspace's
+`staging/` directory. The wizard lists these candidates; it does not browse
+arbitrary paths or fetch market data.
+
+1. Choose a staged folder or package and preview the original sample rows.
+2. Map timestamp/open/high/low/close/volume and optionally asset. Declare the
+   calendar, frequency and IANA timezone; package declarations remain fixed.
+3. Run the read-only quality report. Inspect summary and per-asset checks,
+   missing rates and expandable original examples. A failure blocks wizard
+   intake; warnings need interpretation. Unknown delisted-asset coverage stays
+   unknown. Long gaps and raw-price jumps do not establish their cause.
+4. Choose a new or pristine existing Factor Project, explicitly select its
+   prediction assets and forward horizon, and declare source metadata. Review
+   the exact intake command, request and package, acknowledge the write, then
+   confirm. Core performs strict intake and retains its normalized snapshot.
+
+Raw CSV packaging supports daily V1 date labels. It retains the Core minimum
+of four assets and 180 aligned observations; a quality pass alone cannot
+establish intake readiness. Use an audited existing package for V5/V6 or other
+supported contracts. No research Run starts. Review `research.md` before
+authoring a candidate. Unknown provider retrieval time is kept as JSON null.
+The same diagnostics are available through `aq data check PATH --json`.
+See [[docs/design/studio-data-intake]] and [[docs/CLI]].
+
 ## Work with Factors, Portfolios, and governed RL
 
 Factor candidates use an ordinary long-form pandas panel rather than a private

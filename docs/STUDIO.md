@@ -38,6 +38,28 @@ audit gate: freezing alone cannot expose test data. Disabled actions keep a
 visible reason, and counted execution still asks for confirmation of trial N
 of M. More detail is in [[docs/design/studio-workbench-kit]].
 
+## Staged data intake wizard
+
+Use **Import data** in the Factors library or the link in **New factor** to
+open `?view=data-intake`. With `--allow-actions`, its four steps select only
+Workspace staging candidates, preview column mapping and declared market
+clock, run deterministic quality diagnostics, and bind a new or pristine
+existing Factor Project through `project.intake`. With actions off it shows
+the shared read-only state and an enable command.
+
+Quality tables expose pass/warn/fail checks and first examples for each asset,
+including missing scheduled bars, zero volume, jumps, gaps, duplicate/order
+errors, price/OHLC errors, delisted-universe coverage and timestamp alignment.
+Unknown coverage/calendar authority remains unknown. Diagnostic inspection is
+read-only and needs no confirmation; snapshot intake previews exact argv and
+requires a separate acknowledgement and confirmation, then records a job audit.
+
+CSV packaging is daily V1; existing audited package versions retain strict
+Core contracts. Raw bytes remain unchanged under staging, mapping is recorded
+in a content-addressed staging bundle, and Core owns the Project-local snapshot.
+No Run, Session or trading action starts here. See
+[[docs/design/studio-data-intake]] and [[docs/OPERATOR_GUIDE]].
+
 ## Open a Workspace
 
 ```bash

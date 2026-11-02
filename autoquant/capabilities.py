@@ -150,6 +150,23 @@ def descriptor(
 
 CLI_COMMANDS = [
     descriptor(
+        "data.check",
+        "aq data check <path-or-package> [--options FILE] [--calendar ID] [--timezone IANA] [--frequency INTERVAL] [--jump-threshold FRACTION] [--long-gap-bars N] [--universe-status STATUS] [--json]",
+        "Inspect OHLCV quality without network or mutation. Diagnostics do not replace strict intake; unknown calendar or universe authority remains unknown.",
+        "read-only",
+        [argument("path", "positional", "string", True, "Dataset package JSON, CSV file or staged CSV directory."),
+         argument("options", "option", "string", False, "JSON options file with mapping and declared quality authority."),
+         argument("options-json", "option", "string", False, "Inline JSON options, mutually exclusive with --options."),
+         *[argument(name, "option", kind, False, description) for name, kind, description in [
+             ("calendar", "string", "Explicit exchange calendar, weekdays or 24/7."),
+             ("timezone", "string", "Declared IANA timezone."),
+             ("frequency", "string", "Declared completed bar interval."),
+             ("jump-threshold", "number", "Positive absolute close-return threshold; default 0.3."),
+             ("long-gap-bars", "integer", "Consecutive missing bars; default 5."),
+             ("universe-status", "string", "unknown, currently-listed-only or contains-delisted; unauthenticated caller claim.")]],
+         JSON_ARGUMENT],
+    ),
+    descriptor(
         "candidate.show",
         "aq candidate show <directory> --project ID --session ID [--json]",
         "Read confined candidate source and exact optimistic source hash; initial denotes a pristine intake.",

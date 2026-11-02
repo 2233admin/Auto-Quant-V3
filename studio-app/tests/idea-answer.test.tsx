@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import './intake.test'
 import { test } from 'node:test'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { FactorDiagnostics, ProjectSnapshot, RunRow } from '../src/api'

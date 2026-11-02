@@ -2246,7 +2246,7 @@ def _handler(
             """Serve GET action/job routes; False when path is not one."""
             assert actions is not None
             job_match = re.fullmatch(r"/api/v1/jobs/([A-Za-z0-9-]+)", path)
-            if path not in {"/api/v1/actions", "/api/v1/jobs", "/api/v1/idea", "/api/v1/idea-datasets", "/api/v1/assistant", "/api/v1/assistant/session"} and not job_match:
+            if path not in {"/api/v1/actions", "/api/v1/jobs", "/api/v1/idea", "/api/v1/idea-datasets", "/api/v1/data-sources", "/api/v1/assistant", "/api/v1/assistant/session"} and not job_match:
                 return False
             if not self._token_ok():
                 return True
@@ -2258,6 +2258,12 @@ def _handler(
                     if len(ids) != 1:
                         raise ActionError(400, "assistant.session", "One conversation id is required")
                     data = actions.assistant.view(ids[0])
+                elif path == "/api/v1/data-sources":
+                    from .studio_data import sources
+                    paths = parse_qs(urlsplit(self.path).query).get("path") or []
+                    if len(paths) > 1:
+                        raise ActionError(422, "studio.dataset", "Select one staged source")
+                    data = sources(actions, paths[0] if paths else None)
                 elif path == "/api/v1/idea-datasets":
                     from .studio_ideas import datasets
                     data = datasets(actions)
@@ -2375,7 +2381,7 @@ def _handler(
                     self._json(HTTPStatus.OK, success(actions.preview(body)))
                 else:
                     saved = (
-                        isinstance(body, dict) and body.get("actionId") == SAVE_ID
+                        isinstance(body, dict) and body.get("actionId") in {SAVE_ID, "data.check"}
                     )
                     self._json(
                         HTTPStatus.OK if saved else HTTPStatus.ACCEPTED,

@@ -10,7 +10,7 @@ save over the same base hash while a Studio job owns that Project.
 
 The idea-first Factor slice is described in [[docs/design/idea-verdict-card]].
 It adds `project.create` (id, name, description, allowlisted blank/Factor
-template) and `project.intake` (confined staged V1 dataset, explicit prediction
+template) and `project.intake` (confined staged dataset, explicit prediction
 assets and horizon). Both preview exact argv and execute the existing CLI.
 Intake writes its displayed strict caller request under `.autoquant/idea-inputs`
 before invoking Core. GET `/api/v1/idea-datasets` and `/api/v1/idea` require the
@@ -20,6 +20,13 @@ Session gates apply. Started research jobs record the original question and
 its hash as operational metadata. None of these records changes Judge or Run
 authority. These narrow working-file writes supersede the older blanket
 “only the audit log” and “no browser-side code editing” non-goals below.
+
+The data wizard in [[docs/design/studio-data-intake]] adds read-only,
+confirmation-free `data.check` and token-protected staging discovery. It extends
+`project.intake` with staged CSV mapping/package construction, new or pristine
+existing Factor targets, content-bound preview and mandatory second confirmation.
+Its confirmed staging bundle writes are also explicit exceptions to the old
+audit-only non-goal. Strict CLI intake remains the Project mutation authority.
 
 Status: slice S1 implemented (server side: flag, security layer, JobRunner,
 audit log, the `experiment.evaluate` action); the S3 subset `session.start` and
@@ -166,7 +173,8 @@ means it is not offered in v1 and the reason is stated.
 | Action id | `aq` command template | Parameters and validation | Preconditions | Writes | Appears in Studio | Second confirmation | Label |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `project.create` | `aq project create <ws> <project_id> --template <t> [--name N] [--description D] --json` | `project_id`: `^[a-z][a-z0-9-]{1,39}$` and not already present; `template`: enum from `aq project templates`, v1 limited to `ohlcv-factor-lab`; `name` and `description`: 1 to 120 and 0 to 500 chars, no control characters | Workspace writable; id unused | New Project directory from the template | New Project card in the Workspace list, opened at its Project page | No (creates only an empty scaffold) | safe now |
-| `project.intake` | `aq project intake <ws> <project_id> --request <file> --dataset <manifest> --template <t> --json` | `request` and `dataset`: existing files confined to the Workspace staging area; template enum | Files present and inside the Workspace | Project with a verified request intake and dataset snapshot | Project page in intake state with the Core-authored next command | No | safe now (file-based; see open question on the "New idea" box) |
+| `project.intake` | `aq project intake <ws> <project_id> --request <file> --dataset <manifest> --template <t> --json` | Confined staged package or CSV wizard inputs, explicit prediction assets and horizon | Workspace staging sources and new/pristine Factor target | Project with a verified request intake and dataset snapshot; declared staging bundle | Data intake wizard and Factor setup | Yes | implemented |
+| `data.check` | `aq data check <staged-source> --options-json <options> --json` | Confined staged source and declared diagnostic options | Workspace serving scope, valid token | None; synchronous inspection | Data intake wizard | No confirmation | implemented |
 | `idea.new` | `aq hypothesis add <ws> --idea TEXT --kind factor --project <id>` then `aq project create` | `idea`: 8 to 500 chars | `aq hypothesis` group exists | Hypothesis draft and its dedicated target Project (owner decision: one Hypothesis per dedicated Project) | Hypothesis draft card on the new Project | No | needs Hypothesis |
 | `session.start` | `aq session start <ws> --project <p> --study <study_id> [--request <file>] --json` | `study_id` from the verified snapshot's Study list; `request` optional, Workspace-confined | Project has a Study; no active Session on the Study; baseline can be established | Session, baseline Run, Session worktree | Session appears with leader and next command | Yes: starting a Session opens a trial family; the dialog shows the current family trial count | safe now |
 | `session.check` | `aq session check <ws> --project <p> --session <sid> --json` | `sid` from snapshot | Session `active`, candidate present, not stale | Nothing durable by design (fixed bounded preflight) | Preflight result on the candidate card | No | safe now |
@@ -623,7 +631,7 @@ saying so.
 | --- | --- | --- |
 | Should `--allow-actions` ever be the default? | No. Opt-in per server start, banner states it | Keeps the observation-surface invariant true by default; threat model above |
 | Should Studio append a tag to the Experiment `--hypothesis` text to mark Studio runs? | No. Join through the audit log by Experiment id | Adding text changes the Core record; the owner decision is no new write path in Core |
-| Second confirmation scope | Required for `session.start`, `experiment.evaluate`, `report.publish`, `session.complete`; not for `project.create`/`project.intake`/`session.check` | Matches which actions consume a trial or create immutable evidence |
+| Second confirmation scope | Required for `project.intake`, `session.start`, `experiment.evaluate`, `report.publish`, `session.complete`; not for `project.create`/`session.check`; `data.check` needs no confirmation | Intake binds Project data authority; research actions retain their existing gates |
 | Timeout for `experiment.evaluate` | 15 minutes, per action override in the catalog | Reference product saw a factor analysis finish in 6 seconds; ours includes a Study currentness check and test audit, so a generous cap with cancel |
 | One job per Project or per Workspace | Per Project | Matches the Project-family trial count unit; Projects are self-contained |
 | Where is the "New idea" text stored before Hypothesis objects exist? | As the Project `--description` of an `ohlcv-factor-lab` Project | Reuses `aq project create`; no new object |

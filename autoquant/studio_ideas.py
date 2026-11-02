@@ -179,7 +179,7 @@ def prepare(service, body):
         writes = "Writes the displayed request and binds a normalized Project-local snapshot through strict Core intake. No trial."
     preview = {"actionId": action, "project": pid, "params": params, "argv": argv,
                "display": join(argv), "commandHash": service.command_hash(action, pid, argv, fingerprint),
-               "writes": writes, "trial": None, "requiresSecondConfirm": False, "timeoutSeconds": 120,
+               "writes": writes, "trial": None, "requiresSecondConfirm": action == INTAKE_ID, "timeoutSeconds": 120,
                "request": request}
     return preview
 
@@ -190,6 +190,8 @@ def launch(service, body):
         raise ActionError(400, "studio.confirm-required", "confirm must be true")
     if body.get("commandHash") != preview["commandHash"]:
         raise ActionError(409, "studio.stale-preview", "Inputs changed; preview again")
+    if preview["requiresSecondConfirm"] and body.get("secondConfirm") is not True:
+        raise ActionError(400, "studio.second-confirm-required", "Acknowledge binding the Project snapshot")
     pid = preview["project"]
     if service.runner.active_job(pid):
         raise ActionError(409, "studio.busy", "This Project already has a running job")

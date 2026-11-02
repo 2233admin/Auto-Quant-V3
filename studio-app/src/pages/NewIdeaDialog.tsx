@@ -1,4 +1,4 @@
-import { translate, uiTemplate, useLanguage } from '../i18n'
+import { translate, uiTemplate, uiText, useLanguage } from '../i18n'
 import { useEffect, useState } from 'react'
 import { useActions } from '../actions/ActionsContext'
 import { launchPreviewed, previewAction } from '../actions/candidateApi'
@@ -43,6 +43,7 @@ export function NewIdeaDialog({ open, onClose }: { open: boolean; onClose: () =>
     <div className="adialog-body">
       <header className="adialog-head"><h2>{t('New factor', '新建因子')}</h2><p className="muted small">{t('One question. One dedicated Project. Start with a Factor that ranks future returns.', '一个问题对应一个专属项目。从预测未来收益排序的因子开始。')}</p></header>
       <div className="adialog-scroll idea-form">
+        <a href={routeHref({ view: 'data-intake' })} onClick={onClose}>{uiText('Import data with the intake wizard')}</a>
         <label className="afield">{t('Factor name', '因子名称')}<input className="fe-input" value={name} maxLength={120} onChange={e => { setName(e.target.value); setId(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0,64)); change() }} placeholder={t('Five-day momentum', '五日动量')} /></label>
         <label className="afield">{t('Original question', '原始问题')}<textarea className="fe-input" rows={3} value={hypothesis} maxLength={500} onChange={e => { setHypothesis(e.target.value); change() }} placeholder={t('Does five-day relative strength rank higher returns over the next daily bar?', '五日相对强度能否预测下一个交易日的收益排序？')} /></label>
         <label className="afield">{t('Project id', '项目标识')}<input className="fe-input mono" value={id} onChange={e => { setId(e.target.value); change() }} /></label>

@@ -319,6 +319,9 @@ def build_parser() -> RaisingArgumentParser:
     )
     subcommands = parser.add_subparsers(dest="command", required=True)
 
+    from .data_commands import add_data_parser
+    add_data_parser(subcommands, _json_argument)
+
 
     candidate = subcommands.add_parser("candidate", help="inspect or save confined candidate source")
     candidate_actions = candidate.add_subparsers(dest="candidate_action", required=True)
@@ -5838,6 +5841,10 @@ def _orient(args: argparse.Namespace) -> CommandResult:
 
 
 def dispatch(args: argparse.Namespace) -> CommandResult:
+    if args.command_id == "data.check":
+        from .data_commands import run_data_check
+        data = run_data_check(args)
+        return CommandResult("data.check", data, json.dumps(data, indent=2) + "\n")
     if args.command_id in {"candidate.show", "candidate.save"}:
         from .candidate_commands import candidate_access
         source = None
@@ -6116,6 +6123,7 @@ def _command_id(argv: Sequence[str]) -> str:
     if not argv:
         return "help"
     if argv[0] in {
+        "data",
         "workspace",
         "candidate",
         "project",

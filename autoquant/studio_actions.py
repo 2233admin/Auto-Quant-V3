@@ -1341,10 +1341,14 @@ class ActionService:
                             "description": {"type": "string", "minLength": 8, "maxLength": 500},
                             "template": {"enum": ["blank", "ohlcv-factor-lab"]}}},
                 {"id": "project.intake", "label": "Bind staged dataset", "command": "aq project intake",
-                 "classification": "writes-working-file", "writes": "Binds a caller-selected daily V1 package through Core intake.",
-                 "requiresSecondConfirm": False, "timeoutSeconds": 120, "targets": [],
-                 "params": {"dataset": {"type": "string"}, "horizon": {"type": "integer", "minimum": 1, "maximum": 60},
+                 "classification": "writes-working-file", "writes": "Binds staged data through strict Core intake; raw CSV packaging is V1.",
+                 "requiresSecondConfirm": True, "timeoutSeconds": 120, "targets": [],
+                 "params": {"source": {"type": "string"}, "options": {"type": "object"}, "dataset": {"type": "string"}, "horizon": {"type": "integer", "minimum": 1, "maximum": 60},
                             "predictionAssets": {"type": "array"}}},
+                {"id": "data.check", "label": "Check staged data", "command": "aq data check",
+                 "classification": "read-only", "writes": "None", "requiresSecondConfirm": False,
+                 "confirmationRequired": False, "timeoutSeconds": 120, "targets": [],
+                 "params": {"source": {"type": "string"}, "options": {"type": "object"}}},
             ])
         return {"actions": actions}
 
@@ -1394,6 +1398,12 @@ class ActionService:
         )
 
     def preview(self, body: Any) -> dict[str, Any]:
+        if isinstance(body, dict) and body.get("actionId") == "data.check":
+            from .studio_data import check_preview
+            return check_preview(self, body)
+        if isinstance(body, dict) and body.get("actionId") == "project.intake" and isinstance(body.get("params"), dict) and "source" in body["params"]:
+            from .studio_data import prepare_intake
+            return prepare_intake(self, body)
         if isinstance(body, dict) and body.get("actionId") in {"project.create", "project.intake"}:
             from .studio_ideas import prepare
             return prepare(self, body)
@@ -1422,6 +1432,13 @@ class ActionService:
         }
 
     def create(self, body: Any) -> dict[str, Any]:
+        if isinstance(body, dict) and body.get("actionId") == "data.check":
+            from .studio_data import data_check
+            return data_check(self, body)
+        if isinstance(body, dict) and body.get("actionId") == "project.intake" and isinstance(body.get("params"), dict) and "source" in body["params"]:
+            from .studio_data import launch_intake
+            with self._idea_launch_lock:
+                return launch_intake(self, body)
         if isinstance(body, dict) and body.get("actionId") in {"project.create", "project.intake"}:
             from .studio_ideas import launch
             with self._idea_launch_lock:
