@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Glyph } from '../design/icons'
 
 export type Verdict = 'pass' | 'fail' | 'inconclusive'
-const GLYPH = { pass: 'supported', fail: 'refuted', inconclusive: 'inconclusive' } as const
+const GLYPH = { pass: 'supported', fail: 'error', inconclusive: 'inconclusive' } as const
 
 export type Reason = { tone: 'bad' | 'info'; text: ReactNode; field: string }
 

@@ -2,6 +2,7 @@ import { translate, uiTemplate, uiText, uiValue, useLanguage } from '../i18n'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RunRow } from '../api'
 import { Glyph } from '../design/icons'
+import { signedNumber } from '../design/signConvention'
 import { num, plural, when } from '../format'
 import { Section } from '../design/layout'
 import { Notice } from '../Notice'
@@ -62,7 +63,7 @@ function buildChecks(study: FactorDiagnostics, frontier: FrontierResult, project
       id: 'test-role',
       group: 'Research integrity',
       state: 'info',
-      label: showTest ? 'Test split is a visible diagnostic' : 'Test split is hidden until its audit exists',
+      label: showTest ? 'Test split is a visible diagnostic' : 'Test split is hidden until the study is frozen.',
       detail: uiTemplate("Test role {0}. {1}", [protocol.testRole, integrity?.externalHoldoutRequired
           ? 'The Session ledger requires a new external holdout before a fresh production-grade claim.'
           : 'No Session ledger says whether an external holdout is required.']),
@@ -79,7 +80,7 @@ function buildChecks(study: FactorDiagnostics, frontier: FrontierResult, project
       group: 'Split protocol',
       state: ordered ? 'pass' : 'fail',
       label: uiText("Train, validation and test are chronological and disjoint"),
-      detail: uiTemplate("Train to {0}, validation {1} to {2}{3}.{4}", [day(windows.train.end), day(windows.validation.start), day(windows.validation.end), showTest ? `, test from ${day(windows.test.start)}` : '', showTest ? '' : ` ${TEST_HIDDEN_NOTE}.`]),
+      detail: uiTemplate("Train to {0}, validation {1} to {2}{3}.{4}", [day(windows.train.end), day(windows.validation.start), day(windows.validation.end), showTest ? `, test from ${day(windows.test.start)}` : '', showTest ? '' : ` ${uiText(TEST_HIDDEN_NOTE)}`]),
     },
     {
       id: 'purge',
@@ -301,7 +302,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
   const adjP = adjustment?.statistics?.familywiseAdjustedPValue
   const stats: Stat[] = validation
     ? [
-        { label: uiText("Rank IC"), value: num(validation.meanRankIc, 4), hint: uiTemplate("Validation split, {0}-bar horizon", [study.protocol.primaryHorizon]) },
+        { label: uiText("Rank IC"), value: signedNumber(validation.meanRankIc, 4), signed: true, focal: true, hint: uiTemplate("Validation split, {0}-bar horizon", [study.protocol.primaryHorizon]) },
         { label: uiText("HAC t"), value: num(validation.hacTStatistic, 2), hint: uiText("Validation split, HAC standard error") },
         ...(typeof adjP === 'number' && Number.isFinite(adjP)
           ? [{ label: uiText("Adj. p"), value: num(adjP, 3), hint: uiTemplate("Family-wise adjusted p over {0} unique trials, from the Session ledger (not a property of this Run alone)", [adjustment?.statistics?.uniqueTrials ?? '?']) }]
@@ -316,7 +317,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
   const runState = runRow ? (runRow.status === 'succeeded' ? 'done' : 'failed') : null
   const exportButton: ActionButton = testVisible
     ? { label: uiText("Export JSON"), onClick: () => downloadJson(`${study.run.id}-factor-evidence.json`, study), title: uiText("Download the Factor evidence snapshot of this Run as JSON") }
-    : { label: uiText("Export JSON"), disabled: true, disabledReason: uiTemplate("{0}: the raw snapshot is exported only when every number in it may be shown.", [TEST_HIDDEN_NOTE]) }
+    : { label: uiText("Export JSON"), disabled: true, disabledReason: uiTemplate("{0}: the raw snapshot is exported only when every number in it may be shown.", [uiText(TEST_HIDDEN_NOTE)]) }
   const resultActions: ActionButton[] = [
     { label: uiText("Parameters"), onClick: () => setParamsOpen(true), title: uiText("Show the parameters fixed by the Study") },
     { label: uiText("Compare"), href: routeHref({ view: 'compare', id: project.id, a: study.run.id }) },
@@ -335,7 +336,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
           actions={
             <div className="wb-resultbar">
               <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />
-              <StatChips label={uiText("Headline numbers of this Run")} scope="Validation" stats={stats} />
+              <StatChips label={uiText("Headline numbers of this Run")} scope="Validation · development" stats={stats} />
             </div>
           }
           status={
@@ -356,7 +357,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
           <h1 className="sr-only">{uiText("Factor evidence ")}<span translate="no">{study.run.id}</span></h1>
           <FactorHero study={study} />
           {validation ? (
-            <MetricGrid groups={metricGroups} hiddenNote={testVisible && study.summary.testAudit ? undefined : TEST_HIDDEN_NOTE} />
+            <MetricGrid groups={metricGroups} hiddenNote={testVisible && study.summary.testAudit ? undefined : uiText(TEST_HIDDEN_NOTE)} />
           ) : (
             <p className="muted small">{uiText("The Run published no validation summary.")}</p>
           )}
@@ -522,7 +523,7 @@ export function FactorPage({ project, study, run, go }: { project: ProjectSnapsh
         <p className="muted">{uiText("This Run belongs to the ")}{other.lane}{uiText(" lane. ")}<a href={otherHref}>{uiText("Open ")}{other.lane}</a>
         </p>
       ) : pending ? (
-        <p className="muted">{tr('Loading Run…', '正在加载运行记录…')}</p>
+        <p className="muted">{tr('Loading…', '加载中…')}</p>
       ) : fetched?.error ? (
         <Notice kind="error" label={uiText("Error")} title={uiTemplate("Could not load Run {0}.", [wanted])} subtitle={fetched.error} />
       ) : (

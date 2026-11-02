@@ -8,7 +8,7 @@ import './compactTile.css'
 
 const TONE: Record<Exclude<Tone, 'neutral'>, { glyph: GlyphKind; word: string; signal: boolean }> = {
   caution: { glyph: 'inconclusive', get word() { return uiText("Caution") }, signal: false },
-  weak: { glyph: 'refuted', get word() { return uiText("Weak") }, signal: true },
+  weak: { glyph: 'error', get word() { return uiText("Weak") }, signal: true },
 }
 
 /**

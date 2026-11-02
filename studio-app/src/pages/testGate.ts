@@ -1,10 +1,11 @@
 import type { FactorDiagnostics, FactorSplit } from '../api'
+import { STATE_COPY } from '../components/stateCopy'
 
 /**
  * The single visibility rule for the test split: no test or holdout number is drawn before its audit exists.
  * Visible only when the Run published a test audit AND the protocol marks the test split a visible diagnostic.
  */
-export const TEST_HIDDEN_NOTE = 'Test split hidden until its audit exists'
+export const TEST_HIDDEN_NOTE = STATE_COPY.hiddenReason
 
 export function testVisible(
   protocol: { testRole?: string } | undefined | null,

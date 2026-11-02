@@ -14,10 +14,10 @@ const words = (s: string | undefined) => (s ? s.replaceAll('-', ' ') : '—')
 const n0 = (v: number | null | undefined) => (finite(v) ? String(Math.round(v)) : '—')
 
 /** The server's own sizing enum is the only status this lane publishes; everything else is descriptive. */
-function statusOf(sizing: Sizing | undefined): { word: string; glyph: 'supported' | 'refuted' | 'empty'; signal: boolean } {
+function statusOf(sizing: Sizing | undefined): { word: string; glyph: 'supported' | 'error' | 'empty'; signal: boolean } {
   if (!sizing || sizing.status === 'not-requested') return { word: uiText("Descriptive audit"), glyph: 'empty', signal: false }
   const ok = sizing.result?.ceilingSatisfied === true
-  return { word: words(sizing.status).replace(/^./, (c) => c.toUpperCase()), glyph: ok ? 'supported' : 'refuted', signal: !ok }
+  return { word: words(sizing.status).replace(/^./, (c) => c.toUpperCase()), glyph: ok ? 'supported' : 'error', signal: !ok }
 }
 
 function coreTiles(x: BookRiskDiagnostics): HeroTile[] {

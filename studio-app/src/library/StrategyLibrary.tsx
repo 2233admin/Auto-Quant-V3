@@ -1,4 +1,4 @@
-import { translate, uiText, uiValue, useLanguage } from '../i18n'
+import { translate, uiTemplate, uiText, uiValue, useLanguage } from '../i18n'
 ﻿import { useState } from 'react'
 import type { WorkspaceSummary } from '../api'
 import { ActionRow } from '../components/workbench'
@@ -16,11 +16,11 @@ export function StrategyLibrary({ workspace, go }: { workspace: WorkspaceSummary
   const command = "aq project create '" + (workspace?.source.rootDir ?? '.').replaceAll("'", "''") + "' my-strategy --template ohlcv-portfolio-lab"
   return <div className="pg object-library strategies-library"><LibraryTitle strategy /><div className="library-toolbar" data-measure="toolbar">
     <ActionRow primary={{ label: t('+ New strategy', '+ 新建策略'), disabled: true, disabledReason: reason, showReason: false }} />
-    <LibraryFilter options={FILTERS} counts={filterCounts(rows, FILTERS, p => p.library!.strategy!.state)} selected={filter} onSelect={setFilter} />
+    <LibraryFilter options={FILTERS} counts={filterCounts(rows, FILTERS, p => p.library!.strategy!.state)} selected={filter} onSelect={setFilter} label={uiText("Status")} onReset={() => { setFilter("All"); setQuery(""); setSort("updated"); setAscending(false) }} />
     <input data-measure="search" aria-label={t('Search strategies', '搜索策略')} type="search" placeholder={t('Search name or question', '搜索名称或问题')} value={query} onChange={e => setQuery(e.target.value)} />
     <select aria-label={uiText("Sort strategies")} value={sort} onChange={e => setSort(e.target.value)}><option value="updated">{uiText("Last updated")}</option><option value="name">{uiText("Name")}</option></select><button className="abtn library-order" aria-label={ascending ? uiText("Sort descending") : uiText("Sort ascending")} onClick={() => setAscending(v => !v)}>{ascending ? '↑' : '↓'}</button>
-  </div><div className="library-grid" data-measure="grid">{shown.map(p => { const s = p.library!.strategy!; return <LibraryCard strategy key={p.id} name={p.name} description={p.description} badge={s.state} metric={strategyMetricLine(s)} points={s.points} updated={s.updatedAt} href={routeHref({ view: 'portfolio', id: p.id })} go={go} /> })}</div>
-    <p className="library-end" role="status">{shown.length ? (language === 'zh' ? `已加载全部 ${shown.length} 个策略` : 'All ' + shown.length + ' strategies loaded') : t('No strategies match. Create a Portfolio Project with the command below.', '没有匹配的策略。可以使用下方命令创建组合项目。')}</p>
+  </div><div className="library-meta">{uiTemplate("Strategies / Library · {0} objects · validation development evidence", [rows.length])}</div><div className="library-grid" data-measure="grid">{shown.map(p => { const s = p.library!.strategy!; return <LibraryCard strategy key={p.id} name={p.name} description={p.description} badge={s.state} metric={strategyMetricLine(s)} secondary={uiTemplate("Net Sharpe {0}", [s.net?.sharpe?.toFixed(2) ?? "—"])} headline={s.net ? { value: s.net.totalReturn == null ? null : s.net.totalReturn * 100, digits: 2, unit: "%", label: "Net return" } : undefined} points={s.points} updated={s.updatedAt} href={routeHref({ view: 'portfolio', id: p.id })} go={go} /> })}</div>
+    <p className="library-end" role="status">{shown.length ? uiText('End of list') : uiText('No evidence in this Project')}</p>
     <aside className="library-unavailable"><p>{uiValue(reason)}</p><p>{t('This CLI command creates a Portfolio scaffold; binding the source factor and caller-owned construction policy still requires the Project workflow.', '此命令创建组合项目骨架；绑定来源因子和由用户确定的组合构建规则仍需通过项目流程完成。')}</p><div><code>{command}</code><CopyButton text={command} label={t('Copy command', '复制命令')} /></div></aside>
   </div>
 }

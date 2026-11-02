@@ -43,9 +43,9 @@ function useDetail(p: ProjectSummary): Detail {
   return detail
 }
 
-const VERDICT: Record<Verdict, { word: string; glyph: 'supported' | 'refuted' | 'inconclusive'; signal: boolean }> = {
-  pass: { get word() { return uiText("Pass") }, glyph: 'supported', signal: false },
-  fail: { get word() { return uiText("Fail") }, glyph: 'refuted', signal: true },
+const VERDICT: Record<Verdict, { word: string; glyph: 'supported' | 'error' | 'inconclusive'; signal: boolean }> = {
+  pass: { get word() { return uiText("Supported") }, glyph: 'supported', signal: false },
+  fail: { get word() { return uiText("Inconclusive") }, glyph: 'error', signal: true },
   inconclusive: { get word() { return uiText("Inconclusive") }, glyph: 'inconclusive', signal: false },
 }
 
@@ -131,7 +131,7 @@ export function ProjectCard({ p }: { p: ProjectSummary }) {
           )}
         </div>
       ) : (
-        <p className="muted small">{detail.state === 'error' ? uiText("Could not load the Run values.") : uiText("Loading Run values…")}</p>
+        <p className="muted small">{detail.state === 'error' ? uiText("Could not load the Run values.") : uiText("Loading…")}</p>
       )}
 
       <dl className="pc-facts">

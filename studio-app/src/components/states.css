@@ -1,8 +1,8 @@
 /* Shared empty, loading and end-of-list states. Tokens only. */
 .st { display: grid; place-content: center; justify-items: center; gap: var(--space-1); text-align: center; padding: var(--space-4); min-height: 96px; }
-.st--empty { border: 1px dashed var(--line-strong); background: repeating-linear-gradient(135deg, transparent 0 8px, var(--hover) 8px 9px); }
+.st--empty { border: 1px dashed var(--line-strong); background: none; }
 .st--loading { border: 1px solid var(--line); background: var(--raised); grid-auto-flow: row; }
-.st-title { margin: 0; font: 500 13px/20px var(--font-sans); color: var(--muted); }
+.st-title { margin: 0; font: var(--type-body); color: var(--muted); }
 .st-body { max-width: 70ch; font: var(--type-small); color: var(--muted); }
 .st-body p { margin: 0; }
 .st-body p + p { margin-top: var(--space-1); }

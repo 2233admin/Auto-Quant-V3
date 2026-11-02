@@ -13,6 +13,8 @@ export type ChartSize = { width: number; height: number }
  */
 export function ChartCard({
   title,
+  subtitle,
+  footer,
   info,
   toggle,
   legend,
@@ -22,6 +24,8 @@ export function ChartCard({
   children,
 }: {
   title: string
+  subtitle?: ReactNode
+  footer?: ReactNode
   info?: ReactNode
   toggle?: ReactNode
   legend?: ReactNode
@@ -51,16 +55,18 @@ export function ChartCard({
     ro.observe(el)
     return () => ro.disconnect()
   }, [el])
+  const Header = footer ? 'header' : 'figcaption'
   return (
     <figure className={`wb-chart${fill ? ' is-fill' : ''}`}>
-      <figcaption className="wb-chart-head">
+      <Header className="wb-chart-head">
         <span className="wb-chart-title">
           <strong>{title}</strong>
           {info && <Info label={uiTemplate("{0}: how to read it", [title])}>{info}</Info>}
         </span>
         {toggle && <span className="wb-chart-toggle">{toggle}</span>}
+        {subtitle && <p className="figure-subtitle">{subtitle}</p>}
         {legend && <span className="wb-chart-legend">{legend}</span>}
-      </figcaption>
+      </Header>
       <div className="wb-chart-body" ref={ref} style={{ minHeight }}>
         <div className="wb-chart-fill">{height > 0 && children({ width, height })}</div>
       </div>
@@ -70,6 +76,7 @@ export function ChartCard({
           <div className="tablewrap">{table}</div>
         </AnimatedDetails>
       )}
+      {footer}
     </figure>
   )
 }

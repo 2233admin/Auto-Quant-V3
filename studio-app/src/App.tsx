@@ -127,7 +127,7 @@ export default function App() {
     page = data.workspace ? (
       <FactorLibrary workspace={data.workspace} go={go} />
     ) : (
-      <div className="pg">{data.error ? <Notice kind="error" label={uiText("Error")} title={uiText("Could not load the Workspace.")} subtitle={data.error} /> : <Loading label={uiText("Loading Workspace…")} minHeight={240} />}</div>
+      <div className="pg">{data.error ? <Notice kind="error" label={uiText("Error")} title={uiText("Could not load the Workspace.")} subtitle={data.error} /> : <Loading label={uiText("Loading…")} minHeight={240} />}</div>
     )
   } else if (project.state === 'ready') {
     page =
@@ -157,7 +157,7 @@ export default function App() {
   } else if (project.state === 'error') {
     page = (
       <div className="pg">
-        <Notice kind="error" label={uiText("Error")} title={uiText("Could not load this Project.")} subtitle={project.message} />
+        <Notice kind="error" label={uiText("Error")} title={uiText("Could not load this Project")} subtitle={project.message} />
         <p>
           <a href={routeHref({ view: 'projects' })}>{uiText("Back to Factors")}</a>
         </p>
@@ -166,7 +166,7 @@ export default function App() {
   } else {
     page = (
       <div className="pg">
-        <Loading label={uiText("Loading Project…")} minHeight={240} />
+        <Loading label={uiText("Loading…")} minHeight={240} />
       </div>
     )
   }

@@ -15,6 +15,13 @@ import { FACTOR_FILTERS, factorMetricLine, factorPoints, filterCounts, LibraryCa
 import { SessionRecovery } from '../src/pages/FactorEditorState'
 import { parseRoute } from '../src/route'
 import { setLanguage, uiTemplate, uiText } from '../src/i18n'
+import { readFileSync, readdirSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { signedNumber, signRole, formattedSignRole, storedSignConvention, applySignConvention } from '../src/design/signConvention'
+import { groupReturnCaption, rankIcCaption, portfolioCaption } from '../src/pages/figureEvidence'
+import { SignedValue, ComparisonFigure, StatChips, ActionRow, SignConventionSetting } from '../src/components/workbench'
+import { STATE_COPY } from '../src/components/stateCopy'
+import { StateCatalogue } from '../src/components/workbench/StateCatalogue'
 
 test('landing and legacy projects alias both open Factors', () => {
   for (const query of ['', '?view=projects', '?view=factors']) assert.equal(parseRoute(query).view, 'factors')
@@ -226,11 +233,11 @@ test('expression adapter round-trips only its exact authored wrapper', () => {
   assert.equal(expressionSource('', arbitrary), arbitrary)
 })
 
-test('locked parameters are read-only inputs and title owns the Ideas return link', () => {
+test('locked parameters are read-only inputs and title owns the Factors return link', () => {
   const html = renderToStaticMarkup(<ParamGrid params={[{ label: 'Assets', value: 'A, B' }]} />)
   assert.match(html, /readOnly=""/)
   assert.match(html, /Locked by the Study/)
-  assert.match(renderToStaticMarkup(<TitleCard title="Momentum" subtitle="Question" backHref="/" type="Factor" />), /aria-label="Back to Ideas"/)
+  assert.match(renderToStaticMarkup(<TitleCard title="Momentum" subtitle="Question" backHref="/" type="Factor" />), /aria-label="Back to Factors"/)
 })
 
 test('completed status retains progress; whole-action jobs do not invent stage counts', () => {
@@ -238,4 +245,76 @@ test('completed status retains progress; whole-action jobs do not invent stage c
   const html = answer({ job: { status: 'succeeded', stageMode: 'whole-action', stages: [{ state: 'pending' }] } })
   assert.match(html, /Command-level progress/)
   assert.doesNotMatch(html, /0\/1 stages complete/)
+})
+
+test('sign formatting includes a glyph, canonical zero, and neutral missing values', () => {
+  assert.equal(signedNumber(.12345, 4), '+0.1235')
+  assert.equal(signedNumber(-1.25, 2, '%'), '−1.25%')
+  for (const v of [0, -0, -.00001]) assert.equal(signedNumber(v, 2), '0.00')
+  for (const v of [null, undefined, Infinity, NaN]) assert.equal(signedNumber(v), '—')
+  assert.equal(signRole(-2), 'negative'); assert.equal(signRole(2), 'positive'); assert.equal(signRole(0), 'neutral')
+  assert.equal(formattedSignRole(signedNumber(-.00001)), 'neutral')
+})
+
+test('only explicit focal values receive chromatic roles; HAC and counts stay neutral', () => {
+  const neutral = renderToStaticMarkup(<SignedValue value={-2} />)
+  assert.doesNotMatch(neutral, /data-sign=/)
+  const focal = renderToStaticMarkup(<SignedValue value={-2} focal />)
+  assert.match(focal, /data-sign="negative"/); assert.match(focal, /−2.00/)
+  const html = renderToStaticMarkup(<StatChips label="Headline" stats={[{ label:'Rank IC',value:'+0.12',signed:true },{ label:'HAC t',value:'2.5' },{ label:'Observations',value:'90' }]} />)
+  assert.equal((html.match(/data-sign="positive"/g) ?? []).length, 1)
+  assert.match(html, /data-sign-area="verdict-headline"/)
+})
+
+test('sign convention safely defaults and applies when browser storage is denied', () => {
+  const previousStorage=Object.getOwnPropertyDescriptor(globalThis,'localStorage')
+  const previousDocument=Object.getOwnPropertyDescriptor(globalThis,'document')
+  const root={ dataset: {} as Record<string,string> }
+  try {
+    Object.defineProperty(globalThis,'localStorage',{ configurable:true,get:()=>{throw new Error('denied')} })
+    Object.defineProperty(globalThis,'document',{ configurable:true,value:{documentElement:root} })
+    assert.equal(storedSignConvention(),'red-up')
+    assert.doesNotThrow(()=>applySignConvention('green-up'))
+    assert.equal(root.dataset.signConvention,'green-up')
+  } finally {
+    if(previousStorage)Object.defineProperty(globalThis,'localStorage',previousStorage);else Reflect.deleteProperty(globalThis,'localStorage')
+    if(previousDocument)Object.defineProperty(globalThis,'document',previousDocument);else Reflect.deleteProperty(globalThis,'document')
+  }
+})
+
+test('captions use published validation totals, never cross-split chart endpoints', () => {
+  assert.equal(groupReturnCaption(study()), 'Long-short compounds +20.0% over the validation window, before costs.')
+  assert.equal(rankIcCaption(study()), 'Mean rank IC is +0.1200 over the validation window at the primary 1-bar horizon.')
+  assert.equal(portfolioCaption(-.1234,'validation',false), 'The portfolio returns −12.34% over the validation window, after costs.')
+  for(const audit of [false,true])for(const role of ['sealed','visible-diagnostic']){
+    const s=study();s.protocol.testRole=role;if(!audit)delete s.summary.testAudit
+    const allowed=audit&&role==='visible-diagnostic'
+    assert.equal(groupReturnCaption(s,'test').includes('987654.3%'),allowed)
+    assert.equal(rankIcCaption(s,'test').includes('876.5432'),allowed)
+    if(!allowed){assert.equal(groupReturnCaption(s,'test'),STATE_COPY.hiddenReason);assert.equal(rankIcCaption(s,'test'),STATE_COPY.hiddenReason)}
+  }
+  assert.equal(portfolioCaption(999,'test',false),STATE_COPY.hiddenReason)
+})
+
+test('paired comparisons have neutral direct labels and no dead export', () => {
+  const html=renderToStaticMarkup(<ComparisonFigure title="Comparison" subtitle="Validation" label="FIG C" caption="Candidate is lower." baselineLabel="Previous" subjectLabel="Candidate" rows={[{label:'Rank IC',baseline:.2,subject:-.1}]} format={v=>signedNumber(v,4)} />)
+  assert.match(html,/\+0.2000/);assert.match(html,/−0.1000/);assert.match(html,/FIG C/)
+  assert.doesNotMatch(html,/data-sign=|PNG|<button/)
+})
+
+test('the catalogue uses one exact state wording and disabled actions show every reason', () => {
+  const html=renderToStaticMarkup(<StateCatalogue />)
+  for(const key of ['supported','inconclusive','couldNotTest','notTested','stale','staleReason','readOnly','readOnlyReason','hidden','hiddenReason','empty','loading','error','retry'] as const)assert.ok(html.includes(STATE_COPY[key]), key)
+  const actions=renderToStaticMarkup(<ActionRow primary={{label:'Run',disabled:true,disabledReason:'No candidate.',showReason:false}} secondary={[{label:'Save',disabled:true,disabledReason:'Nothing changed.'}]} />)
+  assert.match(actions,/>No candidate. Nothing changed.<\/p>/)
+  const setting=renderToStaticMarkup(<SignConventionSetting readOnly />)
+  assert.equal((setting.match(/disabled=""/g) ?? []).length,2)
+  assert.match(setting,/Read-only session: actions are off./)
+})
+
+test('removed verdict is absent from every Studio source file', () => {
+  const source=resolve(process.cwd(),'studio-app/src')
+  const visit=(dir:string):string[]=>readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?visit(resolve(dir,e.name)):/\.(tsx?|css)$/.test(e.name)?[resolve(dir,e.name)]:[])
+  const removed=['Re','futed'].join('')
+  for(const path of visit(source)) assert.ok(!readFileSync(path,'utf8').toLowerCase().includes(removed.toLowerCase()),path)
 })

@@ -13,7 +13,7 @@ export function AttentionPage({ workspace }: { workspace: WorkspaceSummary | nul
   if (!workspace) {
     return (
       <div className="pg">
-        <Loading label={t('Loading Workspace…', '正在加载工作区…')} minHeight={240} />
+        <Loading label={t('Loading…', '加载中…')} minHeight={240} />
       </div>
     )
   }

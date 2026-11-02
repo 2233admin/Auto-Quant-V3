@@ -42,5 +42,5 @@ remain recognizable technical notation alongside translated labels.
   Empty-state pages are explicitly distinguished from pages with populated
   sample evidence; no research trial is created for presentation acceptance.
 
-See [[studio-observation-surface]] for the read-model boundary and
-[[studio-assistant]] for action and provider limitations.
+See [[docs/design/studio-observation-surface]] for the read-model boundary and
+[[docs/design/studio-assistant]] for action and provider limitations.

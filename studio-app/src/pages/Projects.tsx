@@ -75,7 +75,7 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
       id: 'metric',
       label: uiText("Original question"),
       render: (r) => {
-        const question = r.snap?.agentWorkBrief?.question?.text ?? r.snap?.description ?? r.p.description ?? 'Loading question…'
+        const question = r.snap?.agentWorkBrief?.question?.text ?? r.snap?.description ?? r.p.description ?? 'Loading…'
         return <span className="idea-table-question" title={question}>{question}</span>
       },
     },

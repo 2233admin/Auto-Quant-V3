@@ -128,7 +128,7 @@ export function buildVerdict(study: FactorDiagnostics, adjustment: Adjustment | 
   return { verdict, reasons }
 }
 
-const VERDICT_WORD: Record<Verdict, string> = { pass: 'Pass', fail: 'Fail', inconclusive: 'Inconclusive' }
+const VERDICT_WORD: Record<Verdict, string> = { pass: 'Supported', fail: 'Inconclusive', inconclusive: 'Inconclusive' }
 
 const ic4 = (v: number) => `${v < 0 ? '-' : ''}${Math.abs(v).toFixed(4)}`
 
@@ -248,7 +248,7 @@ export function FoldTable({ study }: { study: FactorDiagnostics }) {
   if (folds.length === 0) return <Empty title={t('Chronological folds', '时间分折')} reason={t('This Run publishes no chronological folds.', '本次运行没有发布时间分折。')} />
   return (
     <div className="tablewrap tablewrap--tall">
-      {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
+      {!studyTestVisible(study) && <p className="faint small">{uiText(TEST_HIDDEN_NOTE)}</p>}
       <table className="tbl">
         <caption className="faint small">{t('Each split cut into consecutive halves in time order. The weakest validation fold is', '每个数据划分按时间顺序分为连续两半。最弱的验证分折为')} {study.summary.weakestValidationFold?.id ?? t('not recorded', '未记录')}.</caption>
         <thead>
@@ -340,7 +340,7 @@ export function QualificationBlock({ study }: { study: FactorDiagnostics }) {
         <dd>{uiValue(d.explanation)}</dd>
       </dl>
       <div className="tablewrap tablewrap--tall">
-        {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
+        {!studyTestVisible(study) && <p className="faint small">{uiText(TEST_HIDDEN_NOTE)}</p>}
         <table className="tbl">
           <caption className="faint small">
             {t('Each variant against the HAC t line', '各变体相对 HAC t 阈值的结果')}{finite(line) ? ` ${num(line, 2)}` : ''}.
@@ -416,7 +416,7 @@ export function HorizonTable({ study }: { study: FactorDiagnostics }) {
   if (study.horizonProfile.length === 0) return <Empty title={t('Horizon profile', '预测周期概览')} reason={t('This Run publishes no horizon profile.', '本次运行没有发布预测周期概览。')} />
   return (
     <div className="tablewrap tablewrap--tall">
-      {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
+      {!studyTestVisible(study) && <p className="faint small">{uiText(TEST_HIDDEN_NOTE)}</p>}
       <table className="tbl">
         <caption className="faint small">
           {language === 'zh' ? `各前瞻周期的候选因子秩 IC；选择使用 ${study.protocol.primaryHorizon} 个周期的结果。` : uiTemplate("Candidate rank IC at each forward horizon; selection reads the {0}-bar one.", [study.protocol.primaryHorizon])}
@@ -475,7 +475,7 @@ export function StabilityTables({ study }: { study: FactorDiagnostics }) {
   const styles = stability.styles.filter((r) => shown.includes(r.split)).sort((a, b) => foldOrder({ split: a.split, id: a.style }, { split: b.split, id: b.style }))
   return (
     <div className="stack">
-      {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
+      {!studyTestVisible(study) && <p className="faint small">{uiText(TEST_HIDDEN_NOTE)}</p>}
       <div>
         <h3 className="h-small">{uiText("By market regime")}<Info label={uiText("About market regimes")}>
             <p>{study.protocol.semantics.regimes ?? uiText("Causal trailing market direction and volatility.")}</p>
@@ -674,7 +674,7 @@ export function ProtocolBox({ study }: { study: FactorDiagnostics }) {
         </dd>
       </dl>
       <div className="tablewrap">
-        {!studyTestVisible(study) && <p className="faint small">{TEST_HIDDEN_NOTE}</p>}
+        {!studyTestVisible(study) && <p className="faint small">{uiText(TEST_HIDDEN_NOTE)}</p>}
         <table className="tbl">
           <caption className="faint small">
             {t('Split windows, fixed from the dataset before any candidate ran.', '数据划分窗口在任何候选运行前根据数据集固定。')}

@@ -6,6 +6,7 @@ import { when } from '../format'
 import { routeHref } from '../route'
 import { REFRESH_MS, type ShellData } from '../useShellData'
 import { Modal } from './Modal'
+import { STATE_COPY } from '../components/stateCopy'
 export type Crumb = { label: string; href?: string; data?: boolean }
 
 type ChoiceProps<T extends string> = {
@@ -37,8 +38,8 @@ export function Updated({ data }: { data: ShellData }) {
     ) : (
       <button type="button" className="updated is-stale" onClick={data.refresh}>
         <Glyph kind="error" signal />
-        <span className="sig">{t('Stale', '数据过期')}</span>
-        <span>{t('Refresh', '刷新')}</span>
+          <span className="sig">{STATE_COPY.stale}</span>
+          <span>{STATE_COPY.refresh}</span>
       </button>
     )
   }
@@ -52,7 +53,7 @@ export function Updated({ data }: { data: ShellData }) {
   return (
     <button type="button" className={stale ? 'updated is-stale' : 'updated'} onClick={data.refresh} title={hint}>
       {stale && <Glyph kind="error" signal />}
-      {stale && <span className="sig">{t('Stale', '数据过期')}</span>}
+      {stale && <span className="sig">{STATE_COPY.stale}</span>}
       {!data.live && (
         <span className="paused">
           <Icon name="pause" />

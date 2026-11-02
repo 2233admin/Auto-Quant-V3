@@ -10,9 +10,9 @@ import '../components/states.css'
 import { loadState, type Loaded } from './data'
 import './library.css'
 
-const VERDICT: Record<Verdict, { word: string; glyph: 'supported' | 'refuted' | 'inconclusive'; signal: boolean }> = {
-  pass: { get word() { return uiText("Pass") }, glyph: 'supported', signal: false },
-  fail: { get word() { return uiText("Fail") }, glyph: 'refuted', signal: true },
+const VERDICT: Record<Verdict, { word: string; glyph: 'supported' | 'error' | 'inconclusive'; signal: boolean }> = {
+  pass: { get word() { return uiText("Supported") }, glyph: 'supported', signal: false },
+  fail: { get word() { return uiText("Inconclusive") }, glyph: 'error', signal: true },
   inconclusive: { get word() { return uiText("Inconclusive") }, glyph: 'inconclusive', signal: false },
 }
 

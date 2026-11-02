@@ -24,7 +24,7 @@ function Swatch({ kind }: { kind: SeriesKey | 'dd' }) {
     <svg width="22" height="12" aria-hidden="true">
       {kind === 'net' && <line x1="0" y1="6" x2="22" y2="6" stroke="var(--text)" strokeWidth="2" />}
       {kind === 'gross' && <line x1="0" y1="6" x2="22" y2="6" stroke="var(--muted)" strokeWidth="1.8" strokeDasharray="1.5 3" strokeLinecap="round" />}
-      {kind === 'bench' && <line x1="0" y1="6" x2="22" y2="6" stroke="var(--signal-graphic)" strokeWidth="1.8" strokeDasharray="6 3" />}
+      {kind === 'bench' && <line x1="0" y1="6" x2="22" y2="6" stroke="var(--muted)" strokeWidth="1.8" strokeDasharray="6 3" />}
       {kind === 'ticks' && <path d="M4 1v10M11 1v10M18 1v10" stroke="var(--text)" strokeWidth="1.2" />}
       {kind === 'exposure' && <path d="M0 3h22" stroke="var(--text)" strokeWidth="1.4" />}
       {kind === 'exposure' && <path d="M0 9h22" stroke="var(--muted)" strokeWidth="1.4" strokeDasharray="5 3" />}
@@ -331,7 +331,7 @@ export function PortfolioChart({
 
         <g clipPath={`url(#${clip})`}>
           {on.gross && hasGross && <path d={line((p) => p.grossGrowth, yG)} fill="none" stroke="var(--muted)" strokeWidth="1.6" strokeDasharray="1.5 3" strokeLinecap="round" />}
-          {on.bench && hasBench && <path d={line((p) => p.benchmarkGrowth, yG)} fill="none" stroke="var(--signal-graphic)" strokeWidth="1.7" strokeDasharray="6 3" />}
+          {on.bench && hasBench && <path d={line((p) => p.benchmarkGrowth, yG)} fill="none" stroke="var(--muted)" strokeWidth="1.7" strokeDasharray="6 3" />}
           {on.net && (
             <>
               <path d={line((p) => p.netGrowth, yG)} fill="none" stroke="var(--bg)" strokeWidth="4" strokeLinejoin="round" />
@@ -356,7 +356,7 @@ export function PortfolioChart({
           <g pointerEvents="none">
             <line x1={x(t[hover])} x2={x(t[hover])} y1={gTop} y2={axisY} stroke="var(--text)" strokeWidth="1" strokeDasharray="2 2" />
             {on.net && finite(hp.netGrowth) && <circle cx={x(t[hover])} cy={yG(hp.netGrowth)} r="3.6" fill="var(--text)" stroke="var(--bg)" strokeWidth="1.5" />}
-            {on.bench && hasBench && finite(hp.benchmarkGrowth) && <circle cx={x(t[hover])} cy={yG(hp.benchmarkGrowth)} r="3.4" fill="var(--signal-graphic)" stroke="var(--bg)" strokeWidth="1.5" />}
+            {on.bench && hasBench && finite(hp.benchmarkGrowth) && <circle cx={x(t[hover])} cy={yG(hp.benchmarkGrowth)} r="3.4" fill="var(--muted)" stroke="var(--bg)" strokeWidth="1.5" />}
             {on.gross && hasGross && finite(hp.grossGrowth) && <circle cx={x(t[hover])} cy={yG(hp.grossGrowth)} r="3" fill="var(--muted)" stroke="var(--bg)" strokeWidth="1.5" />}
             {finite(hp.drawdown) && <circle cx={x(t[hover])} cy={yD(hp.drawdown)} r="3.2" fill="var(--text)" stroke="var(--bg)" strokeWidth="1.5" />}
           </g>

@@ -1,4 +1,5 @@
 import { DiagnosticText } from './components/DiagnosticText'
+import { uiText } from './i18n'
 import type { ReactNode } from 'react'
 
 type Props = { kind: 'error' | 'info'; label: string; title: string; subtitle?: string; children?: ReactNode }
@@ -18,6 +19,8 @@ const ICONS = {
 /** A one-line notice (design-system Notice): what is wrong or missing, then what to do. No close button, no action. */
 export function Notice({ kind, label, title, subtitle, children }: Props) {
   const icon = ICONS[kind]
+  // Titles arrive already translated; match the English source or its Chinese rendering.
+  const loadError = kind === 'error' && /^(Could not load|无法加载)/i.test(title)
   return (
     <div className={`notice notice--${kind}`} role="status">
       <div className="notice-details">
@@ -25,9 +28,10 @@ export function Notice({ kind, label, title, subtitle, children }: Props) {
           <path d={icon.d} />
         </svg>
         <div className="notice-text">
-          <div className="notice-title">{title}</div>
+          <div className="notice-title">{loadError ? uiText('Could not load this Project') : title}</div>
           {subtitle && <div className="notice-sub"><DiagnosticText value={subtitle} error={kind === 'error'} /></div>}
           {children}
+          {loadError && <button className="wb-link" onClick={() => window.location.reload()}>{uiText('Retry')}</button>}
         </div>
       </div>
     </div>

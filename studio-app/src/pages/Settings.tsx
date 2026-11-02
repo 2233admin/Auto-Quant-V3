@@ -8,7 +8,8 @@ import type { Catalog, CatalogAction } from '../actions/types'
 import { Loading } from '../components/States'
 import { Glyph } from '../design/icons'
 import { Notice } from '../Notice'
-import { PaneCard, WorkbenchShell } from '../components/workbench'
+import { SignConventionSetting } from '../components/workbench'
+import { STATE_COPY } from '../components/stateCopy'
 import './ideas.css'
 const ENABLE_COMMAND = 'aq studio serve --allow-actions'
 const AUDIT_FILE = ['.autoquant', 'studio-actions.jsonl']
@@ -60,7 +61,7 @@ function ActionsSection({ workspace }: { workspace: WorkspaceSummary }) {
     <section className="set-sec" aria-labelledby="set-actions">
       <h2 id="set-actions">{t('Actions', '操作权限')}</h2>
       <p>
-        <Glyph kind={on ? 'supported' : 'empty'} /> {on ? t('On: Studio can start local jobs from the Project pages.', '已开启：Studio 可以从项目页面启动本地任务。') : t('Off: Studio is read-only.', '已关闭：Studio 当前为只读模式。')}
+        <Glyph kind={on ? 'supported' : 'empty'} /> {on ? t('On: Studio can start local jobs from the Project pages.', '已开启：Studio 可以从项目页面启动本地任务。') : STATE_COPY.readOnlyReason}
       </p>
       {!on && (
         <>
@@ -77,7 +78,7 @@ function ActionsSection({ workspace }: { workspace: WorkspaceSummary }) {
           [t('Audit log', '审计日志'), auditPath(root), true],
         ]}
       />
-      {on && catalog.state === 'loading' && <Loading label={uiText("Loading actions…")} minHeight={60} />}
+      {on && catalog.state === 'loading' && <Loading label={uiText("Loading…")} minHeight={60} />}
       {on && catalog.state === 'error' && <Notice kind="error" label={uiText("Error")} title={uiText("Could not load the action catalog.")} subtitle={catalog.error} />}
       {on && catalog.state === 'ready' && (
         <ul className="set-actions" aria-label={uiText("Available actions")}>
@@ -123,7 +124,7 @@ function WorkspaceSection({ workspace }: { workspace: WorkspaceSummary }) {
 const RULES = [
   'Trials are counted per research family and never removed.',
   'The holdout is sealed and can be opened once.',
-  'Test numbers stay hidden until their audit exists.',
+  'Test split is hidden until the study is frozen.',
   'Verdicts come from the fixed Judge, not from Studio.',
 ]
 
@@ -134,23 +135,18 @@ export function SettingsPage({ workspace }: { workspace: WorkspaceSummary | null
   if (!workspace) {
     return (
       <div className="pg">
-        <Loading label={uiText("Loading Workspace…")} minHeight={240} />
+        <Loading label={uiText("Loading…")} minHeight={240} />
       </div>
     )
   }
   const h = workspace.harness
   const version = `AQ ${h.version}${h.commit ? `@${h.commit.slice(0, 7)}` : ''}${h.dirty ? '+dirty' : ''}`
   return (
-    <WorkbenchShell
-      ratio={50}
-      left={
-        <PaneCard label={t('Actions and Workspace', '操作权限和工作区')} tabs={<h1 className="set-title">{t('Settings', '设置')}</h1>}>
+    <div className="settings-page">
+          <h1>{t('Settings', '设置')}</h1>
+          <SignConventionSetting readOnly={!workspace.actions?.enabled} />
           <ActionsSection workspace={workspace} />
           <WorkspaceSection workspace={workspace} />
-        </PaneCard>
-      }
-      right={
-        <PaneCard label={t('Research rules and About', '研究规则和关于')} tabs={<h2 className="set-title">{t('Rules and About', '规则和关于')}</h2>}>
           <section className="set-sec" aria-labelledby="set-rules">
             <h2 id="set-rules">{t('Research rules', '研究规则')}</h2>
             <p className="small muted">{t('Fixed by the Judge. Read-only.', '由判定器固定，仅供查看。')}</p>
@@ -167,8 +163,6 @@ export function SettingsPage({ workspace }: { workspace: WorkspaceSummary | null
               <a href="/legacy">{t('Open Legacy Studio', '打开旧版 Studio')}</a> <span className="muted">{t('for lanes that have no native page yet.', '查看尚无新版页面的研究方向。')}</span>
             </p>
           </section>
-        </PaneCard>
-      }
-    />
+    </div>
   )
 }

@@ -1,9 +1,10 @@
 import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import type { FactorDiagnostics, FactorQuantileRow, FactorSplit } from '../api'
+import { rankIcCaption } from './figureEvidence'
 import { num, ret } from '../format'
 import { Info } from '../components/Info'
-import { ChartCard } from '../components/workbench'
+import { FigureCard } from '../components/workbench'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import {
   expectedMaxZ,
@@ -165,7 +166,7 @@ export function IcByHorizonLegend({ study }: { study: FactorDiagnostics }) {
     <span className="legend">
       <Swatch kind="train" label={uiText("Train")} />
       <Swatch kind="validation" label={uiText("Validation (selection)")} />
-      {testShown ? <Swatch kind="test" label={uiText("Test (visible audit)")} /> : <span className="faint">{TEST_HIDDEN_NOTE}</span>}
+      {testShown ? <Swatch kind="test" label={uiText("Test (visible audit)")} /> : <span className="faint">{uiText(TEST_HIDDEN_NOTE)}</span>}
     </span>
   )
 }
@@ -329,7 +330,7 @@ export function IcByHorizonCard({
   minHeight?: number
 }) {
   return (
-    <ChartCard
+    <FigureCard label={uiText("FIG B")} subtitle={uiText("Published horizon and split summaries.")} caption={rankIcCaption(study)} development
       title={uiText("Rank IC by horizon and split")}
       info={
         <>
@@ -350,7 +351,7 @@ export function IcByHorizonCard({
       minHeight={minHeight}
     >
       {({ width, height }) => <IcByHorizonPlot study={study} width={width} height={height} label={IC_BY_HORIZON_SHORT} />}
-    </ChartCard>
+    </FigureCard>
   )
 }
 
@@ -429,7 +430,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
           <Swatch kind="dot" label={uiText("Sampled timestamp")} />
           <Swatch kind="line" label={uiTemplate("Trailing mean of {0} samples", [WINDOW])} />
           <Swatch kind="dash" label={uiText("Split mean, all timestamps")} />
-          {!testShown && <span className="faint">{TEST_HIDDEN_NOTE}</span>}
+          {!testShown && <span className="faint">{uiText(TEST_HIDDEN_NOTE)}</span>}
         </span>
       }
       note={
@@ -558,7 +559,7 @@ export function Quantiles({ study }: { study: FactorDiagnostics }) {
       plotRef={plotRef}
       short={uiText("Low, middle and high factor groups per split; a useful factor rises from low to high.")}
       desc={uiText("Mean forward return of the low, middle and high factor groups in each split. A useful factor shows the bars rising from low to high.")}
-      legend={testShown ? undefined : <span className="legend"><span className="faint">{TEST_HIDDEN_NOTE}</span></span>}
+      legend={testShown ? undefined : <span className="legend"><span className="faint">{uiText(TEST_HIDDEN_NOTE)}</span></span>}
       table={
         <table className="tbl">
           <caption className="small muted">{uiText("Quantile mean forward return")}</caption>

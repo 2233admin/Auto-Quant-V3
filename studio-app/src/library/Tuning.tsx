@@ -26,7 +26,7 @@ const PHASE: Record<Phase, { word: string; glyph: GlyphKind; signal: boolean }> 
   queued: { get word() { return uiText("Queued") }, glyph: 'proposed', signal: false },
   running: { get word() { return uiText("Running") }, glyph: 'running', signal: false },
   done: { get word() { return uiText("Done") }, glyph: 'supported', signal: false },
-  failed: { get word() { return uiText("Failed") }, glyph: 'refuted', signal: true },
+  failed: { get word() { return uiText("Failed") }, glyph: 'error', signal: true },
 }
 
 /** Maps the server's trial status string to a counter. Unknown words count as failed so nothing is silently dropped. */
@@ -265,10 +265,10 @@ function Detail({ workspace, id, go }: { workspace: WorkspaceSummary | null; id:
   const all = useAllProjects(workspace)
   const item = all.find((l) => l.summary.id === id)
   const [chosen, setChosen] = useState('')
-  if (!workspace || (item && item.state === 'loading')) return <div className="pg"><Loading label={uiText("Loading Workspace…")} minHeight={240} /></div>
+  if (!workspace || (item && item.state === 'loading')) return <div className="pg"><Loading label={uiText("Loading…")} minHeight={240} /></div>
   if (!item) return <div className="pg"><Notice kind="error" label={uiText("Error")} title={uiText("Unknown Project.")} subtitle={id} /><p><a href={routeHref({ view: 'tuning' })}>{uiText("Back to tuning tasks")}</a></p></div>
   const project = item.project
-  if (!project) return <div className="pg"><Notice kind="error" label={uiText("Error")} title={uiText("Could not load this Project.")} subtitle={id} /></div>
+  if (!project) return <div className="pg"><Notice kind="error" label={uiText("Error")} title={uiText("Could not load this Project")} subtitle={id} /></div>
   const sessions = project.sessions
   const session = sessions.find((s) => sessionOf(s).id === chosen) ?? sessions[0]
   return (

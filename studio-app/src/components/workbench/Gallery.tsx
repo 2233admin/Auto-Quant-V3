@@ -1,5 +1,6 @@
 import { uiTemplate, uiText } from '../../i18n'
 import { useState } from 'react'
+import { StateCatalogue } from './StateCatalogue'
 import { Swatch } from '../../pages/FactorCharts'
 import { MotionDemos } from '../motion/MotionDemos'
 import { ActionRow, ChartCard, FactChips, MetricGrid, PaneCard, SegmentedToggle, StatusLine, TabList, VerdictBar, WorkbenchShell, useHashTab, type StatusState } from '.'
@@ -69,7 +70,7 @@ export function WorkbenchGallery() {
         <>
           <VerdictBar
             tone="bad"
-            word={uiText("Refuted")}
+            word={uiText("Inconclusive")}
             reasons={[
               { tone: 'bad', text: uiText("Validation HAC p is above 0.05."), field: 'summary.hacNormalPValue' },
               { tone: 'info', text: uiText("Test split is hidden by the protocol."), field: 'protocol.splits.testVisible' },
@@ -165,5 +166,6 @@ export function WorkbenchGallery() {
     </PaneCard>
   )
 
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('catalogue') === 'states') return <StateCatalogue />
   return <WorkbenchShell left={leftPane} right={rightPane} ratio={40} />
 }

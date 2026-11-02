@@ -1,10 +1,11 @@
 import { uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
+import { formattedSignRole } from '../../design/signConvention'
 import { AnimatedValue } from '../motion/AnimatedValue'
 import './workbench.css'
 
 /** `hint` is the tooltip: where the number comes from. */
-export type Stat = { label: string; value: string; hint?: string }
+export type Stat = { label: string; value: string; hint?: string; signed?: boolean; focal?: boolean }
 
 /**
  * The headline numbers of the Run on show, as a compact inline row (label, mono value) that sits beside the Run selector.
@@ -13,12 +14,12 @@ export type Stat = { label: string; value: string; hint?: string }
 export function StatChips({ stats, label, scope }: { stats: Stat[]; label: string; scope?: ReactNode }) {
   if (stats.length === 0) return null
   return (
-    <dl className="wb-stats" aria-label={label}>
+    <dl data-sign-area="verdict-headline" className="wb-stats" aria-label={label}>
       {scope && <span className="wb-stats-scope faint">{uiValue(scope)}</span>}
       {stats.map((s) => (
         <div key={s.label} className="wb-stat" title={s.hint ? `${s.label}: ${s.hint}` : undefined}>
           <dt>{uiValue(s.label)}</dt>
-          <dd className="mono"><AnimatedValue value={s.value} /></dd>
+          <dd className={s.focal ? "type-value-focal" : "type-value"} data-sign={s.signed ? formattedSignRole(s.value) : undefined}><AnimatedValue value={s.value} /></dd>
         </div>
       ))}
     </dl>

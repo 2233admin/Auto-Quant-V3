@@ -199,7 +199,7 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
   const testVisible = a.splitProtocol?.testRole === 'visible-audit-only' && !!a.splits?.test?.candidate
   const effective: Split = testVisible ? split : 'validation'
   const outsideTest = (d: string | undefined) => testVisible || !testRange?.start || !d || d < testRange.start
-  const hiddenNote = testVisible ? '' : 'Dates inside the test split are not drawn because no test audit is published for this Run.'
+  const hiddenNote = testVisible ? '' : 'Test split is hidden until the study is frozen.'
   const toggle = <SplitToggle value={effective} onChange={setSplit} testVisible={testVisible} />
 
   const allPoints = (a.path ?? []).filter((p) => p.timestamp)

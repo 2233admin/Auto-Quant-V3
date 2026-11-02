@@ -3,16 +3,16 @@
 .ocard { border: 1px solid var(--line); background: var(--raised); padding: var(--space-4); display: grid; gap: var(--space-2); align-content: start; }
 .ocard header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
 .ocard h3 { font: var(--type-section); margin: 0; }
-.ocard h4 { font: 500 11px/16px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: var(--space-3) 0 0; }
+.ocard h4 { font: var(--type-label-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: var(--space-3) 0 0; }
 .ocard p { margin: 0; font: var(--type-body); }
-.ocard .big { font: 500 32px/40px var(--font-mono); }
+.ocard .big { font: var(--type-value-focal); }
 
-.badge { font: 500 11px/16px var(--font-mono); padding: 1px 8px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
+.badge { font: var(--type-label-mono); padding: 1px 8px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
 .badge.is-warn { border-color: var(--signal-graphic); color: var(--signal); }
 
 /* Interval bar: a 0-100% track, the 95% interval as a block, the estimate as a tick. */
 .ibar { position: relative; height: 10px; background: var(--hover); border: 1px solid var(--line); }
-.ibar.is-empty { background: repeating-linear-gradient(135deg, var(--hover) 0 4px, transparent 4px 8px); }
+.ibar.is-empty { background: none; }
 .ibar-half { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--grid); }
 .ibar-range { position: absolute; top: 0; bottom: 0; background: var(--stroke); opacity: .7; }
 .ibar-point { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--text); }

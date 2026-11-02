@@ -70,7 +70,7 @@ function Table({ a, b, project }: { a: RunDiagnostics; b: RunDiagnostics; projec
               </tbody>
             </table>
           </div>
-          {!rows.some((r) => r.group === 'test') && <p className="small muted">{uiText("Test split hidden until its audit exists (at least one Run has no visible test audit).")}</p>}
+          {!rows.some((r) => r.group === 'test') && <p className="small muted">{uiText("Test split is hidden until the study is frozen. (at least one Run has no visible test audit).")}</p>}
         </Section>
         <div className="vstack">
           <Section
@@ -160,7 +160,7 @@ export function ComparePage({ project, a, b, go }: { project: ProjectSnapshot; a
       )}
       {error && !error.unsupported && <Notice kind="error" label={uiText("Error")} title={uiText("Could not load a Run.")} subtitle={error.message} />}
       {error?.unsupported && <Notice kind="info" label={uiText("Info")} title={uiText("One of these Runs is not a Factor Run.")} subtitle={uiText("Compare reads Factor Runs only.")} />}
-      {(loadA.state === 'loading' || loadB.state === 'loading') && <p className="muted">{uiText("Loading Runs…")}</p>}
+      {(loadA.state === 'loading' || loadB.state === 'loading') && <p className="muted">{uiText("Loading…")}</p>}
       {loadA.state === 'ready' && loadB.state === 'ready' && <Table a={loadA.payload.factorExplorer} b={loadB.payload.factorExplorer} project={project} />}
     </div>
   )
