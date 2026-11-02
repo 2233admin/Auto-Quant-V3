@@ -50,6 +50,15 @@ before any test number or point is serialized, and the browser applies testGate
 again. Paired test metric rows require both audits. Test windows remain protocol
 facts and are checked even when numerical audits are hidden.
 
+Protocol facts render one readable row per fact (issue #17): Study id, 8-character
+hashes with the full value on hover and a copy action, dataset id, split windows
+as `Train start → end · Validation … · Test …`, horizon, cost model and objective.
+`studio-app/src/pages/compare/protocolFacts.ts` only formats the published payload;
+it never re-decides comparability. Rows whose values differ (or whose authority is
+missing) are highlighted and expand to both complete values. A test window is
+written only when that Run passes testGate; otherwise it reads as hidden, in the
+row, its hover text and its expansion.
+
 Compare shows subject minus baseline, with a plus or minus glyph for every finite
 delta. Only the primary validation delta receives sign colour; all other values
 remain neutral. Catalogue help defines every metric. Paired figures use grey for
