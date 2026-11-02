@@ -1,0 +1,272 @@
+{
+  "engine": {
+    "id": "sentrux-native",
+    "version": "2.2.0"
+  },
+  "godFiles": [
+    {
+      "functions": 8,
+      "loc": 847,
+      "path": "allocation_explorer.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 18,
+      "loc": 2502,
+      "path": "book_risk_explorer.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 12,
+      "loc": 2547,
+      "path": "briefs.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 2,
+      "loc": 1429,
+      "path": "capabilities.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 21,
+      "loc": 1282,
+      "path": "checks.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 88,
+      "loc": 5937,
+      "path": "cli.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 25,
+      "loc": 1452,
+      "path": "decision_matrix.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 17,
+      "loc": 1492,
+      "path": "decision_support.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 36,
+      "loc": 2537,
+      "path": "dossiers.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 51,
+      "loc": 5119,
+      "path": "factor_explorer.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 51,
+      "loc": 2578,
+      "path": "holdouts.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 48,
+      "loc": 5135,
+      "path": "intake.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 39,
+      "loc": 1041,
+      "path": "intervals.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 11,
+      "loc": 1499,
+      "path": "mandates.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 18,
+      "loc": 3087,
+      "path": "orientation.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 63,
+      "loc": 10393,
+      "path": "portfolio_explorer.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 10,
+      "loc": 811,
+      "path": "project_templates/ohlcv_allocation_lab/judge.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 17,
+      "loc": 1671,
+      "path": "project_templates/ohlcv_book_risk_lab/judge.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 34,
+      "loc": 2562,
+      "path": "project_templates/ohlcv_factor_lab/judge.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 19,
+      "loc": 1883,
+      "path": "project_templates/ohlcv_portfolio_lab/judge.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 44,
+      "loc": 4051,
+      "path": "project_templates/ohlcv_portfolio_lab/portfolio_core.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 31,
+      "loc": 2551,
+      "path": "project_templates/ohlcv_rl_factor_lab/judge.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 34,
+      "loc": 1856,
+      "path": "project_templates/ohlcv_rl_factor_lab/rl_core.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 28,
+      "loc": 2285,
+      "path": "reports.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 26,
+      "loc": 1435,
+      "path": "research.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 18,
+      "loc": 1719,
+      "path": "research_agenda.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 16,
+      "loc": 1335,
+      "path": "research_program.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 23,
+      "loc": 1006,
+      "path": "reviews.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 38,
+      "loc": 5902,
+      "path": "rl_explorer.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 19,
+      "loc": 1170,
+      "path": "run_reports.py",
+      "rule": "loc>800"
+    },
+    {
+      "functions": 31,
+      "loc": 2166,
+      "path": "runs.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 53,
+      "loc": 3354,
+      "path": "sessions.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 38,
+      "loc": 1756,
+      "path": "studies.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 56,
+      "loc": 2832,
+      "path": "studio.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 78,
+      "loc": 1493,
+      "path": "studio_actions.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 142,
+      "loc": 5674,
+      "path": "studio_assets/studio.js",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 28,
+      "loc": 560,
+      "path": "studio_assistant.py",
+      "rule": "functions>25&&loc>400"
+    },
+    {
+      "functions": 29,
+      "loc": 566,
+      "path": "studio_assistant_providers.py",
+      "rule": "functions>25&&loc>400"
+    },
+    {
+      "functions": 33,
+      "loc": 1899,
+      "path": "templates.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 39,
+      "loc": 1162,
+      "path": "workspace.py",
+      "rule": "loc>800; functions>25&&loc>400"
+    },
+    {
+      "functions": 22,
+      "loc": 816,
+      "path": "workspace_skills/fetch-yahoo-ohlcv/scripts/fetch_yahoo_intraday.py",
+      "rule": "loc>800"
+    }
+  ],
+  "metrics": {
+    "branch_density_per_fn": 657,
+    "complex_fn_count": 3,
+    "coupling_score": 119.39,
+    "cross_module_edges": 1182,
+    "cycle_count": 0,
+    "files": 99,
+    "functions": 1882,
+    "god_file_count": 41,
+    "import_modeled_files": 99,
+    "max_complexity": 657,
+    "quality_signal": 0,
+    "total_import_edges": 1182
+  },
+  "savedAt": 1793653386,
+  "schema": "code-intel-sentrux-baseline.v5",
+  "scope": ".",
+  "sourceCommit": "b27f773347388ed77df752ed22f4ff43e29fb78f"
+}

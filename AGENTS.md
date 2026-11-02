@@ -414,6 +414,9 @@ Read the relevant linked document before changing a subsystem:
   hashing, and identity discovery: [[docs/design/distribution-build-identity]]
 - System direction, Workspace/Project ownership, and runtime boundaries:
   [[docs/ARCHITECTURE]]
+- Code Intel structural ratchet: governed scopes, no-new-god-file baseline,
+  unsupported boundary rules, and the local gate commands:
+  [[docs/design/structural-rules]]
 - Workspace discovery, Project identity, self-contained construction, and path
   confinement: [[docs/design/workspace-project-boundaries]]
 - Versioned CLI envelopes, capability discovery, operation effects, artifacts,
