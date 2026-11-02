@@ -1,0 +1,28 @@
+# Structural rules for the Studio frontend scope `studio-app/src/`.
+#
+# Engine: Code Intel Pipeline built-in sentrux-native (2.2.0 at creation).
+# Run from the repository root:
+#   code-intel sentrux check studio-app/src       # rules + baseline ratchet
+#   code-intel sentrux gate_save studio-app/src   # deliberate re-baseline only
+# Rationale, unsupported rules and the local workflow live in
+# docs/design/structural-rules.md.
+#
+# Measured on 2026-11-03 (worktree based on b27f773): 3 god files,
+# coupling 59.05, cycle_count 0, quality_signal 9117, max complexity 20.
+#
+# The thresholds below are snapshots of the measured state so the current
+# tree passes. The baseline ratchet in `.sentrux/baseline.json` additionally
+# fails any new god file (over 800 non-empty lines, or over 25 functions with
+# more than 400 lines) and any coupling/quality/cycle regression.
+#
+# Not expressed here (unsupported by the engine for TypeScript):
+#   - "studio-app/src must not reach into autoquant source": `[[boundary]]`
+#     and `[[layer]]` only resolve Rust `use crate::` edges.
+#   - "a grandfathered god file must not grow": the ratchet compares
+#     identities, not per-file line counts.
+#   - max_cycles: cycle detection resolves Rust modules only.
+
+[constraints]
+max_coupling = 60.0
+max_cc = 20
+no_god_files = false

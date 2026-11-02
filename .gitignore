@@ -19,3 +19,7 @@ __pycache__/
 /studio-app/node_modules/
 /studio-app/tsconfig.tsbuildinfo
 /.tmp/
+
+# Code Intel session-local structural snapshots (committed: rules.toml, baseline.json)
+.sentrux/agent-sessions/
+.sentrux/cache/

@@ -1,0 +1,36 @@
+# Structural rules for the Python Core scope `autoquant/`.
+#
+# Engine: Code Intel Pipeline built-in sentrux-native (2.2.0 at creation).
+# Run from the repository root:
+#   code-intel sentrux check autoquant       # rules + baseline ratchet
+#   code-intel sentrux gate_save autoquant   # deliberate re-baseline only
+# Rationale, unsupported rules and the local workflow live in
+# docs/design/structural-rules.md.
+#
+# Measured on 2026-11-03 (worktree based on b27f773): 41 god files,
+# coupling 119.39, cycle_count 0, quality_signal 0, max complexity 657.
+#
+# The thresholds below are conservative so the current tree passes. The real
+# protection is the baseline ratchet in `.sentrux/baseline.json`, which the
+# engine evaluates on every `check`/`gate`:
+#   - god_files_increased: any file over 800 non-empty lines (or over 25
+#     functions with more than 400 lines) whose path is not listed in the
+#     baseline fails. New files must therefore stay under 800 lines; the 41
+#     standing god files are grandfathered by identity, not amnestied.
+#   - coupling_increased / quality_degraded / cycles_increased: any increase
+#     over the saved value fails.
+#
+# Not expressed here (unsupported by the engine for Python/TypeScript):
+#   - "autoquant/ must not import studio-app": `[[boundary]]`/`[[layer]]`
+#     only resolve Rust `use crate::` edges.
+#   - excluding the generated bundle `autoquant/studio_app/`: the file gate has
+#     no user exclude yet; its JS bundle is measured (it is not a god file).
+#   - "a grandfathered god file must not grow": the ratchet compares
+#     identities, not per-file line counts.
+#   - max_cc: the value is dominated by the minified Studio bundle (657), so a
+#     ceiling would only track bundle rebuilds.
+#   - max_cycles: cycle detection resolves Rust modules only.
+
+[constraints]
+max_coupling = 120.0
+no_god_files = false
