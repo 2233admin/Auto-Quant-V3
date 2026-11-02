@@ -6,6 +6,8 @@ import { when } from '../format'
 import { testVisible } from '../pages/testGate'
 import { useSlidingHighlight } from '../components/motion/useSlidingHighlight'
 import { SignedValue } from '../components/workbench/SignedValue'
+import { MetricListInfo } from '../components/MetricInfo'
+import type { MetricId } from '../metrics/catalogue'
 import './cards.css'
 const labels: Record<string, string> = { All: '全部', Supported: '支持', Inconclusive: '结论不明确', 'Not tested': '未测试', 'Could not be tested': '无法测试', Backtested: '已回测', Defined: '已定义', Development: '开发' }
 
@@ -40,12 +42,12 @@ export function MiniCurve({ points, label }: { points: LibraryPoint[]; label: st
   const path = values.map((v, i) => `${i * 144 / (values.length - 1)},${25 - (v - low) / (high - low || 1) * 23}`).join(' ')
   return <svg className="library-spark" data-measure="sparkline" viewBox="0 0 147 27" role="img" aria-label={label}><polygon points={`0,27 ${path} 144,27`} fill="currentColor" opacity="0.08" /><polyline points={path} fill="none" stroke="currentColor" strokeWidth="1.25" /></svg>
 }
-export function LibraryCard({ name, badge, metric, headline, secondary, points, updated, href, strategy, description, go }: { name: string; badge: string; metric: string; secondary?: string; headline?: { value: number | null | undefined; label: string; digits: number; unit?: string }; points: LibraryPoint[]; updated: string | null; href: string; strategy?: boolean; description?: string | null; go: (href: string) => void }) {
+export function LibraryCard({ name, badge, metric, metrics, headline, secondary, points, updated, href, strategy, description, go }: { name: string; badge: string; metric: string; metrics?: MetricId[]; secondary?: string; headline?: { value: number | null | undefined; label: string; digits: number; unit?: string }; points: LibraryPoint[]; updated: string | null; href: string; strategy?: boolean; description?: string | null; go: (href: string) => void }) {
   const language = useLanguage()
-  return <article className={`library-card ${strategy ? 'library-card--strategy' : ''}`} data-measure="card" aria-label={name} onClick={e => { if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !(e.target as Element).closest('a,button')) go(href) }}>
+  return <article className={`library-card ${strategy ? 'library-card--strategy' : ''}`} data-measure="card" aria-label={name} onClick={e => { if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !(e.target as Element).closest('a,button,.info')) go(href) }}>
     <div className="library-card-top"><a href={href} title={name}>{name}</a><span className="library-badge" data-state={badge}>{language === 'zh' ? labels[badge] ?? badge : badge}</span></div>
     {strategy && <p className="library-description" title={description ?? undefined}>{description || uiText("Portfolio construction defined by its Study.")}</p>}
-    <div className="library-card-evidence"><div style={{ minWidth: 0, flex: 1 }}><p className="library-metric" data-sign-area="library-headline" title={metric}>{headline ? <><SignedValue {...headline} focal /><small>{uiText(headline.label)}</small></> : metric}</p>{headline && <div className="library-secondary">{secondary && <>{secondary} · </>}<span className="development-tag">{uiText("development")}</span> · {uiText("validation")}</div>}</div><MiniCurve points={points} label={strategy ? uiText("Net growth, train and validation only") : uiText("Latest Run long-short cumulative curve, permitted splits only")} /></div>
+    <div className="library-card-evidence"><div style={{ minWidth: 0, flex: 1 }}><p className="library-metric" data-sign-area="library-headline" title={metric}>{headline ? <><SignedValue {...headline} focal /><small>{uiText(headline.label)}</small></> : metric}</p>{headline && <div className="library-secondary">{secondary && <>{secondary} · </>}<span className="development-tag">{uiText("development")}</span> · {uiText("validation")}</div>}</div>{metrics && metrics.length > 0 && <MetricListInfo ids={metrics} label={uiText("What these numbers mean")} />}<MiniCurve points={points} label={strategy ? uiText("Net growth, train and validation only") : uiText("Latest Run long-short cumulative curve, permitted splits only")} /></div>
     <footer className="library-card-footer" data-measure="footer"><span><Icon name={strategy ? 'strategies' : 'factors'} />{strategy ? translate(language, 'Strategy', '策略') : translate(language, 'Factor expression', '因子表达式')}</span><span title={updated ?? uiText("No Run yet")}>{translate(language, 'Last updated:', '最近更新：')} {updated ? when(updated) : translate(language, 'Not run', '未运行')}</span></footer>
   </article>
 }

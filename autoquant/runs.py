@@ -142,6 +142,10 @@ def _harness_source_hash(package_root: Path | None = None) -> str:
         # sources under studio-app/; rebuilding it must not change the Harness
         # identity that Runs record and replay compares.
         and path.relative_to(package_root).parts[0] != "studio_app"
+        # Structural-gate rules and baselines (docs/design/structural-rules.md)
+        # are repository governance, not runtime code; re-saving a baseline
+        # must not change the Harness identity either.
+        and path.relative_to(package_root).parts[0] != ".sentrux"
     }
     return hash_json(files)
 

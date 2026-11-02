@@ -22,6 +22,11 @@ an explicit expandable original; Studio never guesses their scientific meaning.
 This is a presentation feature, not a change to the research protocol or an
 automatic translation of user-authored research.
 
+Metric definitions are the one exception to the single Chinese catalog: they
+are authored as English/Chinese pairs in `studio-app/src/metrics/catalogue.ts`
+so each definition stays one reviewable unit, and the UI test requires both
+sides of every entry (see [[docs/STUDIO]]).
+
 Localization covers the shell, Assistant and contextual drawer, Factor and
 Strategy libraries, Run history and comparison, Tuning, Settings, Attention,
 Project research, Factor editing and evidence, Portfolio, Book Risk, Path

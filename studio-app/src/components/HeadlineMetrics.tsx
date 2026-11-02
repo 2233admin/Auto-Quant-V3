@@ -30,20 +30,21 @@ export function HeadlineMetrics({ splits, horizon, defs }: { splits: HeadlineSpl
           <div className="hm-split" key={name}>
             <h3 className="hm-title">{uiText(name)} · {uiValue(role)} · {horizon}{uiText("-bar horizon")}</h3>
             <CompactTileGrid label={uiTemplate("{0} headline figures", [name])}>
-              <CompactTile label={uiText("Mean rank IC")} value={num(s.meanRankIc, 4)} info={measure} />
-              <CompactTile label={uiText("Mean Pearson IC")} value={num(s.meanPearsonIc, 4)} />
-              <CompactTile label={uiText("Rank IC std")} value={num(s.rankIcStandardDeviation, 3)} note={uiText("per-bar")} />
-              <CompactTile label={uiText("Rank IC IR")} value={num(s.rankIcir, 3)} />
-              <CompactTile label={uiText("Pearson IC IR")} value={num(s.pearsonIcir, 3)} />
-              <CompactTile label={uiText("Hit rate")} value={num(s.rankHitRate, 3)} info={<p>{uiText("Share of bars with rank IC above 0.")}</p>} />
-              <CompactTile label={uiText("HAC t")} value={num(s.hacTStatistic, 2)} info={inference} />
-              <CompactTile label={uiText("HAC p")} value={num(s.hacNormalPValue, 3)} note={uiText("two-sided")} info={inference} />
+              <CompactTile label={uiText("Mean rank IC")} value={num(s.meanRankIc, 4)} info={measure} metric="meanRankIc" />
+              <CompactTile label={uiText("Mean Pearson IC")} value={num(s.meanPearsonIc, 4)} metric="meanPearsonIc" />
+              <CompactTile label={uiText("Rank IC std")} value={num(s.rankIcStandardDeviation, 3)} note={uiText("per-bar")} metric="rankIcStd" />
+              <CompactTile label={uiText("Rank IC IR")} value={num(s.rankIcir, 3)} metric="rankIcir" />
+              <CompactTile label={uiText("Pearson IC IR")} value={num(s.pearsonIcir, 3)} metric="pearsonIcir" />
+              <CompactTile label={uiText("Hit rate")} value={num(s.rankHitRate, 3)} metric="rankHitRate" />
+              <CompactTile label={uiText("HAC t")} value={num(s.hacTStatistic, 2)} info={inference} metric="hacT" />
+              <CompactTile label={uiText("HAC p")} value={num(s.hacNormalPValue, 3)} note={uiText("two-sided")} info={inference} metric="hacP" />
               <CompactTile
                 label={uiText("Observations")}
                 value={int(s.observations)}
                 note={uiTemplate("min {0}", [int(s.minimumObservations)])}
                 tone={weak ? 'weak' : 'neutral'}
                 toneReason={weak ? 'below min' : undefined}
+                metric="observations"
               />
             </CompactTileGrid>
           </div>

@@ -9,3 +9,11 @@
 .info-body--end { right: 0; }
 .info-body p { margin: 0; font: var(--type-small); max-width: none; }
 .info-body .mono { overflow-wrap: anywhere; }
+
+/* Metric definitions from src/metrics/catalogue.ts, inside the same popover. */
+.metric-def { display: grid; gap: var(--space-2); }
+.metric-def + .metric-def { padding-top: var(--space-2); border-top: 1px solid var(--line); }
+.metric-def-k { color: var(--muted); font: var(--type-label); margin-right: var(--space-1); }
+.metric-def-page { display: block; font: var(--type-small); }
+.metric-def-page p { display: inline; }
+.reading-order { margin: 0; padding-left: 1.4em; display: grid; gap: var(--space-1); font: var(--type-small); }

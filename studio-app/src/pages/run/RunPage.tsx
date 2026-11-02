@@ -10,6 +10,7 @@ import { LaunchedLabel } from '../../actions/LaunchedLabel'
 import { Notice } from '../../Notice'
 import { HeadlineMetrics, type HeadlineSplit } from '../../components/HeadlineMetrics'
 import { Info } from '../../components/Info'
+import { MetricInfo } from '../../components/MetricInfo'
 import { NotPublished } from '../../components/NotPublished'
 import { pickIntegrity, TrialCounter } from '../../components/TrialCounter'
 import { FactChips, MetricGrid, Tabs, useHashTab, VerdictBar, type Fact, type MetricGroup, type TabDef } from '../../components/workbench'
@@ -61,7 +62,7 @@ const VERDICT_WORD = { pass: 'Supported', fail: 'Inconclusive', inconclusive: 'I
 const int = (v: number) => v.toLocaleString('en-US')
 
 /** The published validation (and, only when its audit is visible, test) numbers as compact tiles. */
-function metricGroups(fe: RunDiagnostics, project: ProjectSnapshot, showTest: boolean): MetricGroup[] {
+export function runMetricGroups(fe: RunDiagnostics, project: ProjectSnapshot, showTest: boolean): MetricGroup[] {
   const v = fe.summary.validation
   const t = fe.summary.testAudit
   const horizon = fe.protocol.primaryHorizon
@@ -75,15 +76,15 @@ function metricGroups(fe: RunDiagnostics, project: ProjectSnapshot, showTest: bo
       heading: uiTemplate("Validation · selection split · {0}-bar horizon", [horizon]),
       label: uiTemplate("Validation split, {0}-bar horizon", [horizon]),
       tiles: [
-        { label: uiText("Mean rank IC"), value: num(v.meanRankIc, 4), info: measure },
-        { label: uiText("HAC t"), value: num(v.hacTStatistic, 2), info: inference },
-        { label: uiText("HAC p"), value: num(v.hacNormalPValue, 3), info: <>{inference}<p>{uiText("Two-sided.")}</p></> },
-        { label: uiText("Hit rate"), value: num(v.rankHitRate, 3), info: <p>{uiText("Share of bars with rank IC above 0.")}</p> },
-        { label: uiText("Rank IC IR"), value: num(v.rankIcir, 3) },
-        { label: uiText("Mean Pearson IC"), value: num(v.meanPearsonIc, 4) },
-        { label: uiText("Rank IC std"), value: num(v.rankIcStandardDeviation, 3) },
-        { label: uiText("Observations"), value: int(v.observations), info: <p>{uiText("Minimum required: ")}{int(v.minimumObservations)}{uiText(" observations.")}</p>, tone: weak ? 'weak' : 'neutral', toneReason: weak ? 'below min' : undefined },
-        { label: uiText("Trials counted"), value: fam ? int(fam.totalExecutions) : '—', info: <p>{fam ? uiTemplate("{0} unique candidate sources among {1} executions.", [int(fam.uniqueSourceTrials), int(fam.totalExecutions)]) : uiText("No Session ledger records the trials.")}</p> },
+        { label: uiText("Mean rank IC"), value: num(v.meanRankIc, 4), info: measure, metric: 'meanRankIc' },
+        { label: uiText("HAC t"), value: num(v.hacTStatistic, 2), info: inference, metric: 'hacT' },
+        { label: uiText("HAC p"), value: num(v.hacNormalPValue, 3), info: <>{inference}<p>{uiText("Two-sided.")}</p></>, metric: 'hacP' },
+        { label: uiText("Hit rate"), value: num(v.rankHitRate, 3), metric: 'rankHitRate' },
+        { label: uiText("Rank IC IR"), value: num(v.rankIcir, 3), metric: 'rankIcir' },
+        { label: uiText("Mean Pearson IC"), value: num(v.meanPearsonIc, 4), metric: 'meanPearsonIc' },
+        { label: uiText("Rank IC std"), value: num(v.rankIcStandardDeviation, 3), metric: 'rankIcStd' },
+        { label: uiText("Observations"), value: int(v.observations), info: <p>{uiText("Minimum required: ")}{int(v.minimumObservations)}{uiText(" observations.")}</p>, tone: weak ? 'weak' : 'neutral', toneReason: weak ? 'below min' : undefined, metric: 'observations' },
+        { label: uiText("Trials counted"), value: fam ? int(fam.totalExecutions) : '—', info: <p>{fam ? uiTemplate("{0} unique candidate sources among {1} executions.", [int(fam.uniqueSourceTrials), int(fam.totalExecutions)]) : uiText("No Session ledger records the trials.")}</p>, metric: 'trialsCounted' },
       ],
     })
   }
@@ -92,11 +93,11 @@ function metricGroups(fe: RunDiagnostics, project: ProjectSnapshot, showTest: bo
       heading: uiText("Test · visible audit, not used for selection"),
       label: uiTemplate("Test split visible audit, {0}-bar horizon", [horizon]),
       tiles: [
-        { label: uiText("Mean rank IC"), value: num(t.meanRankIc, 4) },
-        { label: uiText("HAC t"), value: num(t.hacTStatistic, 2) },
-        { label: uiText("HAC p"), value: num(t.hacNormalPValue, 3) },
-        { label: uiText("Hit rate"), value: num(t.rankHitRate, 3) },
-        { label: uiText("Observations"), value: int(t.observations), info: <p>{uiText("Minimum required: ")}{int(t.minimumObservations)}{uiText(" observations.")}</p> },
+        { label: uiText("Mean rank IC"), value: num(t.meanRankIc, 4), metric: 'meanRankIc' },
+        { label: uiText("HAC t"), value: num(t.hacTStatistic, 2), metric: 'hacT' },
+        { label: uiText("HAC p"), value: num(t.hacNormalPValue, 3), metric: 'hacP' },
+        { label: uiText("Hit rate"), value: num(t.rankHitRate, 3), metric: 'rankHitRate' },
+        { label: uiText("Observations"), value: int(t.observations), info: <p>{uiText("Minimum required: ")}{int(t.minimumObservations)}{uiText(" observations.")}</p>, metric: 'observations' },
       ],
     })
   }
@@ -146,7 +147,7 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
         {verdictClause(fe, verdict)}
       </VerdictBar><p className="small muted">{uiText("Development evidence; the published diagnosis and trial adjustment do not provide independent confirmation.")}</p></section>
       <section id="evidence-figures"><IcByHorizonCard study={fe} table={false} /><FactorComparisons study={fe} runs={project.runs.filter(r => r.studyId === fe.run.studyId)} projectId={project.id} /></section>
-      <section id="evidence-strength"><MetricGrid groups={metricGroups(fe, project, showTest)} hiddenNote={showTest ? undefined : uiText(TEST_HIDDEN_NOTE)} /></section>
+      <section id="evidence-strength"><MetricGrid groups={runMetricGroups(fe, project, showTest)} hiddenNote={showTest ? undefined : uiText(TEST_HIDDEN_NOTE)} /></section>
       <TrialCounter project={project} />
       <section id="evidence-details"><Tabs
         label={uiText("Run sections")}
@@ -167,12 +168,12 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
                     <thead>
                       <tr>
                         <th scope="col">{uiText("Split")}</th>
-                        <th scope="col" className="r">{uiText("Mean rank IC")}</th>
-                        <th scope="col" className="r">{uiText("IC IR")}</th>
-                        <th scope="col" className="r">{uiText("HAC t")}</th>
-                        <th scope="col" className="r">p</th>
-                        <th scope="col" className="r">{uiText("Hit rate")}</th>
-                        <th scope="col" className="r">{uiText("Obs.")}</th>
+                        <th scope="col" className="r">{uiText("Mean rank IC")} <MetricInfo id="meanRankIc" align="end" /></th>
+                        <th scope="col" className="r">{uiText("IC IR")} <MetricInfo id="rankIcir" align="end" /></th>
+                        <th scope="col" className="r">{uiText("HAC t")} <MetricInfo id="hacT" align="end" /></th>
+                        <th scope="col" className="r">p <MetricInfo id="hacP" align="end" /></th>
+                        <th scope="col" className="r">{uiText("Hit rate")} <MetricInfo id="rankHitRate" align="end" /></th>
+                        <th scope="col" className="r">{uiText("Obs.")} <MetricInfo id="observations" align="end" /></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -188,10 +189,10 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
                     <thead>
                       <tr>
                         <th scope="col">{uiText("Horizon (bars)")}</th>
-                        <th scope="col" className="r">{uiText("Mean rank IC")}</th>
-                        <th scope="col" className="r">{uiText("HAC t")}</th>
-                        <th scope="col" className="r">p</th>
-                        <th scope="col" className="r">{uiText("Obs.")}</th>
+                        <th scope="col" className="r">{uiText("Mean rank IC")} <MetricInfo id="meanRankIc" align="end" /></th>
+                        <th scope="col" className="r">{uiText("HAC t")} <MetricInfo id="hacT" align="end" /></th>
+                        <th scope="col" className="r">p <MetricInfo id="hacP" align="end" /></th>
+                        <th scope="col" className="r">{uiText("Obs.")} <MetricInfo id="observations" align="end" /></th>
                       </tr>
                     </thead>
                     <tbody>

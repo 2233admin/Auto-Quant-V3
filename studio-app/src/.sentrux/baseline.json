@@ -1,0 +1,44 @@
+{
+  "engine": {
+    "id": "sentrux-native",
+    "version": "2.2.0"
+  },
+  "godFiles": [
+    {
+      "functions": 33,
+      "loc": 751,
+      "path": "pages/FactorCharts.tsx",
+      "rule": "functions>25&&loc>400"
+    },
+    {
+      "functions": 32,
+      "loc": 727,
+      "path": "pages/FactorEvidence.tsx",
+      "rule": "functions>25&&loc>400"
+    },
+    {
+      "functions": 27,
+      "loc": 615,
+      "path": "pages/project/ProjectResearch.tsx",
+      "rule": "functions>25&&loc>400"
+    }
+  ],
+  "metrics": {
+    "branch_density_per_fn": 20,
+    "complex_fn_count": 0,
+    "coupling_score": 59.42,
+    "cross_module_edges": 826,
+    "cycle_count": 0,
+    "files": 139,
+    "functions": 683,
+    "god_file_count": 3,
+    "import_modeled_files": 139,
+    "max_complexity": 20,
+    "quality_signal": 9114,
+    "total_import_edges": 826
+  },
+  "savedAt": 1793655346,
+  "schema": "code-intel-sentrux-baseline.v5",
+  "scope": ".",
+  "sourceCommit": "0c8eba2fb506814138857c6b59594ef7426c99ff"
+}

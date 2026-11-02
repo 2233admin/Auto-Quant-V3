@@ -20,6 +20,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/product-maturity-roadmap]] | Close the most visible gaps against mature factor-research products in the agreed seven-step order without weakening any integrity rule. | 2026-11-03 |
 | [[plans/studio-assistant]] | Add local Claude/Codex conversations with governed aq writes, safe context and explicit isolation completion gates. | 2026-11-02 |
 | [[plans/studio-confirmed-design-foundation]] | Apply confirmed Studio hierarchy, sign conventions, figures and states with automated browser measurements. | 2026-11-01 |
 | [[plans/measured-factor-strategy-libraries]] | Measure and implement the Factor/Strategy libraries, navigation and persistent factor editor for supervised acceptance. | 2026-11-01 |

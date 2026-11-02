@@ -7,6 +7,8 @@ import { SPLIT_LABEL, SPLITS } from './factorMath'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { Empty } from './FactorCharts'
 import { Info } from '../components/Info'
+import { MetricExplanation, MetricInfo } from '../components/MetricInfo'
+import type { MetricId } from '../metrics/catalogue'
 import { VerdictBar } from '../components/workbench'
 
 const int = (v: number) => v.toLocaleString('en-US')
@@ -21,7 +23,7 @@ export const visibleSplits = (study: FactorDiagnostics): FactorSplit[] => gatedS
 // Verdict strip
 
 export type Verdict = 'pass' | 'fail' | 'inconclusive'
-type Reason = { tone: 'good' | 'bad' | 'info'; text: ReactNode; field: string }
+type Reason = { tone: 'good' | 'bad' | 'info'; text: ReactNode; field: string; metric?: MetricId }
 
 /** diagnosis.stage values that mean "no edge found". Every other unqualified stage means "evidence not yet sufficient". */
 // A failed qualification is not a falsification of the caller's idea.
@@ -50,9 +52,10 @@ export function buildVerdict(study: FactorDiagnostics, adjustment: Adjustment | 
       tone: diagnosis.qualifiesForPortfolio ? 'good' : 'bad',
       text: <>{uiValue(diagnosis.explanation)}</>,
       field: `factorQualification.diagnosis.stage = ${diagnosis.stage}`,
+      metric: 'qualificationStage',
     })
   } else {
-    reasons.push({ tone: 'info', text: uiText("This Run publishes no Factor qualification, so there is no server verdict."), field: 'factorQualification.diagnosis' })
+    reasons.push({ tone: 'info', text: uiText("This Run publishes no Factor qualification, so there is no server verdict."), field: 'factorQualification.diagnosis', metric: 'qualificationStage' })
   }
 
   const validation = study.summary.validation
@@ -60,7 +63,7 @@ export function buildVerdict(study: FactorDiagnostics, adjustment: Adjustment | 
   if (validation) {
     const t = validation.hacTStatistic
     if (!finite(t)) {
-      reasons.push({ tone: 'info', text: uiText("Validation HAC t statistic is not defined (degenerate variance)."), field: 'summary.validation.hacTStatistic' })
+      reasons.push({ tone: 'info', text: uiText("Validation HAC t statistic is not defined (degenerate variance)."), field: 'summary.validation.hacTStatistic', metric: 'hacT' })
     } else if (finite(line)) {
       const clears = t >= line && (validation.meanRankIc ?? 0) > 0
       reasons.push({
@@ -69,18 +72,20 @@ export function buildVerdict(study: FactorDiagnostics, adjustment: Adjustment | 
           ? `Validation HAC t ${num(t, 2)} is at or above the ${num(line, 2)} pass line.`
           : `Validation HAC t ${num(t, 2)} is below the ${num(line, 2)} pass line${(validation.meanRankIc ?? 0) <= 0 ? ' and the mean rank IC is not positive' : ''}.`,
         field: 'summary.validation.hacTStatistic vs diagnosticThresholds.minimumPositiveHacTStatistic',
+        metric: 'hacT',
       })
     } else {
-      reasons.push({ tone: 'info', text: uiTemplate("Validation HAC t {0}; the Run publishes no pass line.", [num(t, 2)]), field: 'summary.validation.hacTStatistic' })
+      reasons.push({ tone: 'info', text: uiTemplate("Validation HAC t {0}; the Run publishes no pass line.", [num(t, 2)]), field: 'summary.validation.hacTStatistic', metric: 'hacT' })
     }
     if (!validation.sufficient) {
-      reasons.push({ tone: 'bad', text: uiTemplate("Validation has {0} observations, below the minimum {1}.", [int(validation.observations), int(validation.minimumObservations)]), field: 'summary.validation.sufficient' })
+      reasons.push({ tone: 'bad', text: uiTemplate("Validation has {0} observations, below the minimum {1}.", [int(validation.observations), int(validation.minimumObservations)]), field: 'summary.validation.sufficient', metric: 'observations' })
     }
     if (finite(validation.meanRankIc) && finite(validation.meanPearsonIc) && Math.sign(validation.meanRankIc) !== Math.sign(validation.meanPearsonIc)) {
       reasons.push({
         tone: 'bad',
         text: uiTemplate("Validation mean IC (Pearson {0}) and mean rank IC ({1}) disagree in sign.", [num(validation.meanPearsonIc, 4), num(validation.meanRankIc, 4)]),
         field: 'summary.validation.meanPearsonIc vs meanRankIc',
+        metric: 'meanPearsonIc',
       })
     }
   }
@@ -95,6 +100,7 @@ export function buildVerdict(study: FactorDiagnostics, adjustment: Adjustment | 
         tone: signs.size > 1 ? 'bad' : 'good',
         text: signs.size > 1 ? `Mean rank IC changes sign across splits: ${listing}.` : `Mean rank IC has the same sign in every shown split: ${listing}.`,
         field: `horizonProfile[${primary.horizon}].{split}.meanRankIc`,
+        metric: 'meanRankIc',
       })
     }
   }
@@ -106,24 +112,26 @@ export function buildVerdict(study: FactorDiagnostics, adjustment: Adjustment | 
       tone: positive === folds.length ? 'good' : 'bad',
       text: uiTemplate("{0} of {1} {2} a positive mean rank IC.", [positive, plural(folds.length, 'chronological validation fold'), positive === 1 ? 'has' : 'have']),
       field: 'stability.chronologicalFolds[validation].meanRankIc',
+      metric: 'chronologicalFolds',
     })
   }
 
   if (adjustment) {
     const stats = adjustment.statistics
     if (adjustment.passes === true) {
-      reasons.push({ tone: 'good', text: uiTemplate("The family-wise rule is met{0}.", [stats ? ` (adjusted p ${num(stats.familywiseAdjustedPValue, 3)} over ${plural(stats.uniqueTrials, 'trial')})` : '']), field: 'selectionAdjustment.passes = true' })
+      reasons.push({ tone: 'good', text: uiTemplate("The family-wise rule is met{0}.", [stats ? ` (adjusted p ${num(stats.familywiseAdjustedPValue, 3)} over ${plural(stats.uniqueTrials, 'trial')})` : '']), field: 'selectionAdjustment.passes = true', metric: 'adjustedP' })
     } else if (adjustment.passes === false) {
       reasons.push({
         tone: 'bad',
         text: uiTemplate("The family-wise rule is not met{0}.", [stats ? ` (adjusted p ${num(stats.familywiseAdjustedPValue, 3)} over ${plural(stats.uniqueTrials, 'trial')}; the rule needs ≤ ${num(1 - adjustment.confidenceLevel, 2)})` : '']),
         field: 'selectionAdjustment.passes = false',
+        metric: 'adjustedP',
       })
     } else {
-      reasons.push({ tone: 'info', text: uiTemplate("The family-wise rule has no verdict: {0}", [adjustment.interpretation]), field: 'selectionAdjustment.passes = null' })
+      reasons.push({ tone: 'info', text: uiTemplate("The family-wise rule has no verdict: {0}", [adjustment.interpretation]), field: 'selectionAdjustment.passes = null', metric: 'adjustedP' })
     }
   } else {
-    reasons.push({ tone: 'info', text: uiText("No Session ledger records the trials, so the family-wise rule cannot be applied."), field: 'selectionIntegrity.selectionAdjustment' })
+    reasons.push({ tone: 'info', text: uiText("No Session ledger records the trials, so the family-wise rule cannot be applied."), field: 'selectionIntegrity.selectionAdjustment', metric: 'trialsCounted' })
   }
   return { verdict, reasons }
 }
@@ -196,6 +204,7 @@ function ReasonList({ reasons }: { reasons: Reason[] }) {
             {uiValue(r.text)}{' '}
             <Info label={uiText("Why: the field behind this reason")}>
               <p className="mono verdict-field">{r.field}</p>
+              {r.metric && <MetricExplanation id={r.metric} />}
             </Info>
           </span>
         </li>
@@ -255,12 +264,12 @@ export function FoldTable({ study }: { study: FactorDiagnostics }) {
           <tr>
             <th scope="col">{t('Fold', '分折')}</th>
             <th scope="col">{t('Split', '数据划分')}</th>
-            <th scope="col" className="r">{t('Observations', '观测数')}</th>
-            <th scope="col" className="r">{t('Mean rank IC', '平均秩 IC')}</th>
-            <th scope="col" className="r">{uiText("IC IR")}</th>
-            <th scope="col" className="r">{t('Hit rate', '命中率')}</th>
-            <th scope="col" className="r">{uiText("HAC t")}</th>
-            <th scope="col" className="r">{uiText("HAC p")}</th>
+            <th scope="col" className="r">{t('Observations', '观测数')} <MetricInfo id="observations" align="end" /></th>
+            <th scope="col" className="r">{t('Mean rank IC', '平均秩 IC')} <MetricInfo id="meanRankIc" align="end" /></th>
+            <th scope="col" className="r">{uiText("IC IR")} <MetricInfo id="rankIcir" align="end" /></th>
+            <th scope="col" className="r">{t('Hit rate', '命中率')} <MetricInfo id="rankHitRate" align="end" /></th>
+            <th scope="col" className="r">{uiText("HAC t")} <MetricInfo id="hacT" align="end" /></th>
+            <th scope="col" className="r">{uiText("HAC p")} <MetricInfo id="hacP" align="end" /></th>
           </tr>
         </thead>
         <tbody>
@@ -297,7 +306,7 @@ const VARIANTS = [
   ['equalRankBlend', 'Equal-rank blend'],
 ] as const
 
-const INCREMENTAL: [string, string][] = [
+const INCREMENTAL: [MetricId & ('styleNeutralIcRetention' | 'styleNeutralIcDelta' | 'blendUpliftVsStyle' | 'blendUpliftVsCandidate'), string][] = [
   ['styleNeutralIcRetention', 'Share of candidate IC kept after removing the style'],
   ['styleNeutralIcDelta', 'Style-neutral IC minus candidate IC'],
   ['blendUpliftVsStyle', 'Blend IC minus style IC'],
@@ -356,9 +365,9 @@ export function QualificationBlock({ study }: { study: FactorDiagnostics }) {
             <tr>
               <th scope="col">{t('Variant', '变体')}</th>
               <th scope="col">{t('Split', '数据划分')}</th>
-              <th scope="col" className="r">{t('Mean rank IC', '平均秩 IC')}</th>
-              <th scope="col" className="r">{uiText("HAC t")}</th>
-              <th scope="col" className="r">{uiText("HAC p")}</th>
+              <th scope="col" className="r">{t('Mean rank IC', '平均秩 IC')} <MetricInfo id="meanRankIc" align="end" /></th>
+              <th scope="col" className="r">{uiText("HAC t")} <MetricInfo id="hacT" align="end" /></th>
+              <th scope="col" className="r">{uiText("HAC p")} <MetricInfo id="hacP" align="end" /></th>
               <th scope="col">{t('Against the line', '是否达到阈值')}</th>
             </tr>
           </thead>
@@ -399,7 +408,7 @@ export function QualificationBlock({ study }: { study: FactorDiagnostics }) {
         <dl className="kv">
           {INCREMENTAL.map(([key, label]) => (
             <div key={key} className="kv-row">
-              <dt>{uiValue(label)}</dt>
+              <dt>{uiValue(label)} <MetricInfo id={key} label={uiValue(label)} /></dt>
               <dd className="mono">{num(q.validation?.incremental[key], 4)}</dd>
             </div>
           ))}
@@ -428,11 +437,11 @@ export function HorizonTable({ study }: { study: FactorDiagnostics }) {
           <tr>
             <th scope="col">{t('Horizon', '预测周期')}</th>
             <th scope="col">{t('Split', '数据划分')}</th>
-            <th scope="col" className="r">{t('Observations', '观测数')}</th>
-            <th scope="col" className="r">{t('Mean rank IC', '平均秩 IC')}</th>
-            <th scope="col" className="r">{t('Mean Pearson IC', '平均 Pearson IC')}</th>
-            <th scope="col" className="r">{uiText("HAC t")}</th>
-            <th scope="col" className="r">{uiText("HAC p")}</th>
+            <th scope="col" className="r">{t('Observations', '观测数')} <MetricInfo id="observations" align="end" /></th>
+            <th scope="col" className="r">{t('Mean rank IC', '平均秩 IC')} <MetricInfo id="meanRankIc" align="end" /></th>
+            <th scope="col" className="r">{t('Mean Pearson IC', '平均 Pearson IC')} <MetricInfo id="meanPearsonIc" align="end" /></th>
+            <th scope="col" className="r">{uiText("HAC t")} <MetricInfo id="hacT" align="end" /></th>
+            <th scope="col" className="r">{uiText("HAC p")} <MetricInfo id="hacP" align="end" /></th>
           </tr>
         </thead>
         <tbody>
@@ -487,10 +496,10 @@ export function StabilityTables({ study }: { study: FactorDiagnostics }) {
               <tr>
                 <th scope="col">{uiText("Regime")}</th>
                 <th scope="col">{uiText("Split")}</th>
-                <th scope="col" className="r">{uiText("Observations")}</th>
-                <th scope="col" className="r">{uiText("Mean rank IC")}</th>
-                <th scope="col" className="r">{uiText("HAC t")}</th>
-                <th scope="col" className="r">{uiText("HAC p")}</th>
+                <th scope="col" className="r">{uiText("Observations")} <MetricInfo id="observations" align="end" /></th>
+                <th scope="col" className="r">{uiText("Mean rank IC")} <MetricInfo id="meanRankIc" align="end" /></th>
+                <th scope="col" className="r">{uiText("HAC t")} <MetricInfo id="hacT" align="end" /></th>
+                <th scope="col" className="r">{uiText("HAC p")} <MetricInfo id="hacP" align="end" /></th>
               </tr>
             </thead>
             <tbody>
@@ -521,8 +530,8 @@ export function StabilityTables({ study }: { study: FactorDiagnostics }) {
               <tr>
                 <th scope="col">{uiText("Asset")}</th>
                 <th scope="col">{uiText("Split")}</th>
-                <th scope="col" className="r">{uiText("Observations")}</th>
-                <th scope="col" className="r">{uiText("Rank correlation")}</th>
+                <th scope="col" className="r">{uiText("Observations")} <MetricInfo id="observations" align="end" /></th>
+                <th scope="col" className="r">{uiText("Rank correlation")} <MetricInfo id="assetRankCorrelation" align="end" /></th>
               </tr>
             </thead>
             <tbody>
@@ -548,9 +557,9 @@ export function StabilityTables({ study }: { study: FactorDiagnostics }) {
               <tr>
                 <th scope="col">{uiText("Style")}</th>
                 <th scope="col">{uiText("Split")}</th>
-                <th scope="col" className="r">{uiText("Observations")}</th>
-                <th scope="col" className="r">{uiText("Mean rank correlation")}</th>
-                <th scope="col" className="r">{uiText("Mean |rank correlation|")}</th>
+                <th scope="col" className="r">{uiText("Observations")} <MetricInfo id="observations" align="end" /></th>
+                <th scope="col" className="r">{uiText("Mean rank correlation")} <MetricInfo id="styleMeanRankCorrelation" align="end" /></th>
+                <th scope="col" className="r">{uiText("Mean |rank correlation|")} <MetricInfo id="styleMeanAbsRankCorrelation" align="end" /></th>
               </tr>
             </thead>
             <tbody>

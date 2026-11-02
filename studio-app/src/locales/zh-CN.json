@@ -2282,5 +2282,13 @@
   "Back": "返回",
   "Project id": "项目标识",
   "Factor name": "因子名称",
-  "Unknown": "未知"
+  "Unknown": "未知",
+  "Whether each split's mean IC is distinguishable from zero, using a Newey–West HAC standard error (maximum lag 5 for cross-sectional scoring, the forward horizon for single-asset temporal scoring).": "使用 Newey–West HAC 标准误判断各数据划分的平均 IC 是否显著异于零（横截面评分的最大滞后为 5，单资产时间序列评分为前瞻周期）。",
+  "How to read": "怎么读",
+  "How AutoQuant computes it": "AutoQuant 的计算方式",
+  "Caveat": "注意",
+  "Compare:": "参考：",
+  "Wording is AutoQuant’s own.": "释义为 AutoQuant 自行撰写。",
+  "What these numbers mean": "这些数字的含义",
+  "How to read this answer": "如何阅读这个结论"
 }

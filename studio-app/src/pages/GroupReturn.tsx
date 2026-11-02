@@ -181,12 +181,12 @@ const SPREAD_INFO = (basis: string | undefined) => (
 )
 
 const spreadTiles = (s: FactorSpreadSplit): MetricGroup['tiles'] => [
-  { label: uiText("Total return"), value: spct(s.totalReturn, 1) },
-  { label: uiText("Max drawdown"), value: spct(s.maximumDrawdown, 1) },
-  { label: uiText("Sharpe per bar"), value: num(s.sharpePerBar, 3) },
-  { label: uiText("Hit rate"), value: pct(s.hitRate, 1) },
-  { label: uiText("Mean per bar"), value: spct(s.meanPerBar, 3) },
-  { label: uiText("Observations"), value: typeof s.observations === 'number' ? int(s.observations) : '—' },
+  { label: uiText("Total return"), value: spct(s.totalReturn, 1), metric: 'spreadTotalReturn' },
+  { label: uiText("Max drawdown"), value: spct(s.maximumDrawdown, 1), metric: 'spreadMaxDrawdown' },
+  { label: uiText("Sharpe per bar"), value: num(s.sharpePerBar, 3), metric: 'spreadSharpePerBar' },
+  { label: uiText("Hit rate"), value: pct(s.hitRate, 1), metric: 'spreadHitRate' },
+  { label: uiText("Mean per bar"), value: spct(s.meanPerBar, 3), metric: 'spreadMeanPerBar' },
+  { label: uiText("Observations"), value: typeof s.observations === 'number' ? int(s.observations) : '—', metric: 'spreadObservations' },
 ]
 
 /** Validation long-short groups, plus the test group only when the test split is visible (the same rule as the core metrics). Values arrive from the Core summary; nothing is re-derived. */
@@ -236,7 +236,7 @@ export function FactorHero({ study, minHeight = 260 }: { study: FactorDiagnostic
     const cum = study.quantilePath?.cumulative
     const desc = `Compounded growth multiple of the low, middle and high factor groups and of the long-short spread (high minus low), starting near 1.0. ${cum?.basis ?? ''} ${testShown ? `${points.length} of ${int(cum?.totalRows ?? points.length)}` : points.length} bars are drawn. ${testShown ? '' : TEST_HIDDEN_NOTE + '.'}`.trim()
     return (
-      <><StatChips label={uiText("Long-short headline")} scope="Long-short · validation · development" stats={(study.spreadSummary?.splits ?? []).filter(s => s.split === "validation").flatMap(s => [{ label: "Total return", value: signedNumber(s.totalReturn == null ? null : s.totalReturn * 100, 1, "%"), signed: true }, { label: "Max drawdown", value: signedNumber(s.maximumDrawdown == null ? null : s.maximumDrawdown * 100, 1, "%"), signed: true }])} /><FigureCard label={uiText("FIG A")} subtitle={uiText("Published group growth, before costs.")} caption={groupReturnCaption(study)} development
+      <><StatChips label={uiText("Long-short headline")} scope="Long-short · validation · development" stats={(study.spreadSummary?.splits ?? []).filter(s => s.split === "validation").flatMap(s => [{ label: "Total return", value: signedNumber(s.totalReturn == null ? null : s.totalReturn * 100, 1, "%"), signed: true, metric: 'spreadTotalReturn' as const }, { label: "Max drawdown", value: signedNumber(s.maximumDrawdown == null ? null : s.maximumDrawdown * 100, 1, "%"), signed: true, metric: 'spreadMaxDrawdown' as const }])} /><FigureCard label={uiText("FIG A")} subtitle={uiText("Published group growth, before costs.")} caption={groupReturnCaption(study)} development
         title={uiText("Group cumulative return")}
         info={
           <>
