@@ -22,6 +22,14 @@ export type Route =
 
 const EVENT_STUDY_PATH = /^\/projects\/([^/]+)\/event-study\/?$/
 
+/** Views addressed by name alone, and views that also need a Project `id`. */
+const BARE_VIEWS = ['data-intake', 'assistant', 'factors', 'runs', 'strategies', 'attention', 'settings'] as const
+const ID_VIEWS = ['project', 'portfolio', 'bookrisk', 'bookstress', 'allocation', 'rl'] as const
+type BareView = (typeof BARE_VIEWS)[number]
+type IdView = (typeof ID_VIEWS)[number]
+const isBare = (view: string | null): view is BareView => (BARE_VIEWS as readonly string[]).includes(view ?? '')
+const isIdView = (view: string | null): view is IdView => (ID_VIEWS as readonly string[]).includes(view ?? '')
+
 export function parseRoute(search: string, pathname = '/'): Route {
   const study = EVENT_STUDY_PATH.exec(pathname)
   if (study) {
@@ -33,20 +41,10 @@ export function parseRoute(search: string, pathname = '/'): Route {
   }
   const p = new URLSearchParams(search)
   const id = p.get('id')
-  if (p.get('view') === 'data-intake') return { view: 'data-intake' }
-  if (p.get('view') === 'assistant') return { view: 'assistant' }
-  if (p.get('view') === 'project' && id) return { view: 'project', id }
-  if (p.get('view') === 'portfolio' && id) return { view: 'portfolio', id }
-  if (p.get('view') === 'factors') return { view: 'factors' }
-  if (p.get('view') === 'runs') return { view: 'runs' }
-  if (p.get('view') === 'strategies') return { view: 'strategies' }
-  if (p.get('view') === 'attention') return { view: 'attention' }
-  if (p.get('view') === 'settings') return { view: 'settings' }
-  if (p.get('view') === 'tuning') return id ? { view: 'tuning', id } : { view: 'tuning' }
-  if (p.get('view') === 'bookrisk' && id) return { view: 'bookrisk', id }
-  if (p.get('view') === 'bookstress' && id) return { view: 'bookstress', id }
-  if (p.get('view') === 'allocation' && id) return { view: 'allocation', id }
-  if (p.get('view') === 'rl' && id) return { view: 'rl', id }
+  const view = p.get('view')
+  if (isBare(view)) return { view }
+  if (isIdView(view) && id) return { view, id }
+  if (view === 'tuning') return id ? { view: 'tuning', id } : { view: 'tuning' }
   const projectParam = p.get('project')
   if (p.get('view') === 'run' && projectParam && id) return { view: 'run', id: projectParam, run: id }
   if (p.get('view') === 'compare' && projectParam) {
