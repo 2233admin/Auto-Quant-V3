@@ -1,6 +1,6 @@
 import { translate, uiTemplate, uiText, uiValue, useLanguage } from '../i18n'
 import { useEffect, useState, type ReactNode } from 'react'
-import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RunRow } from '../api'
+import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RankSummary, type RunRow } from '../api'
 import { Glyph } from '../design/icons'
 import { signedNumber } from '../design/signConvention'
 import { num, plural, when } from '../format'
@@ -27,6 +27,19 @@ import './factor.css'
 import { DiagnosticText } from '../components/DiagnosticText'
 
 type Check = { id: string; group: string; state: 'pass' | 'fail' | 'info'; label: string; detail: ReactNode }
+
+/** The Factor page's headline chips: validation numbers only, each tied to its catalogue definition. */
+export function factorStats(validation: RankSummary | undefined, horizon: number, adjustment: ReturnType<typeof adjustmentOf>): Stat[] {
+  if (!validation) return []
+  const adjP = adjustment?.statistics?.familywiseAdjustedPValue
+  return [
+    { label: uiText("Rank IC"), value: signedNumber(validation.meanRankIc, 4), signed: true, focal: true, hint: uiTemplate("Validation split, {0}-bar horizon", [horizon]), metric: 'meanRankIc' },
+    { label: uiText("HAC t"), value: num(validation.hacTStatistic, 2), hint: uiText("Validation split, HAC standard error"), metric: 'hacT' },
+    ...(typeof adjP === 'number' && Number.isFinite(adjP)
+      ? [{ label: uiText("Adj. p"), value: num(adjP, 3), hint: uiTemplate("Family-wise adjusted p over {0} unique trials, from the Session ledger (not a property of this Run alone)", [adjustment?.statistics?.uniqueTrials ?? '?']), metric: 'adjustedP' as const }]
+      : []),
+  ]
+}
 
 const STATE_WORD = { pass: 'Pass', fail: 'Fail', info: 'Not a pass/fail' } as const
 
@@ -193,7 +206,7 @@ function Limits({ study, frontier }: { study: FactorDiagnostics; frontier: Front
           <ul className="bullets">
             <li>{uiText("How well the factor ranks next-")}{study.protocol.primaryHorizon}{uiText("-bar returns ")}<em>{uiText("over time")}</em>{uiText(" for")}{' '}
               <span className="mono" translate="no">{assets.join(', ') || 'the prediction asset'}</span>{uiText(", split into train, validation and test windows.")}</li>
-            <li>{uiText("Whether each split's mean IC is distinguishable from zero, using a HAC standard error whose maximum lag equals the forward horizon.")}</li>
+            <li>{uiText("Whether each split's mean IC is distinguishable from zero, using a Newey–West HAC standard error (maximum lag 5 for cross-sectional scoring, the forward horizon for single-asset temporal scoring).")}</li>
             <li>{uiText("The selection-adjusted view for the trials the Project ledger records.")}</li>
           </ul>
         </div>
@@ -299,16 +312,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
     { id: 'provenance', label: uiText("Provenance"), badge: failing ? 'run error' : undefined },
   ]
   const [paramsOpen, setParamsOpen] = useState(false)
-  const adjP = adjustment?.statistics?.familywiseAdjustedPValue
-  const stats: Stat[] = validation
-    ? [
-        { label: uiText("Rank IC"), value: signedNumber(validation.meanRankIc, 4), signed: true, focal: true, hint: uiTemplate("Validation split, {0}-bar horizon", [study.protocol.primaryHorizon]) },
-        { label: uiText("HAC t"), value: num(validation.hacTStatistic, 2), hint: uiText("Validation split, HAC standard error") },
-        ...(typeof adjP === 'number' && Number.isFinite(adjP)
-          ? [{ label: uiText("Adj. p"), value: num(adjP, 3), hint: uiTemplate("Family-wise adjusted p over {0} unique trials, from the Session ledger (not a property of this Run alone)", [adjustment?.statistics?.uniqueTrials ?? '?']) }]
-          : []),
-      ]
-    : []
+  const stats = factorStats(validation, study.protocol.primaryHorizon, adjustment)
   const duration = typeof runRow?.durationMs === 'number' ? `${(runRow.durationMs / 1000).toFixed(1)} s` : undefined
   // Which candidate this Run came from: the candidate source hash the Run publishes, and its trial number in the Session ledger (omitted when the ledger has no Experiment for this Run).
   const trialOfRun = project.sessions.flatMap((x) => x.experiments ?? []).find((e) => e.runId === study.run.id)?.sequence

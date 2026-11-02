@@ -13,6 +13,7 @@ import { FactorHero, spreadGroups } from './GroupReturn'
 import { signedNumber } from '../design/signConvention'
 import { FactorComparisons } from './FactorComparisons'
 import { TEST_HIDDEN_NOTE } from './testGate'
+import { readingOrder } from '../metrics/catalogue'
 
 export type IdeaVerdictState = 'Supported' | 'Inconclusive' | 'Could not be tested'
 
@@ -81,8 +82,8 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
           {runs.map((r, i) => <option key={r.id} value={r.id}>{r.startedAt?.replace('T', ' ').slice(0, 19) ?? r.id} · {r.id === run?.id ? word : r.status === 'succeeded' ? uiText("Completed") : uiText("Could not be tested")}{uiText(" · Trial ")}{runs.length - i}</option>)}
         </select>
         <StatChips label={uiText("Run facts")} scope="development" stats={[
-          ...(showEvidence && !pending && study.summary.validation ? [{ label: uiText("Rank IC"), value: signedNumber(study.summary.validation.meanRankIc, 4), signed: true, focal: true }] : []),
-          { label: uiText("Trials"), value: String(count) },
+          ...(showEvidence && !pending && study.summary.validation ? [{ label: uiText("Rank IC"), value: signedNumber(study.summary.validation.meanRankIc, 4), signed: true, focal: true, metric: 'meanRankIc' as const }] : []),
+          { label: uiText("Trials"), value: String(count), metric: 'trialsCounted' },
         ]} />
       </div>
       <div className="idea-action-chips" data-measure="chips"><ActionRow align="start" secondary={[
@@ -95,6 +96,9 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
       {pending ? <div className="idea-empty"><h2>{uiText("Analysis in progress")}</h2><p>{busy || uiText("The fixed Judge is running.")}</p><p className="small muted">{uiText("Preflight → baseline or candidate Run → validation evidence. Trial records are retained even if execution fails.")}</p><p className="small">{uiText("The original question and verdict wording are fixed for this attempt.")}</p></div>
       : !hasAttempt ? <div className="idea-empty"><h2>{uiText("Not tested")}</h2><p>{uiText("Define the factor on the left, then run one bounded analysis.")}</p><p className="small muted">{uiText("You will confirm the exact command and trial count before execution. Inconclusive is a valid stopping point.")}</p></div>
       : <><VerdictBar tone={status === 'Supported' ? 'ok' : status === 'Could not be tested' ? 'bad' : 'warn'} word={status} detail={sentence}>{status === 'Supported' ? uiText("Development evidence only") : status === 'Inconclusive' ? uiText("Not established, not disproved") : uiText("No scientific conclusion")}</VerdictBar>
+        <details className="idea-reading" data-measure="reading"><summary>{uiText("How to read this answer")}</summary>
+          <ol className="reading-order">{readingOrder({ range: validation && !failedJob && !failedRun ? range : null, horizon: study?.protocol.primaryHorizon ?? '—', executions: count, sources: family?.uniqueSourceTrials ?? count, adjustment: adjustment?.passes === true ? 'passes' : adjustment?.passes === false ? 'fails' : 'none' }).map((step, i) => <li key={i}>{step}</li>)}</ol>
+        </details>
         {showEvidence && <><FactorHero key={study.run.id} study={study} minHeight={200} /><section className="idea-core-metrics" data-measure="metrics" aria-label={uiText("Core metrics")}><h2 className="set-title">{uiText("Core metrics")}</h2><MetricGrid groups={ideaMetricGroups(study, project)} /><p className="small muted idea-conclusion">{sentence}</p></section><FactorComparisons study={study} runs={runs} projectId={project.id} /></>}
         {study && status === 'Could not be tested' && !failedJob && !failedRun && <p className="small">{study.factorQualification.diagnosis?.explanation ?? uiText("Core publishes no applicable qualification protocol.")}</p>}
         {(failedJob || failedRun) && <p className="small idea-failure">{failedRun ? run.summary : failure}</p>}

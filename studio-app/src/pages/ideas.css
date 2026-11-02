@@ -180,3 +180,6 @@
 .idea-workbench .wb-pane[aria-label='Factor idea editor'] .wb-pane-actions .abtn { padding-inline: 7px; }
 .idea-workbench .wb-pane[aria-label='Factor idea editor'] .wb-tab { padding-inline: 6px; }
 @media (max-width: 999px) { .idea-source { min-height: 350px; }.idea-source .cf-area { min-height: 300px; } }
+.idea-reading > summary { color: var(--muted); font: var(--type-small); cursor: pointer; }
+.idea-reading > .reading-order { margin-top: var(--space-2); max-width: 72ch; }
+.idea-reading[open] { margin-bottom: var(--space-3); }

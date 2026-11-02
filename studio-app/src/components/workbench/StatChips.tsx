@@ -2,10 +2,12 @@ import { uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 import { formattedSignRole } from '../../design/signConvention'
 import { AnimatedValue } from '../motion/AnimatedValue'
+import { MetricInfo } from '../MetricInfo'
+import type { MetricId } from '../../metrics/catalogue'
 import './workbench.css'
 
-/** `hint` is the tooltip: where the number comes from. */
-export type Stat = { label: string; value: string; hint?: string; signed?: boolean; focal?: boolean }
+/** `hint` is the tooltip: where the number comes from. `metric` adds the catalogue "?" (the hint becomes its page context). */
+export type Stat = { label: string; value: string; hint?: string; signed?: boolean; focal?: boolean; metric?: MetricId }
 
 /**
  * The headline numbers of the Run on show, as a compact inline row (label, mono value) that sits beside the Run selector.
@@ -18,7 +20,7 @@ export function StatChips({ stats, label, scope }: { stats: Stat[]; label: strin
       {scope && <span className="wb-stats-scope faint">{uiValue(scope)}</span>}
       {stats.map((s) => (
         <div key={s.label} className="wb-stat" title={s.hint ? `${s.label}: ${s.hint}` : undefined}>
-          <dt>{uiValue(s.label)}</dt>
+          <dt>{uiValue(s.label)}{s.metric && <> <MetricInfo id={s.metric} label={uiValue(s.label)} extra={s.hint} align="end" /></>}</dt>
           <dd className={s.focal ? "type-value-focal" : "type-value"} data-sign={s.signed ? formattedSignRole(s.value) : undefined}><AnimatedValue value={s.value} /></dd>
         </div>
       ))}

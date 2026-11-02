@@ -2,6 +2,8 @@ import { uiTemplate, uiText, uiValue } from '../i18n'
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../design/icons'
 import { Info } from './Info'
+import { MetricInfo } from './MetricInfo'
+import type { MetricId } from '../metrics/catalogue'
 import { AnimatedValue } from './motion/AnimatedValue'
 import type { Tone } from './MetricTile'
 import './compactTile.css'
@@ -13,7 +15,8 @@ const TONE: Record<Exclude<Tone, 'neutral'>, { glyph: GlyphKind; word: string; s
 
 /**
  * One published number on one row (about 34px): label left, mono value right-aligned. Tone is shown by glyph and word,
- * never colour alone. `note` and `delta` are short and sit beside the value; `info` opens a popover with the definition.
+ * never colour alone. `note` and `delta` are short and sit beside the value; `metric` opens the catalogue definition (with
+ * `info` as page context), otherwise `info` alone opens a popover.
  * No statistics are computed here.
  */
 export function CompactTile({
@@ -24,6 +27,7 @@ export function CompactTile({
   tone = 'neutral',
   toneReason,
   info,
+  metric,
 }: {
   label: string
   value: string
@@ -32,13 +36,15 @@ export function CompactTile({
   tone?: Tone
   toneReason?: string
   info?: ReactNode
+  /** Catalogue id: the "?" then opens the shared definition, with `info` as this page's context. */
+  metric?: MetricId
 }) {
   const t = tone === 'neutral' ? null : TONE[tone]
   return (
     <div className="ct">
       <dt className="ct-label">
         <span className="ct-label-text">{uiValue(label)}</span>
-        {info && <Info label={uiTemplate("{0}: definition", [label])}>{info}</Info>}
+        {metric ? <MetricInfo id={metric} label={label} extra={info} /> : info && <Info label={uiTemplate("{0}: definition", [label])}>{info}</Info>}
       </dt>
       <dd className="ct-right">
         {t && (
