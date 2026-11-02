@@ -577,6 +577,34 @@ threshold; negative return/risk evidence is visibly adverse. Once the
 delegated Session exists, its established `request → governed evidence →
 decision-support report` projection takes precedence over an older Run Report.
 
+### Metric definitions and reading order
+
+Every number on the Factor workbench and answer card, the Factor evidence tabs,
+the Run page, the Portfolio page, the library cards and the headline stat
+chips has a "?" that opens its definition in the shared `Info` popover. The
+definitions live in one bilingual catalogue,
+`studio-app/src/metrics/catalogue.ts`, keyed by stable metric id: a short
+label, a one-sentence definition, how to read it (direction, typical ranges,
+caveats), how AutoQuant Core computes it, and optional reference libraries
+(Alphalens, JoinQuant `jqfactor_analyzer`). The wording is AutoQuant's own and
+states where Core differs from those libraries, for example the Newey–West
+lag of 5 in cross-sectional mode, three quantile groups instead of five, and
+per-bar rather than annualised long-short and IC IR figures. The popover adds
+the page's own context (protocol semantics, minimum observations, benchmark
+value) beneath the static definition. Catalogue text is static, so an
+explanation never quotes a Run value and cannot reveal a hidden test number.
+Verdict reasons carry the definition of the number they quote.
+
+The Factor answer card has a collapsed "How to read this answer" disclosure
+with a fixed order: the verdict word, what was tested and on which split, the
+focal numbers, trials and the family-wise adjustment, and what is hidden and
+why. It uses only values the card already shows.
+
+`node studio-app/tests/run-idea-answer.cjs` renders the main pages in English
+and Chinese and fails when a rendered metric tile, stat chip, numeric table
+column or metric row lacks a catalogue entry with complete English and Chinese
+text, or when a catalogue entry is unused.
+
 ## Machine-readable snapshot
 
 Agents and scripts can inspect the same normalized observation without

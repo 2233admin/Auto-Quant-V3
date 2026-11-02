@@ -1630,7 +1630,7 @@
   "What would you like to test?": "你想检验什么？",
   "Where adaptive value stops.": "自适应增益停止于何处。",
   "Where the active return appears": "超额收益出现在哪里",
-  "Whether each split's mean IC is distinguishable from zero, using a HAC standard error whose maximum lag equals the forward horizon.": "使用最大滞后等于前瞻周期的 HAC 标准误，判断各数据划分的平均 IC 是否显著异于零。",
+  "Whether each split's mean IC is distinguishable from zero, using a Newey–West HAC standard error (maximum lag 5 for cross-sectional scoring, the forward horizon for single-asset temporal scoring).": "使用 Newey–West HAC 标准误判断各数据划分的平均 IC 是否显著异于零（横截面评分的最大滞后为 5，单资产时间序列评分为前瞻周期）。",
   "Whiskers are ±1.96 HAC standard errors, recovered as |mean IC / HAC t|. The HAC maximum lag equals each forward horizon, so overlapping forward returns are accounted for; a bar with no whisker has no usable t statistic. Only the": "误差线为 ±1.96 倍 HAC 标准误，由 |平均 IC / HAC t| 还原。HAC 最大滞后等于各前瞻周期，以处理前瞻收益重叠；没有误差线的条形没有可用的 t 统计量。仅",
   "Whole sampled path (all splits)": "完整采样路径（全部数据划分）",
   "Why test is shown but not used for selection": "为何显示测试集但不用于选择",
@@ -2172,5 +2172,12 @@
   "FIG A": "图 A",
   "FIG B": "图 B",
   "FIG C": "图 C",
-  "FIG D": "图 D"
+  "FIG D": "图 D",
+  "How to read": "怎么读",
+  "How AutoQuant computes it": "AutoQuant 的计算方式",
+  "Caveat": "注意",
+  "Compare:": "参考：",
+  "Wording is AutoQuant’s own.": "释义为 AutoQuant 自行撰写。",
+  "What these numbers mean": "这些数字的含义",
+  "How to read this answer": "如何阅读这个结论"
 }

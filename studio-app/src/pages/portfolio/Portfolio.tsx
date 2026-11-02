@@ -17,6 +17,8 @@ import { when } from '../../format'
 import { RunSelect } from '../run/RunSelect'
 import { otherLaneOf } from '../run/runTypes'
 import './portfolio.css'
+import { MetricInfo } from '../../components/MetricInfo'
+import type { MetricId } from '../../metrics/catalogue'
 import { Empty } from '../../components/States'
 
 type Split = 'validation' | 'test'
@@ -35,19 +37,19 @@ function verdictOf(pf: PortfolioDiagnostics): Verdict {
   return stage && FAIL_STAGES.has(stage) ? 'fail' : 'inconclusive'
 }
 
-type Metric = { key: keyof PerfSummary; label: string; kind: 'pct' | 'num'; vsBench: boolean; gross: boolean }
+type Metric = { key: keyof PerfSummary; metric: MetricId; label: string; kind: 'pct' | 'num'; vsBench: boolean; gross: boolean }
 const METRICS: Metric[] = [
-  { key: 'totalReturn', get label() { return uiText("Net total return") }, kind: 'pct', vsBench: true, gross: true },
-  { key: 'annualReturn', get label() { return uiText("Net annualized return") }, kind: 'pct', vsBench: true, gross: true },
-  { key: 'sharpe', get label() { return uiText("Net Sharpe") }, kind: 'num', vsBench: true, gross: true },
-  { key: 'sortino', get label() { return uiText("Net Sortino") }, kind: 'num', vsBench: true, gross: true },
-  { key: 'maximumDrawdown', get label() { return uiText("Max drawdown") }, kind: 'pct', vsBench: true, gross: true },
-  { key: 'calmar', get label() { return uiText("Calmar ratio") }, kind: 'num', vsBench: true, gross: false },
-  { key: 'annualVolatility', get label() { return uiText("Annualized volatility") }, kind: 'pct', vsBench: true, gross: false },
-  { key: 'expectedShortfall95', get label() { return uiText("Expected shortfall 95%") }, kind: 'pct', vsBench: true, gross: false },
-  { key: 'positiveRate', get label() { return uiText("Positive-day rate") }, kind: 'pct', vsBench: true, gross: false },
-  { key: 'activeAnnualReturn', get label() { return uiText("Active return vs benchmark") }, kind: 'pct', vsBench: false, gross: false },
-  { key: 'informationRatio', get label() { return uiText("Information ratio") }, kind: 'num', vsBench: false, gross: false },
+  { key: 'totalReturn', metric: 'netTotalReturn', get label() { return uiText("Net total return") }, kind: 'pct', vsBench: true, gross: true },
+  { key: 'annualReturn', metric: 'netAnnualReturn', get label() { return uiText("Net annualized return") }, kind: 'pct', vsBench: true, gross: true },
+  { key: 'sharpe', metric: 'netSharpe', get label() { return uiText("Net Sharpe") }, kind: 'num', vsBench: true, gross: true },
+  { key: 'sortino', metric: 'netSortino', get label() { return uiText("Net Sortino") }, kind: 'num', vsBench: true, gross: true },
+  { key: 'maximumDrawdown', metric: 'maxDrawdown', get label() { return uiText("Max drawdown") }, kind: 'pct', vsBench: true, gross: true },
+  { key: 'calmar', metric: 'calmar', get label() { return uiText("Calmar ratio") }, kind: 'num', vsBench: true, gross: false },
+  { key: 'annualVolatility', metric: 'annualVolatility', get label() { return uiText("Annualized volatility") }, kind: 'pct', vsBench: true, gross: false },
+  { key: 'expectedShortfall95', metric: 'expectedShortfall95', get label() { return uiText("Expected shortfall 95%") }, kind: 'pct', vsBench: true, gross: false },
+  { key: 'positiveRate', metric: 'positiveRate', get label() { return uiText("Positive-day rate") }, kind: 'pct', vsBench: true, gross: false },
+  { key: 'activeAnnualReturn', metric: 'activeReturn', get label() { return uiText("Active return vs benchmark") }, kind: 'pct', vsBench: false, gross: false },
+  { key: 'informationRatio', metric: 'informationRatio', get label() { return uiText("Information ratio") }, kind: 'num', vsBench: false, gross: false },
 ]
 
 const SHORT: Record<string, string> = {
@@ -67,7 +69,7 @@ const SHORT: Record<string, string> = {
 const fmtMetric = (m: Metric, x: number | null | undefined) => (m.kind === 'pct' ? (m.key === 'maximumDrawdown' || m.key.endsWith('Return') ? sp(x) : up(x, 1)) : fn(x))
 
 /** The published headline metrics (Calmar and expected shortfall included) as compact tiles; the benchmark value is in each tile's "?". */
-function metricGroups(pf: PortfolioDiagnostics, split: Split): MetricGroup[] | null {
+export function portfolioMetricGroups(pf: PortfolioDiagnostics, split: Split): MetricGroup[] | null {
   const v = pf.strategyViability?.[split]
   if (!v?.net) return null
   const f = v.friction
@@ -83,17 +85,29 @@ function metricGroups(pf: PortfolioDiagnostics, split: Split): MetricGroup[] | n
             label: SHORT[m.key] ?? m.label,
             value: fmtMetric(m, v.net?.[m.key]),
             info: m.vsBench && finite(bench) ? <p>{uiValue(m.label)}{uiText(". Benchmark value: ")}{fmtMetric(m, bench)}.</p> : m.label,
+            metric: m.metric,
           }
         }),
-        { label: uiText("1-way turnover / yr"), value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—', info: 'Annualized one-way turnover: traded notional per year, one way.' },
-        { label: uiText("Total cost drag"), value: up(f?.totalCostDrag, 2), info: `Total cost drag at ${finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade.` },
+        { label: uiText("1-way turnover / yr"), value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—', info: 'Annualized one-way turnover: traded notional per year, one way.', metric: 'turnover' },
+        { label: uiText("Total cost drag"), value: up(f?.totalCostDrag, 2), info: `Total cost drag at ${finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade.`, metric: 'costDrag' },
       ],
     },
   ]
 }
 
+/** The headline chips of the shown split, each tied to its catalogue definition. */
+export function portfolioStats(netSplit: PerfSummary | null | undefined, effective: Split): Stat[] {
+  return netSplit
+    ? [
+        { label: uiText("Net Sharpe"), value: signedNumber(netSplit.sharpe), signed: true, hint: uiTemplate("{0} split, after costs", [effective]), metric: 'netSharpe' },
+        { label: uiText("Net return"), value: signedNumber(netSplit.totalReturn == null ? null : netSplit.totalReturn * 100, 2, '%'), signed: true, focal: true, hint: uiTemplate("Total return, {0} split, after costs", [effective]), metric: 'netTotalReturn' },
+        { label: uiText("Max drawdown"), value: signedNumber(netSplit.maximumDrawdown == null ? null : netSplit.maximumDrawdown * 100, 2, '%'), signed: true, hint: uiTemplate("{0} split", [effective]), metric: 'maxDrawdown' },
+      ]
+    : []
+}
+
 /** Gross, net and benchmark side by side for every headline metric, behind a disclosure. */
-function MetricDetail({ pf, split }: { pf: PortfolioDiagnostics; split: Split }) {
+export function MetricDetail({ pf, split }: { pf: PortfolioDiagnostics; split: Split }) {
   const v = pf.strategyViability?.[split]
   if (!v?.net) return <p><NA why={`strategyViability.${split}.net is not in the payload`} /></p>
   return (
@@ -117,7 +131,7 @@ function MetricDetail({ pf, split }: { pf: PortfolioDiagnostics; split: Split })
             const delta = m.vsBench && finite(net) && finite(bench) ? net - bench : null
             return (
               <tr key={m.key}>
-                <th scope="row">{uiValue(m.label)}</th>
+                <th scope="row">{uiValue(m.label)} <MetricInfo id={m.metric} label={uiValue(m.label)} /></th>
                 <td className="r mono">{fmtMetric(m, net)}</td>
                 <td className="r mono">{m.vsBench ? (finite(bench) ? fmtMetric(m, bench) : '—') : uiText("by definition")}</td>
                 <td className="r mono">{delta === null ? '—' : m.kind === 'pct' ? uiTemplate("{0}{1} pts", [delta >= 0 ? '+' : '−', fn(Math.abs(delta) * 100, 2)]) : `${delta >= 0 ? '+' : '−'}${fn(Math.abs(delta), 2)}`}</td>
@@ -228,7 +242,7 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
       : 'No validation net Sharpe is published for this Run.'
 
   const portfolioRuns = project.runs.filter((r) => otherLaneOf(project, r.id)?.view === 'portfolio')
-  const groups = metricGroups(pf, effective)
+  const groups = portfolioMetricGroups(pf, effective)
   const win = (k: 'train' | 'validation' | 'test') => {
     const w = pf.selection?.splits?.[k]
     return w ? `${day(w.start)} to ${day(w.end)}` : '—'
@@ -259,13 +273,7 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
   ]
 
   const netSplit = pf.strategyViability?.[effective]?.net
-  const stats: Stat[] = netSplit
-    ? [
-        { label: uiText("Net Sharpe"), value: signedNumber(netSplit.sharpe), signed: true, hint: uiTemplate("{0} split, after costs", [effective]) },
-        { label: uiText("Net return"), value: signedNumber(netSplit.totalReturn == null ? null : netSplit.totalReturn * 100, 2, '%'), signed: true, focal: true, hint: uiTemplate("Total return, {0} split, after costs", [effective]) },
-        { label: uiText("Max drawdown"), value: signedNumber(netSplit.maximumDrawdown == null ? null : netSplit.maximumDrawdown * 100, 2, '%'), signed: true, hint: uiTemplate("{0} split", [effective]) },
-      ]
-    : []
+  const stats = portfolioStats(netSplit, effective)
   const runRow = project.runs.find((r) => r.id === run?.id)
   const duration = typeof runRow?.durationMs === 'number' ? `${(runRow.durationMs / 1000).toFixed(1)} s` : undefined
   const exportButton: ActionButton = testVisible
