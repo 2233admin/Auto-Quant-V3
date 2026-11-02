@@ -20,6 +20,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/strategy-workbench]] | Open Strategy evidence tabs and offer only Core-supported, confirmed Factor-to-Portfolio routes. | 2026-11-03 |
 | [[plans/run-history-compare]] | Browse immutable Runs across the Workspace and compare two only under the same evaluation authority, refusing with the exact differing fields. | 2026-11-03 |
 | [[plans/product-maturity-roadmap]] | Close the most visible gaps against mature factor-research products in the agreed seven-step order without weakening any integrity rule. | 2026-11-03 |
 | [[plans/studio-assistant]] | Add local Claude/Codex conversations with governed aq writes, safe context and explicit isolation completion gates. | 2026-11-02 |

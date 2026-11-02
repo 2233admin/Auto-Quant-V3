@@ -16,10 +16,10 @@
 .floating-shell .rail.is-narrow .rail-new span, .floating-shell .rail.is-narrow .rail-collapse span, .floating-shell .rail.is-narrow .railfoot { display: none; }
 .floating-shell .rail.is-narrow .rail-new { width: 100%; margin-inline: 0; }
 .floating-shell .top { top: 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--raised); min-height: 56px; }
-.floating-shell .page:not(:has(.idea-workbench)) { margin-top: 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--raised); min-height: calc(100dvh - 80px); overflow: clip; }
-.floating-shell .main:has(.idea-workbench) > .top { display: none; }
-.floating-shell .page:has(.idea-workbench) { padding: 0; }
-.floating-shell .page:not(:has(.idea-workbench)) .wb-shell { height: calc(100dvh - 82px); }
+.floating-shell .page:not(:has(.idea-workbench, .strategy-workbench)) { margin-top: 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--raised); min-height: calc(100dvh - 80px); overflow: clip; }
+.floating-shell .main:has(.idea-workbench, .strategy-workbench) > .top { display: none; }
+.floating-shell .page:has(.idea-workbench, .strategy-workbench) { padding: 0; }
+.floating-shell .page:not(:has(.idea-workbench, .strategy-workbench)) .wb-shell { height: calc(100dvh - 82px); }
 .wb-title-card { display: flex; align-items: center; gap: 16px; height: 56px; padding: 8px 20px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--raised); }
 .wb-title-back { display: grid; place-items: center; color: var(--text); flex: none; width: 18px; height: 28px; }
 .wb-title-copy { min-width: 0; }

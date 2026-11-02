@@ -887,7 +887,7 @@ class StudioActionsTests(unittest.TestCase):
             self.assertIn("opens a trial family", data["trial"]["notice"])
             catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
             ids = [item["id"] for item in catalog["data"]["actions"]]
-            self.assertEqual(ids, ["experiment.evaluate", "session.start", "session.check", "candidate.save", "project.create", "project.intake", "data.check"])
+            self.assertEqual(ids, ["experiment.evaluate", "session.start", "session.check", "candidate.save", "strategy.build", "project.create", "project.intake", "data.check"])
             start = catalog["data"]["actions"][1]
             self.assertEqual(
                 start["targets"][0]["studies"],

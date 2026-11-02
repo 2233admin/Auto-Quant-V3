@@ -6,6 +6,7 @@ export type HoldoutState = { present: boolean; status: string | null }
 
 export type LibraryPoint = { split: string; value: number }
 export type FactorSummary = {
+  buildStrategy?: StrategyRoute
   studyId: string; verdict: 'Supported' | 'Inconclusive' | 'Not tested' | 'Could not be tested'
   question: string; expression: string; bound: boolean
   request: { horizonPolicy: { primaryForwardBars: number }; factorPolicy: { predictionAssets: string[] } } | null
@@ -15,8 +16,17 @@ export type FactorSummary = {
   protocol: { testRole?: string }; testAudit: boolean
 }
 export type StrategySummary = {
-  state: 'Backtested' | 'Defined'; updatedAt: string | null; points: LibraryPoint[]
+  state: 'Backtested' | 'Defined' | 'Tuned'; updatedAt: string | null; points: LibraryPoint[]
+  evidence?: { runId: string; researchFamily: SelectionIntegrity['researchFamily']; selectionAdjustment: StrategyAdjustment } | null
   net: { totalReturn?: number | null; sharpe?: number | null; maximumDrawdown?: number | null } | null
+}
+export type StrategyAdjustment = Omit<NonNullable<SelectionIntegrity['selectionAdjustment']>, 'statistics'> & {
+  statistics: { deflatedSharpeProbability?: number | null; minimumTrackRecordObservations?: number | null } | null
+}
+export type StrategyRoute = {
+  mode: 'blocked' | 'start' | 'open'; reasonCode: string; reason: string
+  template: string; argv: string[]; display: string; studyId: string | null; runId: string | null
+  factorRunId?: string | null
 }
 export type LibrarySummary = { factor: FactorSummary | null; strategy: StrategySummary | null }
 

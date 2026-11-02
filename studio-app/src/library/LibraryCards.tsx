@@ -9,7 +9,7 @@ import { SignedValue } from '../components/workbench/SignedValue'
 import { MetricListInfo } from '../components/MetricInfo'
 import type { MetricId } from '../metrics/catalogue'
 import './cards.css'
-const labels: Record<string, string> = { All: '全部', Supported: '支持', Inconclusive: '结论不明确', 'Not tested': '未测试', 'Could not be tested': '无法测试', Backtested: '已回测', Defined: '已定义', Development: '开发' }
+const labels: Record<string, string> = { All: '全部', Supported: '支持', Inconclusive: '结论不明确', 'Not tested': '未测试', 'Could not be tested': '无法测试', Backtested: '已回测', Tuned: '已调优', Defined: '已定义', Development: '开发' }
 
 export const FACTOR_FILTERS = ['All', 'Supported', 'Inconclusive', 'Not tested', 'Could not be tested'] as const
 export function filterCounts<T>(rows: T[], filters: readonly string[], state: (r: T) => string) {

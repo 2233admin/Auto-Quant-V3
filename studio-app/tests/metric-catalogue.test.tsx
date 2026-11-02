@@ -16,6 +16,7 @@ import { runMetricGroups } from '../src/pages/run/RunPage'
 import { MetricDetail, portfolioMetricGroups, portfolioStats } from '../src/pages/portfolio/Portfolio'
 import type { PortfolioDiagnostics } from '../src/pages/portfolio/portfolioTypes'
 import { LibraryCard } from '../src/library/LibraryCards'
+import { StrategyTuning } from '../src/pages/strategy/StrategyTuning'
 import { ComparisonResults } from '../src/pages/compare/ComparisonResults'
 import type { Comparison, HistoryRun } from '../src/library/runHistoryApi'
 
@@ -119,6 +120,7 @@ const pages = () => {
       <MetricGrid groups={portfolioMetricGroups(portfolio, 'validation') ?? []} />
       <MetricDetail pf={portfolio} split="validation" />
     </>),
+    'Strategy tuning': renderToStaticMarkup(<StrategyTuning project={{ ...project, library: { strategy: { evidence: { runId: 'run-base', selectionAdjustment: { status: 'available', interpretation: 'Core adjustment.', statistics: { deflatedSharpeProbability: .9, minimumTrackRecordObservations: 123 } } } } } } as unknown as ProjectSnapshot} />),
     'Library cards': renderToStaticMarkup(<>
       <LibraryCard name="F" badge="Supported" metric="m" metrics={['meanRankIc', 'hacT', 'trialsCounted']} points={[]} updated={null} href="/" go={() => {}} />
       <LibraryCard strategy name="S" badge="Inconclusive" metric="m" metrics={['netTotalReturn', 'netSharpe', 'maxDrawdown']} points={[]} updated={null} href="/" go={() => {}} />

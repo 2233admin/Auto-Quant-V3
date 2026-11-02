@@ -219,8 +219,8 @@ Source: the Arknights: Endfield wiki on Bilibili Wiki (https://wiki.biligame.com
 Each template lists regions in reading order and what is on the first screen (1440x900 reference) versus folded.
 
 1. Library (factors, strategies, runs): title bar (page-title, one description line) then toolbar (create actions left; filter with counts, search, sort right) then a 3-column card grid of `ProjectCard`, 8px gaps; footer "End of list". First screen: title, toolbar and the first two rows of cards. Folded: later cards, card actions (hover or quiet footer link).
-2. Factor workbench: header (back, page-title with description, object-type tag). Left pane (editor): tabs (Definition, Versions) with the Run action top-right, parameter grid, then the expression editor with formula or Python toggle and a validation chip. Right pane (result): run selector with headline stats, status line, verdict line, chart card, metric grid. First screen: definition, the Run action, verdict, chart, first metric row. Folded: older runs, progress stages, versions, provenance facts, derived actions. The action chip row (save as version, build strategy, export) is NOT adopted yet: the owner has not decided it; until then derived actions live in the pane head overflow.
-3. Strategy workbench: header as above. Left pane: object definition. Right pane: multi-tab inspector (Params, Versions, Backtest runs, Tuning, Notes) with the run selector, verdict line and headline metrics always above the tab content. First screen: header, definition, selected tab content, verdict. Folded: other tabs, holdings table, older runs.
+2. Factor workbench: header (back, page-title with description, object-type tag). Left pane (editor): tabs (Definition, Versions) with the Run action top-right, parameter grid, then the expression editor with formula or Python toggle and a validation chip. Right pane (result): run selector with headline stats, status line, verdict line, chart card, metric grid. First screen: definition, the Run action, verdict, chart, first metric row. Folded: older runs, progress stages, versions, provenance facts, derived actions. Issue #7 adds the explicitly requested Build strategy action and its visible refusal reason to the answer action row; the remaining proposed action-chip layout is not adopted wholesale.
+3. Strategy workbench (issue #7 implementation): title card with the Project definition and published lifecycle, then one evidence pane with Backtest, Versions, Tuning and Analyses. Backtest keeps the Portfolio run selector, verdict, focal net headline row, FigureCard and metric catalogue. Versions reuses history/compare; Tuning exposes only the base-family adjustment and neighborhood scope; Analyses links Project-owned evidence. First screen: title, tabs, selected evidence. Folded: holdings tables, details and older runs. This task-specific layout follows [[docs/design/studio-information-architecture]].
 4. Evidence page: title bar, verdict line (focal), evidence-strength sentence, uncertainty list, the test-split status, the next step, then the full metric grid and provenance facts. Single column up to 960px, centred. Folded: raw tables.
 5. Settings: title bar, grouped lists of label-and-control rows under section headings, one primary button per group at most. No cards.
 
@@ -288,7 +288,13 @@ Rejected (first extraction):
 - The large rounded-corner floating-card look: the owner does not want rounded corners; our existing smaller radius stays.
 - Red-up and green-down colour semantics: the first draft rejected them; the owner has since decided sign colour on the focal row with a Settings switch, default red up / green down (see "Signed numbers"). The QUBE hues themselves are still not adopted.
 
-Undecided: the action-chip row (save as version, build strategy, export) was not selected by the owner and is left out of the adopted list. Fonts: the owner did not answer, so Inter and IBM Plex Mono stay.
+The original action-chip row was not adopted wholesale. Issue #7 explicitly
+requests Build strategy on the Factor answer action row and in the Strategies
+library; this one action now follows the confirmed local-action rules, with
+visible refusal and CLI guidance when Core cannot perform the conversion.
+Other undecided actions remain outside this change. Fonts remain Inter and
+IBM Plex Mono. Screenshots are technical review evidence, not owner visual
+acceptance.
 
 Existing system: colour, spacing and radius tokens are recorded unchanged from `studio-app/src/design/tokens.css`; the workbench kit is recorded from `studio-app/src/components/workbench`. The design-system package is `design-system/`. The graybox comparison and Spec Reconciliation are deliver-stage work (they need a running build with a graybox mode).
 

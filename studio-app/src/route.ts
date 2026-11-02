@@ -9,6 +9,7 @@ export type Route =
   | { view: 'compare'; id: string; a?: string; b?: string; projectB?: string }
   | { view: 'factor'; id: string; study?: string; run?: string }
   | { view: 'portfolio'; id: string }
+  | { view: 'strategy'; id: string }
   | { view: 'factors' }
   | { view: 'runs' }
   | { view: 'strategies' }
@@ -24,7 +25,7 @@ const EVENT_STUDY_PATH = /^\/projects\/([^/]+)\/event-study\/?$/
 
 /** Views addressed by name alone, and views that also need a Project `id`. */
 const BARE_VIEWS = ['data-intake', 'assistant', 'factors', 'runs', 'strategies', 'attention', 'settings'] as const
-const ID_VIEWS = ['project', 'portfolio', 'bookrisk', 'bookstress', 'allocation', 'rl'] as const
+const ID_VIEWS = ['project', 'portfolio', 'strategy', 'bookrisk', 'bookstress', 'allocation', 'rl'] as const
 type BareView = (typeof BARE_VIEWS)[number]
 type IdView = (typeof ID_VIEWS)[number]
 const isBare = (view: string | null): view is BareView => (BARE_VIEWS as readonly string[]).includes(view ?? '')
@@ -64,7 +65,7 @@ export function routeHref(route: Route): string {
   if (route.view === 'data-intake') return '/?view=data-intake'
   if (route.view === 'assistant') return '/?view=assistant'
   if (route.view === 'project') return `/?${new URLSearchParams({ view: 'project', id: route.id })}`
-  if (route.view === 'portfolio') return `/?${new URLSearchParams({ view: 'portfolio', id: route.id })}`
+  if (route.view === 'portfolio' || route.view === 'strategy') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`
   if (route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'attention' || route.view === 'settings') return `/?${new URLSearchParams({ view: route.view })}`
   if (route.view === 'tuning') return `/?${new URLSearchParams(route.id ? { view: 'tuning', id: route.id } : { view: 'tuning' })}`
   if (route.view === 'bookrisk' || route.view === 'bookstress') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`

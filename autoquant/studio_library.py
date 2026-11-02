@@ -107,14 +107,30 @@ def library_projection(project, snapshot, workspace_root):
             "protocol": {"testRole": protocol.get("testRole")}, "testAudit": visible,
             "points": _points(((explorer.get("quantilePath") or {}).get("cumulative") or {}).get("points", []), "spread", visible) if exact and verdict in ("Supported", "Inconclusive") else [],
         }
+        from .studio_strategy import observed_strategy_route
+        result["factor"]["buildStrategy"] = observed_strategy_route(
+            project, snapshot.get("researchProgramStatus"), workspace_root,
+            outcome=claim.get("outcome"))
     explorer = snapshot.get("portfolioExplorer") or {}
     if portfolio_ids or explorer:
         runs = sorted((r for r in snapshot["runs"] if r["studyId"] in portfolio_ids), key=lambda r: (r["startedAt"], r["id"]), reverse=True)
-        latest = runs[0] if runs else None
-        exact = latest and explorer.get("run", {}).get("id") == latest["id"]
+        latest = next((r for r in runs if explorer.get("run", {}).get("id") == r["id"]), None)
+        exact = latest and latest["status"] == "succeeded"
         validation = (explorer.get("strategyViability") or {}).get("validation") or {}
+        evidence = None
+        if exact:
+            try:
+                run = load_run(project, latest["id"])
+                family = build_research_family(project, run)
+                evidence = {"runId": latest["id"], "researchFamily": family.projection,
+                            "selectionAdjustment": build_selection_adjustment(run, family)}
+            except (OSError, AutoQuantValidationError):
+                pass
+        state = "Defined"
+        if exact and validation.get("net"):
+            state = "Tuned" if (explorer.get("parameterNeighborhood") or {}).get("available") is True else "Backtested"
         result["strategy"] = {
-            "state": "Backtested" if exact and latest["status"] == "succeeded" else "Defined",
+            "state": state, "evidence": evidence,
             "net": validation.get("net") if exact else None,
             "updatedAt": latest["startedAt"] if latest else None,
             # Validation metrics and development path only; no test audit is inferred from Portfolio presence.

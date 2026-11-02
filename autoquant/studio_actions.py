@@ -585,7 +585,7 @@ class JobRunner:
             return
         job.result = envelope
         data = envelope.get("data")
-        if isinstance(data, dict) and job.action_id == START_ID:
+        if isinstance(data, dict) and job.action_id in {START_ID, BUILD_ID}:
             refs: dict[str, str] = {}
             session = data.get("session")
             if isinstance(session, dict):
@@ -670,6 +670,7 @@ def validate_evaluate_params(params: Any) -> dict[str, str]:
 START_ID = "session.start"
 CHECK_ID = "session.check"
 SAVE_ID = "candidate.save"
+BUILD_ID = "strategy.build"
 START_TIMEOUT_SECONDS = 15 * 60
 CHECK_TIMEOUT_SECONDS = 10 * 60
 START_WRITES = (
@@ -691,11 +692,18 @@ START_NOTICE = (
     "source trial unless an identical successful one is reused"
 )
 SAVE_CONFLICT = "The candidate on disk changed since it was loaded; reload before saving"
-STAGES_BY_ACTION = {START_ID: START_STAGES, CHECK_ID: CHECK_STAGES,
+STAGES_BY_ACTION = {START_ID: START_STAGES, BUILD_ID: START_STAGES, CHECK_ID: CHECK_STAGES,
                     "project.create": (("project-created", "Project created"),),
                     "project.intake": (("dataset-bound", "Dataset bound"),)}
 ACTION_ORDER = (EVALUATE_ID, START_ID, CHECK_ID, SAVE_ID)
 ACTION_SPECS: dict[str, dict[str, Any]] = {
+    BUILD_ID: {
+        "label": "Build strategy",
+        "classification": "writes-immutable-evidence",
+        "writes": "Starts the existing research-desk Portfolio Study in a governed Session; a new baseline counts unless reused. No Project conversion or new Study.",
+        "command": "aq session start",
+        "second": True,
+    },
     EVALUATE_ID: {
         "label": "Run analysis",
         "classification": "writes-immutable-evidence",
@@ -1039,6 +1047,7 @@ class ActionService:
         self._fingerprint = fingerprint
         self._idea_launch_lock = threading.Lock()
         self._timeouts = {
+            BUILD_ID: float(START_TIMEOUT_SECONDS),
             EVALUATE_ID: float(EVALUATE_TIMEOUT_SECONDS),
             START_ID: float(START_TIMEOUT_SECONDS),
             CHECK_ID: float(CHECK_TIMEOUT_SECONDS),
@@ -1332,6 +1341,9 @@ class ActionService:
                     "targets": targets[action_id],
                 }
             )
+        from .studio_strategy import catalog_entry
+        actions.append(catalog_entry(self, {pid: project for pid, project in projects.items()
+                                           if project_id is None or pid == project_id}))
         if self.scope == "workspace" and project_id is None:
             actions.extend([
                 {"id": "project.create", "label": "New idea", "command": "aq project create",
@@ -1358,6 +1370,9 @@ class ActionService:
         if not isinstance(body, dict):
             raise _validation("body", "schema.object", "Request body must be an object")
         action_id = body.get("actionId")
+        if action_id == BUILD_ID:
+            from .studio_strategy import prepare_build
+            return prepare_build(self, body)
         if action_id not in {EVALUATE_ID, START_ID, CHECK_ID}:
             raise ActionError(404, "studio.unknown-action", f"Unknown action: {action_id!r}")
         project = self._project(body.get("project"))

@@ -17,11 +17,13 @@ export function CompareSelection({ count, decision, error, onCompare }: { count:
   </div>
 }
 
-export function RunHistory({ workspace, go }: { workspace: WorkspaceSummary | null; go: (href: string) => void }) {
-  const history = useHistory(workspace?.generatedAt ?? '')
+export const scopedRuns = (rows: import('./runHistoryApi').HistoryRun[], projectId?: string, lane?: string) => rows.filter(r => (!projectId || r.project.id === projectId) && (!lane || r.lane === lane))
+
+export function RunHistory({ workspace, go, projectId, lane, revision }: { workspace: WorkspaceSummary | null; go: (href: string) => void; projectId?: string; lane?: string; revision?: string }) {
+  const history = useHistory(revision ?? workspace?.generatedAt ?? '')
   const [filters, setFilters] = useState(emptyFilters)
   const [picked, setPicked] = useState<string[]>([])
-  const rows = history.rows
+  const rows = scopedRuns(history.rows, projectId, lane)
   const shown = rows.filter(r => matchesRun(r, filters))
   const two = picked.map(k => rows.find(r => runKey(r) === k)).filter(r => !!r)
   const check = useRead<Comparison>(two.length === 2 ? compareUrl(two[0], two[1]) : undefined)
@@ -31,7 +33,7 @@ export function RunHistory({ workspace, go }: { workspace: WorkspaceSummary | nu
   }
   const href = (r: typeof rows[number]) => routeHref({ view: 'run', id: r.project.id, run: r.id })
   return <div className="pg">
-    <PageHead title={uiText('Run history')} lede={uiText('Every immutable Run across objects and lanes. Select two Runs with the same evaluation baseline.')} />
+    <PageHead title={uiText(projectId ? 'Strategy versions' : 'Run history')} lede={uiText(projectId ? 'Portfolio Runs in this Project over time. Select two to check their evaluation baseline before comparing.' : 'Every immutable Run across objects and lanes. Select two Runs with the same evaluation baseline.')} />
     {history.loading && <p role="status">{uiText('Loading…')}</p>}
     {history.error && <p role="alert">{uiText('Could not load Run history.')} {history.error}</p>}
     {history.warnings && <details className="small muted"><summary>{uiText('Workspace diagnostics; verified Runs remain listed.')}</summary><p>{history.warnings}</p></details>}
@@ -40,6 +42,6 @@ export function RunHistory({ workspace, go }: { workspace: WorkspaceSummary | nu
     <CompareSelection count={picked.length} decision={check?.data} error={check?.error} onCompare={openCompare} />
     {picked.length > 0 && <button className="btn" onClick={() => setPicked([])}>{uiText('Clear selection')}</button>}
     {!history.loading && !shown.length && <Empty>{uiText('No Run matches these filters.')}</Empty>}
-    {shown.length > 0 && <DataTable rows={shown} cols={runColumns(picked, toggle)} rowKey={runKey} href={href} go={go} initial={{ id: 'started', dir: -1 }} caption={uiText('Runs across all Projects')} selected={r => picked.includes(runKey(r))} />}
+    {shown.length > 0 && <DataTable rows={shown} cols={runColumns(picked, toggle)} rowKey={runKey} href={href} go={go} initial={{ id: 'started', dir: -1 }} caption={uiText(projectId ? 'Portfolio Runs in this Project' : 'Runs across all Projects')} selected={r => picked.includes(runKey(r))} />}
   </div>
 }

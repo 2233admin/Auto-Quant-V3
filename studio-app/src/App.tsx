@@ -14,7 +14,7 @@ import { FactorPage } from './pages/Factor'
 import { IdeaWorkbench } from './pages/IdeaWorkbench'
 import { ProjectPage, useProject } from './pages/Project'
 import { ComparePage } from './pages/compare/ComparePage'
-import { PortfolioPage } from './pages/portfolio/Portfolio'
+import { StrategyPage } from './pages/strategy/Strategy'
 import { BookRiskPage } from './pages/lanes/BookRisk'
 import { BookStressPage } from './pages/lanes/BookStress'
 import { AllocationPage } from './pages/allocation/Allocation'
@@ -43,7 +43,7 @@ export default function App() {
   const project = useProject(projectId ?? '', projectId ? data.updated : null)
   const assistantContext: AssistantContext | null = route.view === 'factor'
     ? { project: route.id, page: 'factor', ...(route.study ? { study: route.study } : {}), ...(route.run ? { run: route.run } : {}) }
-    : route.view === 'portfolio' ? { project: route.id, page: 'portfolio' } : null
+    : route.view === 'portfolio' || route.view === 'strategy' ? { project: route.id, page: 'portfolio' } : null
 
   useEffect(() => setAskAssistant(false), [route.view, projectId])
 
@@ -91,9 +91,9 @@ export default function App() {
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'bookrisk' ? 'Book Risk' : 'Reported-book path stress' },
             ]
-        : route.view === 'portfolio'
+        : route.view === 'portfolio' || route.view === 'strategy'
           ? [
-              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
+              { label: uiText("Strategies"), href: routeHref({ view: 'strategies' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: uiText("Portfolio") },
             ]
@@ -113,6 +113,8 @@ export default function App() {
                 ? [{ label: uiText("Settings") }]
                 : [{ label: uiText("Factors") }]
   const routeTitles: Record<string, string> = { assistant: 'Assistant', projects: 'Factors', factors: 'Factor library', strategies: 'Strategy library', runs: 'Run history', tuning: 'Tuning tasks', attention: 'Attention', settings: 'Settings', 'event-study': 'Price event study', factor: 'Factor evidence', portfolio: 'Portfolio', bookrisk: 'Book Risk', bookstress: 'Reported-book path stress', allocation: 'Strategic allocation', rl: 'Governed RL policy', run: 'Run', compare: 'Compare Runs', project: 'Project' }
+  routeTitles['strategy'] = 'Strategy workbench'
+  routeTitles['portfolio'] = 'Strategy workbench'
   routeTitles['data-intake'] = 'Import data'
   document.title = [uiText(routeTitles[route.view] ?? 'AutoQuant Studio'), ...(projectId ? [known?.name ?? projectId] : []), 'AutoQuant Studio'].join(' · ')
 
@@ -143,8 +145,8 @@ export default function App() {
         <RunPage project={project.project} runId={route.run} go={go} />
       ) : route.view === 'compare' ? (
         <ComparePage project={project.project} a={route.a} b={route.b} projectB={route.projectB} go={go} />
-      ) : route.view === 'portfolio' ? (
-        <PortfolioPage project={project.project} go={go} />
+      ) : route.view === 'portfolio' || route.view === 'strategy' ? (
+        <StrategyPage key={project.project.id} project={project.project} go={go} />
       ) : route.view === 'bookrisk' ? (
         <BookRiskPage project={project.project} />
       ) : route.view === 'bookstress' ? (

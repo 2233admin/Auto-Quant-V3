@@ -74,7 +74,7 @@ library; `?view=projects` keeps working as an alias.
 | `?view=factors` | Default landing library: one compact card per Factor Project with verdict, validation headline, latest Run curve and retained trial count |
 | `?view=factor&id=…` | Factor workbench: left editor (frozen question, locked parameters, expression, Run analysis), right result (run selector, action chips, status line, chart, metrics) |
 | `?view=strategies` | Portfolio Project cards with Defined/Backtested state, validation net headline metrics and development net-growth curve |
-| `?view=portfolio&id=…` | Strategy workbench: tabs Backtest, Versions, Tuning, Analyses |
+| `?view=strategy&id=…` | Strategy workbench: tabs Backtest, Versions, Tuning, Analyses; `?view=portfolio&id=…` remains an alias |
 | `?view=runs` | Run history across objects and lanes |
 | `?view=run&id=…` | Run page, lane-aware |
 | `?view=tuning` | Tuning tasks |
@@ -102,8 +102,13 @@ library; `?view=projects` keeps working as an alias.
    The sidebar places New factor, three recent factors and the four object libraries below the brand. Attention, Settings
    and the search hint remain at the bottom. The factor editor now has complete expandable authority rows, persistent
    source tabs, a pinned trial note and a stale-session recovery action.
-3. The Strategy library skeleton is implemented; Strategy workbench tabs and moving the Portfolio page content remain pending. The New strategy action needs the
-   `project.create` family of actions for Portfolio Projects.
+3. The Strategy workbench reuses the Portfolio pane under Backtest. Versions
+   reuses the Run history and server-verified comparison, confined to this
+   Project's Portfolio lane. Tuning shows the exact base Run's family adjustment
+   and the fixed neighborhood scope; individual cells have no adjusted result
+   and are not ranked there. Analyses lists only this Project's Book Risk, Path
+   Stress, Allocation and governed RL Runs. The Factor answer and Strategies
+   library expose the verified build route described below.
 4. Run history gains object and lane filters; lane pages become reachable only from Runs and from their object.
 5. Tuning tasks attach to objects.
 
@@ -120,12 +125,31 @@ curve is the latest Run's published cumulative high-minus-low spread, not a hist
 The footer identifies Factor expression and the latest Run timestamp; missing timestamps say Not run. Search matches
 the name, frozen question and authored expression. Filter counts describe the entire library, independently of search.
 
-Strategy cards represent Portfolio Projects only; RL and Allocation remain reachable through Runs. Their net return,
+Strategy cards represent Projects with Portfolio Studies; RL and Allocation remain reachable through Runs. Their net return,
 net Sharpe and maximum drawdown come from the Portfolio validation summary. The curve contains train and validation
-net-growth observations. Defined means there is no current successful Portfolio Run; Backtested does not imply a
-positive result. New strategy remains visibly disabled with its actual missing-action reason and a copyable CLI
-Portfolio-scaffold command. The UI explicitly distinguishes scaffold creation from binding a source factor and its
-caller-owned construction policy.
+net-growth observations. Defined means there is no verified current net-of-cost
+Portfolio evidence. Backtested means that evidence exists; Tuned additionally
+requires its published `parameterNeighborhood.available=true`. Neither implies
+a positive result, successful optimization or independent confirmation. A newer
+rejected attempt cannot replace the explorer's current Run or its lifecycle.
+
+Build strategy follows the template fit contract: Factor-to-Portfolio work
+belongs in `ohlcv-research-desk`. Standalone Factor Labs have no Core conversion
+command, so the control stays disabled with its exact reason and a copyable
+`aq project intake ... --template ohlcv-research-desk --request ... --dataset ...`
+Agent path. The Agent must first agree caller-owned construction policy, retain
+a complete compatible dataset, author the factor, and establish/report counted
+Factor evidence in the sibling desk. Creating a scaffold does not transfer
+evidence. No defaults are invented to fill that authority gap.
+
+In an existing coordinated desk, current Portfolio evidence opens its Strategy.
+Otherwise `strategy.build` may preview the existing Core `session.start` command
+for its Portfolio Study only after the strict Factor-to-Portfolio gate passes,
+shared active Sessions end, and retained failure dispositions are respected.
+This creates a governed Session/worktree and possibly a counted baseline, not
+a Project conversion or new Study. The selected Factor Run must match the
+current admitted source before the workbench offers this action. Confirmation,
+stale-state checks and audit follow [[docs/design/studio-local-actions]].
 
 The Workspace summary carries bounded library projections, including at most 64 curve observations per card. No
 card fetches full Project or Run diagnostics. Factor test points are removed before sampling unless both the actual

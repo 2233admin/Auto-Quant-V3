@@ -1,4 +1,5 @@
 import { translate, uiTemplate, uiText, uiValue, useLanguage } from '../i18n'
+import { BuildStrategyAction } from '../actions/BuildStrategyAction'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RankSummary, type RunRow } from '../api'
 import { Glyph } from '../design/icons'
@@ -346,6 +347,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
           status={
             <div className="fr-status">
               <ActionRow align="start" secondary={resultActions} />
+              <BuildStrategyAction projectId={project.id} route={project.library?.factor?.buildStrategy} shownRunId={study.run.id} />
               <LoopStatus loop={loop} project={project} />
               <FactorVerdict study={study} adjustment={adjustment} />
               {runState && runRow && (

@@ -28,7 +28,10 @@ authority.
 ## Authoritative locations
 
 - Immutable Run and artifact verification: `autoquant/runs.py`
-- Portfolio diagnostics projection: `autoquant/portfolio_explorer.py`
+- Portfolio diagnostics loader/schema and compatibility imports:
+  `autoquant/portfolio_explorer.py`; performance/viability/path projection:
+  `autoquant/portfolio_performance.py`; shared strict primitives:
+  `autoquant/portfolio_projection.py`
 - CLI/schema/capability projection: `autoquant/cli.py` and
   `autoquant/capabilities.py`
 - Latest-Run observation and browser presentation: `autoquant/studio.py` and
@@ -76,6 +79,12 @@ the projection does not silently repair missing rows or recompute a competing
 Judge score.
 
 ## Performance path and sampling
+
+The Strategy workbench consumes these same projections through its Backtest
+tab; Versions compares immutable Runs through the shared history contract.
+The extraction retains the original function and constant imports from
+`portfolio_explorer.py`. No Judge, accounting, JSON key, sampling order or
+numerical formula changes with that module move.
 
 Core compounds the complete chronological daily rows before sampling:
 

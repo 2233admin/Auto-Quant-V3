@@ -45,6 +45,19 @@ const PORTFOLIO_LEDGER: Bi = {
 }
 
 export const METRIC_CATALOGUE = {
+  deflatedSharpe: {
+    label: { en: 'Deflated Sharpe probability', zh: '折减 Sharpe 概率' },
+    definition: { en: 'Core probability that the selected validation Sharpe exceeds the trial-family expected maximum.', zh: 'Core 估计所选验证集 Sharpe 超过试验族预期最大值的概率。' },
+    read: { en: 'Read with minimum track record and the family trial count; it is development evidence, not independent confirmation.', zh: '需结合最小样本长度和研究族试验数阅读；这是开发阶段证据，不是独立确认。' },
+    core: { en: 'Core deflates the period Sharpe against the expected maximum from unique source trials and their dispersion, with skewness and kurtosis corrections.', zh: 'Core 根据不同候选源码试验数及其离散度计算预期最大值，对逐周期 Sharpe 做折减，并校正偏度和峰度。' },
+    caveat: { en: 'The fixed parameter neighborhood has no cell-level adjustment; this probability belongs only to the base Run source family.', zh: '固定参数邻域没有逐配置校正；此概率仅属于基准运行的源码试验族。' },
+  },
+  minimumTrackRecord: {
+    label: { en: 'Minimum track record', zh: '最小样本长度' },
+    definition: { en: 'The observations required by Core for the selected Sharpe to clear the family expected maximum at its fixed confidence level.', zh: '在固定置信水平下，所选 Sharpe 超过试验族预期最大值所需的观测数，由 Core 计算。' },
+    read: { en: 'Compare with the actual validation observations; a large requirement signals insufficient history.', zh: '与实际验证集观测数比较；要求很高意味着历史证据不足。' },
+    core: { en: 'Core minimum-track-record calculation uses the same period Sharpe, expected maximum and return moments as its deflated-Sharpe adjustment.', zh: 'Core 使用与折减 Sharpe 校正相同的逐周期 Sharpe、预期最大值和收益矩计算最小样本长度。' },
+  },
   primaryObjective: {
     label: { en: 'Primary validation objective', zh: '验证集主目标' },
     definition: { en: 'The immutable Study objective measured on validation, when explicitly declared.', zh: '固定研究明确声明的验证集主目标数值。' },

@@ -1,18 +1,16 @@
 import { uiTemplate, uiText, uiValue } from '../i18n'
+import { BuildStrategyAction } from '../actions/BuildStrategyAction'
 import { useState } from 'react'
 import type { FactorDiagnostics, ProjectSnapshot, RunRow } from '../api'
-import type { Idea, IdeaBinding } from '../actions/ideaApi'
-import { jobError } from '../actions/ideaApi'
-import type { Job } from '../actions/types'
-import { isTerminal } from '../actions/types'
+import { jobError, type Idea, type IdeaBinding } from '../actions/ideaApi'
+import { isTerminal, type Job } from '../actions/types'
 import { ActionRow, MetricGrid, PaneCard, VerdictBar, StatusLine, StatChips, FactsDialog, type LockedParam } from '../components/workbench'
 import { routeHref } from '../route'
-import { testVisible } from './testGate'
+import { testVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { coreGroups } from './FactorWorkbench'
 import { FactorHero, spreadGroups } from './GroupReturn'
 import { signedNumber } from '../design/signConvention'
 import { FactorComparisons } from './FactorComparisons'
-import { TEST_HIDDEN_NOTE } from './testGate'
 import { readingOrder } from '../metrics/catalogue'
 
 export type IdeaVerdictState = 'Supported' | 'Inconclusive' | 'Could not be tested'
@@ -91,7 +89,7 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
         ...(diagnostics ? [diagnostics] : []),
         ...(run && !pending ? [{ label: uiText("Export JSON"), onClick: exportJson }] : []),
         ...(onDeclareTrial ? [{ label: uiText("Declare another trial"), onClick: onDeclareTrial }] : []),
-      ]} /></div>
+      ]} /><BuildStrategyAction projectId={project.id} route={project.library?.factor?.buildStrategy} shownRunId={run?.id} /></div>
       <div className="idea-status" data-measure="status"><StatusLine state={pending ? 'running' : !hasAttempt ? 'idle' : failedJob || failedRun ? 'failed' : 'done'} text={pending ? busy || 'Analysis in progress' : !hasAttempt ? 'Not tested · author a candidate to begin' : `${failedJob || failedRun ? 'Analysis failed' : 'Analysis complete'} · ${stageText}`} percent={pending ? null : hasAttempt && !failedJob && !failedRun ? 100 : undefined} elapsed={hasAttempt ? duration : undefined} /></div>
       {pending ? <div className="idea-empty"><h2>{uiText("Analysis in progress")}</h2><p>{busy || uiText("The fixed Judge is running.")}</p><p className="small muted">{uiText("Preflight → baseline or candidate Run → validation evidence. Trial records are retained even if execution fails.")}</p><p className="small">{uiText("The original question and verdict wording are fixed for this attempt.")}</p></div>
       : !hasAttempt ? <div className="idea-empty"><h2>{uiText("Not tested")}</h2><p>{uiText("Define the factor on the left, then run one bounded analysis.")}</p><p className="small muted">{uiText("You will confirm the exact command and trial count before execution. Inconclusive is a valid stopping point.")}</p></div>

@@ -157,11 +157,12 @@ const ANCHOR_TAB: Record<string, TabId> = {
   'pf-episodes': 'episodes',
 }
 
-export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: (href: string) => void }) {
+export function PortfolioPage({ project, go, embedded = false }: { project: ProjectSnapshot; go?: (href: string) => void; embedded?: boolean }) {
   const pf = project.portfolioExplorer
   const [split, setSplit] = useState<Split>('validation')
   const [paramsOpen, setParamsOpen] = useState(false)
-  const [tab, selectTab, anchor] = useHashTab<TabId>(TAB_IDS, 'detail', ANCHOR_TAB)
+  const detailTabs = embedded ? TAB_IDS.filter(id => id !== 'neighborhood') : TAB_IDS
+  const [tab, selectTab, anchor] = useHashTab<TabId>(detailTabs, 'detail', ANCHOR_TAB)
   useEffect(() => {
     if (anchor) requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ block: 'start' }))
   }, [anchor, tab])
@@ -235,11 +236,11 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
     })
   }
   const clause =
-    finite(vSharpe) && finite(vBench) ? `Validation net Sharpe ${fn(vSharpe)} vs benchmark ${fn(vBench)}` : 'No validation net Sharpe is published for this Run.'
+    finite(vSharpe) && finite(vBench) ? uiTemplate('Validation net Sharpe {0} vs benchmark {1}', [fn(vSharpe), fn(vBench)]) : uiText('No validation net Sharpe is published for this Run.')
   const sentence =
     finite(vSharpe) && finite(vBench)
-      ? `Validation net Sharpe ${fn(vSharpe)}, ${vSharpe - vBench >= 0 ? 'above' : 'below'} benchmark by ${fn(Math.abs(vSharpe - vBench), 1)}.${d ? ` Stage ${d.stage}.` : ''}`
-      : 'No validation net Sharpe is published for this Run.'
+      ? uiTemplate('Validation net Sharpe {0}, {1} benchmark by {2}.', [fn(vSharpe), uiText(vSharpe - vBench >= 0 ? 'above' : 'below'), fn(Math.abs(vSharpe - vBench), 1)]) + (d ? ` ${uiTemplate('Stage {0}.', [d.stage])}` : '')
+      : uiText('No validation net Sharpe is published for this Run.')
 
   const portfolioRuns = project.runs.filter((r) => otherLaneOf(project, r.id)?.view === 'portfolio')
   const groups = portfolioMetricGroups(pf, effective)
@@ -251,7 +252,7 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
     { label: uiText("Project"), value: <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a> },
     { label: uiText("Run"), value: run?.id?.replace(/^run-/, '') ?? '—', mono: true },
     { label: uiText("Study"), value: run?.studyId ?? '—', mono: true },
-    { label: uiText("Universe"), value: `${pf.universe?.length ?? '—'} assets` },
+    { label: uiText("Universe"), value: uiTemplate('{0} assets', [pf.universe?.length ?? '—']) },
     { label: uiText("Mandate"), value: pf.mandate?.family ?? '—', mono: true },
     { label: uiText("Benchmark"), value: pf.mandate?.benchmark?.kind ?? '—', mono: true },
     { label: uiText("Selection split"), value: pf.selection?.selectionSplit ?? 'validation', mono: true },
@@ -326,7 +327,7 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
         </div>
       }
     >
-      <h1 className="type-page-title">{uiText("Portfolio")}</h1>
+      {!embedded && <h1 className="type-page-title">{uiText("Portfolio")}</h1>}
       <FactChips
         label={uiText("What was run")}
         locked
@@ -356,7 +357,7 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
       {groups ? <MetricGrid groups={groups} hiddenNote={testVisible ? undefined : hiddenNote} /> : <p><NA why={`strategyViability.${effective}.net is not in the payload`} /></p>}
       <Tabs
         label={uiText("Portfolio sections")}
-        tabs={tabs}
+        tabs={embedded ? tabs.filter(t => t.id !== 'neighborhood') : tabs}
         active={tab}
         onSelect={selectTab}
         panels={{
@@ -436,5 +437,5 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
     </PaneCard>
   )
 
-  return <WorkbenchShell right={right} />
+  return embedded ? right : <WorkbenchShell right={right} />
 }

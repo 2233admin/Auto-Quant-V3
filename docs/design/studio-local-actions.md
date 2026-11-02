@@ -186,7 +186,8 @@ means it is not offered in v1 and the reason is stated.
 | `session.promote` | `aq session promote ...` | | | Writes the KEEP into the owning Project source | | | excluded in v1: promotes code into the Project; stays an Agent or terminal step until the Hypothesis verdict gate exists |
 | `holdout.*` (`bind`, `run`, `assess`) | `aq holdout ...` | | | | | | excluded permanently from one-click: the frozen holdout is one-shot and consumes untouched evidence. Studio keeps showing holdout status read-only and the copyable command; it never offers a run button. Any future "open holdout" flow needs its own design with a separate typed confirmation, not an action in this table |
 | "AI optimize", apply-tuned-parameters, any candidate edit other than `candidate.save` | none | | | | | | excluded: no `aq` command edits candidate code (the one controlled exception is `candidate.save`), and the reference product's silent overwrite (section 5g of the reference notes) is the anti-pattern. Studio shows the candidate diff and offers a "hand to Agent" text box that produces copyable prompt text; it executes nothing |
-| `strategy.build`, tuning sweeps, paper trading | none | | | | | | excluded: no existing `aq` command, would need new Core lanes or trading authority |
+| `strategy.build` | The exact existing research-program `aq session start <project> --study <portfolio-study> [--request <request>] --json` | Existing Project id; no free-form parameters | Verified coordinated desk, passed current Factor admission and Report gate, no shared active Session or retained failure requiring inspection | Session/worktree and baseline unless an identical successful Run is reused; possible counted source trial | Factor answer action row and source selector in Strategies | Required, with exact argv and conditional trial notice | safe only for the existing coordinated Portfolio Study |
+| Arbitrary Factor-to-Portfolio Project conversion, tuning sweeps, paper trading | none | | | | | | excluded: no existing `aq` command with those effects |
 
 Two catalog rules follow from the table:
 
@@ -195,6 +196,30 @@ Two catalog rules follow from the table:
 2. A new action may be added only if an existing `aq` command already performs
    it with the same effect from a terminal. Adding an action never adds a Core
    write path; it adds a button over a command that already exists.
+
+### Strategy build boundary
+
+`autoquant/studio_strategy.py` reads the strict research-program projection;
+Studio does not derive admission from a displayed Supported word or metric
+signs. A standalone Factor Lab refuses preview and launch with the conversion
+gap and a research-desk intake CLI path. No existing Run is copied or relabelled,
+and no caller-owned Portfolio policy is synthesized.
+
+A Factor with `forward-realized-volatility` outcome receives a separate risk
+forecast refusal and template-inspection CLI, rather than a return-desk intake
+recommendation. Changing the supported decision or outcome requires a new
+caller-owned assignment; Studio cannot invert the score into a return claim.
+
+The supported action uses the program's exact Portfolio Session argv and the
+ordinary Session preparation checks/trial disclosure. Its confirmation hash
+binds both the Project fingerprint and the complete verified program, so a
+changed gate, report, source or command requires a fresh preview. Launch runs
+the same interpreter/CLI path as other actions and logs `strategy.build` with
+the normal append-only job audit. Session and baseline Run references are
+extracted from Core's result. Existing current Portfolio evidence instead
+offers Open strategy and spends no trial. This narrow action supersedes the
+old blanket exclusion of `strategy.build`; it does not enable arbitrary Project
+or Study creation from a factor.
 
 ## Job model
 

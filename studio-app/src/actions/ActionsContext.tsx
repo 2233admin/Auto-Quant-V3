@@ -28,6 +28,8 @@ export type ActionsApi = {
 
 const Context = createContext<ActionsApi | null>(null)
 
+export const useOptionalActions = () => useContext(Context)
+
 export function useActions(): ActionsApi {
   const value = useContext(Context)
   if (!value) throw new Error('useActions needs an ActionsProvider')

@@ -38,6 +38,31 @@ audit gate: freezing alone cannot expose test data. Disabled actions keep a
 visible reason, and counted execution still asks for confirmation of trial N
 of M. More detail is in [[docs/design/studio-workbench-kit]].
 
+## Strategy workbench
+
+Open a Strategy library card or `?view=strategy&id=<project>`; the historical
+`?view=portfolio&id=<project>` address is an alias. Backtest retains the verified
+Portfolio verdict, net headline row, growth/drawdown FigureCard and metric
+catalogue. Versions scopes the shared Run history and comparison to the
+Project's Portfolio Runs. Tuning shows the published neighborhood scope and
+the exact base Run's family adjustment, with no raw best configuration or
+parameter application. Analyses links current Project-owned analysis evidence;
+archived analysis Runs offer their exact CLI read command because the native
+analysis pages currently project the current Run only.
+
+Defined, Backtested and Tuned are published-data lifecycle states, never
+scientific verdicts. A neighborhood makes the object Tuned even when its base
+return is negative; it does not establish a successful optimization.
+
+Build strategy appears on Factor answer cards and in the Strategies library's
+source selector. Standalone Factor Labs expose a disabled reason and a sibling
+research-desk intake CLI path. An admitted existing research desk can preview
+and confirm its existing Portfolio Study's governed Session command. The flow
+does not create a new Portfolio Project from standalone Factor evidence or
+invent caller-owned construction policy. See
+[[docs/design/studio-information-architecture]] and
+[[docs/design/studio-local-actions]].
+
 ## Run history and comparison
 
 Open `?view=runs` for every verified immutable Run across the Workspace. Filter
