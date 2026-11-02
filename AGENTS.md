@@ -584,6 +584,8 @@ Read the relevant linked document before changing a subsystem:
 - Project-level synthesis of verified lane Reports into one immutable
   deliverable: [[docs/design/program-research-dossiers]]
 - Studio operator and public read-model guide: [[docs/STUDIO]]
+- Studio English/Chinese copy, original-data boundaries and localization checks:
+  [[docs/design/studio-localization]]
 - Canonical Workspace and Project file schemas: [[docs/PROJECT_FORMAT]]
 - Human and machine-readable command behavior: [[docs/CLI]]
 - Retired repository-root Freqtrade Harness boundary:

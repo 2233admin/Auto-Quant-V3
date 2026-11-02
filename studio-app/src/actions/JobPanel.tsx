@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getJson, type ProjectResponse } from '../api'
 import { plural } from '../format'
@@ -62,12 +63,12 @@ export function useJob(jobId: string, bootstrap: ActionsBootstrap, onTerminal: (
 }
 
 const STATUS_LOOK: Record<JobStatus, { glyph: GlyphKind; word: string; signal: boolean }> = {
-  queued: { glyph: 'proposed', word: 'Queued', signal: false },
-  running: { glyph: 'running', word: 'Running', signal: false },
-  succeeded: { glyph: 'confirmed', word: 'Succeeded', signal: false },
-  failed: { glyph: 'error', word: 'Failed', signal: true },
-  cancelled: { glyph: 'dropped', word: 'Cancelled', signal: false },
-  'timed-out': { glyph: 'error', word: 'Timed out', signal: true },
+  queued: { glyph: 'proposed', get word() { return uiText("Queued") }, signal: false },
+  running: { glyph: 'running', get word() { return uiText("Running") }, signal: false },
+  succeeded: { glyph: 'confirmed', get word() { return uiText("Succeeded") }, signal: false },
+  failed: { glyph: 'error', get word() { return uiText("Failed") }, signal: true },
+  cancelled: { glyph: 'dropped', get word() { return uiText("Cancelled") }, signal: false },
+  'timed-out': { glyph: 'error', get word() { return uiText("Timed out") }, signal: true },
 }
 
 export function elapsed(job: Job, now: number): string {
@@ -105,33 +106,28 @@ function Result({ job }: { job: Job }) {
   }, [job.project, runId])
   if (!runId) {
     return (
-      <p className="small">
-        The command exited with code 0 but its output named no new Run. Check the Project's Runs list before assuming anything changed.
-      </p>
+      <p className="small">{uiText("The command exited with code 0 but its output named no new Run. Check the Project's Runs list before assuming anything changed.")}</p>
     )
   }
   const runHref = routeHref({ view: 'run', id: job.project, run: runId })
   return (
     <div className="jr">
       <p className="small">
-        <strong>A new Run was written:</strong> <span className="mono" translate="no">{runId}</span>
+        <strong>{uiText("A new Run was written:")}</strong> <span className="mono" translate="no">{runId}</span>
         {job.createdRefs.experimentId && (
           <>
-            {' '}
-            from Experiment <span className="mono" translate="no">{job.createdRefs.experimentId}</span>
+            {' '}{uiText("from Experiment ")}<span className="mono" translate="no">{job.createdRefs.experimentId}</span>
           </>
-        )}
-        . It counts as one trial and cannot be removed.
-      </p>
+        )}{uiText(". It counts as one trial and cannot be removed.")}</p>
       <p className="jr-links">
-        <a className="abtn abtn--primary" href={runHref}>Open the new Run</a>
+        <a className="abtn abtn--primary" href={runHref}>{uiText("Open the new Run")}</a>
         {previous.state === 'ready' ? (
-          <a className="abtn" href={routeHref({ view: 'compare', id: job.project, a: previous.id, b: runId })}>Compare with previous Run</a>
+          <a className="abtn" href={routeHref({ view: 'compare', id: job.project, a: previous.id, b: runId })}>{uiText("Compare with previous Run")}</a>
         ) : (
-          <span className="small muted">{previous.state === 'loading' ? 'Looking for the previous Run…' : 'No earlier Run on this Study to compare with.'}</span>
+          <span className="small muted">{previous.state === 'loading' ? uiText("Looking for the previous Run…") : uiText("No earlier Run on this Study to compare with.")}</span>
         )}
       </p>
-      <p className="small muted">The verdict, trial counter and selection adjustment are on the Run page, read from the refreshed Project snapshot. This panel shows only the job's own status.</p>
+      <p className="small muted">{uiText("The verdict, trial counter and selection adjustment are on the Run page, read from the refreshed Project snapshot. This panel shows only the job's own status.")}</p>
     </div>
   )
 }
@@ -140,7 +136,7 @@ function Tail({ label, text, open }: { label: string; text: string; open?: boole
   return (
     <details className="tail" open={open}>
       <summary>
-        {label} <span className="faint small">{text ? plural(text.split('\n').filter(Boolean).length, 'line') : 'empty'}</span>
+        {uiValue(label)} <span className="faint small">{text ? plural(text.split('\n').filter(Boolean).length, 'line') : uiText("empty")}</span>
       </summary>
       <pre className="tail-body mono" tabIndex={0} aria-label={`${label} tail`}>{text || '(no output)'}</pre>
     </details>
@@ -178,41 +174,39 @@ export function JobPanel({ jobId, bootstrap }: { jobId: string; bootstrap: Actio
   const copy = error ? errorCopy(error, 'read the job') : null
 
   return (
-    <aside className={`jobdock${collapsed ? ' is-collapsed' : ''}`} aria-label="Job progress" data-status={job?.status ?? 'loading'}>
+    <aside className={`jobdock${collapsed ? ' is-collapsed' : ''}`} aria-label={uiText("Job progress")} data-status={job?.status ?? 'loading'}>
       <header className="jobdock-head">
         <div className="jobdock-title">
-          <strong>Run analysis</strong>
+          <strong>{uiText("Run analysis")}</strong>
           <span className="faint small mono" translate="no">{job?.project ?? ''}</span>
         </div>
         <div className="jobdock-status" role="status" aria-live="polite">
           {look ? (
             <span className="state">
               <Glyph kind={look.glyph} signal={look.signal} />
-              <span className={look.signal ? 'sig' : undefined}>{look.word}</span>
+              <span className={look.signal ? 'sig' : undefined}>{uiValue(look.word)}</span>
               {job && <span className="faint small mono">{elapsed(job, now)}</span>}
             </span>
           ) : (
-            <span className="muted small">{error ? 'Not loaded' : 'Loading job…'}</span>
+            <span className="muted small">{error ? uiText("Not loaded") : uiText("Loading job…")}</span>
           )}
         </div>
         <button type="button" className="abtn abtn--quiet" onClick={() => setCollapsed((c) => !c)} aria-expanded={!collapsed}>
-          {collapsed ? 'Expand' : 'Collapse'}
+          {collapsed ? uiText("Expand") : uiText("Collapse")}
         </button>
         {(done || stuck) && (
-          <button type="button" className="abtn abtn--quiet" onClick={() => setActiveJobId(null)} aria-label="Close the job panel">
-            Close
-          </button>
+          <button type="button" className="abtn abtn--quiet" onClick={() => setActiveJobId(null)} aria-label={uiText("Close the job panel")}>{uiText("Close")}</button>
         )}
       </header>
       {!collapsed && (
         <div className="jobdock-body">
           <p className="small muted jobdock-origin">
-            <span className="alabel">launched from Studio</span> job <span className="mono" translate="no">{jobId}</span>
+            <span className="alabel">{uiText("launched from Studio")}</span>{uiText(" job ")}<span className="mono" translate="no">{jobId}</span>
           </p>
 
           {error && copy && (
             <div role="alert" className="jobdock-alert">
-              <Notice kind="error" label="Error" title={stuck ? copy.title : failures > 1 ? `${copy.title} Retrying (attempt ${failures}).` : `${copy.title} Retrying.`} subtitle={copy.detail} />
+              <Notice kind="error" label={uiText("Error")} title={stuck ? copy.title : failures > 1 ? uiTemplate("{0} Retrying (attempt {1}).", [copy.title, failures]) : uiTemplate("{0} Retrying.", [copy.title])} subtitle={copy.detail} />
             </div>
           )}
 
@@ -221,41 +215,38 @@ export function JobPanel({ jobId, bootstrap }: { jobId: string; bootstrap: Actio
               <StagePipeline job={job} />
               <div className="cmdrow">
                 <pre className="cmd mono" translate="no">{job.display}</pre>
-                <CopyButton text={job.display} label="Copy command" />
+                <CopyButton text={job.display} label={uiText("Copy command")} />
               </div>
 
               {job.status === 'succeeded' && <Result job={job} />}
               {job.status === 'failed' && (
                 <div className="jr" role="alert">
                   <p>
-                    <strong>The command failed</strong> with exit code <span className="mono">{job.exitCode ?? 'unknown'}</span>. Studio shows no verdict for a failed command.
-                  </p>
-                  {job.createdRefs.runId && <p className="small">A Run was written before the failure: <span className="mono">{job.createdRefs.runId}</span>. It still counts as a trial.</p>}
+                    <strong>{uiText("The command failed")}</strong>{uiText(" with exit code ")}<span className="mono">{job.exitCode ?? uiText("unknown")}</span>{uiText(". Studio shows no verdict for a failed command.")}</p>
+                  {job.createdRefs.runId && <p className="small">{uiText("A Run was written before the failure: ")}<span className="mono">{job.createdRefs.runId}</span>{uiText(". It still counts as a trial.")}</p>}
                 </div>
               )}
               {job.status === 'timed-out' && (
                 <p className="small" role="alert">
-                  <strong>The command ran past its time limit</strong> and was stopped. Anything it had already written stays in the Project and counts; check the Runs list.
-                </p>
+                  <strong>{uiText("The command ran past its time limit")}</strong>{uiText(" and was stopped. Anything it had already written stays in the Project and counts; check the Runs list.")}</p>
               )}
               {job.status === 'cancelled' && (
                 <p className="small">
-                  <strong>Cancelled.</strong> Cancelling does not remove an Experiment that was already written; check the Runs list.
-                </p>
+                  <strong>{uiText("Cancelled.")}</strong>{uiText(" Cancelling does not remove an Experiment that was already written; check the Runs list.")}</p>
               )}
 
-              <Tail label="stderr" text={job.stderrTail} open={job.status === 'failed'} />
-              <Tail label="stdout" text={job.stdoutTail} />
-              {job.truncated && <p className="small muted">Output was longer than Studio keeps; only the last 256 KiB per stream is shown.</p>}
+              <Tail label={uiText("stderr")} text={job.stderrTail} open={job.status === 'failed'} />
+              <Tail label={uiText("stdout")} text={job.stdoutTail} />
+              {job.truncated && <p className="small muted">{uiText("Output was longer than Studio keeps; only the last 256 KiB per stream is shown.")}</p>}
             </>
           )}
 
           {!done && !stuck && (
             <div className="jobdock-actions">
               <button type="button" className="abtn" onClick={requestCancel} disabled={cancel.state === 'busy' || !job}>
-                {cancel.state === 'busy' ? 'Cancelling…' : 'Cancel job'}
+                {cancel.state === 'busy' ? uiText("Cancelling…") : uiText("Cancel job")}
               </button>
-              <span className="small muted">Stops the process. A Run the command already wrote is kept.</span>
+              <span className="small muted">{uiText("Stops the process. A Run the command already wrote is kept.")}</span>
             </div>
           )}
           {cancel.state === 'error' && <p className="small sig" role="alert">{cancel.message}</p>}

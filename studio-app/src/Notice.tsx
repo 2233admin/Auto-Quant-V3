@@ -1,3 +1,4 @@
+import { DiagnosticText } from './components/DiagnosticText'
 import type { ReactNode } from 'react'
 
 type Props = { kind: 'error' | 'info'; label: string; title: string; subtitle?: string; children?: ReactNode }
@@ -25,7 +26,7 @@ export function Notice({ kind, label, title, subtitle, children }: Props) {
         </svg>
         <div className="notice-text">
           <div className="notice-title">{title}</div>
-          {subtitle && <div className="notice-sub">{subtitle}</div>}
+          {subtitle && <div className="notice-sub"><DiagnosticText value={subtitle} error={kind === 'error'} /></div>}
           {children}
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../../i18n'
 import { useId, useState, type ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../../design/icons'
 import { Collapse } from '../motion/Collapse'
@@ -20,11 +21,11 @@ export function VerdictBar({ tone, word, children, detail, reasons = [] }: { ton
       <div className="wb-verdict-line" role="status">
         <span className="wb-pill">
           <Glyph kind={GLYPH[tone]} signal={tone === 'bad'} />
-          {word}
+          {uiValue(word)}
         </span>
         <span className="wb-verdict-text" title={typeof children === 'string' ? children : undefined}>{children}</span>
         <button type="button" className="wb-link" aria-expanded={open} aria-controls={id} onClick={() => setOpen((v) => !v)}>
-          {open ? 'Less' : 'More'}
+          {open ? uiText("Less") : uiText("More")}
         </button>
       </div>
       <Collapse open={open} id={id} className="wb-verdict-more">
@@ -35,7 +36,7 @@ export function VerdictBar({ tone, word, children, detail, reasons = [] }: { ton
               <li key={i}>
                 <Glyph kind={r.tone === 'good' ? 'supported' : r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
                 <span>
-                  {r.text}
+                  {uiValue(r.text)}
                   {r.field && <span className="faint small mono"> {r.field}</span>}
                 </span>
               </li>

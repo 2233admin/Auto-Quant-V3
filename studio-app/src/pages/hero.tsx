@@ -1,3 +1,4 @@
+import { uiValue } from '../i18n'
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../design/icons'
 import { CompactTile, CompactTileGrid } from '../components/CompactTile'
@@ -15,7 +16,7 @@ export function HeroLine({ tone, word, children, why }: { tone: HeroTone; word: 
     <p className="hero-line" data-tone={tone} role="status">
       <Glyph kind={TONE_GLYPH[tone]} signal={tone === 'bad'} />
       <span className="hero-text">
-        <span className="hero-word">{word}</span>
+        <span className="hero-word">{uiValue(word)}</span>
         {children ? <>: {children}</> : null}
         {why}
       </span>

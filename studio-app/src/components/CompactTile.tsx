@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../design/icons'
 import { Info } from './Info'
@@ -6,8 +7,8 @@ import type { Tone } from './MetricTile'
 import './compactTile.css'
 
 const TONE: Record<Exclude<Tone, 'neutral'>, { glyph: GlyphKind; word: string; signal: boolean }> = {
-  caution: { glyph: 'inconclusive', word: 'Caution', signal: false },
-  weak: { glyph: 'refuted', word: 'Weak', signal: true },
+  caution: { glyph: 'inconclusive', get word() { return uiText("Caution") }, signal: false },
+  weak: { glyph: 'refuted', get word() { return uiText("Weak") }, signal: true },
 }
 
 /**
@@ -36,18 +37,18 @@ export function CompactTile({
   return (
     <div className="ct">
       <dt className="ct-label">
-        <span className="ct-label-text">{label}</span>
-        {info && <Info label={`${label}: definition`}>{info}</Info>}
+        <span className="ct-label-text">{uiValue(label)}</span>
+        {info && <Info label={uiTemplate("{0}: definition", [label])}>{info}</Info>}
       </dt>
       <dd className="ct-right">
         {t && (
           <span className="ct-tone">
             <Glyph kind={t.glyph} signal={t.signal} />
-            <span className={t.signal ? 'sig' : undefined}>{t.word}</span>
-            {toneReason ? <span className="faint"> {toneReason}</span> : null}
+            <span className={t.signal ? 'sig' : undefined}>{uiValue(t.word)}</span>
+            {toneReason ? <span className="faint"> {uiValue(toneReason)}</span> : null}
           </span>
         )}
-        {note && <span className="ct-note faint">{note}</span>}
+        {note && <span className="ct-note faint">{uiValue(note)}</span>}
         {delta && <span className="ct-delta mono">{delta}</span>}
         <AnimatedValue className="ct-value mono" value={value} />
       </dd>

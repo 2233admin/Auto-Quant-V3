@@ -14,9 +14,34 @@ import type { FactorSummary, StrategySummary } from '../src/api'
 import { FACTOR_FILTERS, factorMetricLine, factorPoints, filterCounts, LibraryCard, strategyMetricLine } from '../src/library/LibraryCards'
 import { SessionRecovery } from '../src/pages/FactorEditorState'
 import { parseRoute } from '../src/route'
+import { setLanguage, uiTemplate, uiText } from '../src/i18n'
 
 test('landing and legacy projects alias both open Factors', () => {
   for (const query of ['', '?view=projects', '?view=factors']) assert.equal(parseRoute(query).view, 'factors')
+})
+
+test('Chinese presentation preserves user names, numerical evidence, commands and canonical verdict states', () => {
+  setLanguage('zh')
+  try {
+    const summary = { validation: { meanRankIc: 0.8086, hacTStatistic: 17.42 }, trials: 12 } as FactorSummary
+    const metric = factorMetricLine(summary)
+    assert.equal(metric, '验证集秩 IC +0.809 · HAC t 值 17.4 · 试验 12')
+    const html = renderToStaticMarkup(<LibraryCard name="Run" badge="Supported" metric={metric} points={[]} updated={null} href="/?view=factor&id=Run&idea=1" go={() => {}} />)
+    assert.match(html, />Run<\/a>/)
+    assert.match(html, /因子表达式/)
+    assert.match(html, /\+0\.809/)
+    assert.equal(ideaVerdict(null, null), 'Could not be tested')
+    assert.equal(uiTemplate('Run {0}', ['user-id-Run']), '运行 user-id-Run')
+    assert.equal(uiText('aq run ./project --study factor'), 'aq run ./project --study factor')
+    assert.equal(uiText('data-identity-Train'), 'data-identity-Train')
+  } finally { setLanguage('en') }
+  assert.equal(uiText('Run'), 'Run')
+  assert.equal(uiText('Each policy carries its own holdings, drift, no-trade decisions, risk repair, turnover and costs.'), 'Each policy carries its own holdings, drift, no-trade decisions, risk repair, turnover and costs.')
+})
+
+test('localized UI decodes authored JSX entities without altering interpolation values', () => {
+  assert.equal(uiText('policy&apos;s &ldquo;label&rdquo;'), 'policy\'s “label”')
+  assert.equal(uiTemplate('Run {0}', ['<&apos;>']), 'Run <&apos;>')
 })
 
 test('library filter counts include every verdict and zero-result categories', () => {
@@ -105,6 +130,19 @@ test('answer metrics remain validation-only even after a published test audit', 
   assert.ok(groups.every(g => g.heading.toLowerCase().includes('validation')))
   assert.doesNotMatch(JSON.stringify(groups.map(g => g.tiles.map(t => t.value))), /876\.5432|9876|99999/)
   assert.ok(!groups.flatMap(g => g.tiles).some(t => t.label === 'Trials counted'))
+})
+
+test('Chinese labels retain every validation metric and the same sealed-test gate', () => {
+  setLanguage('zh')
+  try {
+    const groups = ideaMetricGroups(study(), project)
+    assert.deepEqual(groups.map(g => g.tiles.length), [6, 6])
+    assert.ok(groups.every(g => g.heading.includes('验证')))
+    assert.doesNotMatch(JSON.stringify(groups.map(g => g.tiles.map(t => t.value))), /876\.5432|9876|99999/)
+    const s = study(); s.protocol.testRole = 'sealed'
+    const html = renderToStaticMarkup(<FactorHero study={s} />)
+    assert.doesNotMatch(html, /876\.5432|9876\.543|2099-12-31/)
+  } finally { setLanguage('en') }
 })
 
 for (const [label, audit, role] of [

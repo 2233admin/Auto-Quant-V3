@@ -1,3 +1,4 @@
+import { uiText } from '../i18n'
 import type { WorkspaceSummary } from '../api'
 import type { Route } from '../route'
 import { FactorLibrary } from './FactorLibrary'
@@ -15,7 +16,7 @@ export const LIBRARY_TITLE: Record<LibraryRoute['view'], string> = { factors: 'F
 
 /** The four read-only cross-Project pages: one list, filters on top, click a row to open detail. */
 export function LibraryPage({ route, workspace, go }: { route: LibraryRoute; workspace: WorkspaceSummary | null; go: (href: string) => void }) {
-  if (!workspace) return <div className="pg"><Loading label="Loading Workspace…" minHeight={240} /></div>
+  if (!workspace) return <div className="pg"><Loading label={uiText("Loading Workspace…")} minHeight={240} /></div>
   if (route.view === 'factors') return <FactorLibrary workspace={workspace} go={go} />
   if (route.view === 'runs') return <RunHistory workspace={workspace} go={go} />
   if (route.view === 'strategies') return <StrategyLibrary workspace={workspace} go={go} />

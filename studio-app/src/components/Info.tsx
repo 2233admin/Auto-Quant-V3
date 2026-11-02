@@ -1,3 +1,4 @@
+import { uiValue } from '../i18n'
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import './info.css'
 
@@ -44,7 +45,7 @@ export function Info({ label, children, align = 'start' }: { label: string; chil
 
   return (
     <span className="info" ref={root}>
-      <button type="button" className="info-btn" aria-expanded={open} aria-controls={panel} aria-label={label} onClick={() => setOpen((v) => !v)}>
+      <button type="button" className="info-btn" aria-expanded={open} aria-controls={panel} aria-label={uiValue(label)} onClick={() => setOpen((v) => !v)}>
         <span aria-hidden="true">?</span>
       </button>
       <span id={panel} role="region" aria-label={label} className={`info-body info-body--${flip ? 'end' : align}`} hidden={!open} ref={body}>

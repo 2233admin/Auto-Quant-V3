@@ -1,3 +1,4 @@
+import { uiTemplate, uiText } from '../i18n'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { ProjectSnapshot } from '../api'
 import { Notice } from '../Notice'
@@ -9,11 +10,11 @@ import type { CatalogAction, CatalogSession, Preview } from './types'
 /** Mirrors the catalog schema and the server's own checks; the server stays the authority. */
 export function validateHypothesis(text: string, min: number, max: number): string | null {
   if (text.length === 0) return `Required: ${min} to ${max} characters.`
-  if (/[\u0000-\u001f\u007f]/.test(text)) return 'No line breaks or control characters.'
-  if (text !== text.trim()) return 'No spaces at the start or end.'
-  if (text.startsWith('-')) return 'Must not start with a dash.'
-  if (text.length < min) return `${min - text.length} more character${min - text.length === 1 ? '' : 's'} needed (minimum ${min}).`
-  if (text.length > max) return `${text.length - max} over the ${max} character limit.`
+  if (/[\u0000-\u001f\u007f]/.test(text)) return uiText("No line breaks or control characters.")
+  if (text !== text.trim()) return uiText("No spaces at the start or end.")
+  if (text.startsWith('-')) return uiText("Must not start with a dash.")
+  if (text.length < min) return uiTemplate("{0} more character{1} needed (minimum {2}).", [min - text.length, min - text.length === 1 ? '' : 's', min])
+  if (text.length > max) return uiTemplate("{0} over the {1} character limit.", [text.length - max, max])
   return null
 }
 
@@ -27,11 +28,11 @@ const PREVIEW_DELAY_MS = 450
 
 function adjustmentLine(preview: Preview): string {
   const adj = preview.trial.adjustment
-  if (!adj) return 'No selection adjustment is recorded for this family yet, so every figure stays in-sample.'
+  if (!adj) return uiText("No selection adjustment is recorded for this family yet, so every figure stays in-sample.")
   const method = adj.method ? ` (${adj.method})` : ''
-  if (adj.passes === true) return `The family currently passes the selection adjustment${method}. One more counted trial raises the number of tests the adjustment must correct for, so the adjusted p-value can only rise.`
-  if (adj.passes === false) return `The family currently fails the selection adjustment${method}. One more counted trial raises the number of tests the adjustment corrects for; it does not improve this.`
-  return `Selection adjustment is ${adj.status ?? 'not available'}${adj.reason ? ` (${adj.reason})` : ''}. One more counted trial enlarges the family the adjustment will have to correct for.`
+  if (adj.passes === true) return uiTemplate("The family currently passes the selection adjustment{0}. One more counted trial raises the number of tests the adjustment must correct for, so the adjusted p-value can only rise.", [method])
+  if (adj.passes === false) return uiTemplate("The family currently fails the selection adjustment{0}. One more counted trial raises the number of tests the adjustment corrects for; it does not improve this.", [method])
+  return uiTemplate("Selection adjustment is {0}{1}. One more counted trial enlarges the family the adjustment will have to correct for.", [adj.status ?? 'not available', adj.reason ? ` (${adj.reason})` : ''])
 }
 
 /**
@@ -163,21 +164,19 @@ export function ConfirmActionDialog({
       }}
     >
       <header className="adialog-head">
-        <h2 id={ids.title}>Run analysis</h2>
-        <p className="small muted">
-          Project: <span translate="no">{project.name}</span> · Nothing runs until you confirm below.
-        </p>
+        <h2 id={ids.title}>{uiText("Run analysis")}</h2>
+        <p className="small muted">{uiText("Project: ")}<span translate="no">{project.name}</span>{uiText(" · Nothing runs until you confirm below.")}</p>
       </header>
 
       <div className="adialog-scroll">
         <div className="afield">
-          <label htmlFor={ids.session}>Session</label>
+          <label htmlFor={ids.session}>{uiText("Session")}</label>
           {sessions.length > 1 ? (
             <select id={ids.session} value={session} onChange={(e) => setSession(e.target.value)}>
               {sessions.map((s) => (
                 <option key={s.session} value={s.session} disabled={!s.available}>
                   {s.session}
-                  {s.available ? '' : ' (blocked)'}
+                  {s.available ? '' : uiText(" (blocked)")}
                 </option>
               ))}
             </select>
@@ -189,13 +188,12 @@ export function ConfirmActionDialog({
 
         {fixedHypothesis !== undefined ? (
           <div className="afield">
-            <span id={ids.hyp} className="afield-label">Hypothesis</span>
+            <span id={ids.hyp} className="afield-label">{uiText("Hypothesis")}</span>
             <p className="small" aria-labelledby={ids.hyp}>{fixedHypothesis}</p>
           </div>
         ) : (
           <div className="afield">
-            <label htmlFor={ids.hyp}>
-              Hypothesis <span className="faint small">what this candidate is meant to test, {minLength} to {maxLength} characters</span>
+            <label htmlFor={ids.hyp}>{uiText("Hypothesis ")}<span className="faint small">{uiText("what this candidate is meant to test, ")}{minLength}{uiText(" to ")}{maxLength}{uiText(" characters")}</span>
             </label>
             <textarea
               id={ids.hyp}
@@ -219,37 +217,36 @@ export function ConfirmActionDialog({
         )}
 
         <section className="apreview" aria-live="polite" aria-busy={preview.state === 'loading'}>
-          <h3>The exact command</h3>
-          {preview.state === 'idle' && <p className="small muted">Enter a valid hypothesis to see the exact command Studio would run.</p>}
-          {preview.state === 'loading' && <p className="small muted">Checking preconditions and building the command…</p>}
-          {preview.state === 'error' && hypothesisIssue && <p className="small muted">No command was built: Studio refused the hypothesis above.</p>}
-          {preview.state === 'error' && preview.kind !== 'validation' && <Notice kind="error" label="Error" title={preview.copy.title} subtitle={preview.copy.detail} />}
-          {preview.state === 'error' && preview.kind === 'validation' && !hypothesisIssue && <Notice kind="error" label="Error" title={preview.copy.title} subtitle={preview.copy.detail} />}
+          <h3>{uiText("The exact command")}</h3>
+          {preview.state === 'idle' && <p className="small muted">{uiText("Enter a valid hypothesis to see the exact command Studio would run.")}</p>}
+          {preview.state === 'loading' && <p className="small muted">{uiText("Checking preconditions and building the command…")}</p>}
+          {preview.state === 'error' && hypothesisIssue && <p className="small muted">{uiText("No command was built: Studio refused the hypothesis above.")}</p>}
+          {preview.state === 'error' && preview.kind !== 'validation' && <Notice kind="error" label={uiText("Error")} title={preview.copy.title} subtitle={preview.copy.detail} />}
+          {preview.state === 'error' && preview.kind === 'validation' && !hypothesisIssue && <Notice kind="error" label={uiText("Error")} title={preview.copy.title} subtitle={preview.copy.detail} />}
           {ready && (
             <>
               <div className="cmdrow">
-                <pre className="cmd mono" translate="no" tabIndex={0} aria-label="Command to run">{ready.display}</pre>
-                <CopyButton text={ready.display} label="Copy command" />
+                <pre className="cmd mono" translate="no" tabIndex={0} aria-label={uiText("Command to run")}>{ready.display}</pre>
+                <CopyButton text={ready.display} label={uiText("Copy command")} />
               </div>
               <dl className="kv akv">
-                <dt>Command hash</dt>
+                <dt>{uiText("Command hash")}</dt>
                 <dd className="mono" translate="no">{ready.commandHash}</dd>
-                <dt>Precondition</dt>
-                <dd>Passed: Session active, authority valid, candidate differs from the leader.</dd>
+                <dt>{uiText("Precondition")}</dt>
+                <dd>{uiText("Passed: Session active, authority valid, candidate differs from the leader.")}</dd>
               </dl>
               {trial && (
                 <div className="trial atrial" role="note">
-                  <p className="trial-head">This will be trial {trial.n} of {trial.m} in this research family</p>
+                  <p className="trial-head">{uiText("This will be trial ")}{trial.n}{uiText(" of ")}{trial.m}{uiText(" in this research family")}</p>
                   <p className="small">{adjustmentLine(ready)}</p>
                   <p className="small">
                     {trial.notice ? `${trial.notice[0].toUpperCase()}${trial.notice.slice(1)}.` : ''}
-                    {trial.externalHoldoutRequired ? ' An external holdout is already required.' : ''}
+                    {trial.externalHoldoutRequired ? uiText(" An external holdout is already required.") : ''}
                   </p>
                 </div>
               )}
               <p className="small muted">
-                {ready.writes} A Run cannot be hidden, deleted or reverted out of the count, and cancelling the job later does not remove an Experiment it already wrote. Time limit {Math.round(ready.timeoutSeconds / 60)} minutes, then the process is stopped.
-              </p>
+                {ready.writes}{uiText(" A Run cannot be hidden, deleted or reverted out of the count, and cancelling the job later does not remove an Experiment it already wrote. Time limit ")}{Math.round(ready.timeoutSeconds / 60)}{uiText(" minutes, then the process is stopped.")}</p>
             </>
           )}
         </section>
@@ -259,27 +256,23 @@ export function ConfirmActionDialog({
 
       <div className="adialog-pinned">
           {stale && (
-            <Notice kind="info" label="Info" title="The Project changed since the preview." subtitle="Nothing was run. Review the refreshed command and trial number, then confirm again." />
+            <Notice kind="info" label={uiText("Info")} title={uiText("The Project changed since the preview.")} subtitle={uiText("Nothing was run. Review the refreshed command and trial number, then confirm again.")} />
           )}
-          {launch.state === 'error' && <Notice kind="error" label="Error" title={launch.copy.title} subtitle={launch.copy.detail} />}
+          {launch.state === 'error' && <Notice kind="error" label={uiText("Error")} title={launch.copy.title} subtitle={launch.copy.detail} />}
       {ready && action.requiresSecondConfirm && (
         <div className="asecond">
           <input id={ids.second} type="checkbox" checked={second} onChange={(e) => setSecond(e.target.checked)} />
-          <label htmlFor={ids.second}>
-            I understand this adds trial {trial?.n} of {trial?.m} to the family permanently and shows test audit values.
-          </label>
+          <label htmlFor={ids.second}>{uiText("I understand this adds trial ")}{trial?.n}{uiText(" of ")}{trial?.m}{uiText(" to the family permanently and shows test audit values.")}</label>
         </div>
       )}
       </div>
       <footer className="adialog-foot">
         <button type="submit" className="abtn abtn--primary" disabled={!canConfirm}>
-          {launch.state === 'busy' ? 'Starting…' : 'Confirm and run'}
+          {launch.state === 'busy' ? uiText("Starting…") : uiText("Confirm and run")}
         </button>
-        <button type="button" className="abtn" onClick={onClose}>
-          Cancel
-        </button>
+        <button type="button" className="abtn" onClick={onClose}>{uiText("Cancel")}</button>
         <span className="small muted afoot-hint">
-          {!ready ? 'Confirm unlocks after the command is shown.' : !second ? 'Tick the acknowledgment to enable Confirm.' : ''}
+          {!ready ? uiText("Confirm unlocks after the command is shown.") : !second ? uiText("Tick the acknowledgment to enable Confirm.") : ''}
         </span>
       </footer>
     </form>

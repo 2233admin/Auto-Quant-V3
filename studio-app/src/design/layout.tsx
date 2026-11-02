@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../i18n'
 import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import { hashWithJob, sectionOfHash } from '../actions/jobHash'
 import { AnimatedDetails } from '../components/motion/AnimatedDetails'
@@ -32,7 +33,7 @@ export function Section({
     return (
       <section className={cls} aria-labelledby={id}>
         <h2 id={id}>{title}</h2>
-        {caption && <p className="sec-cap">{caption}</p>}
+        {caption && <p className="sec-cap">{uiValue(caption)}</p>}
         {children}
       </section>
     )
@@ -42,7 +43,7 @@ export function Section({
       <AnimatedDetails open={defaultOpen}>
         <summary>
           <h2 id={id}>{title}</h2>
-          {caption && <span className="sec-cap">{caption}</span>}
+          {caption && <span className="sec-cap">{uiValue(caption)}</span>}
         </summary>
         <div className="sec-body">{children}</div>
       </AnimatedDetails>
@@ -118,12 +119,12 @@ export function SectionNav({ items }: { items: NavItem[] }) {
   }
 
   return (
-    <nav className="secnav" aria-label="On this page">
+    <nav className="secnav" aria-label={uiText("On this page")}>
       <ul>
         {items.map((item) => (
           <li key={item.id}>
             <a href={`#${item.id}`} aria-current={item.id === active ? 'location' : undefined} onClick={(e) => go(e, item.id)}>
-              {item.label}
+              {uiValue(item.label)}
             </a>
           </li>
         ))}

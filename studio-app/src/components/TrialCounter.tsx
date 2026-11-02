@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../i18n'
 import type { ProjectSnapshot, SelectionIntegrity } from '../api'
 import { Glyph } from '../design/icons'
 import { plural } from '../format'
@@ -23,9 +24,9 @@ export function TrialCounter({ project }: { project: ProjectSnapshot }) {
     return (
       <div className="trial" role="note">
         <Glyph kind="inconclusive" />
-        <span>No trial ledger: numbers are in-sample and unadjusted.</span>
-        <Info label="About the missing trial ledger" align="end">
-          <p>No Session records the trials of this Project, so the numbers on this page are in-sample and unadjusted.</p>
+        <span>{uiText("No trial ledger: numbers are in-sample and unadjusted.")}</span>
+        <Info label={uiText("About the missing trial ledger")} align="end">
+          <p>{uiText("No Session records the trials of this Project, so the numbers on this page are in-sample and unadjusted.")}</p>
         </Info>
       </div>
     )
@@ -47,17 +48,17 @@ export function TrialCounter({ project }: { project: ProjectSnapshot }) {
   return (
     <div className={`trial${passes ? ' is-pass' : ''}`} role="note">
       <Glyph kind={passes ? 'supported' : 'inconclusive'} />
-      <span>{short}</span>
-      <Info label="About the trial count and adjustment" align="end">
+      <span>{uiValue(short)}</span>
+      <Info label={uiText("About the trial count and adjustment")} align="end">
         <p>
-          {plural(fam.totalExecutions, 'trial')} counted in this research family ({fam.uniqueSourceTrials} unique {fam.uniqueSourceTrials === 1 ? 'source' : 'sources'}).
+          {plural(fam.totalExecutions, 'trial')}{uiText(" counted in this research family (")}{fam.uniqueSourceTrials}{uiText(" unique ")}{fam.uniqueSourceTrials === 1 ? uiText("source") : uiText("sources")}).
         </p>
-        <p>{status}</p>
+        <p>{uiValue(status)}</p>
         <p>
           {passes
-            ? 'The adjustment is diagnostic evidence only and carries no trading authority.'
-            : 'Numbers on this page are in-sample: they were selected from these trials and have not passed the adjustment.'}
-          {si.externalHoldoutRequired ? ' An external holdout is still required before a production-grade claim.' : ''}
+            ? uiText("The adjustment is diagnostic evidence only and carries no trading authority.")
+            : uiText("Numbers on this page are in-sample: they were selected from these trials and have not passed the adjustment.")}
+          {si.externalHoldoutRequired ? uiText(" An external holdout is still required before a production-grade claim.") : ''}
         </p>
       </Info>
     </div>

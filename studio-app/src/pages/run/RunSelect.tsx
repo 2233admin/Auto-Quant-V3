@@ -1,9 +1,10 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import type { RunRow } from '../../api'
 import { num, when } from '../../format'
 
 /** Labels carry the headline number so the choice is informed; the value is the immutable Run id. */
 export function runLabel(run: RunRow): string {
-  return `${when(run.startedAt)} · ${run.subject.name} · ${run.primaryMetric} ${num(run.primaryValue, 4)} · ${run.status}`
+  return `${when(run.startedAt)} · ${run.subject.name} · ${run.primaryMetric} ${num(run.primaryValue, 4)} · ${uiText(run.status)}`
 }
 
 /** `compact`: timestamp and status only. The headline number then sits in the page's stat chips, not in the option text. */
@@ -11,13 +12,13 @@ export function RunSelect({ label, runs, value, onChange, allowEmpty, bar, compa
   const ordered = [...runs].sort((x, y) => y.startedAt.localeCompare(x.startedAt))
   return (
     <label className={bar ? 'runsel runsel--bar' : 'runsel'}>
-      <span className={bar ? 'sr-only' : 'runsel-label'}>{label}</span>
+      <span className={bar ? 'sr-only' : 'runsel-label'}>{uiValue(label)}</span>
       <select value={value ?? ''} onChange={(event) => onChange(event.target.value)}>
-        {(allowEmpty || !value) && <option value="">Choose a Run…</option>}
-        {value && !ordered.some((run) => run.id === value) && <option value={value}>Not a Run of this Project</option>}
+        {(allowEmpty || !value) && <option value="">{uiText("Choose a Run…")}</option>}
+        {value && !ordered.some((run) => run.id === value) && <option value={value}>{uiText("Not a Run of this Project")}</option>}
         {ordered.map((run) => (
           <option key={run.id} value={run.id}>
-            {compact ? `${when(run.startedAt)} UTC · ${run.status}` : runLabel(run)}
+            {compact ? uiTemplate("{0} UTC · {1}", [when(run.startedAt), uiText(run.status)]) : runLabel(run)}
           </option>
         ))}
       </select>

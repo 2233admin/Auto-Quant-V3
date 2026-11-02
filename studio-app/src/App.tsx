@@ -1,3 +1,4 @@
+import { uiText, useLanguage } from './i18n'
 import { useEffect, useState } from 'react'
 import { ActionsProvider } from './actions/ActionsContext'
 import { useTheme } from './design/theme'
@@ -28,8 +29,8 @@ import { useShellData } from './useShellData'
 import { Loading } from './components/States'
 import { WorkbenchGallery } from './components/workbench/Gallery'
 import { FloatingShell } from './components/workbench'
-
 export default function App() {
+  useLanguage()
   const { route, go } = useRouter()
   const data = useShellData()
   const [theme, setTheme] = useTheme()
@@ -60,64 +61,56 @@ export default function App() {
   const projectCrumb = (id: string) => ({ label: known?.name ?? id, data: true })
   const crumbs: Crumb[] =
     route.view === 'assistant'
-      ? [{ label: 'Assistant' }]
+      ? [{ label: uiText("Assistant") }]
       : route.view === 'project'
-      ? [{ label: 'Factors', href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
+      ? [{ label: uiText("Factors"), href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
       : route.view === 'event-study'
         ? [
-            { label: 'Factors', href: routeHref({ view: 'projects' }) },
+            { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
             { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
-            { label: 'Price event study' },
+            { label: uiText("Price event study") },
           ]
         : route.view === 'run' || route.view === 'compare'
           ? [
-              { label: 'Factors', href: routeHref({ view: 'projects' }) },
+              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'run' ? 'Run' : 'Compare Runs' },
             ]
         : route.view === 'allocation' || route.view === 'rl'
           ? [
-              { label: 'Factors', href: routeHref({ view: 'projects' }) },
+              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'rl' ? 'Governed RL policy' : 'Strategic allocation' },
             ]
         : route.view === 'bookrisk' || route.view === 'bookstress'
           ? [
-              { label: 'Factors', href: routeHref({ view: 'projects' }) },
+              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'bookrisk' ? 'Book Risk' : 'Reported-book path stress' },
             ]
         : route.view === 'portfolio'
           ? [
-              { label: 'Factors', href: routeHref({ view: 'projects' }) },
+              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
-              { label: 'Portfolio' },
+              { label: uiText("Portfolio") },
             ]
         : route.view === 'factor'
           ? [
-              { label: 'Factors', href: routeHref({ view: 'projects' }) },
+              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
-              { label: 'Factor evidence' },
+              { label: uiText("Factor evidence") },
             ]
           : isLibraryRoute(route)
             ? route.view === 'tuning' && route.id
               ? [{ label: LIBRARY_TITLE.tuning, href: routeHref({ view: 'tuning' }) }, { label: (data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id), data: true }]
               : [{ label: LIBRARY_TITLE[route.view] }]
             : route.view === 'attention'
-              ? [{ label: 'Attention' }]
+              ? [{ label: uiText("Attention") }]
               : route.view === 'settings'
-                ? [{ label: 'Settings' }]
-                : [{ label: 'Factors' }]
-  document.title =
-    route.view === 'assistant'
-      ? 'Assistant · AutoQuant Studio'
-      : route.view === 'projects'
-      ? 'AutoQuant Studio'
-      : route.view === 'attention' || route.view === 'settings'
-        ? `${route.view === 'attention' ? 'Attention' : 'Settings'} · AutoQuant Studio`
-      : isLibraryRoute(route)
-        ? `${LIBRARY_TITLE[route.view]} · AutoQuant Studio`
-      : `${route.view === 'event-study' ? 'Price event study · ' : route.view === 'factor' ? 'Factor evidence · ' : route.view === 'portfolio' ? 'Portfolio · ' : route.view === 'bookrisk' ? 'Book Risk · ' : route.view === 'bookstress' ? 'Reported-book path stress · ' :route.view === 'allocation' ? 'Strategic allocation · ' : route.view === 'rl' ? 'Governed RL policy · ' : route.view === 'run' ? 'Run · ' : route.view === 'compare' ? 'Compare Runs · ' : ''}${known?.name ?? route.id} · AutoQuant Studio`
+                ? [{ label: uiText("Settings") }]
+                : [{ label: uiText("Factors") }]
+  const routeTitles: Record<string, string> = { assistant: 'Assistant', projects: 'Factors', factors: 'Factor library', strategies: 'Strategy library', runs: 'Run history', tuning: 'Tuning tasks', attention: 'Attention', settings: 'Settings', 'event-study': 'Price event study', factor: 'Factor evidence', portfolio: 'Portfolio', bookrisk: 'Book Risk', bookstress: 'Reported-book path stress', allocation: 'Strategic allocation', rl: 'Governed RL policy', run: 'Run', compare: 'Compare Runs', project: 'Project' }
+  document.title = [uiText(routeTitles[route.view] ?? 'AutoQuant Studio'), ...(projectId ? [known?.name ?? projectId] : []), 'AutoQuant Studio'].join(' · ')
 
   let page
   if (new URLSearchParams(window.location.search).get('view') === 'kit') {
@@ -134,7 +127,7 @@ export default function App() {
     page = data.workspace ? (
       <FactorLibrary workspace={data.workspace} go={go} />
     ) : (
-      <div className="pg">{data.error ? <Notice kind="error" label="Error" title="Could not load the Workspace." subtitle={data.error} /> : <Loading label="Loading Workspace…" minHeight={240} />}</div>
+      <div className="pg">{data.error ? <Notice kind="error" label={uiText("Error")} title={uiText("Could not load the Workspace.")} subtitle={data.error} /> : <Loading label={uiText("Loading Workspace…")} minHeight={240} />}</div>
     )
   } else if (project.state === 'ready') {
     page =
@@ -164,16 +157,16 @@ export default function App() {
   } else if (project.state === 'error') {
     page = (
       <div className="pg">
-        <Notice kind="error" label="Error" title="Could not load this Project." subtitle={project.message} />
+        <Notice kind="error" label={uiText("Error")} title={uiText("Could not load this Project.")} subtitle={project.message} />
         <p>
-          <a href={routeHref({ view: 'projects' })}>Back to Factors</a>
+          <a href={routeHref({ view: 'projects' })}>{uiText("Back to Factors")}</a>
         </p>
       </div>
     )
   } else {
     page = (
       <div className="pg">
-        <Loading label="Loading Project…" minHeight={240} />
+        <Loading label={uiText("Loading Project…")} minHeight={240} />
       </div>
     )
   }
@@ -181,7 +174,7 @@ export default function App() {
   return (
     <ActionsProvider workspace={data.workspace} routeKey={JSON.stringify(route)} go={go} refresh={data.refresh}>
     <div ref={ref}>
-      <a className="skip" href="#content">Skip to content</a>
+      <a className="skip" href="#content">{uiText("Skip to content")}</a>
       <FloatingShell sidebar={<Rail route={route} data={data} narrow={compact} onSearch={() => setPalette(true)} />}>
           <TopBar crumbs={crumbs} data={data} theme={theme} onTheme={setTheme} onSearch={() => setPalette(true)} />
           <main id="content" className="page" tabIndex={-1}>
@@ -189,7 +182,7 @@ export default function App() {
           </main>
       </FloatingShell>
       <TabBar route={route} data={data} />
-      {assistantContext && <button className="abtn assistant-ask" type="button" onClick={() => setAskAssistant(true)}>Ask Assistant</button>}
+      {assistantContext && <button className="abtn assistant-ask" type="button" onClick={() => setAskAssistant(true)}>{uiText("Ask Assistant")}</button>}
       {askAssistant && assistantContext && <AssistantDrawer key={JSON.stringify(assistantContext)} workspace={data.workspace} context={assistantContext} onClose={() => setAskAssistant(false)} />}
       <Palette open={palette} onClose={() => setPalette(false)} projects={data.workspace?.projects ?? []} go={go} />
     </div>

@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { useId, useState, type ReactNode } from 'react'
 import { Icon } from '../../design/icons'
 import { Info } from '../Info'
@@ -10,7 +11,7 @@ function Facts({ facts, label, compact }: { facts: Fact[]; label: string; compac
     <dl className="wb-facts" aria-label={label}>
       {facts.map((f) => (
         <div key={f.label} className="wb-fact" title={compact && (typeof f.value === 'string' || typeof f.value === 'number') ? `${f.label}: ${f.value}` : undefined}>
-          <dt>{f.label}</dt>
+          <dt>{uiValue(f.label)}</dt>
           <dd className={f.mono ? 'mono' : undefined} translate={f.mono ? 'no' : undefined}>{f.value}</dd>
         </div>
       ))}
@@ -54,18 +55,18 @@ export function FactChips({
   const head = (
     <p className="wb-facts-head">
       {locked && (
-        <span className="wb-lock" role="img" aria-label="Locked">
+        <span className="wb-lock" role="img" aria-label={uiText("Locked")}>
           <Icon name="lock" />
         </span>
       )}
-      <span>{label}</span>
-      {info && <Info label={`${label}: why locked`}>{info}</Info>}
+      <span>{uiValue(label)}</span>
+      {info && <Info label={uiTemplate("{0}: why locked", [label])}>{info}</Info>}
       {(aside || hasMore) && (
         <span className="wb-facts-tools">
           {aside}
           {hasMore && (
             <button type="button" className="wb-link" aria-expanded={open} aria-controls={moreId} onClick={() => setOpen((v) => !v)}>
-              {open ? 'Hide details' : 'Details'}
+              {open ? uiText("Hide details") : uiText("Details")}
             </button>
           )}
         </span>
@@ -79,14 +80,14 @@ export function FactChips({
         <dl className="wb-chiprow" aria-label={label}>
           {facts.map((f) => (
             <div key={f.label} className="wb-chip">
-              <dt>{f.label}</dt>
+              <dt>{uiValue(f.label)}</dt>
               <dd className={f.mono ? 'mono' : undefined} translate={f.mono ? 'no' : undefined}>{f.value}</dd>
             </div>
           ))}
         </dl>
         {hasMore && (
           <div id={moreId} className="wb-facts-more" hidden={!open}>
-            {more.length > 0 && <Facts facts={more} label={`${label}: details`} compact={false} />}
+            {more.length > 0 && <Facts facts={more} label={uiTemplate("{0}: details", [label])} compact={false} />}
             {moreExtra}
           </div>
         )}

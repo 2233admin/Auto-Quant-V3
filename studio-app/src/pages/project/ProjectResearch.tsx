@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { useId } from 'react'
 import type { ProjectSnapshot, ReportRow, SessionSnapshot, TrialRow } from '../../api'
 import { num, when } from '../../format'
@@ -6,7 +7,7 @@ import { routeHref } from '../../route'
 import { Info } from '../../components/Info'
 import { useFitWidth } from '../../design/useFitWidth'
 
-const NA = (text: string) => <p className="pj-na">Not available: {text}</p>
+const NA = (text: string) => <p className="pj-na">{uiText("Not available: ")}{uiValue(text)}</p>
 
 /** Session fields moved under `session` in the verified snapshot; the flat shape is kept as a fallback. */
 export function sessionMeta(s: SessionSnapshot) {
@@ -69,10 +70,9 @@ export function Trajectory({ trials, metric, show = 'both' }: { trials: TrialRow
   const ordered = [...pts].sort((a, b) => a.sequence - b.sequence)
   const line = (
       <figure ref={show === 'ranked' ? undefined : figRef} className="pj-fig" aria-labelledby={`${id}-t`}>
-        <h3 className="pj-sub" id={`${id}-t`}>
-          Trajectory of the selection metric ({metric})
+        <h3 className="pj-sub" id={`${id}-t`}>{uiText("Trajectory of the selection metric (")}{metric})
         </h3>
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${metric} for each trial by sequence; ${pts.length} trials`}>
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={uiTemplate("{0} for each trial by sequence; {1} trials", [metric, pts.length])}>
           <line className="ax" x1={L} x2={W - R} y1={y(0)} y2={y(0)} />
           <text x={L - 6} y={y(0) + 4} textAnchor="end">
             0
@@ -86,8 +86,7 @@ export function Trajectory({ trials, metric, show = 'both' }: { trials: TrialRow
           {baseline && typeof baseline.primaryValue === 'number' && (
             <>
               <line className="ref" x1={L} x2={W - R} y1={y(baseline.primaryValue)} y2={y(baseline.primaryValue)} />
-              <text x={W - R} y={y(baseline.primaryValue) - 5} textAnchor="end">
-                baseline {signed(baseline.primaryValue)}
+              <text x={W - R} y={y(baseline.primaryValue) - 5} textAnchor="end">{uiText("baseline ")}{signed(baseline.primaryValue)}
               </text>
             </>
           )}
@@ -99,37 +98,33 @@ export function Trajectory({ trials, metric, show = 'both' }: { trials: TrialRow
           ))}
           {ordered.map((t) => (
             <text key={`l${t.runId}`} x={x(t.sequence)} y={H - B + 16} textAnchor="middle">
-              {t.role === 'baseline' ? 'base' : `#${t.sequence}`}
+              {t.role === 'baseline' ? uiText("base") : `#${t.sequence}`}
             </text>
           ))}
-          <text x={(L + W - R) / 2} y={H - 4} textAnchor="middle">
-            Trial sequence
-          </text>
+          <text x={(L + W - R) / 2} y={H - 4} textAnchor="middle">{uiText("Trial sequence")}</text>
         </svg>
-        <p className="muted small">
-          Orange marks the current leader.
-          <Info label="About the trajectory">
-            <p>Orange marks the current leader. Validation metric chosen by the fixed Judge. The test split is not drawn.</p>
+        <p className="muted small">{uiText("Orange marks the current leader.")}<Info label={uiText("About the trajectory")}>
+            <p>{uiText("Orange marks the current leader. Validation metric chosen by the fixed Judge. The test split is not drawn.")}</p>
           </Info>
         </p>
       </figure>
   )
   const ranked = (
       <figure ref={show === 'ranked' ? figRef : undefined} className="pj-fig">
-        <h3 className="pj-sub">Trials ranked by {metric}</h3>
-        <svg viewBox={`0 0 ${W} ${24 + sorted.length * 26}`} role="img" aria-label={`Ranked trial values, best first, ${sorted.length} trials`}>
+        <h3 className="pj-sub">{uiText("Trials ranked by ")}{metric}</h3>
+        <svg viewBox={`0 0 ${W} ${24 + sorted.length * 26}`} role="img" aria-label={uiTemplate("Ranked trial values, best first, {0} trials", [sorted.length])}>
           {sorted.map((t, i) => {
             const cy = 18 + i * 26
             return (
               <g key={t.runId}>
                 <text x={0} y={cy + 4}>
-                  {t.role === 'baseline' ? 'base' : `#${t.sequence}`}
+                  {t.role === 'baseline' ? uiText("base") : `#${t.sequence}`}
                 </text>
                 <line className="ax" x1={L} x2={W - R} y1={cy} y2={cy} />
                 <line className="ref" x1={xv(0)} x2={xv(0)} y1={cy - 9} y2={cy + 9} />
                 <circle cx={xv(t.primaryValue as number)} cy={cy} r={t.isCurrentLeader ? 6 : 4.5} className={ptClass(t)} />
                 <text x={W - R} y={cy - 7} textAnchor="end" className="lbl">
-                  {signed(t.primaryValue)} {t.verdict}
+                  {signed(t.primaryValue)} {uiValue(t.verdict)}
                 </text>
               </g>
             )
@@ -158,22 +153,17 @@ export function TrialMatrix({
     <>
       <div className="pj-key" aria-hidden="true">
         <span>
-          <i style={{ background: 'var(--text)' }} /> KEEP
-        </span>
+          <i style={{ background: 'var(--text)' }} />{uiText(" KEEP")}</span>
         <span>
-          <i /> REVERT
-        </span>
+          <i />{uiText(" REVERT")}</span>
         <span>
-          <i style={{ borderStyle: 'dashed' }} /> baseline
-        </span>
+          <i style={{ borderStyle: 'dashed' }} />{uiText(" baseline")}</span>
         <span>
-          <i style={{ borderColor: 'var(--signal)', borderStyle: 'dotted', borderWidth: 2 }} /> CRASH
-        </span>
+          <i style={{ borderColor: 'var(--signal)', borderStyle: 'dotted', borderWidth: 2 }} />{uiText(" CRASH")}</span>
         <span>
-          <i style={{ outline: '2px solid var(--signal-graphic)', outlineOffset: 1 }} /> current leader
-        </span>
+          <i style={{ outline: '2px solid var(--signal-graphic)', outlineOffset: 1 }} />{uiText(" current leader")}</span>
       </div>
-      <ul className="pj-matrix" aria-label="Trial matrix">
+      <ul className="pj-matrix" aria-label={uiText("Trial matrix")}>
         {trials.map((t) => (
           <li
             key={t.runId}
@@ -181,17 +171,15 @@ export function TrialMatrix({
             data-v={t.verdict}
             data-leader={t.isCurrentLeader}
             data-failed={t.status !== 'succeeded'}
-            title={`${t.role === 'baseline' ? 'Baseline' : `Trial ${t.sequence}`} · ${t.verdict} · Run ${t.status} · ${signed(t.primaryValue)}${t.isCurrentLeader ? ' · current leader' : ''}`}
+            title={uiTemplate("{0} · {1} · Run {2} · {3}{4}", [t.role === 'baseline' ? 'Baseline' : `Trial ${t.sequence}`, t.verdict, t.status, signed(t.primaryValue), t.isCurrentLeader ? ' · current leader' : ''])}
           >
             {t.role === 'baseline' ? 'B' : t.sequence}
-            {t.isCurrentLeader && <small>lead</small>}
+            {t.isCurrentLeader && <small>{uiText("lead")}</small>}
           </li>
         ))}
       </ul>
       {scope && scope.omittedCandidateTrials > 0 && (
-        <p className="muted small">
-          Showing {scope.displayedCandidateTrials} of {scope.totalCandidateTrials} candidate trials; {scope.omittedCandidateTrials} omitted by the server.
-        </p>
+        <p className="muted small">{uiText("Showing ")}{scope.displayedCandidateTrials}{uiText(" of ")}{scope.totalCandidateTrials}{uiText(" candidate trials; ")}{scope.omittedCandidateTrials}{uiText(" omitted by the server.")}</p>
       )}
     </>
   )
@@ -235,7 +223,7 @@ export function TrialHero({ project }: { project: ProjectSnapshot }) {
     <div className="cols cols--3-2 pj-hero">
       <Trajectory trials={trials} metric={dm?.objective?.metric ?? 'primary metric'} show="line" />
       <div>
-        <h3 className="pj-sub">Trial matrix</h3>
+        <h3 className="pj-sub">{uiText("Trial matrix")}</h3>
         <TrialMatrix trials={trials} scope={dm?.scope} />
       </div>
     </div>
@@ -260,21 +248,21 @@ export function ExperimentsBlock({ project }: { project: ProjectSnapshot }) {
                 {meta.id}
               </h3>
             )}
-            <h3 className="pj-sub">Experiments</h3>
+            <h3 className="pj-sub">{uiText("Experiments")}</h3>
             {exps.length === 0 ? (
-              <p className="pj-na">No Experiment has been run in this Session: only the baseline exists.</p>
+              <p className="pj-na">{uiText("No Experiment has been run in this Session: only the baseline exists.")}</p>
             ) : (
               <div className="tablewrap">
                 <table className="tbl">
                   <thead>
                     <tr>
                       <th scope="col">#</th>
-                      <th scope="col">Hypothesis</th>
-                      <th scope="col">Verdict</th>
-                      <th scope="col" className="r">Leader</th>
-                      <th scope="col" className="r">Candidate</th>
-                      <th scope="col" className="r">Improvement</th>
-                      <th scope="col">Run</th>
+                      <th scope="col">{uiText("Hypothesis")}</th>
+                      <th scope="col">{uiText("Verdict")}</th>
+                      <th scope="col" className="r">{uiText("Leader")}</th>
+                      <th scope="col" className="r">{uiText("Candidate")}</th>
+                      <th scope="col" className="r">{uiText("Improvement")}</th>
+                      <th scope="col">{uiText("Run")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -302,20 +290,16 @@ export function ExperimentsBlock({ project }: { project: ProjectSnapshot }) {
                 </table>
               </div>
             )}
-            <p className="muted small">
-              Values are the validation selection metric; the Judge assigns verdicts.
-              <Info label="About the Experiment ledger">
+            <p className="muted small">{uiText("Values are the validation selection metric; the Judge assigns verdicts.")}<Info label={uiText("About the Experiment ledger")}>
                 <p>
                   {dm?.objective
-                    ? `Objective: ${dm.objective.direction} ${dm.objective.metric}; an Experiment must beat the leader by at least ${dm.objective.minimumImprovement} to be kept. `
-                    : ''}
-                  The Judge assigns verdicts. Values are the validation selection metric.
-                </p>
+                    ? uiTemplate("Objective: {0} {1}; an Experiment must beat the leader by at least {2} to be kept.", [dm.objective.direction, dm.objective.metric, dm.objective.minimumImprovement])
+                    : ''}{uiText("The Judge assigns verdicts. Values are the validation selection metric.")}</p>
               </Info>
             </p>
             {trials.length > 0 && i !== focus && (
               <>
-                <h3 className="pj-sub">Trial matrix</h3>
+                <h3 className="pj-sub">{uiText("Trial matrix")}</h3>
                 <TrialMatrix trials={trials} scope={dm?.scope} />
               </>
             )}
@@ -348,77 +332,74 @@ export function SelectionBlock({ project }: { project: ProjectSnapshot }) {
           <div key={meta.id ?? i}>
             <div className="pj-callout" role="note">
               <p>
-                <strong>{passes ? 'The selection adjustment passes.' : 'Headline numbers on this page are in-sample.'}</strong>
-                <Info label="About the selection adjustment">
+                <strong>{passes ? uiText("The selection adjustment passes.") : uiText("Headline numbers on this page are in-sample.")}</strong>
+                <Info label={uiText("About the selection adjustment")}>
                   <p>
                     {passes
-                      ? 'The selected validation result survives the family-wise threshold. This is diagnostic evidence only and has no trading authority.'
-                      : `They have not survived the multiple-testing adjustment${adj ? '' : ' (it is not available)'}, so treat every IC and verdict here as selected from the trials counted below, not as a confirmed effect.`}
+                      ? uiText("The selected validation result survives the family-wise threshold. This is diagnostic evidence only and has no trading authority.")
+                      : uiTemplate("They have not survived the multiple-testing adjustment{0}, so treat every IC and verdict here as selected from the trials counted below, not as a confirmed effect.", [adj ? '' : ' (it is not available)'])}
                   </p>
                 </Info>
               </p>
-              {si.externalHoldoutRequired && <p>An external holdout is required before any production-grade claim.</p>}
+              {si.externalHoldoutRequired && <p>{uiText("An external holdout is required before any production-grade claim.")}</p>}
             </div>
             <div className="cols cols--2-3">
             <dl className="stats">
               <div>
-                <dt>Unique source trials</dt>
+                <dt>{uiText("Unique source trials")}</dt>
                 <dd className="mono">{fam ? fam.uniqueSourceTrials : '—'}</dd>
               </div>
               <div>
-                <dt>Failed trials</dt>
+                <dt>{uiText("Failed trials")}</dt>
                 <dd className="mono">{fam?.failedSourceTrials ?? '—'}</dd>
               </div>
               <div>
-                <dt>Total executions</dt>
+                <dt>{uiText("Total executions")}</dt>
                 <dd className="mono">{fam ? fam.totalExecutions : '—'}</dd>
               </div>
               <div>
-                <dt>Adjustment passes</dt>
-                <dd className="mono">{adj?.passes === true ? 'yes' : adj?.passes === false ? 'no' : '—'}</dd>
+                <dt>{uiText("Adjustment passes")}</dt>
+                <dd className="mono">{adj?.passes === true ? uiText("yes") : adj?.passes === false ? uiText("no") : '—'}</dd>
               </div>
             </dl>
             <dl className="pj-kv">
-              <dt>Adjustment method</dt>
+              <dt>{uiText("Adjustment method")}</dt>
               <dd className="mono">
-                {adj?.method ?? 'not available'}
-                {adj && ` (${Math.round(adj.confidenceLevel * 100)}% confidence)`}
+                {adj?.method ?? uiText("not available")}
+                {adj && uiTemplate("({0}% confidence)", [Math.round(adj.confidenceLevel * 100)])}
               </dd>
               {adj?.statistics && (
                 <>
-                  <dt>Selected mean IC</dt>
+                  <dt>{uiText("Selected mean IC")}</dt>
                   <dd className="mono">{signed(adj.statistics.observedMeanIc)}</dd>
-                  <dt>HAC p, raw / family-wise</dt>
+                  <dt>{uiText("HAC p, raw / family-wise")}</dt>
                   <dd className="mono">
-                    {pValue(adj.statistics.rawHacPValue)} / {pValue(adj.statistics.familywiseAdjustedPValue)} over {adj.statistics.uniqueTrials} trials
-                  </dd>
+                    {pValue(adj.statistics.rawHacPValue)} / {pValue(adj.statistics.familywiseAdjustedPValue)}{uiText(" over ")}{adj.statistics.uniqueTrials}{uiText(" trials")}</dd>
                 </>
               )}
               {adj && !adj.statistics && adj.reason && (
                 <>
-                  <dt>Why unavailable</dt>
-                  <dd>{adj.reason}</dd>
+                  <dt>{uiText("Why unavailable")}</dt>
+                  <dd>{uiValue(adj.reason)}</dd>
                 </>
               )}
-              <dt>Interpretation</dt>
-              <dd>{adj?.interpretation ?? 'not available'}</dd>
-              <dt>Trial count rule</dt>
+              <dt>{uiText("Interpretation")}</dt>
+              <dd>{adj?.interpretation ?? uiText("not available")}</dd>
+              <dt>{uiText("Trial count rule")}</dt>
               <dd className="mono">
                 {fam?.trialCountAssumption ?? '—'}
                 {fam && (fam.reproducible ? ' · reproducible ledger' : ' · ledger not reproducible')}
               </dd>
-              <dt>External holdout required</dt>
+              <dt>{uiText("External holdout required")}</dt>
               <dd>
-                {si.externalHoldoutRequired === true ? 'Yes' : si.externalHoldoutRequired === false ? 'No' : 'Not stated'}
+                {si.externalHoldoutRequired === true ? uiText("Yes") : si.externalHoldoutRequired === false ? uiText("No") : uiText("Not stated")}
                 {si.externalHoldoutReason && <span className="faint small mono"> · {si.externalHoldoutReason}</span>}
               </dd>
             </dl>
             </div>
             {si.warning && (
-              <p className="muted small">
-                Server warning
-                <Info label="Server warning">
-                  <p>{si.warning}</p>
+              <p className="muted small">{uiText("Server warning")}<Info label={uiText("Server warning")}>
+                  <p>{uiValue(si.warning)}</p>
                 </Info>
               </p>
             )}
@@ -456,72 +437,72 @@ export function QuestionBlock({ project }: { project: ProjectSnapshot }) {
   return (
     <div className="cols cols--3-2">
       <div>
-        <h3 className="pj-sub">Question</h3>
-        {text ? <blockquote className="pj-quote">{text}</blockquote> : <p className="pj-na">Not available: no question text.</p>}
-        {q?.origin && <p className="muted small">Origin: {q.origin}</p>}
+        <h3 className="pj-sub">{uiText("Question")}</h3>
+        {text ? <blockquote className="pj-quote">{uiValue(text)}</blockquote> : <p className="pj-na">{uiText("Not available: no question text.")}</p>}
+        {q?.origin && <p className="muted small">{uiText("Origin: ")}{q.origin}</p>}
         {req?.decisionContext && (
           <>
-            <h3 className="pj-sub">Decision it supports</h3>
+            <h3 className="pj-sub">{uiText("Decision it supports")}</h3>
             <p>{req.decisionContext}</p>
           </>
         )}
-        <Bullets title="Hypotheses" items={req?.hypotheses} />
+        <Bullets title={uiText("Hypotheses")} items={req?.hypotheses} />
       </div>
       <div>
-        <h3 className="pj-sub">Claim and horizon</h3>
+        <h3 className="pj-sub">{uiText("Claim and horizon")}</h3>
         {claim || horizon ? (
           <dl className="pj-kv">
             {claim?.claim && (
               <>
-                <dt>Claim</dt>
+                <dt>{uiText("Claim")}</dt>
                 <dd className="mono">{claim.claim}</dd>
               </>
             )}
             {claim?.outcome && (
               <>
-                <dt>Outcome</dt>
+                <dt>{uiText("Outcome")}</dt>
                 <dd className="mono">{claim.outcome}</dd>
               </>
             )}
             {claim && claim.knownStyle !== undefined && (
               <>
-                <dt>Known style</dt>
-                <dd className="mono">{claim.knownStyle ?? 'none'}</dd>
+                <dt>{uiText("Known style")}</dt>
+                <dd className="mono">{claim.knownStyle ?? uiText("none")}</dd>
               </>
             )}
             {claim?.selectionAuthority && (
               <>
-                <dt>Selection authority</dt>
+                <dt>{uiText("Selection authority")}</dt>
                 <dd className="mono">{claim.selectionAuthority}</dd>
               </>
             )}
             {claim?.tradingAuthority && (
               <>
-                <dt>Trading authority</dt>
+                <dt>{uiText("Trading authority")}</dt>
                 <dd className="mono">{claim.tradingAuthority}</dd>
               </>
             )}
             {horizon?.primaryForwardBars !== undefined && (
               <>
-                <dt>Primary horizon</dt>
-                <dd className="mono">{horizon.primaryForwardBars} bars</dd>
+                <dt>{uiText("Primary horizon")}</dt>
+                <dd className="mono">{horizon.primaryForwardBars}{uiText(" bars")}</dd>
               </>
             )}
             {horizon?.diagnosticForwardBars && (
               <>
-                <dt>Context horizons</dt>
-                <dd className="mono">{horizon.diagnosticForwardBars.join(', ')} bars</dd>
+                <dt>{uiText("Context horizons")}</dt>
+                <dd className="mono">{horizon.diagnosticForwardBars.join(', ')}{uiText(" bars")}</dd>
               </>
             )}
             {horizon?.source?.horizon && (
               <>
-                <dt>Caller wording</dt>
+                <dt>{uiText("Caller wording")}</dt>
                 <dd>{horizon.source.horizon}</dd>
               </>
             )}
             {horizon?.targetSemantics && (
               <>
-                <dt>Target</dt>
+                <dt>{uiText("Target")}</dt>
                 <dd className="mono">{horizon.targetSemantics}</dd>
               </>
             )}
@@ -529,8 +510,8 @@ export function QuestionBlock({ project }: { project: ProjectSnapshot }) {
         ) : (
           NA('no Factor Run has recorded a claim or horizon yet.')
         )}
-        <Bullets title="Constraints" items={req?.constraints} />
-        <Bullets title="Deliverables" items={req?.deliverables} />
+        <Bullets title={uiText("Constraints")} items={req?.constraints} />
+        <Bullets title={uiText("Deliverables")} items={req?.deliverables} />
       </div>
     </div>
   )
@@ -567,25 +548,21 @@ export function EvidenceDocsBlock({ project }: { project: ProjectSnapshot }) {
   const required = project.sessions.some((s) => s.selectionIntegrity?.externalHoldoutRequired === true)
   return (
     <>
-      <DocList title="Session Reports" rows={sessionReports} empty="Not available: no Session Report has been published." />
-      <DocList title="Run Reports" rows={project.runReports ?? []} empty="Not available: no Run Report has been published." />
-      <DocList title="Reviews" rows={project.reviews ?? []} empty="Not available: no independent Review exists." />
-      <DocList title="Dossiers" rows={project.dossiers ?? []} empty="Not available: no Dossier has been published." />
-      <h3 className="pj-sub">External holdout</h3>
+      <DocList title={uiText("Session Reports")} rows={sessionReports} empty="Not available: no Session Report has been published." />
+      <DocList title={uiText("Run Reports")} rows={project.runReports ?? []} empty="Not available: no Run Report has been published." />
+      <DocList title={uiText("Reviews")} rows={project.reviews ?? []} empty="Not available: no independent Review exists." />
+      <DocList title={uiText("Dossiers")} rows={project.dossiers ?? []} empty="Not available: no Dossier has been published." />
+      <h3 className="pj-sub">{uiText("External holdout")}</h3>
       {holdout ? (
-        <p>
-          Recorded, status: <span className="mono">{holdout.status ?? holdout.state ?? 'present'}</span>. Holdout numbers are not drawn until the Holdout Assessment is verified.
-        </p>
+        <p>{uiText("Recorded, status: ")}<span className="mono">{holdout.status ?? holdout.state ?? uiText("present")}</span>{uiText(". Holdout numbers are not drawn until the Holdout Assessment is verified.")}</p>
       ) : (
-        <p className="pj-na">
-          Not available: no external holdout has been run for this Project.
-          {required && ' One is required before a production-grade claim.'}
+        <p className="pj-na">{uiText("Not available: no external holdout has been run for this Project.")}{required && uiText(" One is required before a production-grade claim.")}
         </p>
       )}
-      <h3 className="pj-sub">Research agenda</h3>
+      <h3 className="pj-sub">{uiText("Research agenda")}</h3>
       {agenda?.status === 'available' && agenda.moves && agenda.moves.length > 0 ? (
         <>
-          {agenda.diagnosis?.explanation && <p className="muted small">{agenda.diagnosis.explanation}</p>}
+          {agenda.diagnosis?.explanation && <p className="muted small">{uiValue(agenda.diagnosis.explanation)}</p>}
           <ol className="pj-list">
             {agenda.moves.map((m) => (
               <li key={m.id}>
@@ -593,10 +570,10 @@ export function EvidenceDocsBlock({ project }: { project: ProjectSnapshot }) {
               </li>
             ))}
           </ol>
-          {agenda.moveRole && <p className="muted small">Role: {agenda.moveRole}. Moves are diagnostic guidance, never an instruction to run.</p>}
+          {agenda.moveRole && <p className="muted small">{uiText("Role: ")}{agenda.moveRole}{uiText(". Moves are diagnostic guidance, never an instruction to run.")}</p>}
         </>
       ) : (
-        <p className="pj-na">Not available: {agenda?.reason ?? 'the Agent Work Brief has no research agenda.'}</p>
+        <p className="pj-na">{uiText("Not available: ")}{agenda?.reason ?? uiText("the Agent Work Brief has no research agenda.")}</p>
       )}
     </>
   )
@@ -612,7 +589,7 @@ export function NextMoveBlock({ project }: { project: ProjectSnapshot }) {
       {review?.label && (
         <p>
           <span className="chip" data-v={review.status === 'blocked' ? 'CRASH' : 'BASELINE'}>
-            {review.label}
+            {uiValue(review.label)}
           </span>
         </p>
       )}
@@ -626,12 +603,12 @@ export function NextMoveBlock({ project }: { project: ProjectSnapshot }) {
           )}
         </>
       ) : (
-        !review?.label && <p className="pj-na">Not available: the Agent Work Brief recommends no action.</p>
+        !review?.label && <p className="pj-na">{uiText("Not available: the Agent Work Brief recommends no action.")}</p>
       )}
       <p className="muted small">
-        {brief.focus?.studyName ? `Study ${brief.focus.studyName}` : 'Next move'}
-        {brief.authority && <> · trading authority {brief.authority.tradingAuthority}</>}
-        <Info label="About this move">
+        {brief.focus?.studyName ? uiTemplate("Study {0}", [brief.focus.studyName]) : uiText("Next move")}
+        {brief.authority && <>{uiText(" · trading authority ")}{brief.authority.tradingAuthority}</>}
+        <Info label={uiText("About this move")}>
           {brief.reasons && brief.reasons.some((r) => r.message !== review?.detail) && (
             <ul className="pj-list">
               {brief.reasons
@@ -642,13 +619,11 @@ export function NextMoveBlock({ project }: { project: ProjectSnapshot }) {
             </ul>
           )}
           <p>
-            {brief.focus?.studyName && <>Study {brief.focus.studyName}. </>}
-            {brief.focus?.laneName && <>Lane {brief.focus.laneName}. </>}
-            {brief.focus?.scientificStage && <>Stage {brief.focus.scientificStage}. </>}
+            {brief.focus?.studyName && <>{uiText("Study ")}{brief.focus.studyName}. </>}
+            {brief.focus?.laneName && <>{uiText("Lane ")}{brief.focus.laneName}. </>}
+            {brief.focus?.scientificStage && <>{uiText("Stage ")}{brief.focus.scientificStage}. </>}
             {brief.authority && (
-              <>
-                Selection uses the {brief.authority.selectionSplit} split; the test split is {brief.authority.testEntersSelection ? 'part of' : 'never part of'} selection.
-                Trading authority: {brief.authority.tradingAuthority}.
+              <>{uiText("Selection uses the ")}{brief.authority.selectionSplit}{uiText(" split; the test split is ")}{brief.authority.testEntersSelection ? uiText("part of") : uiText("never part of")}{uiText(" selection. Trading authority: ")}{brief.authority.tradingAuthority}.
               </>
             )}
           </p>

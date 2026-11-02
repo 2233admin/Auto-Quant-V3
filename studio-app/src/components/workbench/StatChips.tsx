@@ -1,3 +1,4 @@
+import { uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 import { AnimatedValue } from '../motion/AnimatedValue'
 import './workbench.css'
@@ -13,10 +14,10 @@ export function StatChips({ stats, label, scope }: { stats: Stat[]; label: strin
   if (stats.length === 0) return null
   return (
     <dl className="wb-stats" aria-label={label}>
-      {scope && <span className="wb-stats-scope faint">{scope}</span>}
+      {scope && <span className="wb-stats-scope faint">{uiValue(scope)}</span>}
       {stats.map((s) => (
         <div key={s.label} className="wb-stat" title={s.hint ? `${s.label}: ${s.hint}` : undefined}>
-          <dt>{s.label}</dt>
+          <dt>{uiValue(s.label)}</dt>
           <dd className="mono"><AnimatedValue value={s.value} /></dd>
         </div>
       ))}

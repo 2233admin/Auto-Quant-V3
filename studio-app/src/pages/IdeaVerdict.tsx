@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useState } from 'react'
 import type { FactorDiagnostics, ProjectSnapshot, RunRow } from '../api'
 import type { Idea, IdeaBinding } from '../actions/ideaApi'
@@ -25,7 +26,7 @@ export function ideaMetricGroups(study: FactorDiagnostics, project: ProjectSnaps
   const labels = ['Mean rank IC', 'HAC t', 'HAC p', 'Hit rate', 'Rank IC IR', 'Observations']
   return [
     ...coreGroups({ study, project, validation: study.summary.validation, testAudit: undefined, testVisible: false, defs: study.protocol.semantics })
-      .map(g => ({ ...g, tiles: g.tiles.filter(t => labels.includes(t.label)) })),
+      .map(g => ({ ...g, tiles: g.tiles.filter(t => labels.map(uiText).includes(t.label)) })),
     ...(study.quantileEvidence.status === 'available' ? spreadGroups(study, false) : []),
   ]
 }
@@ -53,7 +54,7 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
   const validation = study?.protocol.splits.splits.validation
   const range = validation ? `${validation.start} – ${validation.end}` : 'No validated evidence range'
   const showEvidence = !!study && status !== 'Could not be tested'
-  const diagnostics = study ? { label: 'Open diagnostics', href: routeHref({ view: 'factor', id: project.id, run: study.run.id }) } : undefined
+  const diagnostics = study ? { label: uiText("Open diagnostics"), href: routeHref({ view: 'factor', id: project.id, run: study.run.id }) } : undefined
   const failure = job && (job.result || job.stderrTail || job.stdoutTail)
     ? jobError(job)
     : `The analysis command failed${!run ? ' before producing a Run' : ''}. This retained job receipt has no error details; inspect the candidate before retrying.`
@@ -69,43 +70,43 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
     const link = document.createElement('a'); link.href = url; link.download = `${run?.id ?? 'idea'}-development.json`; link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
-  return <PaneCard label="Idea verdict">
+  return <PaneCard label={uiText("Idea verdict")}>
     <div className="idea-answer">
       <div className="idea-run-selector" data-measure="selector">
-        <select aria-label="Analysis Run" value={run?.id ?? ''} onChange={e => onSelectRun?.(e.target.value)}>
-          {!runs.length && <option value="">{word}</option>}
-          {runs.map((r, i) => <option key={r.id} value={r.id}>{r.startedAt?.replace('T', ' ').slice(0, 19) ?? r.id} · {r.id === run?.id ? word : r.status === 'succeeded' ? 'Completed' : 'Could not be tested'} · Trial {runs.length - i}</option>)}
+        <select aria-label={uiText("Analysis Run")} value={run?.id ?? ''} onChange={e => onSelectRun?.(e.target.value)}>
+          {!runs.length && <option value="">{uiValue(word)}</option>}
+          {runs.map((r, i) => <option key={r.id} value={r.id}>{r.startedAt?.replace('T', ' ').slice(0, 19) ?? r.id} · {r.id === run?.id ? word : r.status === 'succeeded' ? uiText("Completed") : uiText("Could not be tested")}{uiText(" · Trial ")}{runs.length - i}</option>)}
         </select>
-        <StatChips label="Run facts" stats={[{ label: 'Trials', value: String(count) }, { label: 'Scope', value: 'Development' }]} />
+        <StatChips label={uiText("Run facts")} stats={[{ label: uiText("Trials"), value: String(count) }, { label: uiText("Scope"), value: 'Development' }]} />
       </div>
       <div className="idea-action-chips" data-measure="chips"><ActionRow align="start" secondary={[
-        { label: 'Parameters', onClick: () => setParameters(true) },
+        { label: uiText("Parameters"), onClick: () => setParameters(true) },
         ...(diagnostics ? [diagnostics] : []),
-        ...(run && !pending ? [{ label: 'Export JSON', onClick: exportJson }] : []),
-        ...(onDeclareTrial ? [{ label: 'Declare another trial', onClick: onDeclareTrial }] : []),
+        ...(run && !pending ? [{ label: uiText("Export JSON"), onClick: exportJson }] : []),
+        ...(onDeclareTrial ? [{ label: uiText("Declare another trial"), onClick: onDeclareTrial }] : []),
       ]} /></div>
       <div className="idea-status" data-measure="status"><StatusLine state={pending ? 'running' : !hasAttempt ? 'idle' : failedJob || failedRun ? 'failed' : 'done'} text={pending ? busy || 'Analysis in progress' : !hasAttempt ? 'Not tested · author a candidate to begin' : `${failedJob || failedRun ? 'Analysis failed' : 'Analysis complete'} · ${stageText}`} percent={pending ? null : hasAttempt && !failedJob && !failedRun ? 100 : undefined} elapsed={hasAttempt ? duration : undefined} /></div>
-      {pending ? <div className="idea-empty"><h2>Analysis in progress</h2><p>{busy || 'The fixed Judge is running.'}</p><p className="small muted">Preflight → baseline or candidate Run → validation evidence. Trial records are retained even if execution fails.</p><p className="small">The original question and verdict wording are fixed for this attempt.</p></div>
-      : !hasAttempt ? <div className="idea-empty"><h2>Not tested</h2><p>Define the factor on the left, then run one bounded analysis.</p><p className="small muted">You will confirm the exact command and trial count before execution. Inconclusive is a valid stopping point.</p></div>
-      : <><VerdictBar tone={status === 'Supported' ? 'ok' : status === 'Could not be tested' ? 'bad' : 'warn'} word={status} detail={sentence}>{status === 'Supported' ? 'Development evidence only' : status === 'Inconclusive' ? 'Not established, not disproved' : 'No scientific conclusion'}</VerdictBar>
-        {showEvidence && <><FactorHero key={study.run.id} study={study} minHeight={200} /><section className="idea-core-metrics" data-measure="metrics" aria-label="Core metrics"><h2 className="set-title">Core metrics</h2><MetricGrid groups={ideaMetricGroups(study, project)} /><p className="small muted idea-conclusion">{sentence}</p></section></>}
-        {study && status === 'Could not be tested' && !failedJob && !failedRun && <p className="small">{study.factorQualification.diagnosis?.explanation ?? 'Core publishes no applicable qualification protocol.'}</p>}
+      {pending ? <div className="idea-empty"><h2>{uiText("Analysis in progress")}</h2><p>{busy || uiText("The fixed Judge is running.")}</p><p className="small muted">{uiText("Preflight → baseline or candidate Run → validation evidence. Trial records are retained even if execution fails.")}</p><p className="small">{uiText("The original question and verdict wording are fixed for this attempt.")}</p></div>
+      : !hasAttempt ? <div className="idea-empty"><h2>{uiText("Not tested")}</h2><p>{uiText("Define the factor on the left, then run one bounded analysis.")}</p><p className="small muted">{uiText("You will confirm the exact command and trial count before execution. Inconclusive is a valid stopping point.")}</p></div>
+      : <><VerdictBar tone={status === 'Supported' ? 'ok' : status === 'Could not be tested' ? 'bad' : 'warn'} word={status} detail={sentence}>{status === 'Supported' ? uiText("Development evidence only") : status === 'Inconclusive' ? uiText("Not established, not disproved") : uiText("No scientific conclusion")}</VerdictBar>
+        {showEvidence && <><FactorHero key={study.run.id} study={study} minHeight={200} /><section className="idea-core-metrics" data-measure="metrics" aria-label={uiText("Core metrics")}><h2 className="set-title">{uiText("Core metrics")}</h2><MetricGrid groups={ideaMetricGroups(study, project)} /><p className="small muted idea-conclusion">{sentence}</p></section></>}
+        {study && status === 'Could not be tested' && !failedJob && !failedRun && <p className="small">{study.factorQualification.diagnosis?.explanation ?? uiText("Core publishes no applicable qualification protocol.")}</p>}
         {(failedJob || failedRun) && <p className="small idea-failure">{failedRun ? run.summary : failure}</p>}
         <dl className="set-kv">
-          <dt>Evidence range</dt><dd>{failedJob || failedRun ? 'No completed evidence for this attempt' : `Validation · ${range}`}</dd>
-          <dt>Trials retained</dt><dd>{count} {count === 1 ? 'execution' : 'executions'} · {family?.uniqueSourceTrials ?? count} distinct sources</dd>
-          <dt>Test audit</dt><dd>{study && !failedJob && !failedRun && testVisible(study.protocol, study.summary) ? 'Published diagnostic only; never independent confirmation' : 'Hidden until its audit exists'}</dd>
-          <dt>Sealed holdout</dt><dd>Not opened by this flow. Sealed-tail intake is not implemented.</dd>
+          <dt>{uiText("Evidence range")}</dt><dd>{failedJob || failedRun ? uiText("No completed evidence for this attempt") : uiTemplate("Validation · {0}", [range])}</dd>
+          <dt>{uiText("Trials retained")}</dt><dd>{count} {count === 1 ? uiText("execution") : uiText("executions")} · {family?.uniqueSourceTrials ?? count}{uiText(" distinct sources")}</dd>
+          <dt>{uiText("Test audit")}</dt><dd>{study && !failedJob && !failedRun && testVisible(study.protocol, study.summary) ? uiText("Published diagnostic only; never independent confirmation") : uiText("Hidden until its audit exists")}</dd>
+          <dt>{uiText("Sealed holdout")}</dt><dd>{uiText("Not opened by this flow. Sealed-tail intake is not implemented.")}</dd>
         </dl>
-        <details className="idea-evidence"><summary>Question identity and evidence</summary>
+        <details className="idea-evidence"><summary>{uiText("Question identity and evidence")}</summary>
           <blockquote className="idea-original">“{binding.hypothesis}”</blockquote>
-          {showEvidence && <p className="small">{study.factorQualification.diagnosis?.explanation}</p>}
-          <dl className="set-kv"><dt>Hypothesis SHA-256</dt><dd className="mono">{binding.hypothesisSha256}</dd><dt>Wording policy</dt><dd>{binding.verdictPolicy}</dd><dt>Authority</dt><dd>Studio audit binding; not a Core Hypothesis or immutable Verdict Record.</dd></dl>
-          {run && <a className="small" href={routeHref({ view: 'run', id: project.id, run: run.id })}>Inspect this immutable Run</a>}
-          <p className="small muted">Support needs Core’s positive decision-signal diagnosis and the trial-family adjustment. Failure to qualify for Portfolio research is not a refutation.</p>
+          {showEvidence && <p className="small">{uiValue(study.factorQualification.diagnosis?.explanation)}</p>}
+          <dl className="set-kv"><dt>{uiText("Hypothesis SHA-256")}</dt><dd className="mono">{binding.hypothesisSha256}</dd><dt>{uiText("Wording policy")}</dt><dd>{binding.verdictPolicy}</dd><dt>{uiText("Authority")}</dt><dd>{uiText("Studio audit binding; not a Core Hypothesis or immutable Verdict Record.")}</dd></dl>
+          {run && <a className="small" href={routeHref({ view: 'run', id: project.id, run: run.id })}>{uiText("Inspect this immutable Run")}</a>}
+          <p className="small muted">{uiText("Support needs Core’s positive decision-signal diagnosis and the trial-family adjustment. Failure to qualify for Portfolio research is not a refutation.")}</p>
         </details>
       </>}
     </div>
-    <FactsDialog open={parameters} onClose={() => setParameters(false)} title="Study parameters" facts={params} note="Locked by the Study. Candidate edits cannot change evaluation authority." />
+    <FactsDialog open={parameters} onClose={() => setParameters(false)} title={uiText("Study parameters")} facts={params} note={uiText("Locked by the Study. Candidate edits cannot change evaluation authority.")} />
   </PaneCard>
 }

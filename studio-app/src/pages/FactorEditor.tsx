@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { type FactorDiagnostics, type ProjectSnapshot } from '../api'
 import { ACTIONS_OFF_COPY, useActions } from '../actions/ActionsContext'
@@ -17,7 +18,7 @@ import { gatedSplits } from './testGate'
 import './factorEdit.css'
 
 const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '—')
-const btnText = (text: string) => <span className="wb-btn-text">{text}</span>
+const btnText = (text: string) => <span className="wb-btn-text">{uiValue(text)}</span>
 const SAVE_ICON = (
   <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.5">
     <path d="M3 2h8l2 2v10H3z" />
@@ -44,10 +45,10 @@ export function lockedFacts(study: Tested): Fact[] {
   const context = protocol.horizons.filter((h) => h !== protocol.primaryHorizon).sort((a, b) => a - b)
   const range = (a: string | null | undefined, b: string | null | undefined) => `${day(a)} → ${day(b)}`
   return [
-    { label: 'Study', value: study.run.studyId, mono: true },
-    { label: 'Horizon', value: `${protocol.primaryHorizon}-bar${context.length > 0 ? ` (+${context.join(', ')})` : ''}` },
-    { label: 'Universe', value: `${(study.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}${study.predictionUniverse.evaluationMode ? ` · ${study.predictionUniverse.evaluationMode}` : ''}`, mono: true },
-    { label: 'Dataset', value: study.dataset.id, mono: true },
+    { label: uiText("Study"), value: study.run.studyId, mono: true },
+    { label: uiText("Horizon"), value: uiTemplate("{0}-bar{1}", [protocol.primaryHorizon, context.length > 0 ? ` (+${context.join(', ')})` : '']) },
+    { label: uiText("Universe"), value: `${(study.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}${study.predictionUniverse.evaluationMode ? ` · ${study.predictionUniverse.evaluationMode}` : ''}`, mono: true },
+    { label: uiText("Dataset"), value: study.dataset.id, mono: true },
     ...gatedSplits(study, SPLITS).map((sp) => ({ label: SPLIT_LABEL[sp], value: range(windows[sp].start, windows[sp].end) })),
   ]
 }
@@ -61,16 +62,16 @@ function studyFacts(study: Tested): { chips: Fact[]; more: Fact[] } {
   const shown = gatedSplits(study, SPLITS)
   const range = (a: string | null | undefined, b: string | null | undefined) => `${day(a)} → ${day(b)}`
   const chips: Fact[] = [
-    { label: 'Study', value: study.run.studyId, mono: true },
-    { label: 'Horizon', value: `${protocol.primaryHorizon}-bar${context.length > 0 ? ` (+${context.join(', ')})` : ''}` },
-    { label: 'Universe', value: `${assets.length || '—'} ${assets.length === 1 ? 'asset' : 'assets'}` },
+    { label: uiText("Study"), value: study.run.studyId, mono: true },
+    { label: uiText("Horizon"), value: uiTemplate("{0}-bar{1}", [protocol.primaryHorizon, context.length > 0 ? ` (+${context.join(', ')})` : '']) },
+    { label: uiText("Universe"), value: uiTemplate("{0} assets", [assets.length || '—']) },
     shown.includes('test')
-      ? { label: 'Val / test from', value: `${day(windows.validation.start)} / ${day(windows.test.start)}`, mono: true }
-      : { label: 'Validation from', value: day(windows.validation.start), mono: true },
+      ? { label: uiText("Val / test from"), value: `${day(windows.validation.start)} / ${day(windows.test.start)}`, mono: true }
+      : { label: uiText("Validation from"), value: day(windows.validation.start), mono: true },
   ]
   const more: Fact[] = [
-    { label: 'Assets', value: `${assets.join(', ') || '—'}${study.predictionUniverse.evaluationMode ? ` · ${study.predictionUniverse.evaluationMode}` : ''}`, mono: true },
-    { label: 'Dataset', value: study.dataset.id, mono: true },
+    { label: uiText("Assets"), value: `${assets.join(', ') || '—'}${study.predictionUniverse.evaluationMode ? ` · ${study.predictionUniverse.evaluationMode}` : ''}`, mono: true },
+    { label: uiText("Dataset"), value: study.dataset.id, mono: true },
     ...shown.map((sp) => ({ label: SPLIT_LABEL[sp], value: range(windows[sp].start, windows[sp].end) })),
   ]
   return { chips, more }
@@ -85,10 +86,10 @@ function OneLine({ kind, children, text, action }: { kind?: 'error' | 'ok' | 'in
   useEffect(() => setOpen(false), [text])
   return (
     <div className={`fe-line${open ? ' is-open' : ''}${kind === 'error' ? ' is-error' : ''}`}>
-      <p className="fe-line-t small" title={text} role={kind === 'error' ? 'alert' : undefined}>{children ?? text}</p>
+      <p className="fe-line-t small" title={uiText(text)} role={kind === 'error' ? 'alert' : undefined}>{children ?? uiText(text)}</p>
       {action}
       {text.length > 52 && (
-        <button type="button" className="linklike fe-more" aria-expanded={open} onClick={() => setOpen((v) => !v)}>{open ? 'less' : 'more'}</button>
+        <button type="button" className="linklike fe-more" aria-expanded={open} onClick={() => setOpen((v) => !v)}>{open ? uiText("less") : uiText("more")}</button>
       )}
     </div>
   )
@@ -99,17 +100,17 @@ function History({ project, sessionId }: { project: ProjectSnapshot; sessionId: 
   const row = project.sessions.find((s) => (s.session?.id ?? s.id) === sessionId)
   const experiments = [...(row?.experiments ?? [])].sort((a, b) => b.sequence - a.sequence)
   const trials = [...(row?.decisionMatrix?.trials ?? [])].sort((a, b) => b.sequence - a.sequence)
-  if (!row) return <p className="small muted fe-pad">No Session on this Study yet, so there is no trial history.</p>
-  if (experiments.length === 0 && trials.length === 0) return <p className="small muted fe-pad">This Session has no completed trials yet.</p>
+  if (!row) return <p className="small muted fe-pad">{uiText("No Session on this Study yet, so there is no trial history.")}</p>
+  if (experiments.length === 0 && trials.length === 0) return <p className="small muted fe-pad">{uiText("This Session has no completed trials yet.")}</p>
   return (
-    <div className="fe-hist" role="region" aria-label="Session trial history" tabIndex={0}>
+    <div className="fe-hist" role="region" aria-label={uiText("Session trial history")} tabIndex={0}>
       <table className="tbl fe-hist-t">
         <thead>
           <tr>
             <th scope="col">#</th>
-            <th scope="col">Verdict</th>
-            <th scope="col" className="r">Validation IC</th>
-            <th scope="col">{experiments.length > 0 ? 'Time (UTC)' : 'Role'}</th>
+            <th scope="col">{uiText("Verdict")}</th>
+            <th scope="col" className="r">{uiText("Validation IC")}</th>
+            <th scope="col">{experiments.length > 0 ? uiText("Time (UTC)") : uiText("Role")}</th>
           </tr>
         </thead>
         <tbody>
@@ -117,7 +118,7 @@ function History({ project, sessionId }: { project: ProjectSnapshot; sessionId: 
             ? experiments.map((e) => (
                 <tr key={e.id} title={e.hypothesis}>
                   <td className="mono">{e.sequence}</td>
-                  <td>{e.verdict}</td>
+                  <td>{uiValue(e.verdict)}</td>
                   <td className="r mono">{num(e.candidateValue, 4)}</td>
                   <td className="mono">{when(e.completedAt)}</td>
                 </tr>
@@ -125,9 +126,9 @@ function History({ project, sessionId }: { project: ProjectSnapshot; sessionId: 
             : trials.map((t) => (
                 <tr key={`${t.role}-${t.sequence}-${t.runId}`} title={t.hypothesis}>
                   <td className="mono">{t.sequence}</td>
-                  <td>{t.verdict}</td>
+                  <td>{uiValue(t.verdict)}</td>
                   <td className="r mono">{num(t.primaryValue, 4)}</td>
-                  <td>{t.role}</td>
+                  <td>{uiValue(t.role)}</td>
                 </tr>
               ))}
         </tbody>
@@ -211,7 +212,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
     try {
       const result = await saveCandidate(bootstrap, project.id, { session: sessionId, source: draft, baseSha256: doc.sha256 })
       setLoad({ state: 'ready', doc: { ...doc, source: draft, sha256: result.sha256 ?? doc.sha256, bytes: result.bytes ?? new Blob([draft]).size } })
-      setNote({ kind: 'ok', text: 'Saved to the Session candidate file.' })
+      setNote({ kind: 'ok', text: uiText("Saved to the Session candidate file.") })
       return true
     } catch (reason) {
       if (isConflict(reason)) {
@@ -230,7 +231,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
   const check = useCallback(async (): Promise<boolean> => {
     if (!bootstrap || !sessionId) return false
     setPhase('checking')
-    setNote({ kind: 'info', text: 'Checking the candidate…' })
+    setNote({ kind: 'info', text: uiText("Checking the candidate…") })
     try {
       const outcome = await runCheck(bootstrap, project.id, sessionId)
       setNote({ kind: outcome.ok ? 'ok' : 'error', text: outcome.text })
@@ -338,14 +339,14 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
   return (
     <>
       <PaneCard
-        label="Candidate editor"
+        label={uiText("Candidate editor")}
         flush
         tabs={
           <TabList
-            label="Candidate pane"
+            label={uiText("Candidate pane")}
             tabs={[
-              { id: 'candidate', label: 'Candidate' },
-              { id: 'history', label: 'History' },
+              { id: 'candidate', label: uiText("Candidate") },
+              { id: 'history', label: uiText("History") },
             ]}
             active={tab}
             onSelect={setTab}
@@ -362,7 +363,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
         status={
           <>
             {state.mode === 'off' && (
-              <OneLine text={`Read-only. ${ACTIONS_OFF_COPY} to edit and run from this page.`} action={<CopyButton text={OFF_COMMAND} label="Copy command" />} />
+              <OneLine text={`Read-only. ${ACTIONS_OFF_COPY} to edit and run from this page.`} action={<CopyButton text={OFF_COMMAND} label={uiText("Copy command")} />} />
             )}
             {noSession && <OneLine text={`No active Session on Study ${studyId}. A Session holds the one candidate you edit; starting one opens a trial family.`} />}
             {note && <OneLine kind={note.kind} text={note.text} />}
@@ -378,7 +379,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
                 {hypoVisible && !expanded && (
                   <div className="fe-hypo">
                     <div className="fe-hypo-head">
-                      <label className="fe-h" htmlFor={ids.hyp}>What are you testing?</label>
+                      <label className="fe-h" htmlFor={ids.hyp}>{uiText("What are you testing?")}</label>
                       <span id={ids.hypNote} className={`fe-count small ${showHypProblem ? 'sig' : 'faint'}`} aria-live="polite">
                         {hypothesis.length} / {HYP_MAX}
                       </span>
@@ -390,8 +391,8 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
                       rows={2}
                       value={hypothesis}
                       maxLength={HYP_MAX + 50}
-                      placeholder="A 20-bar lookback ranks next-bar returns better than 10-bar"
-                      title={showHypProblem ? hypProblem ?? undefined : `${HYP_MIN} to ${HYP_MAX} characters. Ctrl+Enter runs the analysis.`}
+                      placeholder={uiText("A 20-bar lookback ranks next-bar returns better than 10-bar")}
+                      title={showHypProblem ? hypProblem ?? undefined : uiTemplate("{0} to {1} characters. Ctrl+Enter runs the analysis.", [HYP_MIN, HYP_MAX])}
                       aria-invalid={showHypProblem ? true : undefined}
                       aria-describedby={ids.hypNote}
                       onChange={(event) => setHypothesis(event.target.value)}
@@ -403,24 +404,24 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
 
                 {!expanded && (
                 <FactChips
-                  label="Fixed by the Study"
+                  label={uiText("Fixed by the Study")}
                   locked
                   variant="row"
-                  info={<p>Fixed by the Study so results stay comparable. The analysis window, horizon, splits and universe cannot be changed here; only the candidate source and the hypothesis can.</p>}
+                  info={<p>{uiText("Fixed by the Study so results stay comparable. The analysis window, horizon, splits and universe cannot be changed here; only the candidate source and the hypothesis can.")}</p>}
                   facts={chips}
                   more={more}
                   aside={
                     on && !noSession ? (
-                      <span className="fe-trial-chip" title={trialTitle} aria-label={`Trial ${trialN} of ${trialM}. ${trialTitle}`}>
-                        <span aria-hidden="true">Trial {trialN}/{trialM}</span>
+                      <span className="fe-trial-chip" title={trialTitle} aria-label={uiTemplate("Trial {0} of {1}. {2}", [trialN, trialM, trialTitle])}>
+                        <span aria-hidden="true">{uiText("Trial ")}{trialN}/{trialM}</span>
                       </span>
                     ) : undefined
                   }
                   moreExtra={
                     (sessionId ?? loadSession) ? (
                       <p className="fe-sid small">
-                        <span className="muted">Session</span> <span className="mono" translate="no">{sessionId ?? loadSession}</span>{' '}
-                        <CopyButton text={sessionId ?? loadSession ?? ''} label="Copy id" />
+                        <span className="muted">{uiText("Session")}</span> <span className="mono" translate="no">{sessionId ?? loadSession}</span>{' '}
+                        <CopyButton text={sessionId ?? loadSession ?? ''} label={uiText("Copy id")} />
                       </p>
                     ) : undefined
                   }
@@ -429,49 +430,44 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
 
                 <section className="fe-cand" aria-labelledby="fe-cand">
                   <div className="fe-cand-head">
-                    <h2 className="fe-h" id="fe-cand">Candidate factor</h2>
-                    {doc && editable && <span className={`fe-chip${dirty ? ' is-dirty' : ''}`} role="status">{dirty ? 'Unsaved changes' : 'Saved'}</span>}
+                    <h2 className="fe-h" id="fe-cand">{uiText("Candidate factor")}</h2>
+                    {doc && editable && <span className={`fe-chip${dirty ? ' is-dirty' : ''}`} role="status">{dirty ? uiText("Unsaved changes") : uiText("Saved")}</span>}
                     {doc && editable && dirty && (
-                      <button type="button" className="abtn abtn--quiet fe-reset" onClick={() => { setDraft(doc.source); setConflict(false) }}>
-                        Reset to saved
+                      <button type="button" className="abtn abtn--quiet fe-reset" onClick={() => { setDraft(doc.source); setConflict(false) }}>{uiText("Reset to saved")}</button>
+                    )}
+                    {doc && (
+                      <button type="button" className="linklike fe-expand" aria-pressed={expanded} title={expanded ? uiText("Show the hypothesis and Study facts again (Esc)") : uiText("Give the editor the whole card")} onClick={() => setExpanded((v) => !v)}>
+                        {expanded ? uiText("Collapse") : uiText("Expand")}
                       </button>
                     )}
                     {doc && (
-                      <button type="button" className="linklike fe-expand" aria-pressed={expanded} title={expanded ? 'Show the hypothesis and Study facts again (Esc)' : 'Give the editor the whole card'} onClick={() => setExpanded((v) => !v)}>
-                        {expanded ? 'Collapse' : 'Expand'}
-                      </button>
-                    )}
-                    {doc && (
-                      <span className="fe-meta small faint" title={`${doc.path} · ${doc.bytes.toLocaleString('en-US')} bytes · ${doc.sha256.slice(0, 12)}`}>
-                        <span className="mono" translate="no">{doc.path}</span> · {doc.bytes.toLocaleString('en-US')} bytes
-                      </span>
+                      <span className="fe-meta small faint" title={uiTemplate("{0} · {1} bytes · {2}", [doc.path, doc.bytes.toLocaleString('en-US'), doc.sha256.slice(0, 12)])}>
+                        <span className="mono" translate="no">{doc.path}</span> · {doc.bytes.toLocaleString('en-US')}{uiText(" bytes")}</span>
                     )}
                   </div>
 
                   {conflict && (
                     <div className="fe-conflict" role="alert">
                       <p className="small">
-                        <strong>The candidate file changed on disk</strong> after you opened it, so Studio did not overwrite it. Your edits are still in the field.
-                      </p>
+                        <strong>{uiText("The candidate file changed on disk")}</strong>{uiText(" after you opened it, so Studio did not overwrite it. Your edits are still in the field.")}</p>
                       <div className="fe-row">
-                        <button type="button" className="abtn" onClick={() => setReloadNonce((n) => n + 1)}>Reload from disk</button>
-                        <CopyButton text={draft} label="Copy my edits" />
-                        <span className="small muted">Reload discards your edits; copy them first if you want to keep them.</span>
+                        <button type="button" className="abtn" onClick={() => setReloadNonce((n) => n + 1)}>{uiText("Reload from disk")}</button>
+                        <CopyButton text={draft} label={uiText("Copy my edits")} />
+                        <span className="small muted">{uiText("Reload discards your edits; copy them first if you want to keep them.")}</span>
                       </div>
                     </div>
                   )}
 
                   {doc ? (
                     <div className="fe-code" onKeyDownCapture={runShortcut}>
-                      <CodeField rows={9} label="Candidate source" value={draft} onChange={setDraft} readOnly={!editable} />
+                      <CodeField rows={9} label={uiText("Candidate source")} value={draft} onChange={setDraft} readOnly={!editable} />
                     </div>
                   ) : load.state === 'loading' ? (
-                    <p className="small muted">Loading the candidate…</p>
+                    <p className="small muted">{uiText("Loading the candidate…")}</p>
                   ) : load.state === 'error' ? (
-                    <p className="small sig" role="alert">Could not read the candidate: {load.message}</p>
+                    <p className="small sig" role="alert">{uiText("Could not read the candidate: ")}{load.message}</p>
                   ) : (
-                    <p className="small muted">
-                      The candidate source of this Run is not published to the browser. {state.mode === 'off' ? 'It appears here once a Session exists and the server can read it.' : 'Start a Session to see and edit it here.'}
+                    <p className="small muted">{uiText("The candidate source of this Run is not published to the browser. ")}{state.mode === 'off' ? uiText("It appears here once a Session exists and the server can read it.") : uiText("Start a Session to see and edit it here.")}
                     </p>
                   )}
                 </section>
@@ -482,7 +478,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
         </div>
       </PaneCard>
 
-      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} label="Confirm Run analysis" className="adialog">
+      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} label={uiText("Confirm Run analysis")} className="adialog">
         {catalog.state === 'ready' && bootstrap && picked && (
           <ConfirmActionDialog
             project={project}
@@ -499,7 +495,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
           />
         )}
       </Modal>
-      <Modal open={startOpen} onClose={() => setStartOpen(false)} label="Confirm Start session" className="adialog">
+      <Modal open={startOpen} onClose={() => setStartOpen(false)} label={uiText("Confirm Start session")} className="adialog">
         {bootstrap && (
           <StartSessionDialog
             project={project}

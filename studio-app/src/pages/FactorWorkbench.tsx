@@ -1,3 +1,4 @@
+import { uiTemplate, uiText } from '../i18n'
 import type { FactorDiagnostics, ProjectSnapshot, RankSummary } from '../api'
 import type { MetricGroup } from '../components/workbench'
 import { pickIntegrity } from '../components/TrialCounter'
@@ -38,37 +39,37 @@ export function coreGroups({ study, project, validation, testAudit, testVisible,
   const inference = defNode(defs?.inference)
   const groups: MetricGroup[] = [
     {
-      heading: `Validation · selection split · ${horizon}-bar horizon`,
-      label: `Validation split, ${horizon}-bar horizon`,
+      heading: uiTemplate("Validation · selection split · {0}-bar horizon", [horizon]),
+      label: uiTemplate("Validation split, {0}-bar horizon", [horizon]),
       tiles: [
-        { label: 'Mean rank IC', value: num(validation.meanRankIc, 4), info: measure },
-        { label: 'HAC t', value: num(validation.hacTStatistic, 2), info: inference },
-        { label: 'HAC p', value: num(validation.hacNormalPValue, 3), info: <>{inference}<p>Two-sided.</p></> },
-        { label: 'Hit rate', value: num(validation.rankHitRate, 3), info: <p>Share of bars with rank IC above 0.</p> },
-        { label: 'Rank IC IR', value: num(validation.rankIcir, 3) },
-        { label: 'Mean Pearson IC', value: num(validation.meanPearsonIc, 4) },
-        { label: 'Rank IC std', value: num(validation.rankIcStandardDeviation, 3) },
+        { label: uiText("Mean rank IC"), value: num(validation.meanRankIc, 4), info: measure },
+        { label: uiText("HAC t"), value: num(validation.hacTStatistic, 2), info: inference },
+        { label: uiText("HAC p"), value: num(validation.hacNormalPValue, 3), info: <>{inference}<p>{uiText("Two-sided.")}</p></> },
+        { label: uiText("Hit rate"), value: num(validation.rankHitRate, 3), info: <p>{uiText("Share of bars with rank IC above 0.")}</p> },
+        { label: uiText("Rank IC IR"), value: num(validation.rankIcir, 3) },
+        { label: uiText("Mean Pearson IC"), value: num(validation.meanPearsonIc, 4) },
+        { label: uiText("Rank IC std"), value: num(validation.rankIcStandardDeviation, 3) },
         {
-          label: 'Observations',
+          label: uiText("Observations"),
           value: int(validation.observations),
-          info: <p>Minimum required: {int(validation.minimumObservations)} observations.</p>,
+          info: <p>{uiText("Minimum required: ")}{int(validation.minimumObservations)}{uiText(" observations.")}</p>,
           tone: weak ? 'weak' : 'neutral',
           toneReason: weak ? 'below min' : undefined,
         },
-        { label: 'Trials counted', value: fam ? int(fam.totalExecutions) : '—', info: <p>{fam ? `${int(fam.uniqueSourceTrials)} unique candidate sources among ${int(fam.totalExecutions)} executions.` : 'No Session ledger records the trials.'}</p> },
+        { label: uiText("Trials counted"), value: fam ? int(fam.totalExecutions) : '—', info: <p>{fam ? uiTemplate("{0} unique candidate sources among {1} executions.", [int(fam.uniqueSourceTrials), int(fam.totalExecutions)]) : uiText("No Session ledger records the trials.")}</p> },
       ],
     },
   ]
   if (testVisible && testAudit) {
     groups.push({
-      heading: 'Test · visible audit, not used for selection',
-      label: `Test split visible audit, ${horizon}-bar horizon`,
+      heading: uiText("Test · visible audit, not used for selection"),
+      label: uiTemplate("Test split visible audit, {0}-bar horizon", [horizon]),
       tiles: [
-        { label: 'Mean rank IC', value: num(testAudit.meanRankIc, 4) },
-        { label: 'HAC t', value: num(testAudit.hacTStatistic, 2) },
-        { label: 'HAC p', value: num(testAudit.hacNormalPValue, 3) },
-        { label: 'Hit rate', value: num(testAudit.rankHitRate, 3) },
-        { label: 'Observations', value: int(testAudit.observations), info: <p>Minimum required: {int(testAudit.minimumObservations)} observations.</p> },
+        { label: uiText("Mean rank IC"), value: num(testAudit.meanRankIc, 4) },
+        { label: uiText("HAC t"), value: num(testAudit.hacTStatistic, 2) },
+        { label: uiText("HAC p"), value: num(testAudit.hacNormalPValue, 3) },
+        { label: uiText("Hit rate"), value: num(testAudit.rankHitRate, 3) },
+        { label: uiText("Observations"), value: int(testAudit.observations), info: <p>{uiText("Minimum required: ")}{int(testAudit.minimumObservations)}{uiText(" observations.")}</p> },
       ],
     })
   }

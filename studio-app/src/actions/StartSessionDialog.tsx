@@ -1,3 +1,4 @@
+import { uiText } from '../i18n'
 import { useEffect, useId, useState } from 'react'
 import type { ProjectSnapshot } from '../api'
 import { Notice } from '../Notice'
@@ -66,54 +67,50 @@ export function StartSessionDialog({
       }}
     >
       <header className="adialog-head">
-        <h2 id={ids.title}>Start session</h2>
-        <p className="small muted">
-          Project: <span translate="no">{project.name}</span> · Study <span className="mono" translate="no">{studyId}</span> · Nothing runs until you confirm below.
-        </p>
+        <h2 id={ids.title}>{uiText("Start session")}</h2>
+        <p className="small muted">{uiText("Project: ")}<span translate="no">{project.name}</span>{uiText(" · Study ")}<span className="mono" translate="no">{studyId}</span>{uiText(" · Nothing runs until you confirm below.")}</p>
       </header>
       <div className="adialog-scroll">
         <section className="apreview" aria-live="polite" aria-busy={load.state === 'loading'}>
-          <h3>The exact command</h3>
-          {load.state === 'loading' && <p className="small muted">Checking preconditions and building the command…</p>}
-          {load.state === 'error' && <Notice kind="error" label="Error" title={load.copy.title} subtitle={load.copy.detail} />}
+          <h3>{uiText("The exact command")}</h3>
+          {load.state === 'loading' && <p className="small muted">{uiText("Checking preconditions and building the command…")}</p>}
+          {load.state === 'error' && <Notice kind="error" label={uiText("Error")} title={load.copy.title} subtitle={load.copy.detail} />}
           {ready && (
             <>
               <div className="cmdrow">
-                <pre className="cmd mono" translate="no" tabIndex={0} aria-label="Command to run">{ready.display}</pre>
-                <CopyButton text={ready.display} label="Copy command" />
+                <pre className="cmd mono" translate="no" tabIndex={0} aria-label={uiText("Command to run")}>{ready.display}</pre>
+                <CopyButton text={ready.display} label={uiText("Copy command")} />
               </div>
               <dl className="kv akv">
-                <dt>Command hash</dt>
+                <dt>{uiText("Command hash")}</dt>
                 <dd className="mono" translate="no">{ready.commandHash}</dd>
               </dl>
               {trial && (
                 <div className="trial atrial" role="note">
-                  <p className="trial-head">
-                    The research family has {trial.currentFamilyTrials ?? 0} counted source {trial.currentFamilyTrials === 1 ? 'trial' : 'trials'} now.
-                  </p>
-                  <p className="small">{trial.notice ? `${trial.notice[0].toUpperCase()}${trial.notice.slice(1)}.` : 'Starting a Session opens a trial family.'}</p>
+                  <p className="trial-head">{uiText("The research family has ")}{trial.currentFamilyTrials ?? 0}{uiText(" counted source ")}{trial.currentFamilyTrials === 1 ? uiText("trial") : uiText("trials")}{uiText(" now.")}</p>
+                  <p className="small">{trial.notice ? `${trial.notice[0].toUpperCase()}${trial.notice.slice(1)}.` : uiText("Starting a Session opens a trial family.")}</p>
                 </div>
               )}
-              <p className="small muted">{ready.writes} Time limit {Math.round(ready.timeoutSeconds / 60)} minutes, then the process is stopped.</p>
+              <p className="small muted">{ready.writes}{uiText(" Time limit ")}{Math.round(ready.timeoutSeconds / 60)}{uiText(" minutes, then the process is stopped.")}</p>
             </>
           )}
         </section>
       </div>
       <div className="adialog-pinned">
-        {failure && <Notice kind="error" label="Error" title={failure.title} subtitle={failure.detail} />}
+        {failure && <Notice kind="error" label={uiText("Error")} title={failure.title} subtitle={failure.detail} />}
         {ready && (
           <div className="asecond">
             <input id={ids.second} type="checkbox" checked={second} onChange={(event) => setSecond(event.target.checked)} />
-            <label htmlFor={ids.second}>I understand this opens a Session and its trial family on Study {studyId}.</label>
+            <label htmlFor={ids.second}>{uiText("I understand this opens a Session and its trial family on Study ")}{studyId}.</label>
           </div>
         )}
       </div>
       <footer className="adialog-foot">
         <button type="submit" className="abtn abtn--primary" disabled={!ready || !second || busy}>
-          {busy ? 'Starting…' : 'Confirm and start'}
+          {busy ? uiText("Starting…") : uiText("Confirm and start")}
         </button>
-        <button type="button" className="abtn" onClick={onClose}>Cancel</button>
-        <span className="small muted afoot-hint">{!ready ? 'Confirm unlocks after the command is shown.' : !second ? 'Tick the acknowledgment to enable Confirm.' : ''}</span>
+        <button type="button" className="abtn" onClick={onClose}>{uiText("Cancel")}</button>
+        <span className="small muted afoot-hint">{!ready ? uiText("Confirm unlocks after the command is shown.") : !second ? uiText("Tick the acknowledgment to enable Confirm.") : ''}</span>
       </footer>
     </form>
   )

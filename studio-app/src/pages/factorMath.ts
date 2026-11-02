@@ -1,12 +1,13 @@
+import { uiTemplate, uiText } from '../i18n'
 import type { FactorDiagnostics, FactorSplit, RankSummary, SelectionIntegrity } from '../api'
 
 export const SPLITS: FactorSplit[] = ['train', 'validation', 'test']
-export const SPLIT_LABEL: Record<FactorSplit, string> = { train: 'Train', validation: 'Validation', test: 'Test' }
+export const SPLIT_LABEL: Record<FactorSplit, string> = { get train() { return uiText('Train') }, get validation() { return uiText('Validation') }, get test() { return uiText('Test') } }
 /** What each split is for, in the words the Run's protocol uses. */
 export const SPLIT_ROLE: Record<FactorSplit, string> = {
-  train: 'training',
-  validation: 'selection',
-  test: 'visible audit',
+  get train() { return uiText('training') },
+  get validation() { return uiText('selection') },
+  get test() { return uiText('visible audit') },
 }
 
 const EULER_MASCHERONI = 0.5772156649015329
@@ -70,19 +71,19 @@ export function noiseFrontier(
     .map((s) => s.selectionIntegrity)
     .filter((si): si is SelectionIntegrity => !!si && si.selectionMetric === 'validation_mean_ic')
   if (candidates.length === 0) {
-    return { ok: false, reason: 'No Research Session in this Project selected on validation mean IC, so there is no trial ledger and the number of independent trials N is unknown.' }
+    return { ok: false, reason: uiText("No Research Session in this Project selected on validation mean IC, so there is no trial ledger and the number of independent trials N is unknown.") }
   }
   const integrity = candidates.find((c) => c.selectionAdjustment?.statistics) ?? candidates[0]
   const adjustment = integrity.selectionAdjustment
   const family = integrity.researchFamily
-  if (!adjustment || !family) return { ok: false, reason: 'The Session ledger publishes no selection adjustment.' }
+  if (!adjustment || !family) return { ok: false, reason: uiText("The Session ledger publishes no selection adjustment.") }
   const stats = adjustment.statistics
   if (adjustment.status !== 'available' || !stats) {
-    return { ok: false, reason: `The selection adjustment is ${adjustment.status}${adjustment.reason ? ` (${adjustment.reason})` : ''}.` }
+    return { ok: false, reason: uiTemplate("The selection adjustment is {0}{1}.", [adjustment.status, adjustment.reason ? ` (${adjustment.reason})` : '']) }
   }
   const { observedMeanIc: ic, rawHacPValue: rawP, familywiseAdjustedPValue: adjustedP, uniqueTrials } = stats
   if (!finite(ic) || ic === 0 || !finite(rawP) || rawP <= 0 || rawP >= 1) {
-    return { ok: false, reason: 'The published raw HAC p-value is degenerate, so the null spread of the mean IC cannot be recovered.' }
+    return { ok: false, reason: uiText("The published raw HAC p-value is degenerate, so the null spread of the mean IC cannot be recovered.") }
   }
   const se = Math.abs(ic) / normalQuantile(1 - rawP / 2)
   const matches = runs.filter((r) => r.primaryValue !== null && Math.abs(r.primaryValue - ic) < 1e-12)

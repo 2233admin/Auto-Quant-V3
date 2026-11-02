@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useEffect, useState } from 'react'
 import { getJson, type ProjectResponse, type ProjectSnapshot, type ProjectSummary, type RunRow } from '../api'
 import { Glyph } from '../design/icons'
@@ -43,9 +44,9 @@ function useDetail(p: ProjectSummary): Detail {
 }
 
 const VERDICT: Record<Verdict, { word: string; glyph: 'supported' | 'refuted' | 'inconclusive'; signal: boolean }> = {
-  pass: { word: 'Pass', glyph: 'supported', signal: false },
-  fail: { word: 'Fail', glyph: 'refuted', signal: true },
-  inconclusive: { word: 'Inconclusive', glyph: 'inconclusive', signal: false },
+  pass: { get word() { return uiText("Pass") }, glyph: 'supported', signal: false },
+  fail: { get word() { return uiText("Fail") }, glyph: 'refuted', signal: true },
+  inconclusive: { get word() { return uiText("Inconclusive") }, glyph: 'inconclusive', signal: false },
 }
 
 /** Study primary-metric values of the latest Run's Study, oldest first. Failed Runs have no value and are skipped. */
@@ -98,20 +99,20 @@ export function ProjectCard({ p }: { p: ProjectSummary }) {
       <div className="pc-badges">
         <span className="pc-badge">
           <Glyph kind={look.glyph} signal={look.signal} />
-          <span className={look.signal ? 'sig' : undefined}>{look.word}</span>
+          <span className={look.signal ? 'sig' : undefined}>{uiValue(look.word)}</span>
         </span>
         {verdict ? (
-          <span className="pc-badge" title="Factor verdict: the server qualification stage, demoted when the selection adjustment fails.">
+          <span className="pc-badge" title={uiText("Factor verdict: the server qualification stage, demoted when the selection adjustment fails.")}>
             <Glyph kind={VERDICT[verdict].glyph} signal={VERDICT[verdict].signal} />
-            <span className={VERDICT[verdict].signal ? 'sig' : undefined}>{VERDICT[verdict].word}</span>
+            <span className={VERDICT[verdict].signal ? 'sig' : undefined}>{uiValue(VERDICT[verdict].word)}</span>
           </span>
         ) : (
-          <span className="pc-badge faint">{detail.state === 'loading' ? 'Loading verdict' : 'No Factor verdict'}</span>
+          <span className="pc-badge faint">{detail.state === 'loading' ? uiText("Loading verdict") : uiText("No Factor verdict")}</span>
         )}
       </div>
 
       {p.runCount === 0 ? (
-        <p className="muted small">No Runs yet. There is no primary metric to show.</p>
+        <p className="muted small">{uiText("No Runs yet. There is no primary metric to show.")}</p>
       ) : latest ? (
         <div className="pc-metric">
           <div className="mt">
@@ -120,29 +121,29 @@ export function ProjectCard({ p }: { p: ProjectSummary }) {
             </span>
             <span className="mt-value mono">{num(latest.primaryValue, 4)}</span>
             <span className="faint small">
-              {splitLabel ? `${splitLabel} split · ` : ''}{plural(values.length, 'valued Run')}
+              {splitLabel ? uiTemplate("{0} split ·", [splitLabel]) : ''}{plural(values.length, 'valued Run')}
             </span>
           </div>
           {values.length > 0 ? (
-            <Sparkline values={values} label={`${latest.primaryMetric} across ${plural(values.length, 'Run')}, oldest to newest; the last point is the latest Run.`} />
+            <Sparkline values={values} label={uiTemplate("{0} across {1}, oldest to newest; the last point is the latest Run.", [latest.primaryMetric, plural(values.length, 'Run')])} />
           ) : (
-            <span className="faint small">No valued Run</span>
+            <span className="faint small">{uiText("No valued Run")}</span>
           )}
         </div>
       ) : (
-        <p className="muted small">{detail.state === 'error' ? 'Could not load the Run values.' : 'Loading Run values…'}</p>
+        <p className="muted small">{detail.state === 'error' ? uiText("Could not load the Run values.") : uiText("Loading Run values…")}</p>
       )}
 
       <dl className="pc-facts">
-        <dt>Trials counted</dt>
-        <dd className="mono">{fam ? `${fam.totalExecutions} (${fam.uniqueSourceTrials} unique)` : project ? 'no ledger' : '—'}</dd>
-        <dt>Runs</dt>
+        <dt>{uiText("Trials counted")}</dt>
+        <dd className="mono">{fam ? uiTemplate("{0} ({1} unique)", [fam.totalExecutions, fam.uniqueSourceTrials]) : project ? uiText("no ledger") : '—'}</dd>
+        <dt>{uiText("Runs")}</dt>
         <dd className="mono">{p.runCount}</dd>
-        <dt>Sessions</dt>
+        <dt>{uiText("Sessions")}</dt>
         <dd className="mono">{sessions}</dd>
-        <dt>External holdout</dt>
-        <dd>{p.externalHoldout.present ? (p.externalHoldout.status ?? 'Recorded') : 'Not run'}</dd>
-        <dt>Latest Run (UTC)</dt>
+        <dt>{uiText("External holdout")}</dt>
+        <dd>{p.externalHoldout.present ? (p.externalHoldout.status ?? 'Recorded') : uiText("Not run")}</dd>
+        <dt>{uiText("Latest Run (UTC)")}</dt>
         <dd className="mono">{when(p.latestRunAt)}</dd>
       </dl>
       {p.brief.headline && <p className="pc-next">{p.brief.headline}</p>}

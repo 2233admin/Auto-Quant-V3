@@ -1,3 +1,4 @@
+import { uiValue } from '../../i18n'
 import { useRef, type KeyboardEvent } from 'react'
 import { useSlidingHighlight } from '../motion/useSlidingHighlight'
 import '../motion/motion.css'
@@ -45,7 +46,7 @@ export function SegmentedToggle<T extends string>({
           onClick={() => onChange(o.id)}
           onKeyDown={(e) => move(e, i)}
         >
-          {o.label}
+          {uiValue(o.label)}
         </button>
       ))}
     </div>

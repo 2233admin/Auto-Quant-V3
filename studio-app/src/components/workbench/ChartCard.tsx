@@ -1,3 +1,4 @@
+import { uiTemplate, uiText } from '../../i18n'
 import { useCallback, useLayoutEffect, useState, type ReactNode } from 'react'
 import { useFitWidth } from '../../design/useFitWidth'
 import { Info } from '../Info'
@@ -55,7 +56,7 @@ export function ChartCard({
       <figcaption className="wb-chart-head">
         <span className="wb-chart-title">
           <strong>{title}</strong>
-          {info && <Info label={`${title}: how to read it`}>{info}</Info>}
+          {info && <Info label={uiTemplate("{0}: how to read it", [title])}>{info}</Info>}
         </span>
         {toggle && <span className="wb-chart-toggle">{toggle}</span>}
         {legend && <span className="wb-chart-legend">{legend}</span>}
@@ -65,7 +66,7 @@ export function ChartCard({
       </div>
       {table && (
         <AnimatedDetails className="wb-chart-table datatable">
-          <summary>Data table</summary>
+          <summary>{uiText("Data table")}</summary>
           <div className="tablewrap">{table}</div>
         </AnimatedDetails>
       )}

@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../i18n'
 import { useId, useState } from 'react'
 import type { ProjectSnapshot } from '../api'
 import { Modal } from '../shell/Modal'
@@ -49,27 +50,25 @@ export function RunAnalysisButton({ project, preferStudyId }: { project: Project
         disabled={reason !== null}
         aria-describedby={reason ? noteId : undefined}
         onClick={() => setOpen(true)}
-      >
-        Run analysis
-      </button>
+      >{uiText("Run analysis")}</button>
       {reason && (
         <p id={noteId} className="small muted runbtn-note">
-          {reason}
+          {uiValue(reason)}
           {retry && (
             <>
               {' '}
-              <button type="button" className="linklike" onClick={catalog.reload}>Retry</button>
+              <button type="button" className="linklike" onClick={catalog.reload}>{uiText("Retry")}</button>
             </>
           )}
           {busyJob && activeJobId !== busyJob && (
             <>
               {' '}
-              <button type="button" className="linklike" onClick={() => setActiveJobId(busyJob)}>Show its progress</button>
+              <button type="button" className="linklike" onClick={() => setActiveJobId(busyJob)}>{uiText("Show its progress")}</button>
             </>
           )}
         </p>
       )}
-      <Modal open={open} onClose={() => setOpen(false)} label="Confirm Run analysis" className="adialog">
+      <Modal open={open} onClose={() => setOpen(false)} label={uiText("Confirm Run analysis")} className="adialog">
         {catalog.state === 'ready' && state.mode === 'on' && (
           <ConfirmActionDialog
             project={project}

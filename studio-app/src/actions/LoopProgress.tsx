@@ -1,3 +1,4 @@
+import { uiText } from '../i18n'
 import { useEffect, useRef, useState } from 'react'
 import type { ProjectSnapshot } from '../api'
 import { Glyph } from '../design/icons'
@@ -101,7 +102,7 @@ function RunningInner({
     })
   }
   return (
-    <div aria-label="Analysis progress">
+    <div aria-label={uiText("Analysis progress")}>
       <StatusLine
         state="running"
         text={job?.status === 'queued' ? 'Queued' : 'Running'}
@@ -151,18 +152,18 @@ export function LoopResult({ outcome, project, onDismiss }: { outcome: LoopOutco
           : 'Cancelled. Cancelling does not remove an Experiment that was already written.'
   }
   return (
-    <section className={`lr${bad ? ' is-bad' : ''}`} aria-label="Last analysis result" role="status">
+    <section className={`lr${bad ? ' is-bad' : ''}`} aria-label={uiText("Last analysis result")} role="status">
       <Glyph kind={bad ? 'error' : 'confirmed'} signal={bad} />
       <div className="lr-body">
         <p className="lr-line" title={line}>{line}</p>
         {outcome.status !== 'succeeded' && outcome.tail && (
           <AnimatedDetails className="lp-more">
-            <summary>Command output</summary>
+            <summary>{uiText("Command output")}</summary>
             <pre className="cmd mono" translate="no">{outcome.tail}</pre>
           </AnimatedDetails>
         )}
       </div>
-      <button type="button" className="abtn abtn--quiet" onClick={onDismiss}>Dismiss</button>
+      <button type="button" className="abtn abtn--quiet" onClick={onDismiss}>{uiText("Dismiss")}</button>
     </section>
   )
 }

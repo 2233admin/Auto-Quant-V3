@@ -1,3 +1,4 @@
+import { uiText } from '../i18n'
 import { useEffect, useState } from 'react'
 import { useActions } from './ActionsContext'
 import { actionCall } from './client'
@@ -23,8 +24,7 @@ export function LaunchedLabel({ runId }: { runId: string }) {
   }, [bootstrap, runId, version])
   if (!job) return null
   return (
-    <span className="alabel" title="Operational metadata from this Studio process; not part of the verdict.">
-      launched from Studio (job {job})
+    <span className="alabel" title={uiText("Operational metadata from this Studio process; not part of the verdict.")}>{uiText("launched from Studio (job ")}{job})
     </span>
   )
 }

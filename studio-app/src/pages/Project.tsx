@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, getJson, type ProjectResponse, type ProjectSnapshot, type RunRow, type StudyRow } from '../api'
 import { Glyph } from '../design/icons'
@@ -108,27 +109,27 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
   const candidates = (dm?.trials ?? []).filter((t) => t.role !== 'baseline')
   const leader = (dm?.trials ?? []).find((t) => t.isCurrentLeader)
   const tiles: HeroTile[] = [
-    { label: 'Candidate trials', value: String(candidates.length), note: `${candidates.filter((t) => t.verdict === 'KEEP').length} kept` },
-    { label: `Leader ${dm?.objective?.metric ?? 'metric'}`, value: leader ? num(leader.primaryValue, 4) : '—', note: leader ? (leader.role === 'baseline' ? 'baseline leads' : `trial ${leader.sequence}`) : undefined },
-    { label: 'Mean rank IC', value: validation ? num(validation.meanRankIc, 4) : '—', note: 'validation split' },
-    { label: 'HAC normal p', value: validation ? num(validation.hacNormalPValue, 3) : '—', note: validation ? `ICIR ${num(validation.rankIcir, 3)}` : undefined },
+    { label: uiText("Candidate trials"), value: String(candidates.length), note: uiTemplate("{0} kept", [candidates.filter((t) => t.verdict === 'KEEP').length]) },
+    { label: uiTemplate("Leader {0}", [dm?.objective?.metric ?? 'metric']), value: leader ? num(leader.primaryValue, 4) : '—', note: leader ? (leader.role === 'baseline' ? 'baseline leads' : `trial ${leader.sequence}`) : undefined },
+    { label: uiText("Mean rank IC"), value: validation ? num(validation.meanRankIc, 4) : '—', note: uiText("validation split") },
+    { label: uiText("HAC normal p"), value: validation ? num(validation.hacNormalPValue, 3) : '—', note: validation ? `ICIR ${num(validation.rankIcir, 3)}` : undefined },
     {
-      label: 'Observations',
+      label: uiText("Observations"),
       value: validation ? String(validation.observations) : '—',
       note: validation && !validation.sufficient ? 'below minimum' : undefined,
     },
-    { label: 'Runs', value: String(project.runs.length), note: `${plural(project.studies.length, 'Study', 'Studies')} · ${plural(n('sessions'), 'Session')}` },
+    { label: uiText("Runs"), value: String(project.runs.length), note: `${plural(project.studies.length, 'Study', 'Studies')} · ${plural(n('sessions'), 'Session')}` },
   ]
   const studiesTable = (
         <div className="tablewrap">
           <table className="tbl">
             <thead>
               <tr>
-                <th scope="col">Study</th>
-                <th scope="col">Subject</th>
-                <th scope="col">Primary metric</th>
-                <th scope="col">Latest Run</th>
-                <th scope="col" className="r">Primary value</th>
+                <th scope="col">{uiText("Study")}</th>
+                <th scope="col">{uiText("Subject")}</th>
+                <th scope="col">{uiText("Primary metric")}</th>
+                <th scope="col">{uiText("Latest Run")}</th>
+                <th scope="col" className="r">{uiText("Primary value")}</th>
               </tr>
             </thead>
             <tbody>
@@ -146,11 +147,11 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
                       {run ? (
                         <span className="state">
                           <Glyph kind={STATUS_GLYPH[run.status] ?? 'empty'} signal={run.status === 'failed'} />
-                          <span>{run.status}</span>
+                          <span>{uiValue(run.status)}</span>
                           <span className="faint mono small">{when(run.startedAt)}</span>
                         </span>
                       ) : (
-                        <span className="faint">No Run yet</span>
+                        <span className="faint">{uiText("No Run yet")}</span>
                       )}
                     </td>
                     <td className="r num mono">{run ? num(run.primaryValue, 4) : '—'}</td>
@@ -170,7 +171,7 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
         <p className="muted small">
           <span className="state">
             <Glyph kind={look.glyph} signal={look.signal} />
-            <span className={look.signal ? 'sig' : undefined}>{look.word}</span>
+            <span className={look.signal ? 'sig' : undefined}>{uiValue(look.word)}</span>
           </span>
           {' · '}
           {plural(project.studies.length, 'Study', 'Studies')} · {plural(project.runs.length, 'Run')} · {plural(n('sessions'), 'Session')} ·{' '}
@@ -180,15 +181,15 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
 
       <SectionNav
         items={[
-          { id: 'sec-next', label: 'Next move' },
-          { id: 'sec-question', label: 'Question' },
-          { id: 'sec-studies', label: 'Studies' },
-          { id: 'sec-selection', label: 'Selection-adjusted' },
-          { id: 'sec-experiments', label: 'Experiments' },
-          { id: 'sec-runs', label: 'Runs' },
-          { id: 'sec-sessions', label: 'Sessions' },
-          { id: 'sec-docs', label: 'Reports' },
-          { id: 'sec-lanes', label: 'Other lanes' },
+          { id: 'sec-next', label: uiText("Next move") },
+          { id: 'sec-question', label: uiText("Question") },
+          { id: 'sec-studies', label: uiText("Studies") },
+          { id: 'sec-selection', label: uiText("Selection-adjusted") },
+          { id: 'sec-experiments', label: uiText("Experiments") },
+          { id: 'sec-runs', label: uiText("Runs") },
+          { id: 'sec-sessions', label: uiText("Sessions") },
+          { id: 'sec-docs', label: uiText("Reports") },
+          { id: 'sec-lanes', label: uiText("Other lanes") },
         ]}
       />
 
@@ -198,31 +199,31 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
           word={headline.word}
           why={
             headline.why.length > 0 ? (
-              <Info label="Why this headline">
+              <Info label={uiText("Why this headline")}>
                 <p>{headline.why.join(' · ')}</p>
-                <p className="faint mono">agentWorkBrief.review, sessions[].experiments[].verdict</p>
+                <p className="faint mono">{uiText("agentWorkBrief.review, sessions[].experiments[].verdict")}</p>
               </Info>
             ) : undefined
           }
         >
-          {headline.text}
+          {uiValue(headline.text)}
         </HeroLine>
 
         {project.diagnostics.length > 0 && (
-          <Notice kind="error" label="Error" title="Project diagnostics." subtitle={project.diagnostics.map((d) => d.message ?? '').join('; ')} />
+          <Notice kind="error" label={uiText("Error")} title={uiText("Project diagnostics.")} subtitle={project.diagnostics.map((d) => d.message ?? '').join('; ')} />
         )}
 
         <section aria-labelledby="sec-trials">
           <h2 id="sec-trials" className="sr-only">
-            {hasTrials ? 'Trials' : 'Studies'}
+            {hasTrials ? uiText("Trials") : uiText("Studies")}
           </h2>
           {hasTrials ? <TrialHero project={project} /> : studiesTable}
         </section>
 
-        <HeroTiles items={tiles} label="Core numbers" />
+        <HeroTiles items={tiles} label={uiText("Core numbers")} />
       </div>
 
-      <Section title="Next move" id="sec-next">
+      <Section title={uiText("Next move")} id="sec-next">
         <div className="pj-next">
           <div>
             <NextMoveBlock project={project} />
@@ -231,43 +232,41 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
             <RunAnalysisButton project={project} />
             {project.factorExplorer && (
               <p className="small">
-                <a href={routeHref({ view: 'factor', id: project.id, study: project.factorExplorer.run.studyId })}>Open Factor evidence</a>
+                <a href={routeHref({ view: 'factor', id: project.id, study: project.factorExplorer.run.studyId })}>{uiText("Open Factor evidence")}</a>
               </p>
             )}
           </div>
         </div>
       </Section>
 
-      <Section title="Question and claim" id="sec-question" fold className="sec--oneline" caption={questionLine(project)}>
+      <Section title={uiText("Question and claim")} id="sec-question" fold className="sec--oneline" caption={questionLine(project)}>
         <QuestionBlock project={project} />
       </Section>
 
-      <Section title="Studies" id="sec-studies">
-        {hasTrials ? studiesTable : <p className="muted small">The Studies table is shown at the top of this page, because no trial trajectory exists yet.</p>}
-        <p className="muted small">
-          Primary values are the selection-split metric.
-          <Info label="About primary values">
-            <p>Primary values are the Study's selection-split metric. Test and holdout numbers are not drawn here.</p>
+      <Section title={uiText("Studies")} id="sec-studies">
+        {hasTrials ? studiesTable : <p className="muted small">{uiText("The Studies table is shown at the top of this page, because no trial trajectory exists yet.")}</p>}
+        <p className="muted small">{uiText("Primary values are the selection-split metric.")}<Info label={uiText("About primary values")}>
+            <p>{uiText("Primary values are the Study's selection-split metric. Test and holdout numbers are not drawn here.")}</p>
           </Info>
         </p>
       </Section>
 
-      <Section title="Selection-adjusted evidence" id="sec-selection">
+      <Section title={uiText("Selection-adjusted evidence")} id="sec-selection">
         <SelectionBlock project={project} />
       </Section>
 
-      <Section title="Experiments and trials" id="sec-experiments">
+      <Section title={uiText("Experiments and trials")} id="sec-experiments">
         <ExperimentsBlock project={project} />
       </Section>
 
-      <Section title="Runs" id="sec-runs">
+      <Section title={uiText("Runs")} id="sec-runs">
         <RunList project={project} />
       </Section>
 
       <div className="cols">
-          <Section title="Sessions" id="sec-sessions">
+          <Section title={uiText("Sessions")} id="sec-sessions">
             {project.sessions.length === 0 ? (
-              <p className="muted">No Research Sessions yet.</p>
+              <p className="muted">{uiText("No Research Sessions yet.")}</p>
             ) : (
               <ul className="plain">
                 {project.sessions.map((s, index) => {
@@ -281,9 +280,9 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
               </ul>
             )}
           </Section>
-          <Section title="Recent activity" id="sec-timeline">
+          <Section title={uiText("Recent activity")} id="sec-timeline">
             {project.timeline.length === 0 ? (
-              <p className="muted">No Runs, Sessions or Reports yet.</p>
+              <p className="muted">{uiText("No Runs, Sessions or Reports yet.")}</p>
             ) : (
               <ol className="timeline">
                 {project.timeline.slice(0, 12).map((row) => (
@@ -299,15 +298,13 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
           </Section>
       </div>
 
-      <Section title="Reports, Reviews, Dossiers and holdout" id="sec-docs" fold caption="Session and Run Reports, Reviews, Dossiers and the external holdout.">
+      <Section title={uiText("Reports, Reviews, Dossiers and holdout")} id="sec-docs" fold caption={uiText("Session and Run Reports, Reviews, Dossiers and the external holdout.")}>
         <EvidenceDocsBlock project={project} />
       </Section>
 
-      <Section title="Other lanes" id="sec-lanes" fold caption="Native lane pages for this Project.">
-        <p className="muted small">
-          Every lane below has a native page here.
-          <Info label="About the lanes">
-            <p>Lanes with evidence in this Project open their native page. A lane the Studio does not draw natively would open the legacy Studio instead.</p>
+      <Section title={uiText("Other lanes")} id="sec-lanes" fold caption={uiText("Native lane pages for this Project.")}>
+        <p className="muted small">{uiText("Every lane below has a native page here.")}<Info label={uiText("About the lanes")}>
+            <p>{uiText("Lanes with evidence in this Project open their native page. A lane the Studio does not draw natively would open the legacy Studio instead.")}</p>
           </Info>
         </p>
         <ul className="plain">
@@ -315,21 +312,21 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
             <li key={lane.key} className="lane">
               <span>{lane.name}</span>
               {lane.key === 'eventStudyExplorer' && project.eventStudyExplorer ? (
-                <a href={routeHref({ view: 'event-study', id: project.id })}>Open event study</a>
+                <a href={routeHref({ view: 'event-study', id: project.id })}>{uiText("Open event study")}</a>
               ) : lane.key === 'portfolioExplorer' && project.portfolioExplorer ? (
-                <a href={routeHref({ view: 'portfolio', id: project.id })}>Open Portfolio</a>
+                <a href={routeHref({ view: 'portfolio', id: project.id })}>{uiText("Open Portfolio")}</a>
               ) : lane.key === 'bookRiskExplorer' && project.bookRiskExplorer ? (
-                <a href={routeHref({ view: 'bookrisk', id: project.id })}>Open Book Risk</a>
+                <a href={routeHref({ view: 'bookrisk', id: project.id })}>{uiText("Open Book Risk")}</a>
               ) : lane.key === 'bookPathStressExplorer' && project.bookPathStressExplorer ? (
-                <a href={routeHref({ view: 'bookstress', id: project.id })}>Open path stress</a>
+                <a href={routeHref({ view: 'bookstress', id: project.id })}>{uiText("Open path stress")}</a>
               ) : lane.key === 'allocationExplorer' && project.allocationExplorer ? (
-                <a href={routeHref({ view: 'allocation', id: project.id })}>Open strategic allocation</a>
+                <a href={routeHref({ view: 'allocation', id: project.id })}>{uiText("Open strategic allocation")}</a>
               ) : lane.key === 'rlExplorer' && project.rlExplorer ? (
-                <a href={routeHref({ view: 'rl', id: project.id })}>Open governed RL policy</a>
+                <a href={routeHref({ view: 'rl', id: project.id })}>{uiText("Open governed RL policy")}</a>
               ) : project[lane.key] ? (
-                <a href="/legacy">Open in legacy Studio</a>
+                <a href="/legacy">{uiText("Open in legacy Studio")}</a>
               ) : (
-                <span className="faint">No evidence in this Project</span>
+                <span className="faint">{uiText("No evidence in this Project")}</span>
               )}
             </li>
           ))}

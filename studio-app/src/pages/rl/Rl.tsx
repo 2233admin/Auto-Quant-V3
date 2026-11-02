@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { useState, type ReactNode } from 'react'
 import type { ProjectSnapshot } from '../../api'
 import { Info } from '../../components/Info'
@@ -21,9 +22,9 @@ const label = (t: { fold: string; seed: number }) => `${t.fold.replace('fold-', 
 /** The server's own boolean: did RL add value over the best validation baseline? Nothing else decides the word. */
 function verdictOf(r: RlDiagnostics): { verdict: Verdict; word: string } {
   const v = r.summary?.rlAddedValidationValue
-  if (v === true) return { verdict: 'pass', word: 'Value added' }
-  if (v === false) return { verdict: 'fail', word: 'No value added' }
-  return { verdict: 'inconclusive', word: 'Unavailable' }
+  if (v === true) return { verdict: 'pass', word: uiText("Value added") }
+  if (v === false) return { verdict: 'fail', word: uiText("No value added") }
+  return { verdict: 'inconclusive', word: uiText("Unavailable") }
 }
 
 function Tiles({ r, split }: { r: RlDiagnostics; split: Split }) {
@@ -39,16 +40,16 @@ function Tiles({ r, split }: { r: RlDiagnostics; split: Split }) {
   const candUse = diag?.candidateFactor?.selectedFrequency ?? (split === 'validation' ? fusion?.meanValidationCandidateActionFrequency : undefined)
   return (
     <dl className="hm-grid">
-      <MetricTile label="RL value-add" value={sn(adv, 2)} note="net Sharpe versus the baseline selected on validation, mean over trials" tone={finite(adv) && adv < 0 ? 'weak' : 'neutral'} toneReason={finite(adv) && adv < 0 ? 'RL trails its baseline' : undefined} />
-      <MetricTile label="Versus candidate factor" value={fusion?.available ? sn(advC, 2) : '—'} note={fusion?.available ? 'net Sharpe versus the content-locked candidate sleeve' : <NA why="factor fusion is not published for this Run" />} />
-      <MetricTile label="Net Sharpe, mean" value={fn(stat?.mean, 2)} note={`min ${fn(stat?.minimum, 2)} · max ${fn(stat?.maximum, 2)} · std ${fn(stat?.standardDeviation, 2)}`} delta={stat?.observations !== undefined ? `${stat.observations} trials` : undefined} />
-      <MetricTile label="Best-action hit rate" value={opp ? up(opp.oracleHitRate, 1) : '—'} note={opp ? `mean selected rank ${fn(opp.meanSelectedRank, 2)} of ${r.protocol?.actions?.length ?? '—'}` : <NA why="same-pretrade opportunity evidence is not published" />} />
-      <MetricTile label="Candidate sleeve used" value={up(candUse, 1)} note="share of decisions in the candidate factor" />
-      <MetricTile label="Failure rate" value={up(s.failureRate, 1)} note={`${s.trialCount ?? '—'} declared trials`} />
-      <MetricTile label="Mean one-way turnover" value={split === 'validation' ? fn(s.meanValidationOneWayTurnover, 2) : '—'} note={split === 'validation' ? undefined : <NA why="the summary publishes turnover for validation only" />} />
-      <MetricTile label="Mean cost drag" value={split === 'validation' ? up(s.meanValidationCostDrag, 2) : '—'} note={split === 'validation' ? `at ${fn(r.protocol?.configuration?.costBps, 1)} bps` : <NA why="the summary publishes cost drag for validation only" />} />
-      <MetricTile label="Seed spread, max std" value={fn(stab?.maximumStandardDeviation, 2)} note={`${stab?.exactConsensusFolds ?? '—'} of ${stab?.folds ?? '—'} folds with identical actions across seeds`} />
-      <MetricTile label="Seed action mismatch" value={up(stab?.meanPairwiseActionMismatch, 1)} note={`max ${up(stab?.maximumPairwiseActionMismatch, 1)} pairwise`} />
+      <MetricTile label={uiText("RL value-add")} value={sn(adv, 2)} note={uiText("net Sharpe versus the baseline selected on validation, mean over trials")} tone={finite(adv) && adv < 0 ? 'weak' : 'neutral'} toneReason={finite(adv) && adv < 0 ? 'RL trails its baseline' : undefined} />
+      <MetricTile label={uiText("Versus candidate factor")} value={fusion?.available ? sn(advC, 2) : '—'} note={fusion?.available ? uiText("net Sharpe versus the content-locked candidate sleeve") : <NA why="factor fusion is not published for this Run" />} />
+      <MetricTile label={uiText("Net Sharpe, mean")} value={fn(stat?.mean, 2)} note={uiTemplate("min {0} · max {1} · std {2}", [fn(stat?.minimum, 2), fn(stat?.maximum, 2), fn(stat?.standardDeviation, 2)])} delta={stat?.observations !== undefined ? `${stat.observations} trials` : undefined} />
+      <MetricTile label={uiText("Best-action hit rate")} value={opp ? up(opp.oracleHitRate, 1) : '—'} note={opp ? uiTemplate("mean selected rank {0} of {1}", [fn(opp.meanSelectedRank, 2), r.protocol?.actions?.length ?? '—']) : <NA why="same-pretrade opportunity evidence is not published" />} />
+      <MetricTile label={uiText("Candidate sleeve used")} value={up(candUse, 1)} note={uiText("share of decisions in the candidate factor")} />
+      <MetricTile label={uiText("Failure rate")} value={up(s.failureRate, 1)} note={uiTemplate("{0} declared trials", [s.trialCount ?? '—'])} />
+      <MetricTile label={uiText("Mean one-way turnover")} value={split === 'validation' ? fn(s.meanValidationOneWayTurnover, 2) : '—'} note={split === 'validation' ? undefined : <NA why="the summary publishes turnover for validation only" />} />
+      <MetricTile label={uiText("Mean cost drag")} value={split === 'validation' ? up(s.meanValidationCostDrag, 2) : '—'} note={split === 'validation' ? uiTemplate("at {0} bps", [fn(r.protocol?.configuration?.costBps, 1)]) : <NA why="the summary publishes cost drag for validation only" />} />
+      <MetricTile label={uiText("Seed spread, max std")} value={fn(stab?.maximumStandardDeviation, 2)} note={uiTemplate("{0} of {1} folds with identical actions across seeds", [stab?.exactConsensusFolds ?? '—', stab?.folds ?? '—'])} />
+      <MetricTile label={uiText("Seed action mismatch")} value={up(stab?.meanPairwiseActionMismatch, 1)} note={uiTemplate("max {0} pairwise", [up(stab?.maximumPairwiseActionMismatch, 1)])} />
     </dl>
   )
 }
@@ -59,21 +60,21 @@ function TrialTable({ r, split }: { r: RlDiagnostics; split: Split }) {
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">Every declared fold and seed, {split}. Advantage is RL net Sharpe minus the baseline selected for that fold on validation.</caption>
+        <caption className="small muted">{uiText("Every declared fold and seed, ")}{split}{uiText(". Advantage is RL net Sharpe minus the baseline selected for that fold on validation.")}</caption>
         <thead>
           <tr>
-            <th scope="col">Trial</th>
-            <th scope="col">Status</th>
-            <th scope="col">Selected baseline</th>
-            <th scope="col" className="r">Net Sharpe</th>
-            <th scope="col" className="r">Advantage</th>
-            <th scope="col" className="r">Vs candidate</th>
-            <th scope="col" className="r">Net return</th>
-            <th scope="col" className="r">Max drawdown</th>
-            <th scope="col" className="r">Turnover</th>
-            <th scope="col" className="r">Cost drag</th>
-            <th scope="col" className="r">Max exec. vol</th>
-            <th scope="col" className="r">Risk breaches</th>
+            <th scope="col">{uiText("Trial")}</th>
+            <th scope="col">{uiText("Status")}</th>
+            <th scope="col">{uiText("Selected baseline")}</th>
+            <th scope="col" className="r">{uiText("Net Sharpe")}</th>
+            <th scope="col" className="r">{uiText("Advantage")}</th>
+            <th scope="col" className="r">{uiText("Vs candidate")}</th>
+            <th scope="col" className="r">{uiText("Net return")}</th>
+            <th scope="col" className="r">{uiText("Max drawdown")}</th>
+            <th scope="col" className="r">{uiText("Turnover")}</th>
+            <th scope="col" className="r">{uiText("Cost drag")}</th>
+            <th scope="col" className="r">{uiText("Max exec. vol")}</th>
+            <th scope="col" className="r">{uiText("Risk breaches")}</th>
           </tr>
         </thead>
         <tbody>
@@ -113,12 +114,10 @@ function BaselineMatrix({ r, split }: { r: RlDiagnostics; split: Split }) {
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">
-          Net Sharpe of every declared comparator in each fold, {split}. The bold marked cell is the baseline the fixed Judge selected on validation. Each fold is shown on its own; no average across folds is computed here.
-        </caption>
+        <caption className="small muted">{uiText("Net Sharpe of every declared comparator in each fold, ")}{split}{uiText(". The bold marked cell is the baseline the fixed Judge selected on validation. Each fold is shown on its own; no average across folds is computed here.")}</caption>
         <thead>
           <tr>
-            <th scope="col">Comparator</th>
+            <th scope="col">{uiText("Comparator")}</th>
             {folds.map((f) => <th scope="col" className="r" key={f}>{f}</th>)}
           </tr>
         </thead>
@@ -131,7 +130,7 @@ function BaselineMatrix({ r, split }: { r: RlDiagnostics; split: Split }) {
                 return (
                   <td className={`r${c?.selectedOnValidation ? ' rl-sel' : ''}`} key={f}>
                     {c ? fn(c[split]?.netSharpe, 2) : '—'}
-                    {c?.selectedOnValidation && <span className="badge">selected</span>}
+                    {c?.selectedOnValidation && <span className="badge">{uiText("selected")}</span>}
                   </td>
                 )
               })}
@@ -150,19 +149,19 @@ function ActionDetail({ r, split }: { r: RlDiagnostics; split: Split }) {
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">Action use, implementation and execution risk for every trial, {split}.</caption>
+        <caption className="small muted">{uiText("Action use, implementation and execution risk for every trial, ")}{split}.</caption>
         <thead>
           <tr>
-            <th scope="col">Trial</th>
-            <th scope="col" className="r">Decisions</th>
+            <th scope="col">{uiText("Trial")}</th>
+            <th scope="col" className="r">{uiText("Decisions")}</th>
             {actions.map((a, k) => (
               <th scope="col" className="r" key={a}><span className="rl-th"><ActionSwatch index={k} />{a}</span></th>
             ))}
-            <th scope="col" className="r">Transitions</th>
-            <th scope="col" className="r">Turnover</th>
-            <th scope="col" className="r">Cost drag</th>
-            <th scope="col" className="r">Risk breaches</th>
-            <th scope="col" className="r">Risk-only overrides</th>
+            <th scope="col" className="r">{uiText("Transitions")}</th>
+            <th scope="col" className="r">{uiText("Turnover")}</th>
+            <th scope="col" className="r">{uiText("Cost drag")}</th>
+            <th scope="col" className="r">{uiText("Risk breaches")}</th>
+            <th scope="col" className="r">{uiText("Risk-only overrides")}</th>
           </tr>
         </thead>
         <tbody>
@@ -174,8 +173,8 @@ function ActionDetail({ r, split }: { r: RlDiagnostics; split: Split }) {
               <td className="r">{a.actionTransitions ?? '—'}</td>
               <td className="r">{fn(a.meanOneWayTurnover, 2)}</td>
               <td className="r">{up(a.totalCostDrag, 2)}</td>
-              <td className="r">{a.executionRisk?.available ? a.executionRisk.executedBreachDates ?? '—' : 'legacy'}</td>
-              <td className="r">{a.executionRisk?.available ? a.executionRisk.riskRebalanceOverrideDates ?? '—' : 'legacy'}</td>
+              <td className="r">{a.executionRisk?.available ? a.executionRisk.executedBreachDates ?? '—' : uiText("legacy")}</td>
+              <td className="r">{a.executionRisk?.available ? a.executionRisk.riskRebalanceOverrideDates ?? '—' : uiText("legacy")}</td>
             </tr>
           ))}
         </tbody>
@@ -192,12 +191,12 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
     return (
       <div className="pg rl">
         <header className="pg-head">
-          <h1>Governed RL policy</h1>
-          <p className="muted small">Project <a href={back}>{project.name}</a>. A learned policy mixing fixed factor sleeves under a locked mandate; no trading authority.</p>
+          <h1>{uiText("Governed RL policy")}</h1>
+          <p className="muted small">{uiText("Project ")}<a href={back}>{project.name}</a>{uiText(". A learned policy mixing fixed factor sleeves under a locked mandate; no trading authority.")}</p>
         </header>
-        <Empty title="No evidence in this Project">
-          <p>This Project has no Governed RL Run, so there are no fold and seed trials, baselines, training history or action audit to draw. Nothing is estimated in its place.</p>
-          <p className="small"><a href={back}>Back to the Project</a></p>
+        <Empty title={uiText("No evidence in this Project")}>
+          <p>{uiText("This Project has no Governed RL Run, so there are no fold and seed trials, baselines, training history or action audit to draw. Nothing is estimated in its place.")}</p>
+          <p className="small"><a href={back}>{uiText("Back to the Project")}</a></p>
         </Empty>
       </div>
     )
@@ -224,7 +223,7 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
   if (finite(s?.meanValidationAdvantageVsBestBaseline)) {
     reasons.push({
       tone: s.meanValidationAdvantageVsBestBaseline < 0 ? 'bad' : 'info',
-      text: `Mean validation net Sharpe advantage over the baseline selected on validation: ${sn(s.meanValidationAdvantageVsBestBaseline, 2)} (the objective asks for at least ${fn(r.run?.objective?.minimumImprovement, 2)}).`,
+      text: uiTemplate("Mean validation net Sharpe advantage over the baseline selected on validation: {0} (the objective asks for at least {1}).", [sn(s.meanValidationAdvantageVsBestBaseline, 2), fn(r.run?.objective?.minimumImprovement, 2)]),
       field: 'summary.meanValidationAdvantageVsBestBaseline',
     })
   }
@@ -238,7 +237,7 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
   if (stab) {
     reasons.push({
       tone: 'info',
-      text: `Seed stability: ${stab.exactConsensusFolds ?? '—'} of ${stab.folds ?? '—'} folds reach identical actions across seeds; the largest within-fold Sharpe spread is ${fn(stab.maximumStandardDeviation, 2)}.`,
+      text: uiTemplate("Seed stability: {0} of {1} folds reach identical actions across seeds; the largest within-fold Sharpe spread is {2}.", [stab.exactConsensusFolds ?? '—', stab.folds ?? '—', fn(stab.maximumStandardDeviation, 2)]),
       field: 'summary.withinFoldSeedStability',
     })
   }
@@ -255,12 +254,12 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
   const advCandE = eff === 'validation' ? fusionE?.meanValidationAdvantageVsCandidateFactor : fusionE?.meanTestAdvantageVsCandidateFactor
   const stabE = s?.withinFoldSeedStability
   const tiles: HeroTile[] = [
-    { label: 'RL value-add', value: sn(advE, 2), note: finite(advE) && advE < 0 ? 'Weak: trails its baseline' : 'vs validation-selected baseline' },
-    { label: 'Versus candidate factor', value: fusionE?.available ? sn(advCandE, 2) : '—', note: fusionE?.available ? 'net Sharpe vs candidate sleeve' : 'fusion not published' },
-    { label: 'Net Sharpe, mean', value: fn(statE?.mean, 2), note: `${statE?.observations ?? s?.trialCount ?? '—'} trials · std ${fn(statE?.standardDeviation, 2)}` },
-    { label: 'Failure rate', value: up(s?.failureRate, 1), note: `${s?.trialCount ?? '—'} declared trials` },
-    { label: 'Mean cost drag', value: eff === 'validation' ? up(s?.meanValidationCostDrag, 2) : '—', note: eff === 'validation' ? `at ${fn(r.protocol?.configuration?.costBps, 1)} bps` : 'validation only' },
-    { label: 'Seed spread, max std', value: fn(stabE?.maximumStandardDeviation, 2), note: `${stabE?.exactConsensusFolds ?? '—'} of ${stabE?.folds ?? '—'} folds agree` },
+    { label: uiText("RL value-add"), value: sn(advE, 2), note: finite(advE) && advE < 0 ? 'Weak: trails its baseline' : 'vs validation-selected baseline' },
+    { label: uiText("Versus candidate factor"), value: fusionE?.available ? sn(advCandE, 2) : '—', note: fusionE?.available ? 'net Sharpe vs candidate sleeve' : 'fusion not published' },
+    { label: uiText("Net Sharpe, mean"), value: fn(statE?.mean, 2), note: uiTemplate("{0} trials · std {1}", [statE?.observations ?? s?.trialCount ?? '—', fn(statE?.standardDeviation, 2)]) },
+    { label: uiText("Failure rate"), value: up(s?.failureRate, 1), note: uiTemplate("{0} declared trials", [s?.trialCount ?? '—']) },
+    { label: uiText("Mean cost drag"), value: eff === 'validation' ? up(s?.meanValidationCostDrag, 2) : '—', note: eff === 'validation' ? `at ${fn(r.protocol?.configuration?.costBps, 1)} bps` : 'validation only' },
+    { label: uiText("Seed spread, max std"), value: fn(stabE?.maximumStandardDeviation, 2), note: uiTemplate("{0} of {1} folds agree", [stabE?.exactConsensusFolds ?? '—', stabE?.folds ?? '—']) },
   ]
   const headText = finite(advV)
     ? `mean validation net Sharpe ${advV < 0 ? 'below' : 'above'} the best baseline by ${fn(Math.abs(advV), 2)} (objective asks for at least ${fn(r.run?.objective?.minimumImprovement, 2)})`
@@ -269,15 +268,12 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
   return (
     <div className="pg rl">
       <header className="pg-head">
-        <h1>Governed RL policy</h1>
-        <p className="muted small">
-          Project <a href={back}>{project.name}</a> · Run <span className="mono">{r.run?.id?.replace(/^run-/, '') ?? '—'}</span> · study <span className="mono">{r.run?.studyId ?? '—'}</span>
-          <Info label="About this page">
-            <p>
-              A Q-learning policy that mixes fixed factor sleeves under a locked mandate. Research diagnostics; no trading authority. Selection uses the {r.protocol?.selectionSplit ?? 'validation'} split only.
-              Test is <span className="mono">{r.protocol?.testRole ?? '—'}</span>
-              {r.protocol?.testEntersSelection === false ? ' and never enters selection' : ''}.
-              {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+        <h1>{uiText("Governed RL policy")}</h1>
+        <p className="muted small">{uiText("Project ")}<a href={back}>{project.name}</a>{uiText(" · Run ")}<span className="mono">{r.run?.id?.replace(/^run-/, '') ?? '—'}</span>{uiText(" · study ")}<span className="mono">{r.run?.studyId ?? '—'}</span>
+          <Info label={uiText("About this page")}>
+            <p>{uiText("A Q-learning policy that mixes fixed factor sleeves under a locked mandate. Research diagnostics; no trading authority. Selection uses the ")}{r.protocol?.selectionSplit ?? uiText("validation")}{uiText(" split only. Test is ")}<span className="mono">{r.protocol?.testRole ?? '—'}</span>
+              {r.protocol?.testEntersSelection === false ? uiText(" and never enters selection") : ''}.
+              {!testVisible && uiText(" No test audit is published for this Run, so no test number is drawn on this page.")}
             </p>
           </Info>
         </p>
@@ -285,15 +281,15 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
 
       <SectionNav
         items={[
-          { id: 'rl-summary', label: 'Verdict and metrics' },
-          { id: 'rl-baselines', label: 'Baselines' },
-          { id: 'rl-training', label: 'Training' },
-          { id: 'rl-actions', label: 'Actions' },
-          { id: 'rl-fusion', label: 'Fusion diagnosis' },
-          { id: 'rl-incremental', label: 'Attribution' },
-          { id: 'rl-behavior', label: 'Behavior' },
-          { id: 'rl-opportunity', label: 'Opportunity' },
-          { id: 'rl-mandate', label: 'Mandate and protocol' },
+          { id: 'rl-summary', label: uiText("Verdict and metrics") },
+          { id: 'rl-baselines', label: uiText("Baselines") },
+          { id: 'rl-training', label: uiText("Training") },
+          { id: 'rl-actions', label: uiText("Actions") },
+          { id: 'rl-fusion', label: uiText("Fusion diagnosis") },
+          { id: 'rl-incremental', label: uiText("Attribution") },
+          { id: 'rl-behavior', label: uiText("Behavior") },
+          { id: 'rl-opportunity', label: uiText("Opportunity") },
+          { id: 'rl-mandate', label: uiText("Mandate and protocol") },
         ]}
       />
 
@@ -302,8 +298,8 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
           tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'}
           word={word}
           why={
-            <Info label="Why this verdict">
-              <p>Read from <span className="mono">summary.rlAddedValidationValue</span> only. {r.run?.summary ? <>{r.run.summary.replace(/\.$/, '')}. </> : null}Test is a visible audit and never enters promotion.</p>
+            <Info label={uiText("Why this verdict")}>
+              <p>{uiText("Read from ")}<span className="mono">{uiText("summary.rlAddedValidationValue")}</span>{uiText(" only. ")}{r.run?.summary ? <>{r.run.summary.replace(/\.$/, '')}. </> : null}{uiText("Test is a visible audit and never enters promotion.")}</p>
             </Info>
           }
         >
@@ -312,35 +308,33 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
 
         <section aria-labelledby="rl-trials" className="pf-hero-chart">
           <div className="pf-hero-head">
-            <h2 id="rl-trials">RL against the selected baseline</h2>
+            <h2 id="rl-trials">{uiText("RL against the selected baseline")}</h2>
             {toggle}
           </div>
           {trials.length ? <TrialChart trials={trials} baselines={r.baselines ?? []} folds={folds} split={eff} /> : <NA why="trials is empty in the payload" />}
         </section>
 
-        <HeroTiles items={tiles} label={`Core numbers, ${eff} split`} />
+        <HeroTiles items={tiles} label={uiTemplate("Core numbers, {0} split", [eff])} />
       </div>
 
       <div className="band">
-        <Section title="Verdict and metrics" id="rl-summary" caption={`${s?.trialCount ?? '—'} fold/seed trials over ${folds.length} folds; ${lc ? 'train-only frozen learner' : 'legacy learner'}.`}>
+        <Section title={uiText("Verdict and metrics")} id="rl-summary" caption={uiTemplate("{0} fold/seed trials over {1} folds; {2}.", [s?.trialCount ?? '—', folds.length, lc ? 'train-only frozen learner' : 'legacy learner'])}>
           <div className="vstack">
             <VerdictBand
               id="rl-verdict-word"
               kicker="Verdict · validation split · RL value-add"
               verdict={verdict}
               word={word}
-              detail={<>Objective {words(r.run?.objective?.metric)}.</>}
+              detail={<>{uiText("Objective ")}{words(r.run?.objective?.metric)}.</>}
               reasons={reasons}
             />
             <details className="pf-allmetrics">
-              <summary>All {eff} metrics</summary>
+              <summary>{uiText("All ")}{eff}{uiText(" metrics")}</summary>
               <Tiles r={r} split={eff} />
             </details>
             {testVisible && eff === 'test' && (
-              <p className="small muted">
-                Test is a visible audit.
-                <Info label="About the test split">
-                  <p>Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>
+              <p className="small muted">{uiText("Test is a visible audit.")}<Info label={uiText("About the test split")}>
+                  <p>{uiText("Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.")}</p>
                 </Info>
               </p>
             )}
@@ -349,28 +343,28 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
         </Section>
       </div>
 
-      <Section title="Comparators" id="rl-baselines" caption="All fixed comparators, fold by fold.">
+      <Section title={uiText("Comparators")} id="rl-baselines" caption={uiText("All fixed comparators, fold by fold.")}>
         <div className="vstack">
           <div className="rl-bar-row">{toggle}</div>
           <BaselineMatrix r={r} split={eff} />
         </div>
       </Section>
 
-      <Section title="Training behavior" id="rl-training" caption="Fixed-budget training history; descriptive only.">
+      <Section title={uiText("Training behavior")} id="rl-training" caption={uiText("Fixed-budget training history; descriptive only.")}>
         <TrainingChart rows={r.training ?? []} trials={trials} episodes={r.protocol?.episodes ?? 0} contextual={r.contextualBaselines ?? []} />
       </Section>
 
-      <Section title="Factor-sleeve allocation" id="rl-actions" caption="Decision split across the fixed sleeves.">
+      <Section title={uiText("Factor-sleeve allocation")} id="rl-actions" caption={uiText("Decision split across the fixed sleeves.")}>
         <div className="vstack">
           <div className="rl-bar-row">{toggle}</div>
           {barRows.length ? <ActionBars rows={barRows} actions={actions} /> : <NA why={`actionSummaries has no ${eff} rows`} />}
           <ActionDetail r={r} split={eff} />
           {r.actionPath?.transitions?.length ? (
             <details className="datatable">
-              <summary>Action transitions on the sampled path ({r.actionPath.sampledRows ?? '—'} of {r.actionPath.totalRows ?? '—'} rows, all splits)</summary>
+              <summary>{uiText("Action transitions on the sampled path (")}{r.actionPath.sampledRows ?? '—'}{uiText(" of ")}{r.actionPath.totalRows ?? '—'}{uiText(" rows, all splits)")}</summary>
               <div className="tablewrap">
                 <table className="tbl">
-                  <thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col" className="r">Count</th></tr></thead>
+                  <thead><tr><th scope="col">{uiText("From")}</th><th scope="col">{uiText("To")}</th><th scope="col" className="r">{uiText("Count")}</th></tr></thead>
                   <tbody>
                     {[...r.actionPath.transitions].sort((a, b) => b.count - a.count).map((t) => (
                       <tr key={`${t.from}${t.to}`}><td>{t.from}</td><td>{t.to}</td><td className="r">{t.count}</td></tr>
@@ -380,44 +374,42 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
               </div>
             </details>
           ) : null}
-          <p className="small muted">
-            Actions select the candidate factor, reference factors or a governed blend.
-            <Info label="About actions">
-              <p>Actions select the content-locked candidate factor, fixed reference factors or their governed blend. Final post-drift books are risk-checked before reward. All values are historical research evidence, not orders or account positions.</p>
+          <p className="small muted">{uiText("Actions select the candidate factor, reference factors or a governed blend.")}<Info label={uiText("About actions")}>
+              <p>{uiText("Actions select the content-locked candidate factor, fixed reference factors or their governed blend. Final post-drift books are risk-checked before reward. All values are historical research evidence, not orders or account positions.")}</p>
             </Info>
           </p>
         </div>
       </Section>
 
-      <Section title="Factor-fusion diagnosis" id="rl-fusion" caption="Where adaptive value stops.">
+      <Section title={uiText("Factor-fusion diagnosis")} id="rl-fusion" caption={uiText("Where adaptive value stops.")}>
         <RlFusion r={r} testVisible={testVisible} />
       </Section>
 
-      <Section title="Incremental attribution" id="rl-incremental" caption="Full-path RL minus the selected baseline.">
+      <Section title={uiText("Incremental attribution")} id="rl-incremental" caption={uiText("Full-path RL minus the selected baseline.")}>
         <div className="vstack">
           <div className="rl-bar-row">{toggle}</div>
           <RlIncremental r={r} split={eff} />
         </div>
       </Section>
 
-      <Section title="Policy behavior" id="rl-behavior" fold caption="Action runs, Q margins and the features behind them.">
+      <Section title={uiText("Policy behavior")} id="rl-behavior" fold caption={uiText("Action runs, Q margins and the features behind them.")}>
         <div className="vstack">
           <div className="rl-bar-row">{toggle}</div>
           <RlBehavior r={r} split={eff} />
         </div>
       </Section>
 
-      <Section title="Factor opportunity" id="rl-opportunity" fold caption="Same-pretrade one-step audit of every sleeve against the selected one.">
+      <Section title={uiText("Factor opportunity")} id="rl-opportunity" fold caption={uiText("Same-pretrade one-step audit of every sleeve against the selected one.")}>
         <div className="vstack">
           <div className="rl-bar-row">{toggle}</div>
           <RlOpportunity r={r} split={eff} />
         </div>
       </Section>
 
-      <Section title="Mandate and protocol" id="rl-mandate" fold caption="The locked portfolio mandate, executed-book risk, learning contract and fold ranges.">
+      <Section title={uiText("Mandate and protocol")} id="rl-mandate" fold caption={uiText("The locked portfolio mandate, executed-book risk, learning contract and fold ranges.")}>
         <div className="vstack">
           <div className="cols">
-            <Block title="Locked mandate">
+            <Block title={uiText("Locked mandate")}>
               {mand ? (
                 <Kv
                   rows={[
@@ -437,7 +429,7 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
                 <NA why="portfolioMandate is not in the payload" />
               )}
             </Block>
-            <Block title="Executed-book risk">
+            <Block title={uiText("Executed-book risk")}>
               {execRisk ? (
                 <Kv
                   rows={[
@@ -457,7 +449,7 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
             </Block>
           </div>
           <div className="cols">
-            <Block title="Learning contract">
+            <Block title={uiText("Learning contract")}>
               <Kv
                 rows={[
                   ['Method', lc?.method ?? 'legacy learner'],
@@ -472,11 +464,11 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
                 ]}
               />
             </Block>
-            <Block title="Fold ranges">
+            <Block title={uiText("Fold ranges")}>
               {r.protocol?.ranges ? (
                 <div className="tablewrap">
                   <table className="tbl">
-                    <thead><tr><th scope="col">Fold</th><th scope="col">Split</th><th scope="col">Range</th><th scope="col" className="r">Rows</th></tr></thead>
+                    <thead><tr><th scope="col">{uiText("Fold")}</th><th scope="col">{uiText("Split")}</th><th scope="col">{uiText("Range")}</th><th scope="col" className="r">{uiText("Rows")}</th></tr></thead>
                     <tbody>
                       {Object.entries(r.protocol.ranges).flatMap(([fold, parts]) =>
                         (['train', 'validation', 'test'] as const)
@@ -485,7 +477,7 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
                             <tr key={fold + k}>
                               <th scope="row">{fold}</th>
                               <td>{k} · {parts[k].role ?? ''}</td>
-                              <td className="mono">{day(parts[k].start)} to {day(parts[k].end)}</td>
+                              <td className="mono">{day(parts[k].start)}{uiText(" to ")}{day(parts[k].end)}</td>
                               <td className="r">{parts[k].observations ?? '—'}</td>
                             </tr>
                           )),
@@ -500,11 +492,11 @@ export function RlPage({ project }: { project: ProjectSnapshot }) {
           </div>
           {r.protocol?.semantics && (
             <details className="datatable">
-              <summary>Protocol semantics, as written by the Run</summary>
+              <summary>{uiText("Protocol semantics, as written by the Run")}</summary>
               <Kv rows={Object.entries(r.protocol.semantics).map(([k, v]): [string, ReactNode] => [words(k.replace(/([A-Z])/g, ' $1').toLowerCase()), v])} />
             </details>
           )}
-          {r.warning && <p className="small muted">{r.warning}</p>}
+          {r.warning && <p className="small muted">{uiValue(r.warning)}</p>}
         </div>
       </Section>
     </div>

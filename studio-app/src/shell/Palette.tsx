@@ -1,3 +1,4 @@
+import { uiText, useLanguage } from '../i18n'
 import { useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 import type { ProjectSummary } from '../api'
 import { routeHref } from '../route'
@@ -9,6 +10,7 @@ type Props = { open: boolean; onClose: () => void; projects: ProjectSummary[]; g
 
 /** Ctrl K: jump to a page or a Project. */
 export function Palette({ open, onClose, projects, go }: Props) {
+  const language = useLanguage()
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   useEffect(() => {
@@ -19,17 +21,17 @@ export function Palette({ open, onClose, projects, go }: Props) {
   }, [open])
   const items = useMemo<Item[]>(() => {
     const all: Item[] = [
-      { group: 'Pages', label: 'Attention', detail: 'Needs a look', href: routeHref({ view: 'attention' }) },
-      { group: 'Pages', label: 'Settings', detail: 'Actions and Workspace', href: routeHref({ view: 'settings' }) },
-      { group: 'Pages', label: 'Factor library', detail: 'Factors', href: routeHref({ view: 'factors' }) },
-      { group: 'Pages', label: 'Strategies', detail: 'Portfolio Projects', href: routeHref({ view: 'strategies' }) },
-      { group: 'Pages', label: 'Run history', detail: 'Runs', href: routeHref({ view: 'runs' }) },
-      { group: 'Pages', label: 'Tuning tasks', detail: 'Sessions and trials', href: routeHref({ view: 'tuning' }) },
+      { group: 'Pages', label: uiText("Attention"), detail: uiText("Needs a look"), href: routeHref({ view: 'attention' }) },
+      { group: 'Pages', label: uiText("Settings"), detail: uiText("Actions and Workspace"), href: routeHref({ view: 'settings' }) },
+      { group: 'Pages', label: uiText("Factor library"), detail: uiText("Factors"), href: routeHref({ view: 'factors' }) },
+      { group: 'Pages', label: uiText("Strategies"), detail: uiText("Portfolio Projects"), href: routeHref({ view: 'strategies' }) },
+      { group: 'Pages', label: uiText("Run history"), detail: uiText("Runs"), href: routeHref({ view: 'runs' }) },
+      { group: 'Pages', label: uiText("Tuning tasks"), detail: uiText("Sessions and trials"), href: routeHref({ view: 'tuning' }) },
       ...projects.map((p) => ({ group: 'Factors', label: p.name, detail: p.id, href: routeHref({ view: 'project', id: p.id }) })),
     ]
     const needle = query.trim().toLowerCase()
     return needle ? all.filter((i) => `${i.label} ${i.detail}`.toLowerCase().includes(needle)) : all
-  }, [projects, query])
+  }, [projects, query, language])
   const choose = (item: Item | undefined) => {
     if (!item) return
     onClose()
@@ -45,13 +47,13 @@ export function Palette({ open, onClose, projects, go }: Props) {
   }
   let last = ''
   return (
-    <Modal open={open} onClose={onClose} label="Search" className="palette">
+    <Modal open={open} onClose={onClose} label={uiText("Search")} className="palette">
       <div className="palette-body">
         <input
           className="palette-input"
           autoFocus
-          placeholder="Search pages and Projects"
-          aria-label="Search pages and Projects"
+          placeholder={uiText("Search pages and Projects")}
+          aria-label={uiText("Search pages and Projects")}
           value={query}
           onChange={(event) => {
             setQuery(event.target.value)
@@ -60,13 +62,13 @@ export function Palette({ open, onClose, projects, go }: Props) {
           onKeyDown={onKey}
         />
         <div className="palette-list" role="listbox">
-          {items.length === 0 && <p className="palette-empty">Nothing matches.</p>}
+          {items.length === 0 && <p className="palette-empty">{uiText("Nothing matches.")}</p>}
           {items.map((item, index) => {
             const head = item.group !== last
             last = item.group
             return (
               <div key={`${item.group}/${item.href}`}>
-                {head && <div className="palette-group">{item.group}</div>}
+                {head && <div className="palette-group">{uiText(item.group)}</div>}
                 <div
                   role="option"
                   aria-selected={index === active}
@@ -81,7 +83,7 @@ export function Palette({ open, onClose, projects, go }: Props) {
             )
           })}
         </div>
-        <p className="palette-keys">↑ ↓ to move · Enter to open · Esc to close</p>
+        <p className="palette-keys">{uiText("↑ ↓ to move · Enter to open · Esc to close")}</p>
       </div>
     </Modal>
   )

@@ -1,3 +1,4 @@
+import { uiTemplate, uiText } from '../../i18n'
 import type { ProjectSnapshot } from '../../api'
 import { testAuditVisible, type RunDiagnostics } from '../run/runTypes'
 
@@ -77,12 +78,12 @@ export function metricRows(a: RunDiagnostics, b: RunDiagnostics): Row[] {
     const x = rows(a, group)
     const y = rows(b, group)
     out.push(
-      { label: `${prefix} mean rank IC`, a: x.ic, b: y.ic, digits: 4, better: 'higher', group },
-      { label: `${prefix} IC information ratio`, a: x.ir, b: y.ir, digits: 3, better: 'higher', group },
-      { label: `${prefix} HAC t-statistic`, a: x.t, b: y.t, digits: 2, better: 'higher', group },
-      { label: `${prefix} HAC p-value`, a: x.p, b: y.p, digits: 3, better: 'lower', group },
-      { label: `${prefix} rank hit rate`, a: x.hit, b: y.hit, digits: 3, better: 'higher', group },
-      { label: `${prefix} observations`, a: x.n, b: y.n, digits: 0, better: null, group },
+      { label: uiTemplate("{0} mean rank IC", [prefix]), a: x.ic, b: y.ic, digits: 4, better: 'higher', group },
+      { label: uiTemplate("{0} IC information ratio", [prefix]), a: x.ir, b: y.ir, digits: 3, better: 'higher', group },
+      { label: uiTemplate("{0} HAC t-statistic", [prefix]), a: x.t, b: y.t, digits: 2, better: 'higher', group },
+      { label: uiTemplate("{0} HAC p-value", [prefix]), a: x.p, b: y.p, digits: 3, better: 'lower', group },
+      { label: uiTemplate("{0} rank hit rate", [prefix]), a: x.hit, b: y.hit, digits: 3, better: 'higher', group },
+      { label: uiTemplate("{0} observations", [prefix]), a: x.n, b: y.n, digits: 0, better: null, group },
     )
   }
   add('validation', 'Validation')
@@ -92,12 +93,12 @@ export function metricRows(a: RunDiagnostics, b: RunDiagnostics): Row[] {
 }
 
 export function deltaWord(row: Row): string {
-  if (row.a === null || row.b === null) return 'not computed'
-  if (row.group === 'test') return 'visible audit only, not for selection'
+  if (row.a === null || row.b === null) return uiText("not computed")
+  if (row.group === 'test') return uiText("visible audit only, not for selection")
   const d = row.b - row.a
   if (d === 0) return 'unchanged'
   if (row.better === null) return d > 0 ? 'more' : 'fewer'
-  return (d > 0) === (row.better === 'higher') ? 'better number' : 'worse number'
+  return (d > 0) === (row.better === 'higher') ? uiText("better number") : uiText("worse number")
 }
 
 /** Sentences about how the better number was obtained, built only from counts and dates the server sent. */

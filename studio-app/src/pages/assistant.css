@@ -51,6 +51,10 @@
 .assistant-compose > div span { color: var(--faint); font: 10px/16px var(--font-sans); }
 .assistant-inspector { display: grid; align-content: start; gap: 14px; padding: 18px 16px; min-width: 0; border-left: 1px solid var(--line); }
 .assistant-inspector > h2 { font: var(--type-small); font-weight: 600; }
+.assistant-stage { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--bg); }
+.assistant-stage > span { color: var(--muted); font: var(--type-small); }
+.assistant-stage strong { color: var(--text); font: var(--type-body); font-weight: 600; }
+.assistant-stage p { color: var(--muted); font: var(--type-small); }
 .assistant-inspector > h2:not(:first-child) { padding-top: 12px; border-top: 1px solid var(--line); }
 .assistant-inspector > p { overflow-wrap: anywhere; font: var(--type-small); }
 .assistant-subtle { color: var(--muted); font: var(--type-small) !important; }

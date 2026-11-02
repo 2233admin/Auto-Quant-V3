@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { useState, type ReactNode } from 'react'
 import type { ProjectSnapshot } from '../../api'
 import { Info } from '../../components/Info'
@@ -19,28 +20,28 @@ type Split = 'validation' | 'test'
 /** The server's own conclusion enum: `supported` when the validation net Sharpe advantage is above zero, otherwise `rejected`. */
 function verdictOf(a: AllocationDiagnostics): { verdict: Verdict; word: string } {
   const s = a.conclusion?.status
-  if (s === 'supported') return { verdict: 'pass', word: 'Supported' }
-  if (s === 'rejected') return { verdict: 'fail', word: 'Rejected' }
-  return { verdict: 'inconclusive', word: 'Unavailable' }
+  if (s === 'supported') return { verdict: 'pass', word: uiText("Supported") }
+  if (s === 'rejected') return { verdict: 'fail', word: uiText("Rejected") }
+  return { verdict: 'inconclusive', word: uiText("Unavailable") }
 }
 
 const words = (s: string | undefined) => (s ? s.replaceAll('-', ' ').replaceAll('_', ' ') : '—')
 
 type Metric = { key: keyof AllocPerf; label: string; kind: 'pct' | 'num'; cmp?: 'netSharpeAdvantage' | 'annualReturnAdvantage' | 'annualVolatilityDifference' | 'maximumDrawdownDifference' }
 const METRICS: Metric[] = [
-  { key: 'sharpe', label: 'Net Sharpe', kind: 'num', cmp: 'netSharpeAdvantage' },
-  { key: 'sortino', label: 'Net Sortino', kind: 'num' },
-  { key: 'total_return', label: 'Net total return', kind: 'pct' },
-  { key: 'annual_return', label: 'Net annualized return', kind: 'pct', cmp: 'annualReturnAdvantage' },
-  { key: 'annual_volatility', label: 'Annualized volatility', kind: 'pct', cmp: 'annualVolatilityDifference' },
-  { key: 'maximum_drawdown', label: 'Max drawdown', kind: 'pct', cmp: 'maximumDrawdownDifference' },
-  { key: 'calmar', label: 'Calmar', kind: 'num' },
-  { key: 'expected_shortfall_95', label: 'Expected shortfall 95%', kind: 'pct' },
-  { key: 'positive_rate', label: 'Positive-day rate', kind: 'pct' },
-  { key: 'benchmark_beta', label: 'Beta to the benchmark', kind: 'num' },
-  { key: 'tracking_error', label: 'Tracking error', kind: 'pct' },
-  { key: 'active_annual_return', label: 'Active return vs benchmark', kind: 'pct' },
-  { key: 'information_ratio', label: 'Information ratio', kind: 'num' },
+  { key: 'sharpe', get label() { return uiText("Net Sharpe") }, kind: 'num', cmp: 'netSharpeAdvantage' },
+  { key: 'sortino', get label() { return uiText("Net Sortino") }, kind: 'num' },
+  { key: 'total_return', get label() { return uiText("Net total return") }, kind: 'pct' },
+  { key: 'annual_return', get label() { return uiText("Net annualized return") }, kind: 'pct', cmp: 'annualReturnAdvantage' },
+  { key: 'annual_volatility', get label() { return uiText("Annualized volatility") }, kind: 'pct', cmp: 'annualVolatilityDifference' },
+  { key: 'maximum_drawdown', get label() { return uiText("Max drawdown") }, kind: 'pct', cmp: 'maximumDrawdownDifference' },
+  { key: 'calmar', get label() { return uiText("Calmar") }, kind: 'num' },
+  { key: 'expected_shortfall_95', get label() { return uiText("Expected shortfall 95%") }, kind: 'pct' },
+  { key: 'positive_rate', get label() { return uiText("Positive-day rate") }, kind: 'pct' },
+  { key: 'benchmark_beta', get label() { return uiText("Beta to the benchmark") }, kind: 'num' },
+  { key: 'tracking_error', get label() { return uiText("Tracking error") }, kind: 'pct' },
+  { key: 'active_annual_return', get label() { return uiText("Active return vs benchmark") }, kind: 'pct' },
+  { key: 'information_ratio', get label() { return uiText("Information ratio") }, kind: 'num' },
 ]
 
 function PerfTiles({ a, split }: { a: AllocationDiagnostics; split: Split }) {
@@ -60,7 +61,7 @@ function PerfTiles({ a, split }: { a: AllocationDiagnostics; split: Split }) {
             label={m.label}
             value={fmt(m, c)}
             delta={delta}
-            note={finite(r) ? `reference ${fmt(m, r)}` : <NA why="the reference value is not published" />}
+            note={finite(r) ? uiTemplate("reference {0}", [fmt(m, r)]) : <NA why="the reference value is not published" />}
           />
         )
       })}
@@ -73,11 +74,11 @@ function ImplementationTiles({ a, split }: { a: AllocationDiagnostics; split: Sp
   if (!i) return <p><NA why={`implementation.${split} is not in the payload`} /></p>
   return (
     <dl className="hm-grid">
-      <MetricTile label="Annualized one-way turnover" value={finite(i.candidateAnnualizedOneWayTurnover) ? `${fn(i.candidateAnnualizedOneWayTurnover, 2)}x` : '—'} note={finite(i.referenceAnnualizedOneWayTurnover) ? `reference ${fn(i.referenceAnnualizedOneWayTurnover, 2)}x` : undefined} />
-      <MetricTile label="Total cost" value={up(i.candidateTotalCost, 3)} note={finite(i.referenceTotalCost) ? `reference ${up(i.referenceTotalCost, 3)}` : undefined} />
-      <MetricTile label="Max forecast volatility" value={up(i.candidateMaximumForecastVolatility, 2)} note={finite(i.candidateRiskLimit) ? `ceiling ${up(i.candidateRiskLimit, 1)}` : undefined} />
+      <MetricTile label={uiText("Annualized one-way turnover")} value={finite(i.candidateAnnualizedOneWayTurnover) ? `${fn(i.candidateAnnualizedOneWayTurnover, 2)}x` : '—'} note={finite(i.referenceAnnualizedOneWayTurnover) ? uiTemplate("reference {0}x", [fn(i.referenceAnnualizedOneWayTurnover, 2)]) : undefined} />
+      <MetricTile label={uiText("Total cost")} value={up(i.candidateTotalCost, 3)} note={finite(i.referenceTotalCost) ? uiTemplate("reference {0}", [up(i.referenceTotalCost, 3)]) : undefined} />
+      <MetricTile label={uiText("Max forecast volatility")} value={up(i.candidateMaximumForecastVolatility, 2)} note={finite(i.candidateRiskLimit) ? uiTemplate("ceiling {0}", [up(i.candidateRiskLimit, 1)]) : undefined} />
       <MetricTile
-        label="Risk-ceiling breaches"
+        label={uiText("Risk-ceiling breaches")}
         value={finite(i.candidateRiskBreaches) ? String(i.candidateRiskBreaches) : '—'}
         tone={finite(i.candidateRiskBreaches) && i.candidateRiskBreaches > 0 ? 'weak' : 'neutral'}
         toneReason={finite(i.candidateRiskBreaches) && i.candidateRiskBreaches > 0 ? 'above zero' : undefined}
@@ -105,25 +106,23 @@ function WeightsTable({ a, hiddenWhy }: { a: AllocationDiagnostics; hiddenWhy: s
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">
-          Weights as fractions of the book. Decision {day(ld?.asOf)}; current state {day(cs?.asOf)}. Context-only assets carry no weight by construction.
-        </caption>
+        <caption className="small muted">{uiText("Weights as fractions of the book. Decision ")}{day(ld?.asOf)}{uiText("; current state ")}{day(cs?.asOf)}{uiText(". Context-only assets carry no weight by construction.")}</caption>
         <thead>
           <tr>
-            <th scope="col">Asset</th>
-            <th scope="col">Role</th>
-            <th scope="col" className="r">Latest ERC target</th>
-            <th scope="col" className="r">Latest executed</th>
-            <th scope="col" className="r">Risk contribution share</th>
-            <th scope="col" className="r">Current drifted</th>
-            <th scope="col" className="r">Reference latest</th>
-            <th scope="col" className="r">Reference current</th>
+            <th scope="col">{uiText("Asset")}</th>
+            <th scope="col">{uiText("Role")}</th>
+            <th scope="col" className="r">{uiText("Latest ERC target")}</th>
+            <th scope="col" className="r">{uiText("Latest executed")}</th>
+            <th scope="col" className="r">{uiText("Risk contribution share")}</th>
+            <th scope="col" className="r">{uiText("Current drifted")}</th>
+            <th scope="col" className="r">{uiText("Reference latest")}</th>
+            <th scope="col" className="r">{uiText("Reference current")}</th>
           </tr>
         </thead>
         <tbody>
           {universe.map((k) => (
             <tr key={k}>
-              <th scope="row">{k}{!tradable.has(k) && <span className="faint small"> context only</span>}</th>
+              <th scope="row">{k}{!tradable.has(k) && <span className="faint small">{uiText(" context only")}</span>}</th>
               <td className="muted">{a.contract?.assetPositionRoles?.[k] ?? '—'}</td>
               <td className="r"><span className="al-cell"><Bar w={get(ld?.targetWeights, k)} />{up(get(ld?.targetWeights, k), 2)}</span></td>
               <td className="r"><span className="al-cell"><Bar w={get(ld?.executedWeights, k)} />{up(get(ld?.executedWeights, k), 2)}</span></td>
@@ -156,19 +155,17 @@ function FidelityTable({ a, testVisible }: { a: AllocationDiagnostics; testVisib
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">
-          Does the solver reach equal risk contribution within the {finite(f.tolerance) ? up(f.tolerance, 1) : '—'} tolerance on each scheduled decision? A cap-induced gap is shown as a gap, never as exact parity. This is separate from the performance conclusion.
-        </caption>
+        <caption className="small muted">{uiText("Does the solver reach equal risk contribution within the ")}{finite(f.tolerance) ? up(f.tolerance, 1) : '—'}{uiText(" tolerance on each scheduled decision? A cap-induced gap is shown as a gap, never as exact parity. This is separate from the performance conclusion.")}</caption>
         <thead>
           <tr>
-            <th scope="col">Measure</th>
+            <th scope="col">{uiText("Measure")}</th>
             {names.map((n) => <th scope="col" className="r" key={n}>{n[0].toUpperCase() + n.slice(1)}</th>)}
           </tr>
         </thead>
         <tbody>
           {rows.map(([label, get]) => (
             <tr key={label}>
-              <th scope="row">{label}</th>
+              <th scope="row">{uiValue(label)}</th>
               {names.map((n) => <td className="r" key={n}>{get(f.bySplit?.[n] ?? {})}</td>)}
             </tr>
           ))}
@@ -186,12 +183,12 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
     return (
       <div className="pg al">
         <header className="pg-head">
-          <h1>Strategic allocation</h1>
-          <p className="muted small">Project <a href={back}>{project.name}</a>. Research diagnostics of a mechanical allocation; no trading authority.</p>
+          <h1>{uiText("Strategic allocation")}</h1>
+          <p className="muted small">{uiText("Project ")}<a href={back}>{project.name}</a>{uiText(". Research diagnostics of a mechanical allocation; no trading authority.")}</p>
         </header>
-        <Empty title="No evidence in this Project">
-          <p>This Project has no Allocation Run, so there is no equal-risk-contribution comparison, construction-fidelity audit or current book to draw. Nothing is estimated in its place.</p>
-          <p className="small"><a href={back}>Back to the Project</a></p>
+        <Empty title={uiText("No evidence in this Project")}>
+          <p>{uiText("This Project has no Allocation Run, so there is no equal-risk-contribution comparison, construction-fidelity audit or current book to draw. Nothing is estimated in its place.")}</p>
+          <p className="small"><a href={back}>{uiText("Back to the Project")}</a></p>
         </Empty>
       </div>
     )
@@ -228,14 +225,14 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
   if (finite(c?.validationNetSharpeAdvantage)) {
     reasons.push({
       tone: c.validationNetSharpeAdvantage < 0 ? 'bad' : 'info',
-      text: `Validation net Sharpe advantage of the candidate over the fixed reference: ${sn(c.validationNetSharpeAdvantage, 2)}. Selection uses validation only; test never enters it.`,
+      text: uiTemplate("Validation net Sharpe advantage of the candidate over the fixed reference: {0}. Selection uses validation only; test never enters it.", [sn(c.validationNetSharpeAdvantage, 2)]),
       field: 'conclusion.validationNetSharpeAdvantage',
     })
   }
   if (vf) {
     reasons.push({
       tone: 'info',
-      text: `Construction fidelity on validation: ${vf.withinToleranceDecisions ?? '—'} of ${vf.eligibleDecisions ?? '—'} eligible decisions reach equal risk contribution within tolerance${(vf.capInducedParityGapDecisions ?? 0) > 0 ? `; ${vf.capInducedParityGapDecisions} show a cap-induced gap` : ''}. A separate question from performance.`,
+      text: uiTemplate("Construction fidelity on validation: {0} of {1} eligible decisions reach equal risk contribution within tolerance{2}. A separate question from performance.", [vf.withinToleranceDecisions ?? '—', vf.eligibleDecisions ?? '—', (vf.capInducedParityGapDecisions ?? 0) > 0 ? `; ${vf.capInducedParityGapDecisions} show a cap-induced gap` : '']),
       field: 'constructionFidelity.bySplit.validation',
     })
   }
@@ -260,15 +257,12 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
   return (
     <div className="pg al">
       <header className="pg-head">
-        <h1>Strategic allocation</h1>
-        <p className="muted small">
-          Project <a href={back}>{project.name}</a> · Run <span className="mono">{a.run?.id?.replace(/^run-/, '') ?? '—'}</span>
-          <Info label="About this page">
-            <p>
-              Equal-risk-contribution construction against a fixed-weight reference. Research diagnostics; no trading authority. Selection uses the {a.splitProtocol?.selectionSplit ?? 'validation'} split only.
-              Test is <span className="mono">{a.splitProtocol?.testRole ?? '—'}</span>
-              {c?.testUsedForSelection === false ? ' and is never used for selection' : ''}.
-              {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+        <h1>{uiText("Strategic allocation")}</h1>
+        <p className="muted small">{uiText("Project ")}<a href={back}>{project.name}</a>{uiText(" · Run ")}<span className="mono">{a.run?.id?.replace(/^run-/, '') ?? '—'}</span>
+          <Info label={uiText("About this page")}>
+            <p>{uiText("Equal-risk-contribution construction against a fixed-weight reference. Research diagnostics; no trading authority. Selection uses the ")}{a.splitProtocol?.selectionSplit ?? uiText("validation")}{uiText(" split only. Test is ")}<span className="mono">{a.splitProtocol?.testRole ?? '—'}</span>
+              {c?.testUsedForSelection === false ? uiText(" and is never used for selection") : ''}.
+              {!testVisible && uiText(" No test audit is published for this Run, so no test number is drawn on this page.")}
             </p>
           </Info>
         </p>
@@ -276,12 +270,12 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
 
       <SectionNav
         items={[
-          { id: 'al-summary', label: 'Verdict and metrics' },
-          { id: 'al-impl', label: 'Implementation' },
-          { id: 'al-book', label: 'Book and weights' },
-          { id: 'al-fidelity', label: 'Construction fidelity' },
-          { id: 'al-contract', label: 'Contract' },
-          { id: 'al-prov', label: 'Provenance' },
+          { id: 'al-summary', label: uiText("Verdict and metrics") },
+          { id: 'al-impl', label: uiText("Implementation") },
+          { id: 'al-book', label: uiText("Book and weights") },
+          { id: 'al-fidelity', label: uiText("Construction fidelity") },
+          { id: 'al-contract', label: uiText("Contract") },
+          { id: 'al-prov', label: uiText("Provenance") },
         ]}
       />
 
@@ -290,9 +284,9 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
           tone={verdict === 'fail' ? 'bad' : verdict === 'pass' ? 'ok' : 'warn'}
           word={word}
           why={
-            <Info label="Why this verdict">
-              <p>Read from the server conclusion enum only. {c?.selectionBasis ? <>Basis <span className="mono">{c.selectionBasis}</span>. </> : null}It says how the candidate compared with the reference, nothing about trading.</p>
-              <p className="faint mono">conclusion.status = {c?.status ?? '—'}</p>
+            <Info label={uiText("Why this verdict")}>
+              <p>{uiText("Read from the server conclusion enum only. ")}{c?.selectionBasis ? <>{uiText("Basis ")}<span className="mono">{c.selectionBasis}</span>. </> : null}{uiText("It says how the candidate compared with the reference, nothing about trading.")}</p>
+              <p className="faint mono">{uiText("conclusion.status = ")}{c?.status ?? '—'}</p>
             </Info>
           }
         >
@@ -301,26 +295,26 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
 
         <section aria-labelledby="al-path" className="pf-hero-chart">
           <div className="pf-hero-head">
-            <h2 id="al-path">Daily path</h2>
+            <h2 id="al-path">{uiText("Daily path")}</h2>
             {toggle}
           </div>
           {points.length >= 2 ? (
             <AllocationChart points={points} windows={windows} ceiling={a.contract?.portfolioPolicy?.annualizedVolatilityCeiling} totalRows={a.dataset?.observations} sampledRows={allPoints.length} note={hiddenNote} testVisible={testVisible} />
           ) : (
-            <Empty title="Not available">
-              <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a path.</p>
+            <Empty title={uiText("Not available")}>
+              <p>{uiText("not available: the Run publishes ")}{allPoints.length}{uiText(" path points")}{testVisible ? '' : uiText(" outside the test split")}{uiText(", too few to draw a path.")}</p>
             </Empty>
           )}
         </section>
 
-        <HeroTiles items={tiles} label={`Core numbers, ${effective} split`} />
+        <HeroTiles items={tiles} label={uiTemplate("Core numbers, {0} split", [effective])} />
       </div>
 
       <div className="band">
         <Section
-          title="Verdict and metrics"
+          title={uiText("Verdict and metrics")}
           id="al-summary"
-          caption={`${a.contract?.tradableAssets?.length ?? '—'} tradable assets; ${words(a.contract?.method?.kind)}; benchmark ${words(a.contract?.benchmark?.kind)}; ${a.dataset?.observations ?? '—'} daily rows.`}
+          caption={uiTemplate("{0} tradable assets; {1}; benchmark {2}; {3} daily rows.", [a.contract?.tradableAssets?.length ?? '—', words(a.contract?.method?.kind), words(a.contract?.benchmark?.kind), a.dataset?.observations ?? '—'])}
         >
           <div className="vstack">
             <VerdictBand
@@ -328,18 +322,16 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
               kicker="Verdict · validation split · relative performance only"
               verdict={verdict}
               word={word}
-              detail={<>{c?.selectionBasis ? <>Basis <span className="mono">{c.selectionBasis}</span>.</> : null}</>}
+              detail={<>{c?.selectionBasis ? <>{uiText("Basis ")}<span className="mono">{c.selectionBasis}</span>.</> : null}</>}
               reasons={reasons}
             />
             <details className="pf-allmetrics">
-              <summary>All {effective} metrics</summary>
+              <summary>{uiText("All ")}{effective}{uiText(" metrics")}</summary>
               <PerfTiles a={a} split={effective} />
             </details>
             {testVisible && effective === 'test' && (
-              <p className="small muted">
-                Test is a visible audit.
-                <Info label="About the test split">
-                  <p>Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>
+              <p className="small muted">{uiText("Test is a visible audit.")}<Info label={uiText("About the test split")}>
+                  <p>{uiText("Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.")}</p>
                 </Info>
               </p>
             )}
@@ -347,16 +339,16 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
         </Section>
       </div>
 
-      <Section title="Implementation and cost" id="al-impl" caption="Turnover, cost and the volatility ceiling.">
+      <Section title={uiText("Implementation and cost")} id="al-impl" caption={uiText("Turnover, cost and the volatility ceiling.")}>
         <div className="vstack">
           <div className="al-bar-row">{toggle}</div>
           <ImplementationTiles a={a} split={effective} />
         </div>
       </Section>
 
-      <Section title="Book and weights" id="al-book" caption="Last decision, drifted current book and reference.">
+      <Section title={uiText("Book and weights")} id="al-book" caption={uiText("Last decision, drifted current book and reference.")}>
         <div className="vstack">
-          <Block title="Current state">
+          <Block title={uiText("Current state")}>
             {cs && !bookHidden ? (
               <Kv
                 rows={[
@@ -379,11 +371,11 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
         </div>
       </Section>
 
-      <Section title="Construction fidelity" id="al-fidelity" caption="Equal risk contribution reached, by split.">
+      <Section title={uiText("Construction fidelity")} id="al-fidelity" caption={uiText("Equal risk contribution reached, by split.")}>
         <div className="vstack">
           <FidelityTable a={a} testVisible={testVisible} />
           {a.solver && (
-            <Block title="Solver totals (all splits)">
+            <Block title={uiText("Solver totals (all splits)")}>
               <Kv
                 rows={[
                   ['Scheduled decisions', String(a.solver.scheduledDecisions ?? '—')],
@@ -397,9 +389,9 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
         </div>
       </Section>
 
-      <Section title="Contract" id="al-contract" fold caption="Method, policy, benchmark and splits.">
+      <Section title={uiText("Contract")} id="al-contract" fold caption={uiText("Method, policy, benchmark and splits.")}>
         <div className="cols">
-          <Block title="Construction and policy">
+          <Block title={uiText("Construction and policy")}>
             <Kv
               rows={[
                 ['Method', words(a.contract?.method?.kind)],
@@ -415,7 +407,7 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
               ]}
             />
           </Block>
-          <Block title="Benchmark and splits">
+          <Block title={uiText("Benchmark and splits")}>
             <Kv
               rows={[
                 ['Benchmark', words(a.contract?.benchmark?.kind)],
@@ -430,9 +422,9 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
         </div>
       </Section>
 
-      <Section title="Provenance and verification" id="al-prov" fold caption="Run identity and server re-derivation.">
+      <Section title={uiText("Provenance and verification")} id="al-prov" fold caption={uiText("Run identity and server re-derivation.")}>
         <div className="cols">
-          <Block title="Run and dataset">
+          <Block title={uiText("Run and dataset")}>
             <Kv
               rows={[
                 ['Run', a.run?.id ?? '—'],
@@ -444,7 +436,7 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
               ]}
             />
           </Block>
-          <Block title="Server re-derivation">
+          <Block title={uiText("Server re-derivation")}>
             {a.verification ? (
               <Kv rows={Object.entries(a.verification).map(([k, v]): [string, ReactNode] => [k.replace(/([A-Z])/g, ' $1').toLowerCase(), v === true ? 'yes' : v === false ? 'no' : String(v)])} />
             ) : (

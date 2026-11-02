@@ -1,3 +1,4 @@
+import { uiValue } from '../../i18n'
 import { useId, type ReactNode } from 'react'
 import '../../actions/actions.css'
 import './workbench.css'
@@ -48,7 +49,7 @@ export function ActionRow({
   const button = (b: ActionButton, cls: string, key?: number) =>
     b.href && !b.disabled ? (
       <a key={key} className={`abtn ${cls}`} href={b.href} aria-label={b.ariaLabel} title={b.title ?? b.ariaLabel}>
-        {b.label}
+        {uiValue(b.label)}
       </a>
     ) : (
     <button
@@ -61,7 +62,7 @@ export function ActionRow({
       title={b.disabled ? `${b.ariaLabel ? `${b.ariaLabel}: ` : ''}${b.reasonTitle ?? b.disabledReason}` : b.title ?? b.ariaLabel}
       onClick={b.disabled ? undefined : b.onClick}
     >
-      {b.label}
+      {uiValue(b.label)}
       {b.disabled && b !== shown && !b.ariaLabel && <span className="sr-only"> ({b.disabledReason})</span>}
     </button>
     )
@@ -74,7 +75,7 @@ export function ActionRow({
       </div>
       {reason && (
         <p id={reasonId} className="wb-actions-reason" title={shown?.disabled ? shown.reasonTitle ?? reason : reason}>
-          {reason}
+          {uiValue(reason)}
         </p>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import type { FactorDiagnostics, FactorQuantileRow, FactorSplit } from '../api'
 import { num, ret } from '../format'
@@ -56,22 +57,22 @@ export function Chart({
         <div className="chart-title">
           <h3 id={`${id}-t`}>{title}</h3>
           {short && (
-            <Info label={`About ${title}`}>
-              <p>{desc}</p>
-              {note && <p>{note}</p>}
+            <Info label={uiTemplate("About {0}", [title])}>
+              <p>{uiValue(desc)}</p>
+              {note && <p>{uiValue(note)}</p>}
             </Info>
           )}
         </div>
         {short ? (
           <>
-            <p className="muted small chart-cap">{short}</p>
+            <p className="muted small chart-cap">{uiValue(short)}</p>
             <p className="sr-only" id={`${id}-d`}>
-              {desc}
+              {uiValue(desc)}
             </p>
           </>
         ) : (
           <p className="muted small" id={`${id}-d`}>
-            {desc}
+            {uiValue(desc)}
           </p>
         )}
       </figcaption>
@@ -84,9 +85,9 @@ export function Chart({
       <div className="plot-wrap" ref={plotRef}>
         {children({ labelledBy: `${id}-t ${id}-d` })}
       </div>
-      {note && !short && <p className="muted small chart-note">{note}</p>}
+      {note && !short && <p className="muted small chart-note">{uiValue(note)}</p>}
       <details className="datatable">
-        <summary>Data table</summary>
+        <summary>{uiText("Data table")}</summary>
         <div className="tablewrap">{table}</div>
       </details>
     </figure>
@@ -115,7 +116,7 @@ export function Swatch({ kind, label }: { kind: 'train' | 'validation' | 'test' 
         {kind === 'ref' && <line x1="0" y1="6" x2="18" y2="6" stroke="var(--signal-graphic)" strokeWidth="1.8" strokeDasharray="2 3" />}
         {kind === 'dot' && <circle cx="9" cy="6" r="2.4" fill="var(--stroke)" />}
       </svg>
-      <span>{label}</span>
+      <span>{uiValue(label)}</span>
     </span>
   )
 }
@@ -162,9 +163,9 @@ export function IcByHorizonLegend({ study }: { study: FactorDiagnostics }) {
   const { testShown } = icBars(study)
   return (
     <span className="legend">
-      <Swatch kind="train" label="Train" />
-      <Swatch kind="validation" label="Validation (selection)" />
-      {testShown ? <Swatch kind="test" label="Test (visible audit)" /> : <span className="faint">{TEST_HIDDEN_NOTE}</span>}
+      <Swatch kind="train" label={uiText("Train")} />
+      <Swatch kind="validation" label={uiText("Validation (selection)")} />
+      {testShown ? <Swatch kind="test" label={uiText("Test (visible audit)")} /> : <span className="faint">{TEST_HIDDEN_NOTE}</span>}
     </span>
   )
 }
@@ -176,10 +177,7 @@ export const IC_BY_HORIZON_SHORT = 'Mean rank IC with ±1.96 HAC whiskers; a whi
 export function IcByHorizonNote({ study }: { study: FactorDiagnostics }) {
   const { primary } = icBars(study)
   return (
-    <>
-      Whiskers are ±1.96 HAC standard errors, recovered as |mean IC / HAC t|. The HAC maximum lag equals each forward horizon, so overlapping
-      forward returns are accounted for; a bar with no whisker has no usable t statistic. Only the {primary}-bar horizon drives selection.
-    </>
+    <>{uiText("Whiskers are ±1.96 HAC standard errors, recovered as |mean IC / HAC t|. The HAC maximum lag equals each forward horizon, so overlapping forward returns are accounted for; a bar with no whisker has no usable t statistic. Only the ")}{primary}{uiText("-bar horizon drives selection.")}</>
   )
 }
 
@@ -187,15 +185,15 @@ export function IcByHorizonTable({ study }: { study: FactorDiagnostics }) {
   const { bars } = icBars(study)
   return (
     <table className="tbl">
-      <caption className="small muted">Mean rank IC, HAC statistics and observations</caption>
+      <caption className="small muted">{uiText("Mean rank IC, HAC statistics and observations")}</caption>
       <thead>
         <tr>
-          <th scope="col" className="r">Horizon</th>
-          <th scope="col">Split</th>
-          <th scope="col" className="r">Mean IC</th>
-          <th scope="col" className="r">HAC SE</th>
-          <th scope="col" className="r">HAC t</th>
-          <th scope="col" className="r">Observations</th>
+          <th scope="col" className="r">{uiText("Horizon")}</th>
+          <th scope="col">{uiText("Split")}</th>
+          <th scope="col" className="r">{uiText("Mean IC")}</th>
+          <th scope="col" className="r">{uiText("HAC SE")}</th>
+          <th scope="col" className="r">{uiText("HAC t")}</th>
+          <th scope="col" className="r">{uiText("Observations")}</th>
         </tr>
       </thead>
       <tbody>
@@ -208,7 +206,7 @@ export function IcByHorizonTable({ study }: { study: FactorDiagnostics }) {
             <td className="r mono">{num(b.t, 2)}</td>
             <td className="r mono">
               {int(b.n)}
-              {!b.sufficient && ' · below minimum'}
+              {!b.sufficient && uiText(" · below minimum")}
             </td>
           </tr>
         ))}
@@ -251,9 +249,7 @@ export function IcByHorizonPlot({ study, width: W, height: H, labelledBy, label 
           </text>
         </g>
       ))}
-      <text transform={`translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">
-        mean rank IC
-      </text>
+      <text transform={`translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{uiText("mean rank IC")}</text>
       {rows.map((row, gi) => {
         const gx = m.l + gi * gw
         return (
@@ -297,7 +293,7 @@ export function IcByHorizonPlot({ study, width: W, height: H, labelledBy, label 
                     </text>
                   )}
                   <text x={cx} y={H - m.b + 18} textAnchor="middle" className="ax">
-                    {split === 'validation' ? 'val' : split}
+                    {split === 'validation' ? uiText("val") : split}
                   </text>
                   {slot >= 70 && (
                     <text x={cx} y={H - m.b + 32} textAnchor="middle" className="ax faint">
@@ -308,7 +304,7 @@ export function IcByHorizonPlot({ study, width: W, height: H, labelledBy, label 
               )
             })}
             <text x={gx + gw / 2} y={H - 10} textAnchor="middle" className="grp">
-              {row.horizon}-bar horizon{row.horizon === primary ? ' · primary' : ''}
+              {row.horizon}{uiText("-bar horizon")}{row.horizon === primary ? uiText(" · primary") : ''}
             </text>
           </g>
         )
@@ -334,7 +330,7 @@ export function IcByHorizonCard({
 }) {
   return (
     <ChartCard
-      title="Rank IC by horizon and split"
+      title={uiText("Rank IC by horizon and split")}
       info={
         <>
           <p>{IC_BY_HORIZON_DESC}</p>
@@ -362,7 +358,7 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
   const [plotRef, W] = useChartWidth()
   return (
     <Chart
-      title="Rank IC by horizon and split"
+      title={uiText("Rank IC by horizon and split")}
       plotRef={plotRef}
       short={IC_BY_HORIZON_SHORT}
       desc={IC_BY_HORIZON_DESC}
@@ -388,7 +384,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
   const points = samplePoints(study, horizon).filter((p) => testShown || p.split !== 'test')
   const { icPath } = study
   if (points.length < WINDOW + 2) {
-    return <Empty title="Rank IC over time" reason={`The Run publishes no per-timestamp IC path (${points.length} points), so the series cannot be drawn.`} />
+    return <Empty title={uiText("Rank IC over time")} reason={uiTemplate("The Run publishes no per-timestamp IC path ({0} points), so the series cannot be drawn.", [points.length])} />
   }
   const smooth = trailingMean(points, WINDOW)
   const H = 320
@@ -413,44 +409,41 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
 
   return (
     <Chart
-      title={`Rank IC over time, ${horizon}-bar horizon`}
+      title={uiTemplate("Rank IC over time, {0}-bar horizon", [horizon])}
       plotRef={plotRef}
-      short={`Sampled rank IC, trailing mean of ${WINDOW}; dashed lines are each split's mean.`}
-      desc={`Sampled per-timestamp rank IC (${testShown ? `${icPath.sampledRows} of ${int(icPath.totalRows)}` : points.length} timestamps) with a trailing mean of ${WINDOW} samples. Dashed lines are each split's published mean IC over all of its timestamps.`}
+      short={uiTemplate("Sampled rank IC, trailing mean of {0}; dashed lines are each split's mean.", [WINDOW])}
+      desc={uiTemplate("Sampled per-timestamp rank IC ({0} timestamps) with a trailing mean of {1} samples. Dashed lines are each split's published mean IC over all of its timestamps.", [testShown ? `${icPath.sampledRows} of ${int(icPath.totalRows)}` : points.length, WINDOW])}
       controls={
-        <div className="seg" role="group" aria-label="Forward horizon">
+        <div className="seg" role="group" aria-label={uiText("Forward horizon")}>
           {[...study.protocol.horizons]
             .sort((a, b) => a - b)
             .map((h) => (
               <button key={h} type="button" aria-pressed={h === horizon} onClick={() => setHorizon(h)}>
-                {h}-bar{h === primary ? ' · primary' : ''}
+                {h}{uiText("-bar")}{h === primary ? uiText(" · primary") : ''}
               </button>
             ))}
         </div>
       }
       legend={
         <span className="legend">
-          <Swatch kind="dot" label="Sampled timestamp" />
-          <Swatch kind="line" label={`Trailing mean of ${WINDOW} samples`} />
-          <Swatch kind="dash" label="Split mean, all timestamps" />
+          <Swatch kind="dot" label={uiText("Sampled timestamp")} />
+          <Swatch kind="line" label={uiTemplate("Trailing mean of {0} samples", [WINDOW])} />
+          <Swatch kind="dash" label={uiText("Split mean, all timestamps")} />
           {!testShown && <span className="faint">{TEST_HIDDEN_NOTE}</span>}
         </span>
       }
       note={
-        <>
-          The path is a bounded sample ({icPath.sampling.replace(/-/g, ' ')}), not the full series, so the trailing mean is a mean of samples and
-          reads only as a drift check. Single timestamps are noisy by construction; the split means are the published full-split values.
-        </>
+        <>{uiText("The path is a bounded sample (")}{icPath.sampling.replace(/-/g, ' ')}{uiText("), not the full series, so the trailing mean is a mean of samples and reads only as a drift check. Single timestamps are noisy by construction; the split means are the published full-split values.")}</>
       }
       table={
         <table className="tbl">
-          <caption className="small muted">Sampled rank IC, {horizon}-bar horizon</caption>
+          <caption className="small muted">{uiText("Sampled rank IC, ")}{horizon}{uiText("-bar horizon")}</caption>
           <thead>
             <tr>
-              <th scope="col">Timestamp (UTC)</th>
-              <th scope="col">Split</th>
-              <th scope="col" className="r">Rank IC</th>
-              <th scope="col" className="r">Trailing mean</th>
+              <th scope="col">{uiText("Timestamp (UTC)")}</th>
+              <th scope="col">{uiText("Split")}</th>
+              <th scope="col" className="r">{uiText("Rank IC")}</th>
+              <th scope="col" className="r">{uiText("Trailing mean")}</th>
             </tr>
           </thead>
           <tbody>
@@ -493,9 +486,7 @@ export function IcOverTime({ study }: { study: FactorDiagnostics }) {
               </text>
             </g>
           ))}
-          <text transform={`translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">
-            rank IC
-          </text>
+          <text transform={`translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{uiText("rank IC")}</text>
           {years
             .filter((yr) => yr > t0 + 90 * 864e5 && yr < t1 - 90 * 864e5)
             .map((yr) => (
@@ -539,11 +530,11 @@ export function Quantiles({ study }: { study: FactorDiagnostics }) {
   if (!drawable) {
     return (
       <Empty
-        title="Mean forward return by factor quantile"
+        title={uiText("Mean forward return by factor quantile")}
         reason={
           evidence.status === 'protocol-unavailable'
-            ? `Not emitted for ${evidence.evaluationMode}. ${evidence.reason ?? ''}`
-            : 'The Run published no quantile rows for the primary horizon.'
+            ? uiTemplate("Not emitted for {0}. {1}", [evidence.evaluationMode, evidence.reason ?? ''])
+            : uiText("The Run published no quantile rows for the primary horizon.")
         }
         code={evidence.reasonCode ?? evidence.status}
       />
@@ -563,23 +554,23 @@ export function Quantiles({ study }: { study: FactorDiagnostics }) {
   const bw = Math.min(54, gw / 4.5)
   return (
     <Chart
-      title={`Mean forward return by factor quantile, ${primary}-bar horizon`}
+      title={uiTemplate("Mean forward return by factor quantile, {0}-bar horizon", [primary])}
       plotRef={plotRef}
-      short="Low, middle and high factor groups per split; a useful factor rises from low to high."
-      desc="Mean forward return of the low, middle and high factor groups in each split. A useful factor shows the bars rising from low to high."
+      short={uiText("Low, middle and high factor groups per split; a useful factor rises from low to high.")}
+      desc={uiText("Mean forward return of the low, middle and high factor groups in each split. A useful factor shows the bars rising from low to high.")}
       legend={testShown ? undefined : <span className="legend"><span className="faint">{TEST_HIDDEN_NOTE}</span></span>}
       table={
         <table className="tbl">
-          <caption className="small muted">Quantile mean forward return</caption>
+          <caption className="small muted">{uiText("Quantile mean forward return")}</caption>
           <thead>
             <tr>
-              <th scope="col">Split</th>
-              <th scope="col" className="r">Low</th>
-              <th scope="col" className="r">Middle</th>
-              <th scope="col" className="r">High</th>
-              <th scope="col" className="r">High − low</th>
-              <th scope="col" className="r">Monotonicity</th>
-              <th scope="col" className="r">Observations</th>
+              <th scope="col">{uiText("Split")}</th>
+              <th scope="col" className="r">{uiText("Low")}</th>
+              <th scope="col" className="r">{uiText("Middle")}</th>
+              <th scope="col" className="r">{uiText("High")}</th>
+              <th scope="col" className="r">{uiText("High − low")}</th>
+              <th scope="col" className="r">{uiText("Monotonicity")}</th>
+              <th scope="col" className="r">{uiText("Observations")}</th>
             </tr>
           </thead>
           <tbody>
@@ -661,8 +652,8 @@ export function Empty({ title, reason, code }: { title: string; reason: string; 
         <h3>{title}</h3>
       </figcaption>
       <div className="empty" role="status">
-        <span className="badge">Not available</span>
-        <p>{reason}</p>
+        <span className="badge">{uiText("Not available")}</span>
+        <p>{uiValue(reason)}</p>
         {code && <p className="faint small mono">{code}</p>}
       </div>
     </figure>
@@ -695,33 +686,27 @@ export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontie
   const marker = runIc !== null && Math.abs(runIc - leaderIc) > 1e-12
   return (
     <Chart
-      title="Noise frontier: how large the best IC looks by luck alone"
+      title={uiText("Noise frontier: how large the best IC looks by luck alone")}
       plotRef={plotRef}
-      short={`Best IC expected from ${n} trial${n === 1 ? '' : 's'} of pure noise, against the family-wise pass line.`}
-      desc={`With ${n} independent trial${n === 1 ? '' : 's'} in the Project ledger, the best mean IC is expected to reach ${ic4(expected(n))} under pure noise. The solid curve is that expectation as trials grow; the dotted curve is the mean IC the published family-wise HAC rule demands.`}
+      short={uiTemplate("Best IC expected from {0} trial{1} of pure noise, against the family-wise pass line.", [n, n === 1 ? '' : 's'])}
+      desc={uiTemplate("With {0} independent trial{1} in the Project ledger, the best mean IC is expected to reach {2} under pure noise. The solid curve is that expectation as trials grow; the dotted curve is the mean IC the published family-wise HAC rule demands.", [n, n === 1 ? '' : 's', ic4(expected(n))])}
       legend={
         <span className="legend">
-          <Swatch kind="line" label="Expected best IC under noise" />
-          <Swatch kind="ref" label="IC needed to pass family-wise HAC rule" />
+          <Swatch kind="line" label={uiText("Expected best IC under noise")} />
+          <Swatch kind="ref" label={uiText("IC needed to pass family-wise HAC rule")} />
         </span>
       }
       note={
-        <>
-          N is the Project ledger's <span className="mono">{frontier.family.trialCountAssumption}</span> count of unique candidate sources (
-          {frontier.family.totalExecutions} execution{frontier.family.totalExecutions === 1 ? '' : 's'}), an upper bound on independent trials. The
-          null spread is the HAC standard error {num(se, 4)} implied by the selected value's published raw p-value {num(frontier.rawP, 3)}. The
-          expectation uses the closed form of <span className="mono">autoquant/selection.py</span>; the dotted curve inverts its published
-          Bonferroni rule (adjusted p = raw p × N ≤ 0.05).
-        </>
+        <>{uiText("N is the Project ledger's ")}<span className="mono">{frontier.family.trialCountAssumption}</span>{uiText(" count of unique candidate sources (")}{frontier.family.totalExecutions}{uiText(" execution")}{frontier.family.totalExecutions === 1 ? '' : 's'}{uiText("), an upper bound on independent trials. The null spread is the HAC standard error ")}{num(se, 4)}{uiText(" implied by the selected value's published raw p-value ")}{num(frontier.rawP, 3)}{uiText(". The expectation uses the closed form of ")}<span className="mono">{uiText("autoquant/selection.py")}</span>{uiText("; the dotted curve inverts its published Bonferroni rule (adjusted p = raw p × N ≤ 0.05).")}</>
       }
       table={
         <table className="tbl">
-          <caption className="small muted">Noise frontier at selected trial counts</caption>
+          <caption className="small muted">{uiText("Noise frontier at selected trial counts")}</caption>
           <thead>
             <tr>
-              <th scope="col" className="r">Trials N</th>
-              <th scope="col" className="r">Expected best IC under noise</th>
-              <th scope="col" className="r">IC needed to pass family-wise HAC</th>
+              <th scope="col" className="r">{uiText("Trials N")}</th>
+              <th scope="col" className="r">{uiText("Expected best IC under noise")}</th>
+              <th scope="col" className="r">{uiText("IC needed to pass family-wise HAC")}</th>
             </tr>
           </thead>
           <tbody>
@@ -731,7 +716,7 @@ export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontie
                 <tr key={t}>
                   <td className="r mono">
                     {t}
-                    {t === n && ' · this ledger'}
+                    {t === n && uiText(" · this ledger")}
                   </td>
                   <td className="r mono">{ic4(expected(t))}</td>
                   <td className="r mono">{ic4(bonf(t))}</td>
@@ -751,9 +736,7 @@ export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontie
               </text>
             </g>
           ))}
-          <text transform={`translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">
-            mean rank IC
-          </text>
+          <text transform={`translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{uiText("mean rank IC")}</text>
           {xticks.map((t) => (
             <g key={t}>
               <line x1={x(t)} x2={x(t)} y1={H - m.b} y2={H - m.b + 5} stroke="var(--stroke)" />
@@ -762,9 +745,7 @@ export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontie
               </text>
             </g>
           ))}
-          <text x={(m.l + W - m.r) / 2} y={H - 8} textAnchor="middle" className="ax">
-            independent trials N (log scale)
-          </text>
+          <text x={(m.l + W - m.r) / 2} y={H - 8} textAnchor="middle" className="ax">{uiText("independent trials N (log scale)")}</text>
           <line x1={m.l} x2={W - m.r} y1={y(0)} y2={y(0)} stroke="var(--text)" strokeWidth="1.2" />
           <line x1={x(n)} x2={x(n)} y1={m.t} y2={H - m.b} stroke="var(--line-strong)" strokeDasharray="3 3" />
           <polyline points={path(bonf)} fill="none" stroke="var(--signal-graphic)" strokeWidth="1.8" strokeDasharray="2 4" strokeLinecap="round" />
@@ -775,15 +756,13 @@ export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontie
           <g transform={`translate(${x(n)} ${y(leaderIc)})`}>
             <path d="M0 -7 L7 0 L0 7 L-7 0 Z" fill="var(--text)" stroke="var(--bg)" strokeWidth="1.5" />
           </g>
-          <text x={x(n) + 12} y={y(leaderIc) + 4} className="val" textAnchor="start">
-            selected {ic4(leaderIc)}
-            {cleared ? '' : ' · below the pass line'}
+          <text x={x(n) + 12} y={y(leaderIc) + 4} className="val" textAnchor="start">{uiText("selected ")}{ic4(leaderIc)}
+            {cleared ? '' : uiText(" · below the pass line")}
           </text>
           {marker && runIc !== null && (
             <>
               <circle cx={x(n)} cy={y(runIc)} r="5.5" fill="var(--bg)" stroke="var(--text)" strokeWidth="1.8" />
-              <text x={x(n) + 12} y={y(runIc) + 4} className="val" textAnchor="start">
-                this Run {ic4(runIc)}
+              <text x={x(n) + 12} y={y(runIc) + 4} className="val" textAnchor="start">{uiText("this Run ")}{ic4(runIc)}
               </text>
             </>
           )}

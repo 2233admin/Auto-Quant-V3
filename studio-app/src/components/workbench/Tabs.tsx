@@ -1,3 +1,4 @@
+import { uiValue } from '../../i18n'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { hashWithJob, sectionOfHash } from '../../actions/jobHash'
 import { useSlidingHighlight } from '../motion/useSlidingHighlight'
@@ -77,8 +78,8 @@ export function TabList<T extends string>({
           onClick={() => onSelect(t.id)}
           onKeyDown={(e) => move(e, i)}
         >
-          {t.label}
-          {t.badge && <span className="wb-tab-badge">{t.badge}</span>}
+          {uiValue(t.label)}
+          {t.badge && <span className="wb-tab-badge">{uiValue(t.badge)}</span>}
         </button>
       ))}
     </div>

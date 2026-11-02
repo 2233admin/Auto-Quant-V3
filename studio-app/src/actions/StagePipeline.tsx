@@ -1,13 +1,14 @@
+import { uiText, uiValue } from '../i18n'
 import { Glyph, type GlyphKind } from '../design/icons'
 import type { Job, StageState } from './types'
 
 /** Stage states as the job payload reports them, in the words the page shows. Never inferred from time or output. */
 const LOOK: Record<StageState, { glyph: GlyphKind; word: string; cls: string }> = {
-  done: { glyph: 'confirmed', word: 'done', cls: 'is-done' },
-  running: { glyph: 'running', word: 'current', cls: 'is-current' },
-  failed: { glyph: 'error', word: 'failed', cls: 'is-failed' },
-  skipped: { glyph: 'dropped', word: 'blocked', cls: 'is-blocked' },
-  pending: { glyph: 'proposed', word: 'waiting', cls: 'is-pending' },
+  done: { glyph: 'confirmed', get word() { return uiText("done") }, cls: 'is-done' },
+  running: { glyph: 'running', get word() { return uiText("current") }, cls: 'is-current' },
+  failed: { glyph: 'error', get word() { return uiText("failed") }, cls: 'is-failed' },
+  skipped: { glyph: 'dropped', get word() { return uiText("blocked") }, cls: 'is-blocked' },
+  pending: { glyph: 'proposed', get word() { return uiText("waiting") }, cls: 'is-pending' },
 }
 
 /**
@@ -19,25 +20,23 @@ export function StagePipeline({ job }: { job: Pick<Job, 'stages' | 'stageMode' |
   const whole = job.stageMode === 'whole-action'
   return (
     <div className="stages">
-      <ol className="stages-list" aria-label="Planned stages">
+      <ol className="stages-list" aria-label={uiText("Planned stages")}>
         {job.stages.map((stage, index) => {
           const look = LOOK[stage.state] ?? LOOK.pending
           return (
             <li key={stage.id} className={`stage ${look.cls}`}>
               <span className="stage-n" aria-hidden="true">{index + 1}</span>
-              <span className="stage-label">{stage.label}</span>
+              <span className="stage-label">{uiValue(stage.label)}</span>
               <span className="stage-state">
                 <Glyph kind={look.glyph} />
-                {look.word}
+                {uiValue(look.word)}
               </span>
             </li>
           )
         })}
       </ol>
       {whole && (
-        <p className="small muted stages-note">
-          Studio reports this command as a whole, not stage by stage. The stages show the planned path, not measured progress.
-        </p>
+        <p className="small muted stages-note">{uiText("Studio reports this command as a whole, not stage by stage. The stages show the planned path, not measured progress.")}</p>
       )}
     </div>
   )

@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../../i18n'
 import { Info } from '../../components/Info'
 import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { niceTicks } from '../factorMath'
@@ -107,7 +108,7 @@ export function AllocationChart({
           <text x={m.l - 8} y={y(v) + 4} textAnchor="end" className="ax">{fmt(v)}</text>
         </g>
       ))}
-      <text transform={`translate(14 ${(top + bot) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{label}</text>
+      <text transform={`translate(14 ${(top + bot) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{uiValue(label)}</text>
     </>
   )
   const years: number[] = []
@@ -116,34 +117,24 @@ export function AllocationChart({
   return (
     <figure ref={figRef} className="chart pf-chart">
       <figcaption>
-        <h3 id={`${id}-t`} className="sr-only">Daily net return, forecast volatility and exposure</h3>
-        <p className="sr-only" id={`${id}-d`}>
-          Daily returns after costs, not compounded. Hover the chart, or focus it and use the arrow keys, to read a date.
-        </p>
-        <p className="muted small">
-          Daily net return, forecast volatility and exposure
-          {sampledRows !== undefined && totalRows !== undefined && <> · {sampledRows} of {totalRows.toLocaleString('en-US')} daily rows</>}
-          <Info label="About this chart">
-            <p>Daily returns after costs, not compounded. Hover the chart, or focus it and use the arrow keys, to read a date.</p>
-            {note ? <p>{note}</p> : null}
+        <h3 id={`${id}-t`} className="sr-only">{uiText("Daily net return, forecast volatility and exposure")}</h3>
+        <p className="sr-only" id={`${id}-d`}>{uiText("Daily returns after costs, not compounded. Hover the chart, or focus it and use the arrow keys, to read a date.")}</p>
+        <p className="muted small">{uiText("Daily net return, forecast volatility and exposure")}{sampledRows !== undefined && totalRows !== undefined && <> · {sampledRows}{uiText(" of ")}{totalRows.toLocaleString('en-US')}{uiText(" daily rows")}</>}
+          <Info label={uiText("About this chart")}>
+            <p>{uiText("Daily returns after costs, not compounded. Hover the chart, or focus it and use the arrow keys, to read a date.")}</p>
+            {note ? <p>{uiValue(note)}</p> : null}
           </Info>
         </p>
       </figcaption>
       <div className="chart-bar">
-        <span className="legend" role="group" aria-label="Series">
+        <span className="legend" role="group" aria-label={uiText("Series")}>
           <span className="legend-item">
-            <svg width="22" height="12" aria-hidden="true"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--text)" strokeWidth="2" /></svg>
-            Candidate (equal risk contribution)
-          </span>
+            <svg width="22" height="12" aria-hidden="true"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--text)" strokeWidth="2" /></svg>{uiText("Candidate (equal risk contribution)")}</span>
           <span className="legend-item">
-            <svg width="22" height="12" aria-hidden="true"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--signal-graphic)" strokeWidth="1.8" strokeDasharray="6 3" /></svg>
-            Fixed-weight reference
-          </span>
+            <svg width="22" height="12" aria-hidden="true"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--signal-graphic)" strokeWidth="1.8" strokeDasharray="6 3" /></svg>{uiText("Fixed-weight reference")}</span>
           {finite(ceiling) && (
             <span className="legend-item">
-              <svg width="22" height="12" aria-hidden="true"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--muted)" strokeWidth="1.8" strokeDasharray="1.5 3" strokeLinecap="round" /></svg>
-              Volatility ceiling
-            </span>
+              <svg width="22" height="12" aria-hidden="true"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--muted)" strokeWidth="1.8" strokeDasharray="1.5 3" strokeLinecap="round" /></svg>{uiText("Volatility ceiling")}</span>
           )}
         </span>
       </div>
@@ -171,7 +162,7 @@ export function AllocationChart({
           return (
             <g key={w.split}>
               <rect x={x(a)} y={top1} width={x(b) - x(a)} height={bot3 - top1} fill={w.split === 'validation' ? 'var(--hover)' : w.split === 'test' ? 'var(--selected)' : 'none'} opacity={w.split === 'test' ? 0.55 : 1} />
-              <text x={(x(a) + x(b)) / 2} y={m.t - 10} textAnchor="middle" className="grp">{w.label}</text>
+              <text x={(x(a) + x(b)) / 2} y={m.t - 10} textAnchor="middle" className="grp">{uiValue(w.label)}</text>
             </g>
           )
         })}
@@ -209,24 +200,24 @@ export function AllocationChart({
       <p className="pf-readout mono small" aria-live="off">
         {hp ? (
           <>
-            <b>{hp.timestamp.slice(0, 10)}</b> · candidate {sp(hp.candidateNetReturn, 2)} · reference {sp(hp.referenceNetReturn, 2)} · forecast vol {up(hp.candidateForecastVolatility, 1)} · gross exposure {up(hp.candidateGrossExposure, 0)}
+            <b>{hp.timestamp.slice(0, 10)}</b>{uiText(" · candidate ")}{sp(hp.candidateNetReturn, 2)}{uiText(" · reference ")}{sp(hp.referenceNetReturn, 2)}{uiText(" · forecast vol ")}{up(hp.candidateForecastVolatility, 1)}{uiText(" · gross exposure ")}{up(hp.candidateGrossExposure, 0)}
           </>
         ) : (
-          <span className="faint">Hover the chart to read a date.</span>
+          <span className="faint">{uiText("Hover the chart to read a date.")}</span>
         )}
       </p>
       <details className="datatable">
-        <summary>Data table</summary>
+        <summary>{uiText("Data table")}</summary>
         <div className="tablewrap tablewrap--tall">
           <table className="tbl">
-            <caption className="small muted">Sampled daily path</caption>
+            <caption className="small muted">{uiText("Sampled daily path")}</caption>
             <thead>
               <tr>
-                <th scope="col">Date</th>
-                <th scope="col" className="r">Candidate net</th>
-                <th scope="col" className="r">Reference net</th>
-                <th scope="col" className="r">Gross exposure</th>
-                <th scope="col" className="r">Forecast vol</th>
+                <th scope="col">{uiText("Date")}</th>
+                <th scope="col" className="r">{uiText("Candidate net")}</th>
+                <th scope="col" className="r">{uiText("Reference net")}</th>
+                <th scope="col" className="r">{uiText("Gross exposure")}</th>
+                <th scope="col" className="r">{uiText("Forecast vol")}</th>
               </tr>
             </thead>
             <tbody>

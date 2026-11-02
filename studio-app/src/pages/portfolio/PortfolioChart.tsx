@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { useCallback, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { niceTicks } from '../factorMath'
 import type { PathPoint } from './portfolioTypes'
@@ -37,11 +38,8 @@ export function PortfolioChartInfo({ transitions, note }: { transitions: string[
   const n = new Set(transitions).size
   return (
     <>
-      <p>Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path). Hover the chart, or focus it and use the arrow keys, to read a date.</p>
-      <p>
-        Transition ticks (bottom of the growth panel) mark only the dates of the server&apos;s recent signal transitions
-        {n ? ` (${n} distinct dates)` : ''}; earlier ones are not published, so a tick-free stretch does not mean no trading.
-        {note ? ` ${note}` : ''}
+      <p>{uiText("Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path). Hover the chart, or focus it and use the arrow keys, to read a date.")}</p>
+      <p>{uiText("Transition ticks (bottom of the growth panel) mark only the dates of the server&apos;s recent signal transitions")}{n ? uiTemplate("({0} distinct dates)", [n]) : ''}{uiText("; earlier ones are not published, so a tick-free stretch does not mean no trading.")}{note ? ` ${note}` : ''}
       </p>
     </>
   )
@@ -52,17 +50,17 @@ export function PathTable({ points }: { points: PathPoint[] }) {
   return (
     <div className="tablewrap tablewrap--tall">
       <table className="tbl">
-        <caption className="small muted">Sampled daily path</caption>
+        <caption className="small muted">{uiText("Sampled daily path")}</caption>
         <thead>
           <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Split</th>
-            <th scope="col" className="r">Net</th>
-            <th scope="col" className="r">Gross</th>
-            <th scope="col" className="r">Benchmark</th>
-            <th scope="col" className="r">Drawdown</th>
-            <th scope="col" className="r">Gross exp.</th>
-            <th scope="col" className="r">Net exp.</th>
+            <th scope="col">{uiText("Date")}</th>
+            <th scope="col">{uiText("Split")}</th>
+            <th scope="col" className="r">{uiText("Net")}</th>
+            <th scope="col" className="r">{uiText("Gross")}</th>
+            <th scope="col" className="r">{uiText("Benchmark")}</th>
+            <th scope="col" className="r">{uiText("Drawdown")}</th>
+            <th scope="col" className="r">{uiText("Gross exp.")}</th>
+            <th scope="col" className="r">{uiText("Net exp.")}</th>
           </tr>
         </thead>
         <tbody>
@@ -210,22 +208,19 @@ export function PortfolioChart({
   const clip = `${id}-clip`
 
   const legend: { key: SeriesKey; label: string; avail: boolean; why: string }[] = [
-    { key: 'net', label: 'Net', avail: true, why: '' },
-    { key: 'gross', label: 'Gross', avail: hasGross, why: 'the Run publishes no gross growth' },
-    { key: 'bench', label: 'Benchmark', avail: hasBench, why: 'the Run publishes no benchmark growth' },
-    { key: 'ticks', label: 'Transitions', avail: tickDates.length > 0, why: 'no published transition date falls inside the visible window' },
-    { key: 'exposure', label: 'Exposure', avail: hasExpo, why: 'the Run publishes no exposure path' },
+    { key: 'net', label: uiText("Net"), avail: true, why: '' },
+    { key: 'gross', label: uiText("Gross"), avail: hasGross, why: 'the Run publishes no gross growth' },
+    { key: 'bench', label: uiText("Benchmark"), avail: hasBench, why: 'the Run publishes no benchmark growth' },
+    { key: 'ticks', label: uiText("Transitions"), avail: tickDates.length > 0, why: 'no published transition date falls inside the visible window' },
+    { key: 'exposure', label: uiText("Exposure"), avail: hasExpo, why: 'the Run publishes no exposure path' },
   ]
 
   return (
     <div className="pf-embed">
-      <p className="sr-only" id={`${id}-d`}>
-        Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path).
-        {totalRows !== undefined && sampledRows !== undefined && <> Sampled path: {sampledRows} of {totalRows.toLocaleString('en-US')} daily rows.</>} Hover the chart, or focus it and use the arrow keys, to read a date.
-      </p>
-      <h3 id={`${id}-t`} className="sr-only">Net growth, benchmark and drawdown</h3>
+      <p className="sr-only" id={`${id}-d`}>{uiText("Growth of 1.0 at the first date, after costs (not currency; initial capital is not published for the path).")}{totalRows !== undefined && sampledRows !== undefined && <>{uiText(" Sampled path: ")}{sampledRows}{uiText(" of ")}{totalRows.toLocaleString('en-US')}{uiText(" daily rows.")}</>}{uiText(" Hover the chart, or focus it and use the arrow keys, to read a date.")}</p>
+      <h3 id={`${id}-t`} className="sr-only">{uiText("Net growth, benchmark and drawdown")}</h3>
       <div className="pf-embed-bar">
-        <span className="legend" role="group" aria-label="Series">
+        <span className="legend" role="group" aria-label={uiText("Series")}>
           {legend.map((l) => (
             <button
               key={l.key}
@@ -233,20 +228,18 @@ export function PortfolioChart({
               className="pf-toggle"
               aria-pressed={l.avail && on[l.key]}
               disabled={!l.avail}
-              title={l.avail ? FULL[l.key] : `not available: ${l.why}`}
+              title={l.avail ? FULL[l.key] : uiTemplate("not available: {0}", [l.why])}
               onClick={() => toggle(l.key)}
             >
               <Swatch kind={l.key} />
-              {l.label}
+              {uiValue(l.label)}
             </button>
           ))}
           <span className="legend-item">
-            <Swatch kind="dd" />
-            Drawdown
-          </span>
+            <Swatch kind="dd" />{uiText("Drawdown")}</span>
         </span>
         {totalRows !== undefined && sampledRows !== undefined && (
-          <span className="faint small">{sampledRows} of {totalRows.toLocaleString('en-US')} daily rows</span>
+          <span className="faint small">{sampledRows}{uiText(" of ")}{totalRows.toLocaleString('en-US')}{uiText(" daily rows")}</span>
         )}
       </div>
       <div className="pf-embed-plot" ref={plotRef}>
@@ -284,7 +277,7 @@ export function PortfolioChart({
                 opacity={w.split === 'test' ? 0.55 : 1}
               />
               <text x={(x(a) + x(b)) / 2} y={m.t - 10} textAnchor="middle" className="grp">
-                {w.label}
+                {uiValue(w.label)}
               </text>
             </g>
           )
@@ -297,9 +290,7 @@ export function PortfolioChart({
             </text>
           </g>
         ))}
-        <text transform={`translate(14 ${(gTop + gBot) / 2}) rotate(-90)`} textAnchor="middle" className="ax">
-          growth of 1.0
-        </text>
+        <text transform={`translate(14 ${(gTop + gBot) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{uiText("growth of 1.0")}</text>
         {ddTicks.map((v) => (
           <g key={`d${v}`}>
             <line x1={m.l} x2={W - m.r} y1={yD(v)} y2={yD(v)} stroke="var(--grid)" strokeWidth="1" opacity={v === 0 ? 1 : 0.5} />
@@ -308,9 +299,7 @@ export function PortfolioChart({
             </text>
           </g>
         ))}
-        <text transform={`translate(14 ${(dTop + dBot) / 2}) rotate(-90)`} textAnchor="middle" className="ax">
-          drawdown
-        </text>
+        <text transform={`translate(14 ${(dTop + dBot) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{uiText("drawdown")}</text>
         {showExpo &&
           eTicks.map((v) => (
             <g key={`e${v}`}>
@@ -321,9 +310,7 @@ export function PortfolioChart({
             </g>
           ))}
         {showExpo && (
-          <text transform={`translate(14 ${(eTop + eBot) / 2}) rotate(-90)`} textAnchor="middle" className="ax">
-            exposure
-          </text>
+          <text transform={`translate(14 ${(eTop + eBot) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{uiText("exposure")}</text>
         )}
         {years
           .filter((yr) => yr > t0 + 60 * 864e5 && yr < t1 - 60 * 864e5)
@@ -380,13 +367,13 @@ export function PortfolioChart({
         {hp ? (
           <>
             <b>{hp.timestamp.slice(0, 10)}</b>
-            {hp.split ? ` · ${hp.split}` : ''} · net {g3(hp.netGrowth)}
-            {hasGross ? ` · gross ${g3(hp.grossGrowth)}` : ''}
-            {hasBench ? ` · benchmark ${g3(hp.benchmarkGrowth)}` : ''} · drawdown {p1(hp.drawdown)}
-            {hasExpo ? ` · gross exp ${g3(hp.grossExposure)} · net exp ${g3(hp.netExposure)}` : ''}
+            {hp.split ? ` · ${hp.split}` : ''}{uiText(" · net ")}{g3(hp.netGrowth)}
+            {hasGross ? uiTemplate("· gross {0}", [g3(hp.grossGrowth)]) : ''}
+            {hasBench ? uiTemplate("· benchmark {0}", [g3(hp.benchmarkGrowth)]) : ''}{uiText(" · drawdown ")}{p1(hp.drawdown)}
+            {hasExpo ? uiTemplate("· gross exp {0} · net exp {1}", [g3(hp.grossExposure), g3(hp.netExposure)]) : ''}
           </>
         ) : (
-          <span className="faint">Hover the chart to read a date.</span>
+          <span className="faint">{uiText("Hover the chart to read a date.")}</span>
         )}
       </p>
     </div>

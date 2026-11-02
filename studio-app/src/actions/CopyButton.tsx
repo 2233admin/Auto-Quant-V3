@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../i18n'
 import { useRef, useState } from 'react'
 import { CopyIcon } from '../components/motion/CopyIcon'
 
@@ -34,10 +35,10 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
     <>
       <button type="button" className="abtn" onClick={copy}>
         <CopyIcon copied={state === 'copied'} />
-        {label}
+        {uiValue(label)}
       </button>
       <span className="small muted" role="status" aria-live="polite">
-        {state === 'copied' ? 'Copied.' : state === 'failed' ? 'Copy failed; select the command and copy it by hand.' : ''}
+        {state === 'copied' ? uiText("Copied.") : state === 'failed' ? uiText("Copy failed; select the command and copy it by hand.") : ''}
       </span>
     </>
   )

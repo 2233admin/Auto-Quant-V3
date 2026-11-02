@@ -1,3 +1,4 @@
+import { uiText } from '../i18n'
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import './codefield.css'
 
@@ -89,7 +90,7 @@ export function CodeField({
         />
       </div>
       <p id={hint} className="cf-hint small faint">
-        {readOnly ? 'Read-only.' : 'Tab inserts 4 spaces. Press Esc, then Tab, to leave the field.'}
+        {readOnly ? uiText("Read-only.") : uiText("Tab inserts 4 spaces. Press Esc, then Tab, to leave the field.")}
       </p>
     </div>
   )

@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../i18n'
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../design/icons'
 import './components.css'
@@ -5,8 +6,8 @@ import './components.css'
 /** What a tile says about its number. Always spelled out in words and a shape, never colour alone. */
 export type Tone = 'neutral' | 'caution' | 'weak'
 const TONE: Record<Exclude<Tone, 'neutral'>, { glyph: GlyphKind; word: string; signal: boolean }> = {
-  caution: { glyph: 'inconclusive', word: 'Caution', signal: false },
-  weak: { glyph: 'refuted', word: 'Weak', signal: true },
+  caution: { glyph: 'inconclusive', get word() { return uiText("Caution") }, signal: false },
+  weak: { glyph: 'refuted', get word() { return uiText("Weak") }, signal: true },
 }
 
 /**
@@ -34,10 +35,10 @@ export function MetricTile({
   return (
     <div className="mt" title={definition}>
       <dt className="mt-label">
-        {label}
+        {uiValue(label)}
         {definition && (
           <span className="mt-def" tabIndex={0} role="note" aria-label={`${label}: ${definition}`}>
-            ?<span className="mt-tip" aria-hidden>{definition}</span>
+            ?<span className="mt-tip" aria-hidden>{uiValue(definition)}</span>
           </span>
         )}
       </dt>
@@ -46,11 +47,11 @@ export function MetricTile({
       {t && (
         <span className="mt-tone small">
           <Glyph kind={t.glyph} signal={t.signal} />
-          <span className={t.signal ? 'sig' : undefined}>{t.word}</span>
-          {toneReason ? <span className="faint"> · {toneReason}</span> : null}
+          <span className={t.signal ? 'sig' : undefined}>{uiValue(t.word)}</span>
+          {toneReason ? <span className="faint"> · {uiValue(toneReason)}</span> : null}
         </span>
       )}
-      {note && <span className="faint small mt-note">{note}</span>}
+      {note && <span className="faint small mt-note">{uiValue(note)}</span>}
     </div>
   )
 }

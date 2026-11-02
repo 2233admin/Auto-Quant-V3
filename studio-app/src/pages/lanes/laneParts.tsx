@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../../design/icons'
 import { Info } from '../../components/Info'
@@ -12,12 +13,11 @@ export function LaneHead({ title, projectId, projectName, lines }: { title: stri
   return (
     <header className="pg-head">
       <h1>{title}</h1>
-      <p className="muted small">
-        Project <a href={routeHref({ view: 'project', id: projectId })}>{projectName}</a> · {lines[0]}
+      <p className="muted small">{uiText("Project ")}<a href={routeHref({ view: 'project', id: projectId })}>{projectName}</a> · {uiValue(lines[0])}
         {lines.length > 1 && (
-          <Info label="About this page">
+          <Info label={uiText("About this page")}>
             {lines.slice(1).map((line, i) => (
-              <p key={i}>{line}</p>
+              <p key={i}>{uiValue(line)}</p>
             ))}
           </Info>
         )}
@@ -31,10 +31,10 @@ export function LaneEmpty({ title, projectId, projectName, what }: { title: stri
   return (
     <div className="pg">
       <LaneHead title={title} projectId={projectId} projectName={projectName} lines={['Research diagnostics; no trading authority.']} />
-      <Empty title="No evidence in this Project">
-        <p>This Project has no {what} Run, so there is nothing to draw. Nothing is estimated in its place.</p>
+      <Empty title={uiText("No evidence in this Project")}>
+        <p>{uiText("This Project has no ")}{uiText(what)}{uiText(" Run, so there is nothing to draw. Nothing is estimated in its place.")}</p>
         <p className="small">
-          <a href={routeHref({ view: 'project', id: projectId })}>Back to the Project</a>
+          <a href={routeHref({ view: 'project', id: projectId })}>{uiText("Back to the Project")}</a>
         </p>
       </Empty>
     </div>
@@ -70,10 +70,10 @@ export function StatusBand({
         <p className="verdict-kicker">{kicker}</p>
         <h2 id={id} className="verdict-word">
           <Glyph kind={glyph} signal={signal} />
-          <span>{word}</span>
+          <span>{uiValue(word)}</span>
         </h2>
         <p className="muted small">
-          <Info label="About this status">
+          <Info label={uiText("About this status")}>
             <p>{lead}</p>
           </Info>
         </p>
@@ -83,8 +83,8 @@ export function StatusBand({
           <li key={i}>
             <Glyph kind={r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
             <span>
-              {r.text}
-              <Info label="Field behind this line">
+              {uiValue(r.text)}
+              <Info label={uiText("Field behind this line")}>
                 <p className="mono verdict-field">{r.field}</p>
               </Info>
             </span>
@@ -96,13 +96,13 @@ export function StatusBand({
 }
 
 export function Na({ why }: { why: string }) {
-  return <span className="pf-na">not available: {why}</span>
+  return <span className="pf-na">{uiText("not available: ")}{why}</span>
 }
 
 export function NaBox({ why }: { why: string }) {
   return (
-    <Empty title="Not available">
-      <p>not available: {why}</p>
+    <Empty title={uiText("Not available")}>
+      <p>{uiText("not available: ")}{why}</p>
     </Empty>
   )
 }
@@ -130,7 +130,7 @@ export function ShareBars({ rows, label, markLabel, fillLabel }: { rows: ShareRo
               <span className="fl" style={{ width: pct(r.share) }} />
               {finite(r.mark) && <span className="mk" style={{ left: pct(r.mark) }} />}
             </span>
-            <span className="vl">{r.text}</span>
+            <span className="vl">{uiValue(r.text)}</span>
           </li>
         ))}
       </ul>
@@ -154,7 +154,7 @@ export function DivergingBars({ rows, label }: { rows: DivRow[]; label: string }
               <span className="zero" />
               <span className={`fl ${finite(r.value) && r.value < 0 ? 'neg' : 'pos'}`} style={{ width: w }} />
             </span>
-            <span className="vl">{r.text}</span>
+            <span className="vl">{uiValue(r.text)}</span>
           </li>
         )
       })}
@@ -170,9 +170,9 @@ export function ArtifactList({ artifacts }: { artifacts: Record<string, Artifact
       <table className="tbl">
         <thead>
           <tr>
-            <th scope="col">Artifact</th>
-            <th scope="col">Path in the Run</th>
-            <th scope="col">What it holds</th>
+            <th scope="col">{uiText("Artifact")}</th>
+            <th scope="col">{uiText("Path in the Run")}</th>
+            <th scope="col">{uiText("What it holds")}</th>
           </tr>
         </thead>
         <tbody>
@@ -198,8 +198,8 @@ export function WeightsTable({ weights, cash, currency }: { weights: Record<stri
       <table className="tbl">
         <thead>
           <tr>
-            <th scope="col">Holding</th>
-            <th scope="col" className="r">Reported weight</th>
+            <th scope="col">{uiText("Holding")}</th>
+            <th scope="col" className="r">{uiText("Reported weight")}</th>
           </tr>
         </thead>
         <tbody>
@@ -210,7 +210,7 @@ export function WeightsTable({ weights, cash, currency }: { weights: Record<stri
             </tr>
           ))}
           <tr>
-            <td>Cash{currency ? ` (${currency})` : ''}</td>
+            <td>{uiText("Cash")}{currency ? ` (${currency})` : ''}</td>
             <td className="r">{up(cash, 1)}</td>
           </tr>
         </tbody>

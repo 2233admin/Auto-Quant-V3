@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { useMemo, useState } from 'react'
 import { Glyph } from '../../design/icons'
 import type {
@@ -18,15 +19,15 @@ type Split = 'validation' | 'test'
 /* ------------------------------------------------------------------ viability and cost stress */
 
 const PERF_ROWS: { key: keyof PerfSummary; label: string; f: (v: number | null | undefined) => string }[] = [
-  { key: 'totalReturn', label: 'Total return', f: (v) => sp(v) },
-  { key: 'annualReturn', label: 'Annualized return', f: (v) => sp(v) },
-  { key: 'annualVolatility', label: 'Annualized volatility', f: (v) => up(v, 2) },
-  { key: 'sharpe', label: 'Sharpe', f: (v) => fn(v) },
-  { key: 'sortino', label: 'Sortino', f: (v) => fn(v) },
-  { key: 'maximumDrawdown', label: 'Max drawdown', f: (v) => sp(v) },
-  { key: 'expectedShortfall95', label: 'Expected shortfall 95%', f: (v) => up(v, 2) },
-  { key: 'positiveRate', label: 'Positive-day rate', f: (v) => up(v) },
-  { key: 'informationRatio', label: 'Information ratio', f: (v) => fn(v) },
+  { key: 'totalReturn', get label() { return uiText("Total return") }, f: (v) => sp(v) },
+  { key: 'annualReturn', get label() { return uiText("Annualized return") }, f: (v) => sp(v) },
+  { key: 'annualVolatility', get label() { return uiText("Annualized volatility") }, f: (v) => up(v, 2) },
+  { key: 'sharpe', get label() { return uiText("Sharpe") }, f: (v) => fn(v) },
+  { key: 'sortino', get label() { return uiText("Sortino") }, f: (v) => fn(v) },
+  { key: 'maximumDrawdown', get label() { return uiText("Max drawdown") }, f: (v) => sp(v) },
+  { key: 'expectedShortfall95', get label() { return uiText("Expected shortfall 95%") }, f: (v) => up(v, 2) },
+  { key: 'positiveRate', get label() { return uiText("Positive-day rate") }, f: (v) => up(v) },
+  { key: 'informationRatio', get label() { return uiText("Information ratio") }, f: (v) => fn(v) },
 ]
 
 const BREAK_EVEN_WHY: Record<string, string> = {
@@ -44,18 +45,17 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
   return (
     <div className="vstack">
       <div className="pf-diag box">
-        <p className="h-small">Server diagnosis · validation split only (testEntersDiagnosis: {String(diag?.testEntersDiagnosis ?? '—')})</p>
+        <p className="h-small">{uiText("Server diagnosis · validation split only (testEntersDiagnosis: ")}{String(diag?.testEntersDiagnosis ?? '—')})</p>
         {diag ? (
           <p>
-            <strong className="mono">{diag.stage}</strong>, next focus <span className="mono">{diag.iterationFocus}</span>. {diag.explanation}
+            <strong className="mono">{uiValue(diag.stage)}</strong>{uiText(", next focus ")}<span className="mono">{diag.iterationFocus}</span>. {uiValue(diag.explanation)}
           </p>
         ) : (
           <p><NA why="strategyViability.diagnosis is not in the payload" /></p>
         )}
         {sig && (
-          <p>
-            Signal intent, before sizing and cost: <strong className="mono">{sig.outcome}</strong>
-            {sig.largestAdverseStage && <>; largest adverse stage <span className="mono">{sig.largestAdverseStage}</span> ({sp(sig.largestAdverseAnnualizedDelta)} annualized)</>}. {sig.explanation}
+          <p>{uiText("Signal intent, before sizing and cost: ")}<strong className="mono">{sig.outcome}</strong>
+            {sig.largestAdverseStage && <>{uiText("; largest adverse stage ")}<span className="mono">{sig.largestAdverseStage}</span> ({sp(sig.largestAdverseAnnualizedDelta)}{uiText(" annualized)")}</>}. {uiValue(sig.explanation)}
           </p>
         )}
       </div>
@@ -63,22 +63,22 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
       <div className="cols cols--tables">
         <div className="tablewrap pf-narrow">
           <table className="tbl">
-            <caption className="small muted">Gross vs net vs benchmark, {split} split ({v.net?.observations ?? '—'} daily observations)</caption>
+            <caption className="small muted">{uiText("Gross vs net vs benchmark, ")}{split}{uiText(" split (")}{v.net?.observations ?? '—'}{uiText(" daily observations)")}</caption>
             <thead>
               <tr>
-                <th scope="col">Metric</th>
-                <th scope="col" className="r">Gross (no cost)</th>
-                <th scope="col" className="r">Net (after cost)</th>
-                <th scope="col" className="r">Benchmark</th>
+                <th scope="col">{uiText("Metric")}</th>
+                <th scope="col" className="r">{uiText("Gross (no cost)")}</th>
+                <th scope="col" className="r">{uiText("Net (after cost)")}</th>
+                <th scope="col" className="r">{uiText("Benchmark")}</th>
               </tr>
             </thead>
             <tbody>
               {PERF_ROWS.map((r) => (
                 <tr key={r.key}>
-                  <th scope="row">{r.label}</th>
+                  <th scope="row">{uiValue(r.label)}</th>
                   <td className="r">{r.f(v.gross?.[r.key])}</td>
                   <td className="r">{r.f(v.net?.[r.key])}</td>
-                  <td className="r">{r.key === 'informationRatio' ? <span className="faint">0 by definition</span> : r.f(v.benchmark?.[r.key])}</td>
+                  <td className="r">{r.key === 'informationRatio' ? <span className="faint">{uiText("0 by definition")}</span> : r.f(v.benchmark?.[r.key])}</td>
                 </tr>
               ))}
             </tbody>
@@ -87,22 +87,21 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
 
         <div className="tablewrap pf-narrow">
           <table className="tbl">
-            <caption className="small muted">Cost stress and one extra bar of delay (net, {split} split)</caption>
+            <caption className="small muted">{uiText("Cost stress and one extra bar of delay (net, ")}{split}{uiText(" split)")}</caption>
             <thead>
               <tr>
-                <th scope="col">Scenario</th>
-                <th scope="col" className="r">Total return</th>
-                <th scope="col" className="r">Annualized</th>
-                <th scope="col" className="r">Net Sharpe</th>
+                <th scope="col">{uiText("Scenario")}</th>
+                <th scope="col" className="r">{uiText("Total return")}</th>
+                <th scope="col" className="r">{uiText("Annualized")}</th>
+                <th scope="col" className="r">{uiText("Net Sharpe")}</th>
               </tr>
             </thead>
             <tbody>
               {(v.costStress ?? []).map((c) => (
                 <tr key={c.costBps}>
                   <th scope="row">
-                    {c.costBps} bps per one-way trade
-                    {c.costBps === f?.baseCostBps && <span className="faint small">base cost</span>}
-                    {c.costBps === 0 && <span className="faint small">frictionless</span>}
+                    {c.costBps}{uiText(" bps per one-way trade")}{c.costBps === f?.baseCostBps && <span className="faint small">{uiText("base cost")}</span>}
+                    {c.costBps === 0 && <span className="faint small">{uiText("frictionless")}</span>}
                   </th>
                   <td className="r">{sp(c.totalReturn)}</td>
                   <td className="r">{sp(c.annualReturn)}</td>
@@ -113,9 +112,7 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
                 <tr><td colSpan={4}><NA why="costStress is empty in the payload" /></td></tr>
               )}
               <tr>
-                <th scope="row">
-                  Extra delay
-                  <span className="faint small">trade one bar later at base cost</span>
+                <th scope="row">{uiText("Extra delay")}<span className="faint small">{uiText("trade one bar later at base cost")}</span>
                 </th>
                 <td className="r">{sp(v.extraDelay?.totalReturn)}</td>
                 <td className="r">{sp(v.extraDelay?.annualReturn)}</td>
@@ -124,13 +121,13 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
             </tbody>
           </table>
           {finite(v.extraDelay?.netSharpeDelta) && (
-            <p className="small muted">Net Sharpe change from the extra delay, as published: {sn(v.extraDelay?.netSharpeDelta)}.</p>
+            <p className="small muted">{uiText("Net Sharpe change from the extra delay, as published: ")}{sn(v.extraDelay?.netSharpeDelta)}.</p>
           )}
         </div>
       </div>
 
       <div className="cols">
-        <Block title="Friction">
+        <Block title={uiText("Friction")}>
           {f ? (
             <Kv
               rows={[
@@ -146,7 +143,7 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
                   'Break-even cost',
                   finite(be?.bps) ? (
                     <>
-                      <span className="mono">{fn(be.bps, 1)} bps</span> one-way <span className="faint small">status {be.status}; search cap {be.searchMaximumBps} bps</span>
+                      <span className="mono">{fn(be.bps, 1)}{uiText(" bps")}</span>{uiText(" one-way ")}<span className="faint small">{uiText("status ")}{uiValue(be.status)}{uiText("; search cap ")}{be.searchMaximumBps}{uiText(" bps")}</span>
                     </>
                   ) : (
                     <NA why={`status "${be?.status ?? 'missing'}"${be?.status && BREAK_EVEN_WHY[be.status] ? `: ${BREAK_EVEN_WHY[be.status]}` : ''}`} />
@@ -158,7 +155,7 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
             <NA why={`strategyViability.${split}.friction is not in the payload`} />
           )}
         </Block>
-        <Block title="Time structure of net returns">
+        <Block title={uiText("Time structure of net returns")}>
           {t ? (
             <Kv
               rows={[
@@ -185,13 +182,13 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
 
 type SortKey = 'id' | 'netSharpe' | 'totalReturn' | 'annualizedOneWayTurnover' | 'totalCostDrag' | 'rebalanceRate' | 'signalTransitions' | 'netSharpeDeltaVsBase'
 const COLS: { key: SortKey; label: string; f: (c: NeighborConfig) => string }[] = [
-  { key: 'netSharpe', label: 'Net Sharpe', f: (c) => fn(c.netSharpe) },
-  { key: 'netSharpeDeltaVsBase', label: 'vs base', f: (c) => sn(c.netSharpeDeltaVsBase) },
-  { key: 'totalReturn', label: 'Total return', f: (c) => sp(c.totalReturn) },
-  { key: 'annualizedOneWayTurnover', label: 'Turnover / yr', f: (c) => `${fn(c.annualizedOneWayTurnover, 1)}x` },
-  { key: 'totalCostDrag', label: 'Cost drag', f: (c) => up(c.totalCostDrag, 2) },
-  { key: 'rebalanceRate', label: 'Rebalance rate', f: (c) => up(c.rebalanceRate, 0) },
-  { key: 'signalTransitions', label: 'Signal transitions', f: (c) => (finite(c.signalTransitions) ? String(c.signalTransitions) : '—') },
+  { key: 'netSharpe', get label() { return uiText("Net Sharpe") }, f: (c) => fn(c.netSharpe) },
+  { key: 'netSharpeDeltaVsBase', get label() { return uiText("vs base") }, f: (c) => sn(c.netSharpeDeltaVsBase) },
+  { key: 'totalReturn', get label() { return uiText("Total return") }, f: (c) => sp(c.totalReturn) },
+  { key: 'annualizedOneWayTurnover', get label() { return uiText("Turnover / yr") }, f: (c) => `${fn(c.annualizedOneWayTurnover, 1)}x` },
+  { key: 'totalCostDrag', get label() { return uiText("Cost drag") }, f: (c) => up(c.totalCostDrag, 2) },
+  { key: 'rebalanceRate', get label() { return uiText("Rebalance rate") }, f: (c) => up(c.rebalanceRate, 0) },
+  { key: 'signalTransitions', get label() { return uiText("Signal transitions") }, f: (c) => (finite(c.signalTransitions) ? String(c.signalTransitions) : '—') },
 ]
 
 export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; split: Split }) {
@@ -229,7 +226,7 @@ export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; spl
   const th = (key: SortKey, label: string, right: boolean) => (
     <th key={key} scope="col" className={right ? 'r' : undefined} aria-sort={sort?.key === key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
       <button type="button" className="pf-sort" onClick={() => setSort((s) => (s?.key === key ? (s.dir === -1 ? { key, dir: 1 } : null) : { key, dir: -1 }))}>
-        {label}
+        {uiValue(label)}
         <span aria-hidden="true">{sort?.key === key ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}</span>
       </button>
     </th>
@@ -239,10 +236,8 @@ export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; spl
     <div className="vstack">
       <div className="pf-diag box">
         <p>
-          <strong>{n} configurations were tried</strong> ({profiles.length} signal profiles x {bands.length} no-trade bands, predeclared, role{' '}
-          <span className="mono">{policy?.role ?? '—'}</span>). The selected configuration is the base, <span className="mono">{baseId ?? '—'}</span>; the other {n - 1}{' '}
-          are context only and never enter selection. The best of {n} is expected to look better than the base even when nothing is real, so read the spread, not the maximum.
-        </p>
+          <strong>{n}{uiText(" configurations were tried")}</strong> ({profiles.length}{uiText(" signal profiles x ")}{bands.length}{uiText(" no-trade bands, predeclared, role")}{' '}
+          <span className="mono">{policy?.role ?? '—'}</span>{uiText("). The selected configuration is the base, ")}<span className="mono">{baseId ?? '—'}</span>{uiText("; the other ")}{n - 1}{' '}{uiText("are context only and never enter selection. The best of ")}{n}{uiText(" is expected to look better than the base even when nothing is real, so read the spread, not the maximum.")}</p>
         {agg && (
           <Kv
             rows={[
@@ -258,20 +253,20 @@ export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; spl
 
       <div className="vstack">
         <figure className="pf-matrix-fig">
-          <figcaption className="small muted">Net Sharpe by signal profile and no-trade band, {split} split. Shade scales with size; sign is always written.</figcaption>
+          <figcaption className="small muted">{uiText("Net Sharpe by signal profile and no-trade band, ")}{split}{uiText(" split. Shade scales with size; sign is always written.")}</figcaption>
           <table className="pf-matrix">
             <thead>
               <tr>
                 <td />
                 {bands.map((b) => (
-                  <th key={b} scope="col">no-trade {b.toFixed(2)}</th>
+                  <th key={b} scope="col">{uiText("no-trade ")}{b.toFixed(2)}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {profiles.map((p) => (
                 <tr key={p.id}>
-                  <th scope="row">{p.label}</th>
+                  <th scope="row">{uiValue(p.label)}</th>
                   {bands.map((b) => {
                     const c = at(p.id, b)
                     if (!c) return <td key={b}><NA why="cell missing" /></td>
@@ -280,12 +275,12 @@ export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; spl
                     const bg = finite(v) ? `color-mix(in srgb, ${v >= 0 ? 'var(--ok)' : 'var(--signal-graphic)'} ${a}%, transparent)` : undefined
                     const isBase = c.id === baseId || c.isBase
                     return (
-                      <td key={b} className={isBase ? 'is-base' : undefined} style={{ background: bg }} title={`${c.id}: net Sharpe ${fn(v)}, total return ${sp(c.totalReturn)}, turnover ${fn(c.annualizedOneWayTurnover, 1)}x`}>
+                      <td key={b} className={isBase ? 'is-base' : undefined} style={{ background: bg }} title={uiTemplate("{0}: net Sharpe {1}, total return {2}, turnover {3}x", [c.id, fn(v), sp(c.totalReturn), fn(c.annualizedOneWayTurnover, 1)])}>
                         <span className="pf-cell-v">
                           <Glyph kind={!finite(v) || Number(v.toFixed(2)) === 0 ? 'empty' : v > 0 ? 'supported' : 'refuted'} />
                           {sn(v)}
                         </span>
-                        {isBase && <span className="pf-cell-tag">selected (base)</span>}
+                        {isBase && <span className="pf-cell-tag">{uiText("selected (base)")}</span>}
                       </td>
                     )
                   })}
@@ -297,7 +292,7 @@ export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; spl
 
         <div className="tablewrap tablewrap--tall">
           <table className="tbl">
-            <caption className="small muted">All {configs.length} configurations, {split} split. Click a header to sort.</caption>
+            <caption className="small muted">{uiText("All ")}{configs.length}{uiText(" configurations, ")}{split}{uiText(" split. Click a header to sort.")}</caption>
             <thead>
               <tr>
                 {th('id', 'Configuration', false)}
@@ -309,7 +304,7 @@ export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; spl
                 <tr key={c.id} className={c.isBase ? 'pf-selected' : undefined}>
                   <th scope="row">
                     <span className="mono nowrap">{c.id}</span>
-                    {c.isBase && <span className="badge">selected (base)</span>}
+                    {c.isBase && <span className="badge">{uiText("selected (base)")}</span>}
                   </th>
                   {COLS.map((col) => (
                     <td key={col.key} className="r">{col.f(c)}</td>
@@ -341,20 +336,19 @@ export function BookBlock({ pf, split, hiddenWhy }: { pf: PortfolioDiagnostics; 
         <div className="cols cols--3-2 cols--tables">
           <div className="tablewrap">
             <table className="tbl">
-              <caption className="small muted">
-                Book on {day(b.timestamp)}, sorted by absolute executed weight.{' '}
-                {b.historicalResearchWeights ? 'These are research weights from a historical Run, not a live account.' : ''}
+              <caption className="small muted">{uiText("Book on ")}{day(b.timestamp)}{uiText(", sorted by absolute executed weight.")}{' '}
+                {b.historicalResearchWeights ? uiText("These are research weights from a historical Run, not a live account.") : ''}
               </caption>
               <thead>
                 <tr>
-                  <th scope="col">Asset</th>
-                  <th scope="col">Signal</th>
-                  <th scope="col" className="r">Executed</th>
-                  <th scope="col" className="r">Target</th>
-                  <th scope="col" className="r">Trade</th>
-                  <th scope="col">Action</th>
-                  <th scope="col" className="r">Net contribution</th>
-                  <th scope="col" className="r">Variance share</th>
+                  <th scope="col">{uiText("Asset")}</th>
+                  <th scope="col">{uiText("Signal")}</th>
+                  <th scope="col" className="r">{uiText("Executed")}</th>
+                  <th scope="col" className="r">{uiText("Target")}</th>
+                  <th scope="col" className="r">{uiText("Trade")}</th>
+                  <th scope="col">{uiText("Action")}</th>
+                  <th scope="col" className="r">{uiText("Net contribution")}</th>
+                  <th scope="col" className="r">{uiText("Variance share")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -375,7 +369,7 @@ export function BookBlock({ pf, split, hiddenWhy }: { pf: PortfolioDiagnostics; 
               </tbody>
             </table>
           </div>
-          <Block title="Exposure and risk on that date">
+          <Block title={uiText("Exposure and risk on that date")}>
             <Kv
               rows={[
                 ['Gross exposure', up(b.grossExposure)],
@@ -393,15 +387,15 @@ export function BookBlock({ pf, split, hiddenWhy }: { pf: PortfolioDiagnostics; 
       {attr?.length ? (
         <div className="tablewrap">
           <table className="tbl">
-            <caption className="small muted">Attribution by asset, {split} split</caption>
+            <caption className="small muted">{uiText("Attribution by asset, ")}{split}{uiText(" split")}</caption>
             <thead>
               <tr>
-                <th scope="col">Asset</th>
-                <th scope="col" className="r">Net contribution / yr</th>
-                <th scope="col" className="r">Avg |weight|</th>
-                <th scope="col" className="r">Variance share</th>
-                <th scope="col" className="r">Cost</th>
-                <th scope="col" className="r">Turnover contribution</th>
+                <th scope="col">{uiText("Asset")}</th>
+                <th scope="col" className="r">{uiText("Net contribution / yr")}</th>
+                <th scope="col" className="r">{uiText("Avg |weight|")}</th>
+                <th scope="col" className="r">{uiText("Variance share")}</th>
+                <th scope="col" className="r">{uiText("Cost")}</th>
+                <th scope="col" className="r">{uiText("Turnover contribution")}</th>
               </tr>
             </thead>
             <tbody>
@@ -433,19 +427,18 @@ export function TransitionsTable({ rows, total }: { rows: Transition[]; total: n
     <div className="tablewrap tablewrap--tall">
       <table className="tbl">
         <caption className="small muted">
-          {rows.length} of the server&apos;s {total} most recent signal transitions (older ones are not published)
-        </caption>
+          {rows.length}{uiText(" of the server&apos;s ")}{total}{uiText(" most recent signal transitions (older ones are not published)")}</caption>
         <thead>
           <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Asset</th>
-            <th scope="col">Event</th>
-            <th scope="col">State</th>
-            <th scope="col" className="r">Executed weight</th>
-            <th scope="col" className="r">Trade</th>
-            <th scope="col">Action</th>
-            <th scope="col">Reason</th>
-            <th scope="col">Regime</th>
+            <th scope="col">{uiText("Date")}</th>
+            <th scope="col">{uiText("Asset")}</th>
+            <th scope="col">{uiText("Event")}</th>
+            <th scope="col">{uiText("State")}</th>
+            <th scope="col" className="r">{uiText("Executed weight")}</th>
+            <th scope="col" className="r">{uiText("Trade")}</th>
+            <th scope="col">{uiText("Action")}</th>
+            <th scope="col">{uiText("Reason")}</th>
+            <th scope="col">{uiText("Regime")}</th>
           </tr>
         </thead>
         <tbody>
@@ -454,7 +447,7 @@ export function TransitionsTable({ rows, total }: { rows: Transition[]; total: n
               <td className="mono">{day(r.timestamp)}</td>
               <th scope="row">{r.asset}</th>
               <td>{r.signalEvent ?? '—'}</td>
-              <td>{signalWord(r.priorSignalState)} to {signalWord(r.signalState)}</td>
+              <td>{signalWord(r.priorSignalState)}{uiText(" to ")}{signalWord(r.signalState)}</td>
               <td className="r">{sp(r.executedWeight, 1)}</td>
               <td className="r">{sp(r.tradeWeight, 1)}</td>
               <td>{r.executionAction ?? '—'}</td>
@@ -476,21 +469,20 @@ export function EpisodesTable({ rows, total }: { rows: Episode[]; total: number 
     <div className="tablewrap tablewrap--tall">
       <table className="tbl">
         <caption className="small muted">
-          {rows.length} of the server&apos;s {total} most recent position episodes. Contributions are additive portfolio returns after trade cost, clipped to the split.
-        </caption>
+          {rows.length}{uiText(" of the server&apos;s ")}{total}{uiText(" most recent position episodes. Contributions are additive portfolio returns after trade cost, clipped to the split.")}</caption>
         <thead>
           <tr>
-            <th scope="col">Split</th>
-            <th scope="col">Asset</th>
-            <th scope="col">Side</th>
-            <th scope="col">Entry</th>
-            <th scope="col">Exit</th>
-            <th scope="col" className="r">Bars</th>
-            <th scope="col" className="r">Net contribution</th>
-            <th scope="col" className="r">Cost</th>
-            <th scope="col" className="r">Best excursion</th>
-            <th scope="col" className="r">Worst excursion</th>
-            <th scope="col">Status</th>
+            <th scope="col">{uiText("Split")}</th>
+            <th scope="col">{uiText("Asset")}</th>
+            <th scope="col">{uiText("Side")}</th>
+            <th scope="col">{uiText("Entry")}</th>
+            <th scope="col">{uiText("Exit")}</th>
+            <th scope="col" className="r">{uiText("Bars")}</th>
+            <th scope="col" className="r">{uiText("Net contribution")}</th>
+            <th scope="col" className="r">{uiText("Cost")}</th>
+            <th scope="col" className="r">{uiText("Best excursion")}</th>
+            <th scope="col" className="r">{uiText("Worst excursion")}</th>
+            <th scope="col">{uiText("Status")}</th>
           </tr>
         </thead>
         <tbody>
@@ -500,7 +492,7 @@ export function EpisodesTable({ rows, total }: { rows: Episode[]; total: number 
               <th scope="row">{e.asset ?? '—'}</th>
               <td>{e.side ?? '—'}</td>
               <td className="mono">{day(e.entryTimestamp)}</td>
-              <td className="mono">{e.exitTimestamp ? day(e.exitTimestamp) : <span className="faint">{e.exitAction ?? 'open'}</span>}</td>
+              <td className="mono">{e.exitTimestamp ? day(e.exitTimestamp) : <span className="faint">{e.exitAction ?? uiText("open")}</span>}</td>
               <td className="r">{e.decisionBars ?? '—'}</td>
               <td className="r">{sp(e.netContribution, 3)}</td>
               <td className="r">{up(e.totalCost, 3)}</td>

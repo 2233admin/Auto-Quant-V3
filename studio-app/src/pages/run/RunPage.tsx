@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { useEffect } from 'react'
 import type { ProjectSnapshot, RankSummary } from '../../api'
 import { num, plural, when } from '../../format'
@@ -27,7 +28,7 @@ const day = (iso: string | undefined) => (iso ? iso.slice(0, 10) : '—')
 function SplitRow({ name, role, s }: { name: string; role: string; s: RankSummary | undefined }) {
   return (
     <tr>
-      <th scope="row">{name}<span className="faint small">{role}</span></th>
+      <th scope="row">{name}<span className="faint small">{uiValue(role)}</span></th>
       <td className="r num">{num(s?.meanRankIc, 4)}</td>
       <td className="r num">{num(s?.rankIcir, 3)}</td>
       <td className="r num">{num(s?.hacTStatistic, 2)}</td>
@@ -67,31 +68,31 @@ function metricGroups(fe: RunDiagnostics, project: ProjectSnapshot, showTest: bo
   if (v) {
     const weak = v.sufficient === false
     groups.push({
-      heading: `Validation · selection split · ${horizon}-bar horizon`,
-      label: `Validation split, ${horizon}-bar horizon`,
+      heading: uiTemplate("Validation · selection split · {0}-bar horizon", [horizon]),
+      label: uiTemplate("Validation split, {0}-bar horizon", [horizon]),
       tiles: [
-        { label: 'Mean rank IC', value: num(v.meanRankIc, 4), info: measure },
-        { label: 'HAC t', value: num(v.hacTStatistic, 2), info: inference },
-        { label: 'HAC p', value: num(v.hacNormalPValue, 3), info: <>{inference}<p>Two-sided.</p></> },
-        { label: 'Hit rate', value: num(v.rankHitRate, 3), info: <p>Share of bars with rank IC above 0.</p> },
-        { label: 'Rank IC IR', value: num(v.rankIcir, 3) },
-        { label: 'Mean Pearson IC', value: num(v.meanPearsonIc, 4) },
-        { label: 'Rank IC std', value: num(v.rankIcStandardDeviation, 3) },
-        { label: 'Observations', value: int(v.observations), info: <p>Minimum required: {int(v.minimumObservations)} observations.</p>, tone: weak ? 'weak' : 'neutral', toneReason: weak ? 'below min' : undefined },
-        { label: 'Trials counted', value: fam ? int(fam.totalExecutions) : '—', info: <p>{fam ? `${int(fam.uniqueSourceTrials)} unique candidate sources among ${int(fam.totalExecutions)} executions.` : 'No Session ledger records the trials.'}</p> },
+        { label: uiText("Mean rank IC"), value: num(v.meanRankIc, 4), info: measure },
+        { label: uiText("HAC t"), value: num(v.hacTStatistic, 2), info: inference },
+        { label: uiText("HAC p"), value: num(v.hacNormalPValue, 3), info: <>{inference}<p>{uiText("Two-sided.")}</p></> },
+        { label: uiText("Hit rate"), value: num(v.rankHitRate, 3), info: <p>{uiText("Share of bars with rank IC above 0.")}</p> },
+        { label: uiText("Rank IC IR"), value: num(v.rankIcir, 3) },
+        { label: uiText("Mean Pearson IC"), value: num(v.meanPearsonIc, 4) },
+        { label: uiText("Rank IC std"), value: num(v.rankIcStandardDeviation, 3) },
+        { label: uiText("Observations"), value: int(v.observations), info: <p>{uiText("Minimum required: ")}{int(v.minimumObservations)}{uiText(" observations.")}</p>, tone: weak ? 'weak' : 'neutral', toneReason: weak ? 'below min' : undefined },
+        { label: uiText("Trials counted"), value: fam ? int(fam.totalExecutions) : '—', info: <p>{fam ? uiTemplate("{0} unique candidate sources among {1} executions.", [int(fam.uniqueSourceTrials), int(fam.totalExecutions)]) : uiText("No Session ledger records the trials.")}</p> },
       ],
     })
   }
   if (showTest && t) {
     groups.push({
-      heading: 'Test · visible audit, not used for selection',
-      label: `Test split visible audit, ${horizon}-bar horizon`,
+      heading: uiText("Test · visible audit, not used for selection"),
+      label: uiTemplate("Test split visible audit, {0}-bar horizon", [horizon]),
       tiles: [
-        { label: 'Mean rank IC', value: num(t.meanRankIc, 4) },
-        { label: 'HAC t', value: num(t.hacTStatistic, 2) },
-        { label: 'HAC p', value: num(t.hacNormalPValue, 3) },
-        { label: 'Hit rate', value: num(t.rankHitRate, 3) },
-        { label: 'Observations', value: int(t.observations), info: <p>Minimum required: {int(t.minimumObservations)} observations.</p> },
+        { label: uiText("Mean rank IC"), value: num(t.meanRankIc, 4) },
+        { label: uiText("HAC t"), value: num(t.hacTStatistic, 2) },
+        { label: uiText("HAC p"), value: num(t.hacNormalPValue, 3) },
+        { label: uiText("Hit rate"), value: num(t.rankHitRate, 3) },
+        { label: uiText("Observations"), value: int(t.observations), info: <p>{uiText("Minimum required: ")}{int(t.minimumObservations)}{uiText(" observations.")}</p> },
       ],
     })
   }
@@ -104,13 +105,13 @@ function testedFacts(fe: RunDiagnostics): Fact[] {
   const windows = protocol.splits.splits
   const context = protocol.horizons.filter((h) => h !== protocol.primaryHorizon).sort((a, b) => a - b)
   return [
-    { label: 'Study', value: fe.run.studyId, mono: true },
-    { label: 'Run started', value: `${when(fe.run.startedAt)} UTC` },
-    { label: 'Dataset', value: `${fe.dataset.id} · ${day(fe.dataset.timeRange?.start)} to ${day(fe.dataset.timeRange?.end)}`, mono: true },
-    { label: 'Scored asset', value: (fe.predictionUniverse.predictionAssets ?? []).join(', ') || '—', mono: true },
-    { label: 'Evaluation mode', value: fe.predictionUniverse.evaluationMode ?? '—', mono: true },
-    { label: 'Horizon', value: `${protocol.primaryHorizon}-bar primary${context.length ? ` · context ${context.join(', ')}-bar` : ''}` },
-    ...gatedSplits(fe, SPLITS).map((s) => ({ label: `${SPLIT_LABEL[s]} window`, value: `${day(windows[s].start)} to ${day(windows[s].end)}` })),
+    { label: uiText("Study"), value: fe.run.studyId, mono: true },
+    { label: uiText("Run started"), value: `${when(fe.run.startedAt)} UTC` },
+    { label: uiText("Dataset"), value: `${fe.dataset.id} · ${day(fe.dataset.timeRange?.start)} to ${day(fe.dataset.timeRange?.end)}`, mono: true },
+    { label: uiText("Scored asset"), value: (fe.predictionUniverse.predictionAssets ?? []).join(', ') || '—', mono: true },
+    { label: uiText("Evaluation mode"), value: fe.predictionUniverse.evaluationMode ?? '—', mono: true },
+    { label: uiText("Horizon"), value: `${protocol.primaryHorizon}-bar primary${context.length ? ` · context ${context.join(', ')}-bar` : ''}` },
+    ...gatedSplits(fe, SPLITS).map((s) => ({ label: uiTemplate("{0} window", [SPLIT_LABEL[s]]), value: `${day(windows[s].start)} to ${day(windows[s].end)}` })),
   ]
 }
 
@@ -130,10 +131,10 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
     if (anchor) requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ block: 'start' }))
   }, [anchor, tab])
   const tabs: TabDef<TabId>[] = [
-    { id: 'evidence', label: 'Evidence' },
-    { id: 'checks', label: 'Checks' },
-    { id: 'provenance', label: 'Provenance' },
-    { id: 'runs', label: 'All Runs', badge: String(project.runs.length) },
+    { id: 'evidence', label: uiText("Evidence") },
+    { id: 'checks', label: uiText("Checks") },
+    { id: 'provenance', label: uiText("Provenance") },
+    { id: 'runs', label: uiText("All Runs"), badge: String(project.runs.length) },
   ]
   return (
     <>
@@ -144,30 +145,30 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
       <MetricGrid groups={metricGroups(fe, project, showTest)} hiddenNote={showTest ? undefined : TEST_HIDDEN_NOTE} />
       <TrialCounter project={project} />
       <Tabs
-        label="Run sections"
+        label={uiText("Run sections")}
         tabs={tabs}
         active={tab}
         onSelect={selectTab}
         panels={{
           evidence: (
             <>
-              <Section title="Rank IC by horizon and split" id="run-ic-table" caption="The numbers behind the chart.">
+              <Section title={uiText("Rank IC by horizon and split")} id="run-ic-table" caption={uiText("The numbers behind the chart.")}>
                 <div className="tablewrap">
                   <IcByHorizonTable study={fe} />
                 </div>
               </Section>
-              <Section title="By split" id="run-splits" caption={showTest ? undefined : TEST_HIDDEN_NOTE}>
+              <Section title={uiText("By split")} id="run-splits" caption={showTest ? undefined : TEST_HIDDEN_NOTE}>
                 <div className="tablewrap">
                   <table className="tbl">
                     <thead>
                       <tr>
-                        <th scope="col">Split</th>
-                        <th scope="col" className="r">Mean rank IC</th>
-                        <th scope="col" className="r">IC IR</th>
-                        <th scope="col" className="r">HAC t</th>
+                        <th scope="col">{uiText("Split")}</th>
+                        <th scope="col" className="r">{uiText("Mean rank IC")}</th>
+                        <th scope="col" className="r">{uiText("IC IR")}</th>
+                        <th scope="col" className="r">{uiText("HAC t")}</th>
                         <th scope="col" className="r">p</th>
-                        <th scope="col" className="r">Hit rate</th>
-                        <th scope="col" className="r">Obs.</th>
+                        <th scope="col" className="r">{uiText("Hit rate")}</th>
+                        <th scope="col" className="r">{uiText("Obs.")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -177,22 +178,22 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
                   </table>
                 </div>
               </Section>
-              <Section title="Horizon profile (validation)" id="run-horizons">
+              <Section title={uiText("Horizon profile (validation)")} id="run-horizons">
                 <div className="tablewrap">
                   <table className="tbl">
                     <thead>
                       <tr>
-                        <th scope="col">Horizon (bars)</th>
-                        <th scope="col" className="r">Mean rank IC</th>
-                        <th scope="col" className="r">HAC t</th>
+                        <th scope="col">{uiText("Horizon (bars)")}</th>
+                        <th scope="col" className="r">{uiText("Mean rank IC")}</th>
+                        <th scope="col" className="r">{uiText("HAC t")}</th>
                         <th scope="col" className="r">p</th>
-                        <th scope="col" className="r">Obs.</th>
+                        <th scope="col" className="r">{uiText("Obs.")}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {fe.horizonProfile.map((h) => (
                         <tr key={h.horizon}>
-                          <th scope="row">{h.horizon}{h.horizon === fe.protocol.primaryHorizon && <span className="faint small">primary</span>}</th>
+                          <th scope="row">{h.horizon}{h.horizon === fe.protocol.primaryHorizon && <span className="faint small">{uiText("primary")}</span>}</th>
                           <td className="r num">{num(h.validation.meanRankIc, 4)}</td>
                           <td className="r num">{num(h.validation.hacTStatistic, 2)}</td>
                           <td className="r num">{num(h.validation.hacNormalPValue, 3)}</td>
@@ -204,13 +205,12 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
                 </div>
               </Section>
               <Section
-                title="All headline figures"
+                title={uiText("All headline figures")}
                 id="run-headline"
                 caption={
-                  <>
-                    Selection uses the validation split only; primary horizon {fe.protocol.primaryHorizon} bars.{' '}
-                    <Info label="About this Run">
-                      <p>{fe.run.summary ?? 'This Run publishes no summary line.'}</p>
+                  <>{uiText("Selection uses the validation split only; primary horizon ")}{fe.protocol.primaryHorizon}{uiText(" bars.")}{' '}
+                    <Info label={uiText("About this Run")}>
+                      <p>{fe.run.summary ?? uiText("This Run publishes no summary line.")}</p>
                     </Info>
                   </>
                 }
@@ -221,11 +221,11 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
           ),
           checks: (
             <>
-              <Section title="Why this verdict" id="run-reasons" caption="Every reason behind the verdict; the ? opens the field it reads.">
+              <Section title={uiText("Why this verdict")} id="run-reasons" caption={uiText("Every reason behind the verdict; the ? opens the field it reads.")}>
                 <VerdictReasons study={fe} adjustment={adjustment} />
               </Section>
               {fe.factorQualification.diagnosis && (
-                <Section title="Qualification diagnosis" id="run-qualification">
+                <Section title={uiText("Qualification diagnosis")} id="run-qualification">
                   <QualificationBlock study={fe} />
                 </Section>
               )}
@@ -233,35 +233,35 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
           ),
           provenance: (
             <>
-              <Section title="Provenance" id="run-provenance" caption="Hashes, dataset and harness that produced this Run.">
+              <Section title={uiText("Provenance")} id="run-provenance" caption={uiText("Hashes, dataset and harness that produced this Run.")}>
                 <dl className="kv">
-                  <dt>Run</dt><dd className="mono">{fe.run.id}</dd>
-                  <dt>Status</dt><dd>{fe.run.status ?? row?.status ?? '—'}</dd>
-                  <dt>Started / completed (UTC)</dt><dd className="mono">{when(fe.run.startedAt)} / {when(fe.run.completedAt)}</dd>
-                  <dt>Study</dt><dd className="mono">{fe.run.studyId}</dd>
-                  <dt>Candidate source hash</dt><dd className="mono" title={fe.run.sourceHash}>{short(fe.run.sourceHash, 16)}</dd>
-                  <dt>Study hash</dt><dd className="mono" title={fe.run.studyHash}>{short(fe.run.studyHash, 16)}</dd>
-                  <dt>Input hash</dt><dd className="mono" title={fe.run.inputHash}>{short(fe.run.inputHash, 16)}</dd>
-                  <dt>Dataset</dt><dd className="mono">{fe.dataset.id} {fe.dataset.version}</dd>
-                  <dt>Dataset hash</dt><dd className="mono" title={fe.dataset.hash}>{short(fe.dataset.hash, 16)}</dd>
-                  <dt>Dataset window</dt><dd className="mono">{day(fe.dataset.timeRange?.start)} to {day(fe.dataset.timeRange?.end)}</dd>
-                  <dt>Universe</dt><dd>{fe.dataset.universe.join(', ')}</dd>
-                  <dt>Prediction assets</dt><dd>{(fe.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}</dd>
-                  <dt>Research horizon id</dt><dd className="mono">{fe.researchHorizon?.id ?? '—'}</dd>
-                  <dt>Harness</dt><dd className="mono">{fe.harness ? `${fe.harness.id ?? ''} ${fe.harness.version ?? ''}${fe.harness.dirty ? ' (dirty)' : ''}` : '—'}</dd>
+                  <dt>{uiText("Run")}</dt><dd className="mono">{fe.run.id}</dd>
+                  <dt>{uiText("Status")}</dt><dd>{fe.run.status ?? row?.status ?? '—'}</dd>
+                  <dt>{uiText("Started / completed (UTC)")}</dt><dd className="mono">{when(fe.run.startedAt)} / {when(fe.run.completedAt)}</dd>
+                  <dt>{uiText("Study")}</dt><dd className="mono">{fe.run.studyId}</dd>
+                  <dt>{uiText("Candidate source hash")}</dt><dd className="mono" title={fe.run.sourceHash}>{short(fe.run.sourceHash, 16)}</dd>
+                  <dt>{uiText("Study hash")}</dt><dd className="mono" title={fe.run.studyHash}>{short(fe.run.studyHash, 16)}</dd>
+                  <dt>{uiText("Input hash")}</dt><dd className="mono" title={fe.run.inputHash}>{short(fe.run.inputHash, 16)}</dd>
+                  <dt>{uiText("Dataset")}</dt><dd className="mono">{fe.dataset.id} {fe.dataset.version}</dd>
+                  <dt>{uiText("Dataset hash")}</dt><dd className="mono" title={fe.dataset.hash}>{short(fe.dataset.hash, 16)}</dd>
+                  <dt>{uiText("Dataset window")}</dt><dd className="mono">{day(fe.dataset.timeRange?.start)}{uiText(" to ")}{day(fe.dataset.timeRange?.end)}</dd>
+                  <dt>{uiText("Universe")}</dt><dd>{fe.dataset.universe.join(', ')}</dd>
+                  <dt>{uiText("Prediction assets")}</dt><dd>{(fe.predictionUniverse.predictionAssets ?? []).join(', ') || '—'}</dd>
+                  <dt>{uiText("Research horizon id")}</dt><dd className="mono">{fe.researchHorizon?.id ?? '—'}</dd>
+                  <dt>{uiText("Harness")}</dt><dd className="mono">{fe.harness ? `${fe.harness.id ?? ''} ${fe.harness.version ?? ''}${fe.harness.dirty ? ' (dirty)' : ''}` : '—'}</dd>
                 </dl>
               </Section>
               <NotPublished />
             </>
           ),
           runs: (
-            <Section title="All Runs of this Project" id="run-all">
+            <Section title={uiText("All Runs of this Project")} id="run-all">
               <RunList project={project} />
             </Section>
           ),
         }}
       />
-      {fe.warning && <p className="small muted">{fe.warning}</p>}
+      {fe.warning && <p className="small muted">{uiValue(fe.warning)}</p>}
     </>
   )
 }
@@ -280,55 +280,54 @@ export function RunPage({ project, runId, go }: { project: ProjectSnapshot; runI
   if (other && laneHref) {
     return (
       <div className="pg">
-        <p className="muted">Opening the {other.lane} page for this Run…</p>
+        <p className="muted">{uiText("Opening the ")}{other.lane}{uiText(" page for this Run…")}</p>
         <p>
-          <a href={laneHref}>Open {other.lane}</a>
+          <a href={laneHref}>{uiText("Open ")}{other.lane}</a>
         </p>
       </div>
     )
   }
   const runLabelId = runId.replace(/^run-/, '')
   const left = (
-    <PaneCard label="What was tested" actions={<RunAnalysisButton project={project} preferStudyId={study} />}>
+    <PaneCard label={uiText("What was tested")} actions={<RunAnalysisButton project={project} preferStudyId={study} />}>
       <header className="rp-lhead">
-        <h1>
-          Run <span className="mono" translate="no">{runLabelId}</span>
+        <h1>{uiText("Run ")}<span className="mono" translate="no">{runLabelId}</span>
         </h1>
         <p className="muted small">
-          {plural(project.runs.length, 'Run')} in this Project. <LaunchedLabel runId={runId} />
+          {plural(project.runs.length, 'Run')}{uiText(" in this Project. ")}<LaunchedLabel runId={runId} />
         </p>
       </header>
-      <RunSelect bar label="Run" runs={project.runs} value={runId} onChange={(id) => go(routeHref({ view: 'run', id: project.id, run: id }))} />
-      <nav className="rp-links" aria-label="Related pages">
-        <a href={factorHref}>Full Factor evidence</a>
-        <a href={routeHref({ view: 'compare', id: project.id, a: runId })}>Compare</a>
-        <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a>
+      <RunSelect bar label={uiText("Run")} runs={project.runs} value={runId} onChange={(id) => go(routeHref({ view: 'run', id: project.id, run: id }))} />
+      <nav className="rp-links" aria-label={uiText("Related pages")}>
+        <a href={factorHref}>{uiText("Full Factor evidence")}</a>
+        <a href={routeHref({ view: 'compare', id: project.id, a: runId })}>{uiText("Compare")}</a>
+        <a href={routeHref({ view: 'project', id: project.id })}>{uiText("Open Project")}</a>
       </nav>
-      {fe && <FactChips label="What was tested" locked facts={testedFacts(fe)} info={<p>These values come from the Study and the Run. They are read-only here.</p>} />}
+      {fe && <FactChips label={uiText("What was tested")} locked facts={testedFacts(fe)} info={<p>{uiText("These values come from the Study and the Run. They are read-only here.")}</p>} />}
     </PaneCard>
   )
   const right = (
-    <PaneCard label="Run result">
-      {load.state === 'loading' && <p className="muted">Loading Run…</p>}
+    <PaneCard label={uiText("Run result")}>
+      {load.state === 'loading' && <p className="muted">{uiText("Loading Run…")}</p>}
       {load.state === 'error' &&
         (load.unsupported ? (
           <Notice
             kind="info"
-            label="Info"
-            title="This Run is not a Factor Run, so it has no Factor evidence page."
-            subtitle="The Run route serves Factor Runs only. Open the Project to find the page for this Run's lane."
+            label={uiText("Info")}
+            title={uiText("This Run is not a Factor Run, so it has no Factor evidence page.")}
+            subtitle={uiText("The Run route serves Factor Runs only. Open the Project to find the page for this Run's lane.")}
           />
         ) : (
-          <Notice kind="error" label="Error" title="Could not load this Run." subtitle={load.message} />
+          <Notice kind="error" label={uiText("Error")} title={uiText("Could not load this Run.")} subtitle={load.message} />
         ))}
       {load.state === 'error' && load.unsupported && (
         <p className="small">
-          <a href={routeHref({ view: 'project', id: project.id })}>Open Project</a> · <a href={routeHref({ view: 'runs' })}>Run history</a>
+          <a href={routeHref({ view: 'project', id: project.id })}>{uiText("Open Project")}</a> · <a href={routeHref({ view: 'runs' })}>{uiText("Run history")}</a>
         </p>
       )}
       {fe && <Body fe={fe} project={project} />}
       {!fe && (
-        <Section title="All Runs of this Project" id="run-all">
+        <Section title={uiText("All Runs of this Project")} id="run-all">
           <RunList project={project} />
         </Section>
       )}

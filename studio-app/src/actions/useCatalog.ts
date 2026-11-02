@@ -1,3 +1,4 @@
+import { uiText } from '../i18n'
 import { useEffect, useState } from 'react'
 import { useActions } from './ActionsContext'
 import { actionCall, errorCopy } from './client'
@@ -35,7 +36,7 @@ export function useCatalog(projectId: string): CatalogLoad & { reload: () => voi
         const action = catalog.actions.find((a) => a.id === EVALUATE_ID)
         const target = action?.targets.find((t) => t.project === projectId)
         const start = catalog.actions.find((a) => a.id === 'session.start')?.targets.find((t) => t.project === projectId) ?? null
-        setLoad(action && target ? { state: 'ready', action, target, start } : { state: 'error', title: 'This Project is not in the action catalog.', detail: 'Studio did not list Run analysis for it.' })
+        setLoad(action && target ? { state: 'ready', action, target, start } : { state: 'error', title: uiText("This Project is not in the action catalog."), detail: uiText("Studio did not list Run analysis for it.") })
       })
       .catch((reason: unknown) => {
         if (controller.signal.aborted) return

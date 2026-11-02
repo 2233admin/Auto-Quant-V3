@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 import { Glyph, type GlyphKind } from '../../design/icons'
 import '../../actions/actions.css'
@@ -34,19 +35,17 @@ export function StatusLine({
     <div className="wb-status" data-state={state}>
       <div className="wb-status-line" role="status" aria-live="polite">
         <Glyph kind={GLYPH[state]} signal={state === 'failed'} />
-        <span className="wb-status-text" title={text}>{text}</span>
+        <span className="wb-status-text" title={text}>{uiValue(text)}</span>
         {bar && <Progress value={pct} label={text} />}
         {bar && <span className="wb-status-pct mono">{pct === null ? '—' : `${pct}%`}</span>}
         {elapsed && <span className="wb-status-time mono faint">{elapsed}</span>}
         {onCancel && state === 'running' && (
-          <button type="button" className="abtn abtn--quiet" onClick={onCancel}>
-            Cancel
-          </button>
+          <button type="button" className="abtn abtn--quiet" onClick={onCancel}>{uiText("Cancel")}</button>
         )}
       </div>
       {details && (
         <AnimatedDetails className="wb-status-more">
-          <summary>Stages and command</summary>
+          <summary>{uiText("Stages and command")}</summary>
           {details}
         </AnimatedDetails>
       )}

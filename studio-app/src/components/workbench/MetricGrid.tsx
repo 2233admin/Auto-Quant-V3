@@ -1,3 +1,4 @@
+import { uiTemplate, uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 import { CompactTile, CompactTileGrid } from '../CompactTile'
 import { Info } from '../Info'
@@ -22,11 +23,11 @@ export function MetricGrid({ groups, hiddenNote }: { groups: MetricGroup[]; hidd
       {groups.map((g) => (
         <div key={g.heading} className={`wb-metric-group${g.tiles.some((t) => t.label.length > LONG_LABEL) ? ' has-long' : ''}`}>
           <h3 className="wb-metric-h">
-            {g.heading}
+            {uiValue(g.heading)}
             {g.info && (
               <>
                 {' '}
-                <Info label={g.infoLabel ?? `About ${g.heading}`}>{g.info}</Info>
+                <Info label={g.infoLabel ?? uiTemplate("About {0}", [g.heading])}>{g.info}</Info>
               </>
             )}
           </h3>

@@ -1,3 +1,4 @@
+import { uiTemplate, uiText } from '../i18n'
 import { useMemo, useState, type ReactNode } from 'react'
 import type { ProjectSnapshot, ProjectSummary, WorkspaceSummary } from '../api'
 import { Empty } from '../components/States'
@@ -25,9 +26,9 @@ function latestOf(r: Row) {
 
 function verdictOf(r: Row) {
   const latest = latestOf(r)
-  if (!latest) return 'Not tested'
-  if (latest.status !== 'succeeded') return 'Could not be tested'
-  if (r.snap?.factorExplorer?.run.id !== latest.id) return 'No current Factor conclusion'
+  if (!latest) return uiText("Not tested")
+  if (latest.status !== 'succeeded') return uiText("Could not be tested")
+  if (r.snap?.factorExplorer?.run.id !== latest.id) return uiText("No current Factor conclusion")
   const exactLeader = r.snap.sessions.find(s => s.session?.leader?.runId === latest.id)
   return ideaVerdict(r.snap.factorExplorer, exactLeader?.selectionIntegrity?.selectionAdjustment?.passes)
 }
@@ -47,7 +48,7 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
   const cols: Col<Row>[] = [
     {
       id: 'name',
-      label: 'Idea',
+      label: uiText("Idea"),
       rowHeader: true,
       render: (r) => (
         <>
@@ -57,7 +58,7 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
             {!r.p.valid && (
               <span className="idea-flag">
                 <Glyph kind="error" signal />
-                <span className="sig">Needs attention</span>
+                <span className="sig">{uiText("Needs attention")}</span>
               </span>
             )}
           </span>
@@ -66,53 +67,51 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
     },
     {
       id: 'verdict',
-      label: 'Verdict',
-      title: 'Factor verdict from the server qualification stage.',
-      render: (r) => <span>{r.loading ? 'Loading…' : verdictOf(r)}</span>,
+      label: uiText("Verdict"),
+      title: uiText("Factor verdict from the server qualification stage."),
+      render: (r) => <span>{r.loading ? uiText("Loading…") : verdictOf(r)}</span>,
     },
     {
       id: 'metric',
-      label: 'Original question',
+      label: uiText("Original question"),
       render: (r) => {
         const question = r.snap?.agentWorkBrief?.question?.text ?? r.snap?.description ?? r.p.description ?? 'Loading question…'
         return <span className="idea-table-question" title={question}>{question}</span>
       },
     },
-    { id: 'last', label: 'Latest Run (UTC)', render: (r) => <span className="mono">{when(r.p.latestRunAt)}</span> },
+    { id: 'last', label: uiText("Latest Run (UTC)"), render: (r) => <span className="mono">{when(r.p.latestRunAt)}</span> },
     {
       id: 'trials',
-      label: 'Trials',
+      label: uiText("Trials"),
       align: 'r',
-      title: 'Every execution in the research family; trials are never removed.',
+      title: uiText("Every execution in the research family; trials are never removed."),
       render: (r) => {
         const fam = r.snap ? pickIntegrity(r.snap)?.researchFamily : undefined
-        return fam ? fam.totalExecutions : <span className="faint small">{r.loading ? '…' : 'no ledger'}</span>
+        return fam ? fam.totalExecutions : <span className="faint small">{r.loading ? '…' : uiText("no ledger")}</span>
       },
     },
     {
       id: 'next',
-      label: 'Next step',
-      render: (r) => <span className="idea-next">{r.p.runCount ? 'Read the conclusion' : 'Continue this idea'}</span>,
+      label: uiText("Next step"),
+      render: (r) => <span className="idea-next">{r.p.runCount ? uiText("Read the conclusion") : uiText("Continue this idea")}</span>,
     },
   ]
 
   return (
     <div className="pg">
       <header className="pg-head idea-head">
-        <h1>Ideas</h1>
+        <h1>{uiText("Ideas")}</h1>
         <p className="muted small">
-          {workspace.source.workspace ? <span translate="no">{workspace.source.workspace.name}</span> : <span>Single Project</span>}
+          {workspace.source.workspace ? <span translate="no">{workspace.source.workspace.name}</span> : <span>{uiText("Single Project")}</span>}
           {' · '}
           {freshness}
         </p>
-        <button type="button" className="abtn abtn--primary idea-new" aria-haspopup="dialog" onClick={() => setCreating(true)}>
-          New idea
-        </button>
+        <button type="button" className="abtn abtn--primary idea-new" aria-haspopup="dialog" onClick={() => setCreating(true)}>{uiText("New idea")}</button>
       </header>
-      <p className="muted">Bring a factor idea. Test it on staged data. Keep an honest answer, including an inconclusive one.</p>
-      {error && <Notice kind="error" label="Error" title="Could not refresh." subtitle={error} />}
+      <p className="muted">{uiText("Bring a factor idea. Test it on staged data. Keep an honest answer, including an inconclusive one.")}</p>
+      {error && <Notice kind="error" label={uiText("Error")} title={uiText("Could not refresh.")} subtitle={error} />}
       {projects.length === 0 ? (
-        <Empty title="What would you like to test?">Choose New idea to write your first question. No analysis runs until you confirm a trial.</Empty>
+        <Empty title={uiText("What would you like to test?")}>{uiText("Choose New idea to write your first question. No analysis runs until you confirm a trial.")}</Empty>
       ) : (
         <div className="idea-table">
         <DataTable
@@ -121,7 +120,7 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
           rowKey={(r) => r.p.id}
           href={hrefOf}
           go={go}
-          caption={`${plural(projects.length, 'idea')}, needs attention first, then latest Run`}
+          caption={uiTemplate("{0}, needs attention first, then latest Run", [plural(projects.length, 'idea')])}
           slideHover
         />
         </div>

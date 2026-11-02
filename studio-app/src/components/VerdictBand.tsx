@@ -1,3 +1,4 @@
+import { uiValue } from '../i18n'
 import type { ReactNode } from 'react'
 import { Glyph } from '../design/icons'
 
@@ -31,7 +32,7 @@ export function VerdictBand({
         <p className="verdict-kicker">{kicker}</p>
         <h2 id={id} className="verdict-word">
           <Glyph kind={GLYPH[verdict]} signal={verdict === 'fail'} />
-          <span>{word}</span>
+          <span>{uiValue(word)}</span>
         </h2>
         <p className="muted small">{detail}</p>
       </div>
@@ -40,7 +41,7 @@ export function VerdictBand({
           <li key={i}>
             <Glyph kind={r.tone === 'bad' ? 'error' : 'empty'} signal={r.tone === 'bad'} />
             <span>
-              {r.text}
+              {uiValue(r.text)}
               <span className="faint small mono verdict-field">{r.field}</span>
             </span>
           </li>

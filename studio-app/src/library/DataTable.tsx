@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { EndOfList } from '../components/States'
 import { useSlidingHighlight } from '../components/motion/useSlidingHighlight'
@@ -82,17 +83,17 @@ export function DataTable<T>({
 
   return (
     <>
-      {overflow && <p className="faint small lib-scrollhint" aria-hidden="true">Scroll sideways for more columns →</p>}
-      <div className={`tablewrap lib-scroll${slideHover ? ' mo-hl mo-hl--overlay' : ''}`} ref={wrap} tabIndex={0} role="region" aria-label={`${caption}, scrollable`}>
+      {overflow && <p className="faint small lib-scrollhint" aria-hidden="true">{uiText("Scroll sideways for more columns →")}</p>}
+      <div className={`tablewrap lib-scroll${slideHover ? ' mo-hl mo-hl--overlay' : ''}`} ref={wrap} tabIndex={0} role="region" aria-label={uiTemplate("{0}, scrollable", [caption])}>
       <table className="tbl lib-tbl">
-        <caption className="sr">{caption}</caption>
+        <caption className="sr">{uiValue(caption)}</caption>
         <thead>
           <tr>
             {cols.map((c) => (
               <th key={c.id} scope="col" className={c.align} title={c.title} aria-sort={sort?.id === c.id ? (sort.dir === 1 ? 'ascending' : 'descending') : c.sort ? 'none' : undefined}>
                 {c.sort ? (
                   <button type="button" className="lib-sort" onClick={() => toggle(c.id)}>
-                    {c.label}
+                    {uiValue(c.label)}
                     <span aria-hidden="true">{sort?.id === c.id ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}</span>
                   </button>
                 ) : (
@@ -117,7 +118,7 @@ export function DataTable<T>({
         </tbody>
       </table>
       </div>
-      <EndOfList label={`End of list · ${rows.length} ${rows.length === 1 ? 'row' : 'rows'}`} />
+      <EndOfList label={uiTemplate("End of list · {0} {1}", [rows.length, rows.length === 1 ? 'row' : 'rows'])} />
     </>
   )
 }

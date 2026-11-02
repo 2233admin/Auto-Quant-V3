@@ -1,3 +1,4 @@
+import { translate, uiText, uiValue, useLanguage } from '../i18n'
 import { useEffect, useState } from 'react'
 import type { WorkspaceSummary } from '../api'
 import { useActions } from '../actions/ActionsContext'
@@ -9,7 +10,6 @@ import { Glyph } from '../design/icons'
 import { Notice } from '../Notice'
 import { PaneCard, WorkbenchShell } from '../components/workbench'
 import './ideas.css'
-
 const ENABLE_COMMAND = 'aq studio serve --allow-actions'
 const AUDIT_FILE = ['.autoquant', 'studio-actions.jsonl']
 
@@ -51,40 +51,42 @@ function useActionCatalog(): { state: 'off' | 'loading' | 'ready' | 'error'; act
 }
 
 function ActionsSection({ workspace }: { workspace: WorkspaceSummary }) {
+  const language = useLanguage()
+  const t = (en: string, zh: string) => translate(language, en, zh)
   const catalog = useActionCatalog()
   const on = !!workspace.actions?.enabled
   const root = workspace.source.rootDir
   return (
     <section className="set-sec" aria-labelledby="set-actions">
-      <h2 id="set-actions">Actions</h2>
+      <h2 id="set-actions">{t('Actions', '操作权限')}</h2>
       <p>
-        <Glyph kind={on ? 'supported' : 'empty'} /> {on ? 'On: Studio can start local jobs from the Project pages.' : 'Off: Studio is read-only.'}
+        <Glyph kind={on ? 'supported' : 'empty'} /> {on ? t('On: Studio can start local jobs from the Project pages.', '已开启：Studio 可以从项目页面启动本地任务。') : t('Off: Studio is read-only.', '已关闭：Studio 当前为只读模式。')}
       </p>
       {!on && (
         <>
-          <p className="small muted">Start the server with the flag below to turn actions on. Studio never turns them on by itself.</p>
+          <p className="small muted">{t('Start the server with the flag below to turn actions on. Studio never turns them on by itself.', '使用下方参数启动服务以开启操作权限。Studio 不会自行开启。')}</p>
           <div className="cmdrow">
             <pre className="cmd mono" translate="no">{ENABLE_COMMAND}</pre>
-            <CopyButton text={ENABLE_COMMAND} label="Copy command" />
+            <CopyButton text={ENABLE_COMMAND} label={t('Copy command', '复制命令')} />
           </div>
         </>
       )}
       <KV
         rows={[
-          ['Token', on ? 'Issued for this page, held in memory, never shown' : 'None issued'],
-          ['Audit log', auditPath(root), true],
+          [t('Token', '令牌'), on ? t('Issued for this page, held in memory, never shown', '已向此页面发放，仅保存在内存中，不会显示') : t('None issued', '未发放')],
+          [t('Audit log', '审计日志'), auditPath(root), true],
         ]}
       />
-      {on && catalog.state === 'loading' && <Loading label="Loading actions…" minHeight={60} />}
-      {on && catalog.state === 'error' && <Notice kind="error" label="Error" title="Could not load the action catalog." subtitle={catalog.error} />}
+      {on && catalog.state === 'loading' && <Loading label={uiText("Loading actions…")} minHeight={60} />}
+      {on && catalog.state === 'error' && <Notice kind="error" label={uiText("Error")} title={uiText("Could not load the action catalog.")} subtitle={catalog.error} />}
       {on && catalog.state === 'ready' && (
-        <ul className="set-actions" aria-label="Available actions">
+        <ul className="set-actions" aria-label={uiText("Available actions")}>
           {catalog.actions.map((a) => (
             <li key={a.id}>
-              <span>{a.label}</span>
+              <span>{uiValue(a.label)}</span>
               <span className="faint small">
-                <span className="mono" translate="no">{a.id}</span> · {a.classification} · writes {a.writes}
-                {a.requiresSecondConfirm ? ' · needs a second confirmation' : ''}
+                <span className="mono" translate="no">{a.id}</span> · {a.classification}{uiText(" · writes ")}{a.writes}
+                {a.requiresSecondConfirm ? uiText(" · needs a second confirmation") : ''}
               </span>
             </li>
           ))}
@@ -95,21 +97,23 @@ function ActionsSection({ workspace }: { workspace: WorkspaceSummary }) {
 }
 
 function WorkspaceSection({ workspace }: { workspace: WorkspaceSummary }) {
+  const language = useLanguage()
+  const t = (en: string, zh: string) => translate(language, en, zh)
   const h = workspace.harness
   const ws = workspace.source.workspace
   return (
     <section className="set-sec" aria-labelledby="set-workspace">
-      <h2 id="set-workspace">Workspace</h2>
+      <h2 id="set-workspace">{t('Workspace', '工作区')}</h2>
       <KV
         rows={[
-          ['Path', workspace.source.rootDir, true],
-          ...(ws?.name ? ([['Name', ws.name, true]] as [string, string, boolean][]) : []),
-          ...(ws?.configurationPath ? ([['Configuration', ws.configurationPath, true]] as [string, string, boolean][]) : []),
+          [t('Path', '路径'), workspace.source.rootDir, true],
+          ...(ws?.name ? ([[t('Name', '名称'), ws.name, true]] as [string, string, boolean][]) : []),
+          ...(ws?.configurationPath ? ([[t('Configuration', '配置文件'), ws.configurationPath, true]] as [string, string, boolean][]) : []),
           ['Harness', h.id, true],
-          ['Version', h.version, true],
+          [t('Version', '版本'), h.version, true],
           ['Commit', h.commit ?? 'unknown', true],
-          ['Uncommitted changes', h.dirty ? 'Yes (dirty working tree)' : 'No'],
-          ['Source hash', h.sourceHash ?? 'not reported', true],
+          [t('Uncommitted changes', '未提交的更改'), h.dirty ? t('Yes (dirty working tree)', '有') : t('No', '无')],
+          [t('Source hash', '源代码哈希'), h.sourceHash ?? t('not reported', '未提供'), true],
         ]}
       />
     </section>
@@ -125,10 +129,12 @@ const RULES = [
 
 /** Read-only: where this Studio runs and what it may do. Nothing here can be edited. */
 export function SettingsPage({ workspace }: { workspace: WorkspaceSummary | null }) {
+  const language = useLanguage()
+  const t = (en: string, zh: string) => translate(language, en, zh)
   if (!workspace) {
     return (
       <div className="pg">
-        <Loading label="Loading Workspace…" minHeight={240} />
+        <Loading label={uiText("Loading Workspace…")} minHeight={240} />
       </div>
     )
   }
@@ -138,27 +144,27 @@ export function SettingsPage({ workspace }: { workspace: WorkspaceSummary | null
     <WorkbenchShell
       ratio={50}
       left={
-        <PaneCard label="Actions and Workspace" tabs={<h1 className="set-title">Settings</h1>}>
+        <PaneCard label={t('Actions and Workspace', '操作权限和工作区')} tabs={<h1 className="set-title">{t('Settings', '设置')}</h1>}>
           <ActionsSection workspace={workspace} />
           <WorkspaceSection workspace={workspace} />
         </PaneCard>
       }
       right={
-        <PaneCard label="Research rules and About" tabs={<h2 className="set-title">Rules and About</h2>}>
+        <PaneCard label={t('Research rules and About', '研究规则和关于')} tabs={<h2 className="set-title">{t('Rules and About', '规则和关于')}</h2>}>
           <section className="set-sec" aria-labelledby="set-rules">
-            <h2 id="set-rules">Research rules</h2>
-            <p className="small muted">Fixed by the Judge. Read-only.</p>
+            <h2 id="set-rules">{t('Research rules', '研究规则')}</h2>
+            <p className="small muted">{t('Fixed by the Judge. Read-only.', '由判定器固定，仅供查看。')}</p>
             <ul>
-              {RULES.map((r) => (
-                <li key={r}>{r}</li>
+              {RULES.map((r, i) => (
+                <li key={r}>{language === 'zh' ? ['试验按研究族计数，记录不会删除。', '封存的留出集只能打开一次。', '审计完成前不显示测试数字。', '判决由固定判定器产生。'][i] : r}</li>
               ))}
             </ul>
           </section>
           <section className="set-sec" aria-labelledby="set-about">
-            <h2 id="set-about">About</h2>
+            <h2 id="set-about">{t('About', '关于')}</h2>
             <KV rows={[['Studio', version, true]]} />
             <p className="small">
-              <a href="/legacy">Open Legacy Studio</a> <span className="muted">for lanes that have no native page yet.</span>
+              <a href="/legacy">{t('Open Legacy Studio', '打开旧版 Studio')}</a> <span className="muted">{t('for lanes that have no native page yet.', '查看尚无新版页面的研究方向。')}</span>
             </p>
           </section>
         </PaneCard>

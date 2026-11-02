@@ -18,3 +18,4 @@ __pycache__/
 *.swp
 /studio-app/node_modules/
 /studio-app/tsconfig.tsbuildinfo
+/.tmp/

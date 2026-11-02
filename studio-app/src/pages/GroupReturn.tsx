@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { FactorCumulativePoint, FactorDiagnostics, FactorSpreadSplit } from '../api'
 import { ChartCard, SegmentedToggle, type MetricGroup } from '../components/workbench'
@@ -16,10 +17,10 @@ const spct = (v: number | null | undefined, digits = 2) =>
 type LineKey = 'high' | 'middle' | 'low' | 'spread'
 /** Monochrome by design: the four lines differ in weight and dash, and the spread alone takes the signal colour. */
 const LINES: { key: LineKey; label: string; stroke: string; width: number; dash?: string; round?: boolean }[] = [
-  { key: 'high', label: 'High group', stroke: 'var(--text)', width: 1.8 },
-  { key: 'middle', label: 'Middle group', stroke: 'var(--muted)', width: 1.4, dash: '6 3' },
-  { key: 'low', label: 'Low group', stroke: 'var(--stroke)', width: 1.6, dash: '1.5 3', round: true },
-  { key: 'spread', label: 'Long-short (high minus low)', stroke: 'var(--signal-graphic)', width: 2.2 },
+  { key: 'high', get label() { return uiText("High group") }, stroke: 'var(--text)', width: 1.8 },
+  { key: 'middle', get label() { return uiText("Middle group") }, stroke: 'var(--muted)', width: 1.4, dash: '6 3' },
+  { key: 'low', get label() { return uiText("Low group") }, stroke: 'var(--stroke)', width: 1.6, dash: '1.5 3', round: true },
+  { key: 'spread', get label() { return uiText("Long-short (high minus low)") }, stroke: 'var(--signal-graphic)', width: 2.2 },
 ]
 
 const m = { l: 56, r: 16, t: 22, b: 40 }
@@ -81,7 +82,7 @@ function GroupPlot({ points, width: W, height: H, label }: { points: FactorCumul
         <text x={m.l - 8} y={y(v) + 4} textAnchor="end" className="ax">{v.toFixed(2)}</text>
       </g>
     ))}
-    <text transform={`translate(13 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">growth multiple</text>
+    <text transform={`translate(13 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{uiText("growth multiple")}</text>
     {bounds.map((b) => (
       <g key={b.i}>
         <line x1={x(t[b.i])} x2={x(t[b.i])} y1={m.t} y2={H - m.b} stroke="var(--stroke)" strokeWidth="1" opacity=".7" />
@@ -115,7 +116,7 @@ function GroupPlot({ points, width: W, height: H, label }: { points: FactorCumul
         <text x={bx + 8} y={m.t + 20} className="ax">{hp.timestamp.slice(0, 10)} · {SPLIT_LABEL[hp.split]}</text>
         {[...LINES].reverse().map((l, i) => (
           <text key={l.key} x={bx + 8} y={m.t + 38 + i * 18} className="val">
-            {l.key === 'spread' ? 'Long-short' : l.label.replace(' group', '')}: {growth(hp[l.key])}
+            {l.key === 'spread' ? uiText("Long-short") : l.label.replace(' group', '')}: {growth(hp[l.key])}
           </text>
         ))}
       </g>
@@ -132,7 +133,7 @@ function GroupLegend({ testShown }: { testShown: boolean }) {
         <svg width="22" height="12" aria-hidden="true">
           <line x1="0" y1="6" x2="22" y2="6" stroke={l.stroke} strokeWidth={l.width} strokeDasharray={l.dash} strokeLinecap={l.round ? 'round' : undefined} />
         </svg>
-        <span>{l.label}</span>
+        <span>{uiValue(l.label)}</span>
       </span>
     ))}
     {!testShown && <span className="faint">{TEST_HIDDEN_NOTE}</span>}
@@ -143,15 +144,15 @@ function GroupLegend({ testShown }: { testShown: boolean }) {
 function GroupTable({ points }: { points: FactorCumulativePoint[] }) {
   return (
   <table className="tbl">
-    <caption className="small muted">Compounded group growth multiples</caption>
+    <caption className="small muted">{uiText("Compounded group growth multiples")}</caption>
     <thead>
       <tr>
-        <th scope="col">Date</th>
-        <th scope="col">Split</th>
-        <th scope="col" className="r">Low</th>
-        <th scope="col" className="r">Middle</th>
-        <th scope="col" className="r">High</th>
-        <th scope="col" className="r">Long-short</th>
+        <th scope="col">{uiText("Date")}</th>
+        <th scope="col">{uiText("Split")}</th>
+        <th scope="col" className="r">{uiText("Low")}</th>
+        <th scope="col" className="r">{uiText("Middle")}</th>
+        <th scope="col" className="r">{uiText("High")}</th>
+        <th scope="col" className="r">{uiText("Long-short")}</th>
       </tr>
     </thead>
     <tbody>
@@ -172,18 +173,18 @@ function GroupTable({ points }: { points: FactorCumulativePoint[] }) {
 
 const SPREAD_INFO = (basis: string | undefined) => (
   <>
-    <p>High minus low group, gross of costs, per-bar not annualised.</p>
+    <p>{uiText("High minus low group, gross of costs, per-bar not annualised.")}</p>
     {basis && <p className="faint">{basis}</p>}
   </>
 )
 
 const spreadTiles = (s: FactorSpreadSplit): MetricGroup['tiles'] => [
-  { label: 'Total return', value: spct(s.totalReturn, 1) },
-  { label: 'Max drawdown', value: spct(s.maximumDrawdown, 1) },
-  { label: 'Sharpe per bar', value: num(s.sharpePerBar, 3) },
-  { label: 'Hit rate', value: pct(s.hitRate, 1) },
-  { label: 'Mean per bar', value: spct(s.meanPerBar, 3) },
-  { label: 'Observations', value: typeof s.observations === 'number' ? int(s.observations) : '—' },
+  { label: uiText("Total return"), value: spct(s.totalReturn, 1) },
+  { label: uiText("Max drawdown"), value: spct(s.maximumDrawdown, 1) },
+  { label: uiText("Sharpe per bar"), value: num(s.sharpePerBar, 3) },
+  { label: uiText("Hit rate"), value: pct(s.hitRate, 1) },
+  { label: uiText("Mean per bar"), value: spct(s.meanPerBar, 3) },
+  { label: uiText("Observations"), value: typeof s.observations === 'number' ? int(s.observations) : '—' },
 ]
 
 /** Validation long-short groups, plus the test group only when the test split is visible (the same rule as the core metrics). Values arrive from the Core summary; nothing is re-derived. */
@@ -196,8 +197,8 @@ export function spreadGroups(study: FactorDiagnostics, testShown: boolean): Metr
   if (!validation) return []
   const info = SPREAD_INFO(sum.basis)
   return [
-    { heading: 'Long-short · validation', info, infoLabel: 'Long-short definition', tiles: spreadTiles(validation) },
-    ...(test ? [{ heading: 'Long-short · test audit', info, infoLabel: 'Long-short definition', tiles: spreadTiles(test) }] : []),
+    { heading: uiText("Long-short · validation"), info, infoLabel: 'Long-short definition', tiles: spreadTiles(validation) },
+    ...(test ? [{ heading: uiText("Long-short · test audit"), info, infoLabel: 'Long-short definition', tiles: spreadTiles(test) }] : []),
   ]
 }
 
@@ -220,12 +221,12 @@ export function FactorHero({ study, minHeight = 260 }: { study: FactorDiagnostic
   const assets = study.predictionUniverse.predictionAssets?.length ?? 0
   const toggle = groups ? (
     <SegmentedToggle
-      label="Hero chart"
+      label={uiText("Hero chart")}
       value={view}
       onChange={setChoice}
       options={[
-        { id: 'group', label: 'Group return' },
-        { id: 'ic', label: 'Rank IC' },
+        { id: 'group', label: uiText("Group return") },
+        { id: 'ic', label: uiText("Rank IC") },
       ]}
     />
   ) : undefined
@@ -234,10 +235,10 @@ export function FactorHero({ study, minHeight = 260 }: { study: FactorDiagnostic
     const desc = `Compounded growth multiple of the low, middle and high factor groups and of the long-short spread (high minus low), starting near 1.0. ${cum?.basis ?? ''} ${testShown ? `${points.length} of ${int(cum?.totalRows ?? points.length)}` : points.length} bars are drawn. ${testShown ? '' : TEST_HIDDEN_NOTE + '.'}`.trim()
     return (
       <ChartCard
-        title="Group cumulative return"
+        title={uiText("Group cumulative return")}
         info={
           <>
-            <p>{desc}</p>
+            <p>{uiValue(desc)}</p>
             {cum?.basis && <p>{cum.basis}</p>}
           </>
         }
@@ -251,7 +252,7 @@ export function FactorHero({ study, minHeight = 260 }: { study: FactorDiagnostic
             points={points}
             width={width}
             height={height}
-            label={`Low, middle and high factor groups compounded at ${cum?.horizon ?? 1}-bar horizon, gross of costs, plus the high-minus-low long-short curve.`}
+            label={uiTemplate("Low, middle and high factor groups compounded at {0}-bar horizon, gross of costs, plus the high-minus-low long-short curve.", [cum?.horizon ?? 1])}
           />
         )}
       </ChartCard>
@@ -264,9 +265,7 @@ export function FactorHero({ study, minHeight = 260 }: { study: FactorDiagnostic
       toggle={toggle}
       legendExtra={
         !quantiles ? (
-          <span className="small">
-            Group return curves do not exist for this Run: it is scored through time on {assets === 1 ? 'a single asset' : `${assets || 'its'} assets`}, so there is no cross-section to split into groups.
-          </span>
+          <span className="small">{uiText("Group return curves do not exist for this Run: it is scored through time on ")}{assets === 1 ? uiText("a single asset") : uiTemplate("{0} assets", [assets || 'its'])}{uiText(", so there is no cross-section to split into groups.")}</span>
         ) : undefined
       }
     />

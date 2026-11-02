@@ -1,3 +1,4 @@
+import { uiTemplate, uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 import './workbench.css'
 
@@ -32,10 +33,10 @@ export function PaneCard({
               {actions && <div className="wb-pane-actions">{actions}</div>}
             </div>
           )}
-          {status && <div className="wb-pane-status">{status}</div>}
+          {status && <div className="wb-pane-status">{uiValue(status)}</div>}
         </header>
       )}
-      <div className={`wb-pane-body${flush ? ' is-flush' : ''}`} tabIndex={flush ? undefined : 0} role={flush ? undefined : 'region'} aria-label={flush ? undefined : `${label} content`}>
+      <div className={`wb-pane-body${flush ? ' is-flush' : ''}`} tabIndex={flush ? undefined : 0} role={flush ? undefined : 'region'} aria-label={flush ? undefined : uiTemplate("{0} content", [label])}>
         {children}
       </div>
     </section>

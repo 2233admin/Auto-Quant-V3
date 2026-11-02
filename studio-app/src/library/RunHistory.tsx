@@ -1,3 +1,4 @@
+import { translate, uiTemplate, uiText, useLanguage } from '../i18n'
 import { useMemo, useState } from 'react'
 import type { WorkspaceSummary } from '../api'
 import { num, plural, when } from '../format'
@@ -5,11 +6,12 @@ import { routeHref } from '../route'
 import { byNewest, dayOf, flatRuns, useAllProjects, type FlatRun } from './data'
 import { DataTable, type Col } from './DataTable'
 import { Empty, Field, LoadNote, PageHead, uniq } from './parts'
-
 const duration = (ms: number | null | undefined) => (typeof ms === 'number' ? (ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`) : '—')
 const key = (r: FlatRun) => `${r.project.id}/${r.run.id}`
 
 export function RunHistory({ workspace, go }: { workspace: WorkspaceSummary | null; go: (href: string) => void }) {
+  const language = useLanguage()
+  const t = (en: string, zh: string) => translate(language, en, zh)
   const all = useAllProjects(workspace)
   const rows = useMemo(() => flatRuns(all).sort((a, b) => byNewest(a.run, b.run)), [all])
   const [q, setQ] = useState('')
@@ -40,14 +42,14 @@ export function RunHistory({ workspace, go }: { workspace: WorkspaceSummary | nu
   const cols: Col<FlatRun>[] = [
     {
       id: 'pick',
-      label: 'Select',
+      label: t('Select', '选择'),
       render: (r) => (
-        <input type="checkbox" aria-label={`Select ${r.run.id} for comparison`} checked={picked.includes(key(r))} onChange={() => toggle(key(r))} />
+        <input type="checkbox" aria-label={uiTemplate("Select {0} for comparison", [r.run.id])} checked={picked.includes(key(r))} onChange={() => toggle(key(r))} />
       ),
     },
     {
       id: 'run',
-      label: 'Run',
+      label: t('Run', '运行'),
       rowHeader: true,
       sort: (r) => r.run.id,
       render: (r) => (
@@ -57,14 +59,14 @@ export function RunHistory({ workspace, go }: { workspace: WorkspaceSummary | nu
         </>
       ),
     },
-    { id: 'project', label: 'Project', sort: (r) => r.project.name, render: (r) => <span translate="no">{r.project.name}</span> },
-    { id: 'lane', label: 'Lane', sort: (r) => r.lane, render: (r) => r.lane },
-    { id: 'status', label: 'Status', sort: (r) => r.run.status, render: (r) => r.run.status },
-    { id: 'started', label: 'Started (UTC)', sort: (r) => r.run.startedAt, render: (r) => <span className="mono">{when(r.run.startedAt)}</span> },
-    { id: 'dur', label: 'Duration', align: 'r', sort: (r) => r.run.durationMs ?? null, render: (r) => duration(r.run.durationMs) },
-    { id: 'metric', label: 'Metric', sort: (r) => r.run.primaryMetric, render: (r) => <span className="mono small" translate="no">{r.run.primaryMetric}</span> },
-    { id: 'value', label: 'Value', align: 'r', sort: (r) => r.run.primaryValue, render: (r) => num(r.run.primaryValue, 4) },
-    { id: 'errors', label: 'Errors', align: 'r', sort: (r) => (r.run.errors ?? []).length, render: (r) => (r.run.errors ?? []).length },
+    { id: 'project', label: t('Project', '项目'), sort: (r) => r.project.name, render: (r) => <span translate="no">{r.project.name}</span> },
+    { id: 'lane', label: t('Lane', '研究方向'), sort: (r) => r.lane, render: (r) => r.lane },
+    { id: 'status', label: t('Status', '状态'), sort: (r) => r.run.status, render: (r) => r.run.status },
+    { id: 'started', label: t('Started (UTC)', '开始时间 (UTC)'), sort: (r) => r.run.startedAt, render: (r) => <span className="mono">{when(r.run.startedAt)}</span> },
+    { id: 'dur', label: t('Duration', '用时'), align: 'r', sort: (r) => r.run.durationMs ?? null, render: (r) => duration(r.run.durationMs) },
+    { id: 'metric', label: t('Metric', '指标'), sort: (r) => r.run.primaryMetric, render: (r) => <span className="mono small" translate="no">{r.run.primaryMetric}</span> },
+    { id: 'value', label: t('Value', '数值'), align: 'r', sort: (r) => r.run.primaryValue, render: (r) => num(r.run.primaryValue, 4) },
+    { id: 'errors', label: t('Errors', '错误'), align: 'r', sort: (r) => (r.run.errors ?? []).length, render: (r) => (r.run.errors ?? []).length },
   ]
   const reset = () => {
     setQ('')
@@ -78,63 +80,63 @@ export function RunHistory({ workspace, go }: { workspace: WorkspaceSummary | nu
   return (
     <div className="pg">
       <PageHead
-        title="Run history"
-        lede={`${plural(rows.length, 'immutable Run')} across ${plural(new Set(rows.map((r) => r.project.id)).size, 'Project')}, newest first. Tick two Runs of one Project to compare them.`}
+        title={t('Run history', '运行历史')}
+        lede={language === 'zh' ? `共 ${rows.length} 条运行记录，来自 ${new Set(rows.map((r) => r.project.id)).size} 个项目，按时间倒序排列。选择同一项目的两条记录进行比较。` : uiTemplate("{0} across {1}, newest first. Tick two Runs of one Project to compare them.", [plural(rows.length, 'immutable Run'), plural(new Set(rows.map((r) => r.project.id)).size, 'Project')])}
       />
       <LoadNote all={all} />
       <div className="lib-filters">
-        <Field label="Search">
-          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Run, Study, metric" />
+        <Field label={t('Search', '搜索')}>
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Run, Study, metric', '运行、研究或指标')} />
         </Field>
-        <Field label="Lane">
+        <Field label={t('Lane', '研究方向')}>
           <select value={lane} onChange={(e) => setLane(e.target.value)}>
-            <option value="">All lanes</option>
+            <option value="">{t('All lanes', '全部方向')}</option>
             {uniq(rows.map((r) => r.lane)).map((v) => <option key={v}>{v}</option>)}
           </select>
         </Field>
-        <Field label="Status">
+        <Field label={t('Status', '状态')}>
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">All statuses</option>
+            <option value="">{t('All statuses', '全部状态')}</option>
             {uniq(rows.map((r) => r.run.status)).map((v) => <option key={v}>{v}</option>)}
           </select>
         </Field>
-        <Field label="Project">
+        <Field label={t('Project', '项目')}>
           <select value={project} onChange={(e) => setProject(e.target.value)}>
-            <option value="">All Projects</option>
+            <option value="">{t('All Projects', '全部项目')}</option>
             {uniq(rows.map((r) => r.project.id)).map((id) => <option key={id} value={id}>{rows.find((r) => r.project.id === id)?.project.name ?? id}</option>)}
           </select>
         </Field>
         <details className="lib-more">
           <summary>
-            Dates
-            {(from || to) && <span className="lib-dot" aria-label="A date filter is set" />}
+            {t('Dates', '日期')}
+            {(from || to) && <span className="lib-dot" aria-label={uiText("A date filter is set")} />}
           </summary>
           <div className="lib-more-panel">
-            <Field label="From (UTC)" visible>
+            <Field label={t('From (UTC)', '起始日期 (UTC)')} visible>
               <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
             </Field>
-            <Field label="To (UTC)" visible>
+            <Field label={t('To (UTC)', '结束日期 (UTC)')} visible>
               <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
             </Field>
           </div>
         </details>
-        {filtered && <button type="button" className="btn" onClick={reset}>Clear filters</button>}
-        <span className="faint small lib-count" role="status">{shown.length} of {rows.length} Runs</span>
+        {filtered && <button type="button" className="btn" onClick={reset}>{t('Clear filters', '清除筛选')}</button>}
+        <span className="faint small lib-count" role="status">{language === 'zh' ? `显示 ${shown.length} / ${rows.length} 条运行记录` : uiTemplate("{0} of {1} Runs", [shown.length, rows.length])}</span>
       </div>
       <div className="lib-bar" role="status">
         {a && b ? (
-          <a className="btn" href={routeHref({ view: 'compare', id: a.project.id, a: a.run.id, b: b.run.id })}>Compare 2 Runs</a>
+          <a className="btn" href={routeHref({ view: 'compare', id: a.project.id, a: a.run.id, b: b.run.id })}>{t('Compare 2 Runs', '比较两次运行')}</a>
         ) : picked.length === 2 ? (
-          <span className="sig small">Compare needs two Runs of the same Project.</span>
+          <span className="sig small">{t('Compare needs two Runs of the same Project.', '比较需要选择同一项目的两次运行。')}</span>
         ) : (
-          <span className="faint small">{picked.length}/2 selected</span>
+          <span className="faint small">{language === 'zh' ? `已选择 ${picked.length}/2` : uiTemplate("{0}/2 selected", [picked.length])}</span>
         )}
-        {picked.length > 0 && <button type="button" className="btn" onClick={() => setPicked([])}>Clear selection</button>}
+        {picked.length > 0 && <button type="button" className="btn" onClick={() => setPicked([])}>{t('Clear selection', '清除选择')}</button>}
       </div>
       {shown.length === 0 ? (
-        <Empty>{rows.length === 0 ? 'No Run was found in this Workspace.' : 'No Run matches these filters.'}</Empty>
+        <Empty>{rows.length === 0 ? t('No Run was found in this Workspace.', '此工作区没有运行记录。') : t('No Run matches these filters.', '没有符合筛选条件的运行记录。')}</Empty>
       ) : (
-        <DataTable rows={shown} cols={cols} rowKey={key} href={href} go={go} initial={{ id: 'started', dir: -1 }} caption="Runs across all Projects" selected={(r) => picked.includes(key(r))} />
+        <DataTable rows={shown} cols={cols} rowKey={key} href={href} go={go} initial={{ id: 'started', dir: -1 }} caption={uiText("Runs across all Projects")} selected={(r) => picked.includes(key(r))} />
       )}
     </div>
   )

@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { useEffect, useState } from 'react'
 import type { ProjectSnapshot } from '../../api'
 import { Section } from '../../design/layout'
@@ -33,17 +34,17 @@ function verdictOf(pf: PortfolioDiagnostics): Verdict {
 
 type Metric = { key: keyof PerfSummary; label: string; kind: 'pct' | 'num'; vsBench: boolean; gross: boolean }
 const METRICS: Metric[] = [
-  { key: 'totalReturn', label: 'Net total return', kind: 'pct', vsBench: true, gross: true },
-  { key: 'annualReturn', label: 'Net annualized return', kind: 'pct', vsBench: true, gross: true },
-  { key: 'sharpe', label: 'Net Sharpe', kind: 'num', vsBench: true, gross: true },
-  { key: 'sortino', label: 'Net Sortino', kind: 'num', vsBench: true, gross: true },
-  { key: 'maximumDrawdown', label: 'Max drawdown', kind: 'pct', vsBench: true, gross: true },
-  { key: 'calmar', label: 'Calmar ratio', kind: 'num', vsBench: true, gross: false },
-  { key: 'annualVolatility', label: 'Annualized volatility', kind: 'pct', vsBench: true, gross: false },
-  { key: 'expectedShortfall95', label: 'Expected shortfall 95%', kind: 'pct', vsBench: true, gross: false },
-  { key: 'positiveRate', label: 'Positive-day rate', kind: 'pct', vsBench: true, gross: false },
-  { key: 'activeAnnualReturn', label: 'Active return vs benchmark', kind: 'pct', vsBench: false, gross: false },
-  { key: 'informationRatio', label: 'Information ratio', kind: 'num', vsBench: false, gross: false },
+  { key: 'totalReturn', get label() { return uiText("Net total return") }, kind: 'pct', vsBench: true, gross: true },
+  { key: 'annualReturn', get label() { return uiText("Net annualized return") }, kind: 'pct', vsBench: true, gross: true },
+  { key: 'sharpe', get label() { return uiText("Net Sharpe") }, kind: 'num', vsBench: true, gross: true },
+  { key: 'sortino', get label() { return uiText("Net Sortino") }, kind: 'num', vsBench: true, gross: true },
+  { key: 'maximumDrawdown', get label() { return uiText("Max drawdown") }, kind: 'pct', vsBench: true, gross: true },
+  { key: 'calmar', get label() { return uiText("Calmar ratio") }, kind: 'num', vsBench: true, gross: false },
+  { key: 'annualVolatility', get label() { return uiText("Annualized volatility") }, kind: 'pct', vsBench: true, gross: false },
+  { key: 'expectedShortfall95', get label() { return uiText("Expected shortfall 95%") }, kind: 'pct', vsBench: true, gross: false },
+  { key: 'positiveRate', get label() { return uiText("Positive-day rate") }, kind: 'pct', vsBench: true, gross: false },
+  { key: 'activeAnnualReturn', get label() { return uiText("Active return vs benchmark") }, kind: 'pct', vsBench: false, gross: false },
+  { key: 'informationRatio', get label() { return uiText("Information ratio") }, kind: 'num', vsBench: false, gross: false },
 ]
 
 const SHORT: Record<string, string> = {
@@ -71,18 +72,18 @@ function metricGroups(pf: PortfolioDiagnostics, split: Split): MetricGroup[] | n
   return [
     {
       heading: label,
-      label: `Core numbers, ${split} split`,
+      label: uiTemplate("Core numbers, {0} split", [split]),
       tiles: [
         ...METRICS.filter((m) => m.key !== 'calmar' || finite(v.net?.calmar)).map((m) => {
           const bench = v.benchmark?.[m.key]
           return {
             label: SHORT[m.key] ?? m.label,
             value: fmtMetric(m, v.net?.[m.key]),
-            info: m.vsBench && finite(bench) ? <p>{m.label}. Benchmark value: {fmtMetric(m, bench)}.</p> : m.label,
+            info: m.vsBench && finite(bench) ? <p>{uiValue(m.label)}{uiText(". Benchmark value: ")}{fmtMetric(m, bench)}.</p> : m.label,
           }
         }),
-        { label: '1-way turnover / yr', value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—', info: 'Annualized one-way turnover: traded notional per year, one way.' },
-        { label: 'Total cost drag', value: up(f?.totalCostDrag, 2), info: `Total cost drag at ${finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade.` },
+        { label: uiText("1-way turnover / yr"), value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—', info: 'Annualized one-way turnover: traded notional per year, one way.' },
+        { label: uiText("Total cost drag"), value: up(f?.totalCostDrag, 2), info: `Total cost drag at ${finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade.` },
       ],
     },
   ]
@@ -95,14 +96,14 @@ function MetricDetail({ pf, split }: { pf: PortfolioDiagnostics; split: Split })
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">Net against benchmark and gross, {split} split</caption>
+        <caption className="small muted">{uiText("Net against benchmark and gross, ")}{split}{uiText(" split")}</caption>
         <thead>
           <tr>
-            <th scope="col">Metric</th>
-            <th scope="col" className="r">Net</th>
-            <th scope="col" className="r">Benchmark</th>
-            <th scope="col" className="r">Net minus benchmark</th>
-            <th scope="col" className="r">Gross (no cost)</th>
+            <th scope="col">{uiText("Metric")}</th>
+            <th scope="col" className="r">{uiText("Net")}</th>
+            <th scope="col" className="r">{uiText("Benchmark")}</th>
+            <th scope="col" className="r">{uiText("Net minus benchmark")}</th>
+            <th scope="col" className="r">{uiText("Gross (no cost)")}</th>
           </tr>
         </thead>
         <tbody>
@@ -113,10 +114,10 @@ function MetricDetail({ pf, split }: { pf: PortfolioDiagnostics; split: Split })
             const delta = m.vsBench && finite(net) && finite(bench) ? net - bench : null
             return (
               <tr key={m.key}>
-                <th scope="row">{m.label}</th>
+                <th scope="row">{uiValue(m.label)}</th>
                 <td className="r mono">{fmtMetric(m, net)}</td>
-                <td className="r mono">{m.vsBench ? (finite(bench) ? fmtMetric(m, bench) : '—') : 'by definition'}</td>
-                <td className="r mono">{delta === null ? '—' : m.kind === 'pct' ? `${delta >= 0 ? '+' : '−'}${fn(Math.abs(delta) * 100, 2)} pts` : `${delta >= 0 ? '+' : '−'}${fn(Math.abs(delta), 2)}`}</td>
+                <td className="r mono">{m.vsBench ? (finite(bench) ? fmtMetric(m, bench) : '—') : uiText("by definition")}</td>
+                <td className="r mono">{delta === null ? '—' : m.kind === 'pct' ? uiTemplate("{0}{1} pts", [delta >= 0 ? '+' : '−', fn(Math.abs(delta) * 100, 2)]) : `${delta >= 0 ? '+' : '−'}${fn(Math.abs(delta), 2)}`}</td>
                 <td className="r mono">{m.gross && finite(gross) ? fmtMetric(m, gross) : '—'}</td>
               </tr>
             )
@@ -151,15 +152,13 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
     return (
       <div className="pg pf">
         <header className="pg-head">
-          <h1>Portfolio</h1>
-          <p className="muted small">
-            Project <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a>. Research diagnostics of a mechanical strategy; no trading authority.
-          </p>
+          <h1>{uiText("Portfolio")}</h1>
+          <p className="muted small">{uiText("Project ")}<a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a>{uiText(". Research diagnostics of a mechanical strategy; no trading authority.")}</p>
         </header>
-        <Empty title="No evidence in this Project">
-          <p>This Project has no Portfolio Run, so there is no net-growth curve, viability diagnosis or parameter neighborhood to draw. Nothing is estimated in its place.</p>
+        <Empty title={uiText("No evidence in this Project")}>
+          <p>{uiText("This Project has no Portfolio Run, so there is no net-growth curve, viability diagnosis or parameter neighborhood to draw. Nothing is estimated in its place.")}</p>
           <p className="small">
-            <a href={routeHref({ view: 'project', id: project.id })}>Back to the Project</a>
+            <a href={routeHref({ view: 'project', id: project.id })}>{uiText("Back to the Project")}</a>
           </p>
         </Empty>
       </div>
@@ -214,7 +213,7 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
   if (agg) {
     reasons.push({
       tone: 'info',
-      text: `${up(agg.positiveNetSharpeRate, 0)} of ${agg.configurationCount} nearby configurations have a positive validation net Sharpe; ${up(agg.signAgreementWithBaseRate, 0)} share the base sign.`,
+      text: uiTemplate("{0} of {1} nearby configurations have a positive validation net Sharpe; {2} share the base sign.", [up(agg.positiveNetSharpeRate, 0), agg.configurationCount, up(agg.signAgreementWithBaseRate, 0)]),
       field: 'parameterNeighborhood.validation.aggregate',
     })
   }
@@ -232,72 +231,72 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
     return w ? `${day(w.start)} to ${day(w.end)}` : '—'
   }
   const facts: Fact[] = [
-    { label: 'Project', value: <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a> },
-    { label: 'Run', value: run?.id?.replace(/^run-/, '') ?? '—', mono: true },
-    { label: 'Study', value: run?.studyId ?? '—', mono: true },
-    { label: 'Universe', value: `${pf.universe?.length ?? '—'} assets` },
-    { label: 'Mandate', value: pf.mandate?.family ?? '—', mono: true },
-    { label: 'Benchmark', value: pf.mandate?.benchmark?.kind ?? '—', mono: true },
-    { label: 'Selection split', value: pf.selection?.selectionSplit ?? 'validation', mono: true },
-    { label: 'Test role', value: pf.selection?.testRole ?? '—', mono: true },
-    { label: 'Train', value: win('train') },
-    { label: 'Validation', value: win('validation') },
-    ...(testVisible ? [{ label: 'Test', value: win('test') }] : []),
-    { label: 'Sampled path', value: finite(pf.path?.sampledRows) ? `${pf.path?.sampledRows} of ${(pf.path?.totalRows ?? 0).toLocaleString('en-US')} rows` : '—' },
+    { label: uiText("Project"), value: <a href={routeHref({ view: 'project', id: project.id })}>{project.name}</a> },
+    { label: uiText("Run"), value: run?.id?.replace(/^run-/, '') ?? '—', mono: true },
+    { label: uiText("Study"), value: run?.studyId ?? '—', mono: true },
+    { label: uiText("Universe"), value: `${pf.universe?.length ?? '—'} assets` },
+    { label: uiText("Mandate"), value: pf.mandate?.family ?? '—', mono: true },
+    { label: uiText("Benchmark"), value: pf.mandate?.benchmark?.kind ?? '—', mono: true },
+    { label: uiText("Selection split"), value: pf.selection?.selectionSplit ?? 'validation', mono: true },
+    { label: uiText("Test role"), value: pf.selection?.testRole ?? '—', mono: true },
+    { label: uiText("Train"), value: win('train') },
+    { label: uiText("Validation"), value: win('validation') },
+    ...(testVisible ? [{ label: uiText("Test"), value: win('test') }] : []),
+    { label: uiText("Sampled path"), value: finite(pf.path?.sampledRows) ? `${pf.path?.sampledRows} of ${(pf.path?.totalRows ?? 0).toLocaleString('en-US')} rows` : '—' },
   ]
 
   const tabs: TabDef<TabId>[] = [
-    { id: 'detail', label: 'Detail' },
-    { id: 'viability', label: 'Viability and cost' },
-    { id: 'neighborhood', label: 'Neighborhood' },
-    { id: 'book', label: 'Book and exposure' },
-    { id: 'transitions', label: 'Transitions', badge: String(transitions.length) },
-    { id: 'episodes', label: 'Episodes', badge: String(episodes.length) },
-    { id: 'path', label: 'Path data' },
+    { id: 'detail', label: uiText("Detail") },
+    { id: 'viability', label: uiText("Viability and cost") },
+    { id: 'neighborhood', label: uiText("Neighborhood") },
+    { id: 'book', label: uiText("Book and exposure") },
+    { id: 'transitions', label: uiText("Transitions"), badge: String(transitions.length) },
+    { id: 'episodes', label: uiText("Episodes"), badge: String(episodes.length) },
+    { id: 'path', label: uiText("Path data") },
   ]
 
   const netSplit = pf.strategyViability?.[effective]?.net
   const stats: Stat[] = netSplit
     ? [
-        { label: 'Net Sharpe', value: fn(netSplit.sharpe), hint: `${effective} split, after costs` },
-        { label: 'Net return', value: sp(netSplit.totalReturn), hint: `Total return, ${effective} split, after costs` },
-        { label: 'Max drawdown', value: sp(netSplit.maximumDrawdown), hint: `${effective} split` },
+        { label: uiText("Net Sharpe"), value: fn(netSplit.sharpe), hint: uiTemplate("{0} split, after costs", [effective]) },
+        { label: uiText("Net return"), value: sp(netSplit.totalReturn), hint: uiTemplate("Total return, {0} split, after costs", [effective]) },
+        { label: uiText("Max drawdown"), value: sp(netSplit.maximumDrawdown), hint: uiTemplate("{0} split", [effective]) },
       ]
     : []
   const runRow = project.runs.find((r) => r.id === run?.id)
   const duration = typeof runRow?.durationMs === 'number' ? `${(runRow.durationMs / 1000).toFixed(1)} s` : undefined
   const exportButton: ActionButton = testVisible
-    ? { label: 'Export JSON', onClick: () => downloadJson(`${run?.id ?? 'portfolio'}-portfolio-evidence.json`, pf), title: 'Download the Portfolio evidence snapshot of this Run as JSON' }
-    : { label: 'Export JSON', disabled: true, disabledReason: 'No test audit is published for this Run: the raw snapshot is exported only when every number in it may be shown.' }
+    ? { label: uiText("Export JSON"), onClick: () => downloadJson(`${run?.id ?? 'portfolio'}-portfolio-evidence.json`, pf), title: uiText("Download the Portfolio evidence snapshot of this Run as JSON") }
+    : { label: uiText("Export JSON"), disabled: true, disabledReason: uiText("No test audit is published for this Run: the raw snapshot is exported only when every number in it may be shown.") }
   const resultActions: ActionButton[] = [
-    { label: 'Parameters', onClick: () => setParamsOpen(true), title: 'Show the parameters of the Study and the Run' },
-    { label: 'Open Project', href: routeHref({ view: 'project', id: project.id }) },
-    ...(run?.id ? [{ label: 'Run summary', href: routeHref({ view: 'run', id: project.id, run: run.id }) }] : []),
+    { label: uiText("Parameters"), onClick: () => setParamsOpen(true), title: uiText("Show the parameters of the Study and the Run") },
+    { label: uiText("Open Project"), href: routeHref({ view: 'project', id: project.id }) },
+    ...(run?.id ? [{ label: uiText("Run summary"), href: routeHref({ view: 'run', id: project.id, run: run.id }) }] : []),
     exportButton,
   ]
 
   const selector =
     portfolioRuns.length > 0 ? (
-      <RunSelect bar compact label="Portfolio Run" runs={portfolioRuns} value={run?.id} onChange={(id) => go?.(routeHref({ view: 'run', id: project.id, run: id }))} />
+      <RunSelect bar compact label={uiText("Portfolio Run")} runs={portfolioRuns} value={run?.id} onChange={(id) => go?.(routeHref({ view: 'run', id: project.id, run: id }))} />
     ) : (
       <span className="mono small faint">{run?.id?.replace(/^run-/, '') ?? '—'}</span>
     )
   const splitControl = (
     <span className="wb-split">
-      <span>Split:</span>
+      <span>{uiText("Split:")}</span>
       {toggle}
     </span>
   )
-  const chips: Fact[] = facts.filter((f) => ['Project', 'Run', 'Study', 'Universe'].includes(f.label))
-  const more: Fact[] = facts.filter((f) => !['Project', 'Run', 'Study', 'Universe'].includes(f.label))
+  const chips: Fact[] = facts.filter((f) => ['Project', 'Run', 'Study', 'Universe'].map(uiText).includes(f.label))
+  const more: Fact[] = facts.filter((f) => !['Project', 'Run', 'Study', 'Universe'].map(uiText).includes(f.label))
 
   const right = (
     <PaneCard
-      label="Results"
+      label={uiText("Results")}
       actions={
         <div className="wb-resultbar">
           {selector}
-          <StatChips label={`Headline numbers, ${effective} split`} scope={effective === 'test' ? 'Test' : 'Validation'} stats={stats} />
+          <StatChips label={uiTemplate("Headline numbers, {0} split", [effective])} scope={effective === 'test' ? 'Test' : 'Validation'} stats={stats} />
         </div>
       }
       status={
@@ -316,65 +315,60 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
         </div>
       }
     >
-      <h1 className="sr-only">Portfolio</h1>
+      <h1 className="sr-only">{uiText("Portfolio")}</h1>
       <FactChips
-        label="What was run"
+        label={uiText("What was run")}
         locked
         variant="row"
         facts={chips}
         more={more}
         info={
           <>
-            <p>These values come from the Study and the Run. They are read-only here. Research diagnostics of a mechanical strategy; no trading authority.</p>
-            <p>
-              Selection uses the {pf.selection?.selectionSplit ?? 'validation'} split only. Test is <span className="mono">{pf.selection?.testRole ?? '—'}</span>
-              {pf.selection?.testEntersSelection === false ? ' and never enters selection' : ''}.
-              {!testVisible && ' No test audit is published for this Run, so no test number is drawn on this page.'}
+            <p>{uiText("These values come from the Study and the Run. They are read-only here. Research diagnostics of a mechanical strategy; no trading authority.")}</p>
+            <p>{uiText("Selection uses the ")}{pf.selection?.selectionSplit ?? uiText("validation")}{uiText(" split only. Test is ")}<span className="mono">{pf.selection?.testRole ?? '—'}</span>
+              {pf.selection?.testEntersSelection === false ? uiText(" and never enters selection") : ''}.
+              {!testVisible && uiText(" No test audit is published for this Run, so no test number is drawn on this page.")}
             </p>
           </>
         }
       />
       {points.length >= 2 ? (
-        <ChartCard title="Growth and drawdown" info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} toggle={splitControl} minHeight={260}>
+        <ChartCard title={uiText("Growth and drawdown")} info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} toggle={splitControl} minHeight={260}>
           {() => <PortfolioChart points={points} windows={windows} transitions={transitions.map((r) => r.timestamp)} totalRows={pf.path?.totalRows} sampledRows={pf.path?.sampledRows} />}
         </ChartCard>
       ) : (
-        <Empty title="Not available">
-          <p>not available: the Run publishes {allPoints.length} path points{testVisible ? '' : ' outside the test split'}, too few to draw a curve.</p>
+        <Empty title={uiText("Not available")}>
+          <p>{uiText("not available: the Run publishes ")}{allPoints.length}{uiText(" path points")}{testVisible ? '' : uiText(" outside the test split")}{uiText(", too few to draw a curve.")}</p>
         </Empty>
       )}
       {points.length < 2 && splitControl}
       {groups ? <MetricGrid groups={groups} hiddenNote={testVisible ? undefined : hiddenNote} /> : <p><NA why={`strategyViability.${effective}.net is not in the payload`} /></p>}
       <Tabs
-        label="Portfolio sections"
+        label={uiText("Portfolio sections")}
         tabs={tabs}
         active={tab}
         onSelect={selectTab}
         panels={{
           detail: (
-            <Section title="Verdict and metrics" id="pf-summary" caption={`Universe ${pf.universe?.length ?? '—'} assets; ${pf.mandate?.family ?? '—'} mandate; benchmark ${pf.mandate?.benchmark?.kind ?? '—'}.`}>
+            <Section title={uiText("Verdict and metrics")} id="pf-summary" caption={uiTemplate("Universe {0} assets; {1} mandate; benchmark {2}.", [pf.universe?.length ?? '—', pf.mandate?.family ?? '—', pf.mandate?.benchmark?.kind ?? '—'])}>
               <div className="vstack">
                 <ul className="pf-reasons">
                   {reasons.map((r, i) => (
                     <li key={i}>
-                      {r.text} <span className="faint small mono">{r.field}</span>
+                      {uiValue(r.text)} <span className="faint small mono">{r.field}</span>
                     </li>
                   ))}
                 </ul>
                 {d && (
-                  <p className="small muted">
-                    Stage <span className="mono">{d.stage}</span>; next focus <span className="mono">{d.iterationFocus}</span>. Read from the server stage only. This lane never shows Pass: even the best stage still needs robustness checks and a fresh external holdout.
-                  </p>
+                  <p className="small muted">{uiText("Stage ")}<span className="mono">{uiValue(d.stage)}</span>{uiText("; next focus ")}<span className="mono">{d.iterationFocus}</span>{uiText(". Read from the server stage only. This lane never shows Pass: even the best stage still needs robustness checks and a fresh external holdout.")}</p>
                 )}
                 {testVisible && effective === 'test' && (
-                  <p className="small muted">
-                    Test is a visible audit.
-                    <Info label="About the test split">
-                      <p>Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.</p>
+                  <p className="small muted">{uiText("Test is a visible audit.")}<Info label={uiText("About the test split")}>
+                      <p>{uiText("Test is a visible audit. It did not enter selection, and looking at it more than once spends the held-out evidence.")}</p>
                     </Info>
                   </p>
                 )}
-                <Block title="Whole sampled path (all splits)">
+                <Block title={uiText("Whole sampled path (all splits)")}>
                   {sum && testVisible ? (
                     <Kv
                       rows={[
@@ -389,45 +383,45 @@ export function PortfolioPage({ project, go }: { project: ProjectSnapshot; go?: 
                     <NA why={sum ? 'the whole-path summary mixes in the test split, and no test audit is published for this Run' : 'path.summary is not in the payload'} />
                   )}
                 </Block>
-                <Block title={`Benchmark and gross detail, ${effective} split`}>
+                <Block title={uiTemplate("Benchmark and gross detail, {0} split", [effective])}>
                   <MetricDetail pf={pf} split={effective} />
                 </Block>
               </div>
             </Section>
           ),
           viability: (
-            <Section title="Viability and cost stress" id="pf-viability" caption="Gross against net, break-even cost and extra delay.">
+            <Section title={uiText("Viability and cost stress")} id="pf-viability" caption={uiText("Gross against net, break-even cost and extra delay.")}>
               <ViabilityBlock pf={pf} split={effective} />
             </Section>
           ),
           neighborhood: (
-            <Section title="Parameter neighborhood" id="pf-neighborhood" caption="Predeclared nearby configurations; context only.">
+            <Section title={uiText("Parameter neighborhood")} id="pf-neighborhood" caption={uiText("Predeclared nearby configurations; context only.")}>
               <NeighborhoodBlock pf={pf} split={effective} />
             </Section>
           ),
           book: (
-            <Section title="Current book and exposure" id="pf-book" caption="Last published decision date, with per-asset attribution.">
+            <Section title={uiText("Current book and exposure")} id="pf-book" caption={uiText("Last published decision date, with per-asset attribution.")}>
               <BookBlock pf={pf} split={effective} hiddenWhy={bookHidden} />
             </Section>
           ),
           transitions: (
-            <Section title="Recent transitions" id="pf-transitions" caption={`${transitions.length} signal transitions.`}>
+            <Section title={uiText("Recent transitions")} id="pf-transitions" caption={uiTemplate("{0} signal transitions.", [transitions.length])}>
               <TransitionsTable rows={transitions} total={transitionsAll.length} />
             </Section>
           ),
           episodes: (
-            <Section title="Recent episodes" id="pf-episodes" caption={`${episodes.length} position episodes.`}>
+            <Section title={uiText("Recent episodes")} id="pf-episodes" caption={uiTemplate("{0} position episodes.", [episodes.length])}>
               <EpisodesTable rows={episodes} total={episodesAll.length} />
             </Section>
           ),
           path: (
-            <Section title="Sampled daily path" id="pf-path" caption="The points the growth chart draws.">
+            <Section title={uiText("Sampled daily path")} id="pf-path" caption={uiText("The points the growth chart draws.")}>
               {points.length >= 2 ? <PathTable points={points} /> : <NA why="too few path points" />}
             </Section>
           ),
         }}
       />
-      <FactsDialog open={paramsOpen} onClose={() => setParamsOpen(false)} title="Study and Run parameters" note="Read-only: they come from the Study and the Run." facts={facts} />
+      <FactsDialog open={paramsOpen} onClose={() => setParamsOpen(false)} title={uiText("Study and Run parameters")} note={uiText("Read-only: they come from the Study and the Run.")} facts={facts} />
     </PaneCard>
   )
 

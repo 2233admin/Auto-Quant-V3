@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { Info } from '../../components/Info'
 import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { niceTicks } from '../factorMath'
@@ -46,8 +47,8 @@ export function LaneChart({
   const ys = series.flatMap((s) => s.points.map((p) => p.y)).filter(finite)
   if (xs.length < 2 || ys.length < 2) {
     return (
-      <Empty title="Not available">
-        <p>not available: the Run publishes fewer than two points for “{title}”, too few to draw a line.</p>
+      <Empty title={uiText("Not available")}>
+        <p>{uiText("not available: the Run publishes fewer than two points for “")}{title}{uiText("”, too few to draw a line.")}</p>
       </Empty>
     )
   }
@@ -106,19 +107,19 @@ export function LaneChart({
     <figure ref={figRef} className="chart lane-chart">
       <figcaption className="lane-cap">
         <h3 id={`${id}-t`}>{title}</h3>
-        <Info label={`About: ${title}`}>
-          <p>{desc} Hover the chart, or focus it and use the arrow keys, to read a point.</p>
+        <Info label={uiTemplate("About: {0}", [title])}>
+          <p>{uiValue(desc)}{uiText(" Hover the chart, or focus it and use the arrow keys, to read a point.")}</p>
         </Info>
-        <p className="sr-only" id={`${id}-d`}>{desc} Hover the chart, or focus it and use the arrow keys, to read a point.</p>
+        <p className="sr-only" id={`${id}-d`}>{uiValue(desc)}{uiText(" Hover the chart, or focus it and use the arrow keys, to read a point.")}</p>
       </figcaption>
       {series.length > 1 && (
-        <span className="legend" role="list" aria-label="Series">
+        <span className="legend" role="list" aria-label={uiText("Series")}>
           {series.map((s, i) => (
             <span className="legend-item" role="listitem" key={s.key}>
               <svg width="26" height="12" aria-hidden="true">
                 <line x1="0" y1="6" x2="26" y2="6" stroke={s.tone === 'muted' ? 'var(--muted)' : 'var(--text)'} strokeWidth="1.9" strokeDasharray={s.dash ?? DASHES[i % DASHES.length]} />
               </svg>
-              {s.label}
+              {uiValue(s.label)}
             </span>
           ))}
         </span>
@@ -181,20 +182,20 @@ export function LaneChart({
             {series.map((s) => ` · ${series.length > 1 ? `${s.label} ` : ''}${fy(at(s, hx))}`).join('')}
           </>
         ) : (
-          <span className="faint">Hover the chart to read a point.</span>
+          <span className="faint">{uiText("Hover the chart to read a point.")}</span>
         )}
       </p>
-      {note && <p className="muted small chart-note">{note}</p>}
+      {note && <p className="muted small chart-note">{uiValue(note)}</p>}
       <details className="datatable">
-        <summary>Data table</summary>
+        <summary>{uiText("Data table")}</summary>
         <div className="tablewrap tablewrap--tall">
           <table className="tbl">
             <caption className="small muted">{title}</caption>
             <thead>
               <tr>
-                <th scope="col">{xLabel ?? 'Date'}</th>
+                <th scope="col">{xLabel ?? uiText("Date")}</th>
                 {series.map((s) => (
-                  <th key={s.key} scope="col" className="r">{s.label}</th>
+                  <th key={s.key} scope="col" className="r">{uiValue(s.label)}</th>
                 ))}
               </tr>
             </thead>

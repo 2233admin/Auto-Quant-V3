@@ -1,3 +1,4 @@
+import { uiValue } from '../i18n'
 import type { ReactNode } from 'react'
 import './states.css'
 
@@ -19,12 +20,12 @@ export function Loading({ label = 'Loading…', minHeight = 120 }: { label?: str
   return (
     <div className="st st--loading" role="status" aria-live="polite" style={{ minHeight }}>
       <span className="st-spin" aria-hidden="true" />
-      <p className="st-title">{label}</p>
+      <p className="st-title">{uiValue(label)}</p>
     </div>
   )
 }
 
 /** The caption under a list that has no more rows. */
 export function EndOfList({ label = 'End of list' }: { label?: string }) {
-  return <p className="st-end">{label}</p>
+  return <p className="st-end">{uiValue(label)}</p>
 }

@@ -1,3 +1,4 @@
+import { uiText, uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 import { Modal } from '../../shell/Modal'
 import { FactChips, type Fact } from './FactChips'
@@ -10,15 +11,13 @@ export function FactsDialog({ open, onClose, title, facts, note }: { open: boole
       <div className="adialog-body">
         <header className="adialog-head">
           <h2>{title}</h2>
-          {note && <p className="small muted">{note}</p>}
+          {note && <p className="small muted">{uiValue(note)}</p>}
         </header>
         <div className="adialog-scroll">
-          <FactChips label="Read-only values" locked facts={facts} compact={false} />
+          <FactChips label={uiText("Read-only values")} locked facts={facts} compact={false} />
         </div>
         <footer className="adialog-foot">
-          <button type="button" className="abtn" onClick={onClose}>
-            Close
-          </button>
+          <button type="button" className="abtn" onClick={onClose}>{uiText("Close")}</button>
         </footer>
       </div>
     </Modal>

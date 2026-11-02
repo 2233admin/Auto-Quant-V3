@@ -1,3 +1,4 @@
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import type { RankSummary } from '../api'
 import { num } from '../format'
 import { CompactTile, CompactTileGrid } from './CompactTile'
@@ -27,20 +28,20 @@ export function HeadlineMetrics({ splits, horizon, defs }: { splits: HeadlineSpl
         const inference = defs?.inference ? <p>{defs.inference}</p> : undefined
         return (
           <div className="hm-split" key={name}>
-            <h3 className="hm-title">{name} · {role} · {horizon}-bar horizon</h3>
-            <CompactTileGrid label={`${name} headline figures`}>
-              <CompactTile label="Mean rank IC" value={num(s.meanRankIc, 4)} info={measure} />
-              <CompactTile label="Mean Pearson IC" value={num(s.meanPearsonIc, 4)} />
-              <CompactTile label="Rank IC std" value={num(s.rankIcStandardDeviation, 3)} note="per-bar" />
-              <CompactTile label="Rank IC IR" value={num(s.rankIcir, 3)} />
-              <CompactTile label="Pearson IC IR" value={num(s.pearsonIcir, 3)} />
-              <CompactTile label="Hit rate" value={num(s.rankHitRate, 3)} info={<p>Share of bars with rank IC above 0.</p>} />
-              <CompactTile label="HAC t" value={num(s.hacTStatistic, 2)} info={inference} />
-              <CompactTile label="HAC p" value={num(s.hacNormalPValue, 3)} note="two-sided" info={inference} />
+            <h3 className="hm-title">{uiText(name)} · {uiValue(role)} · {horizon}{uiText("-bar horizon")}</h3>
+            <CompactTileGrid label={uiTemplate("{0} headline figures", [name])}>
+              <CompactTile label={uiText("Mean rank IC")} value={num(s.meanRankIc, 4)} info={measure} />
+              <CompactTile label={uiText("Mean Pearson IC")} value={num(s.meanPearsonIc, 4)} />
+              <CompactTile label={uiText("Rank IC std")} value={num(s.rankIcStandardDeviation, 3)} note={uiText("per-bar")} />
+              <CompactTile label={uiText("Rank IC IR")} value={num(s.rankIcir, 3)} />
+              <CompactTile label={uiText("Pearson IC IR")} value={num(s.pearsonIcir, 3)} />
+              <CompactTile label={uiText("Hit rate")} value={num(s.rankHitRate, 3)} info={<p>{uiText("Share of bars with rank IC above 0.")}</p>} />
+              <CompactTile label={uiText("HAC t")} value={num(s.hacTStatistic, 2)} info={inference} />
+              <CompactTile label={uiText("HAC p")} value={num(s.hacNormalPValue, 3)} note={uiText("two-sided")} info={inference} />
               <CompactTile
-                label="Observations"
+                label={uiText("Observations")}
                 value={int(s.observations)}
-                note={`min ${int(s.minimumObservations)}`}
+                note={uiTemplate("min {0}", [int(s.minimumObservations)])}
                 tone={weak ? 'weak' : 'neutral'}
                 toneReason={weak ? 'below min' : undefined}
               />

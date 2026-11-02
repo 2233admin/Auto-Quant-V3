@@ -1,3 +1,4 @@
+import { uiText } from '../../i18n'
 import type { ReactNode } from 'react'
 
 export const finite = (v: number | null | undefined): v is number => typeof v === 'number' && Number.isFinite(v)
@@ -33,7 +34,7 @@ export const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) :
 
 /** An honest gap: says what is missing and why, in the same words everywhere. */
 export function NA({ why }: { why: string }) {
-  return <span className="pf-na">not available: {why}</span>
+  return <span className="pf-na">{uiText("not available: ")}{why}</span>
 }
 
 export function Block({ title, children }: { title: string; children: ReactNode }) {
@@ -69,18 +70,12 @@ export function SplitToggle({
 }) {
   return (
     <span className="pf-split">
-      <span className="seg" role="group" aria-label="Split">
-        <button type="button" aria-pressed={value === 'validation'} onClick={() => onChange('validation')}>
-          Validation · selection
-        </button>
+      <span className="seg" role="group" aria-label={uiText("Split")}>
+        <button type="button" aria-pressed={value === 'validation'} onClick={() => onChange('validation')}>{uiText("Validation · selection")}</button>
         {testVisible ? (
-          <button type="button" aria-pressed={value === 'test'} onClick={() => onChange('test')}>
-            Test · visible audit
-          </button>
+          <button type="button" aria-pressed={value === 'test'} onClick={() => onChange('test')}>{uiText("Test · visible audit")}</button>
         ) : (
-          <button type="button" disabled title="not available: no test audit is published for this Run, so no test number is drawn">
-            Test · hidden
-          </button>
+          <button type="button" disabled title={uiText("not available: no test audit is published for this Run, so no test number is drawn")}>{uiText("Test · hidden")}</button>
         )}
       </span>
     </span>

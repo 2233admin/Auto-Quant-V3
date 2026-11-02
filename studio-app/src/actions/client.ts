@@ -1,3 +1,4 @@
+import { uiTemplate, uiText } from '../i18n'
 import type { ActionsBootstrap } from './types'
 
 export type FailureKind = 'token' | 'busy' | 'stale' | 'blocked' | 'validation' | 'unknown-job' | 'timeout' | 'network' | 'server' | 'other'
@@ -80,29 +81,30 @@ export type ErrorCopy = { title: string; detail: string }
 
 /** A readable title and next step for each failure kind. The server message is kept as the detail. */
 export function errorCopy(error: unknown, doing: string): ErrorCopy {
+  doing = uiText(doing)
   if (!(error instanceof ActionHttpError)) {
-    return { title: `Could not ${doing}.`, detail: error instanceof Error ? error.message : String(error) }
+    return { title: uiTemplate("Could not {0}.", [doing]), detail: error instanceof Error ? error.message : String(error) }
   }
   switch (error.kind) {
     case 'token':
-      return { title: `Studio refused to ${doing}: the action token was rejected.`, detail: 'The token changes whenever Studio restarts. Reload this page to get the new one.' }
+      return { title: uiTemplate("Studio refused to {0}: the action token was rejected.", [doing]), detail: uiText("The token changes whenever Studio restarts. Reload this page to get the new one.") }
     case 'busy':
-      return { title: `Could not ${doing}: this Project is busy.`, detail: `${error.message}. Only one job runs per Project; wait for it to finish or cancel it.` }
+      return { title: uiTemplate("Could not {0}: this Project is busy.", [doing]), detail: uiTemplate("{0}. Only one job runs per Project; wait for it to finish or cancel it.", [error.message]) }
     case 'stale':
-      return { title: 'The Project changed since the preview.', detail: 'The command was not run. Review the refreshed command below and confirm again.' }
+      return { title: uiText("The Project changed since the preview."), detail: uiText("The command was not run. Review the refreshed command below and confirm again.") }
     case 'blocked':
-      return { title: `Could not ${doing}: a precondition is not met.`, detail: error.message }
+      return { title: uiTemplate("Could not {0}: a precondition is not met.", [doing]), detail: error.message }
     case 'validation':
-      return { title: `Could not ${doing}: the request was not accepted.`, detail: error.issues.map((i) => i.message).filter(Boolean).join('; ') || error.message }
+      return { title: uiTemplate("Could not {0}: the request was not accepted.", [doing]), detail: error.issues.map((i) => i.message).filter(Boolean).join('; ') || error.message }
     case 'unknown-job':
-      return { title: 'Studio no longer knows this job.', detail: 'The server was probably restarted. Anything the command already wrote is in the Project and appears in the next snapshot.' }
+      return { title: uiText("Studio no longer knows this job."), detail: uiText("The server was probably restarted. Anything the command already wrote is in the Project and appears in the next snapshot.") }
     case 'timeout':
-      return { title: `Could not ${doing}: Studio timed out.`, detail: error.message }
+      return { title: uiTemplate("Could not {0}: Studio timed out.", [doing]), detail: error.message }
     case 'network':
-      return { title: `Could not ${doing}: connection lost.`, detail: error.message }
+      return { title: uiTemplate("Could not {0}: connection lost.", [doing]), detail: error.message }
     case 'server':
-      return { title: `Could not ${doing}: Studio hit an internal error.`, detail: error.message }
+      return { title: uiTemplate("Could not {0}: Studio hit an internal error.", [doing]), detail: error.message }
     default:
-      return { title: `Could not ${doing}.`, detail: error.message }
+      return { title: uiTemplate("Could not {0}.", [doing]), detail: error.message }
   }
 }
