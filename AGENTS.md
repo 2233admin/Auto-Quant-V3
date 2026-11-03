@@ -416,6 +416,8 @@ Read the relevant linked document before changing a subsystem:
   hashing, and identity discovery: [[docs/design/distribution-build-identity]]
 - System direction, Workspace/Project ownership, and runtime boundaries:
   [[docs/ARCHITECTURE]]
+- Full-suite baseline, the known-failure registry and its checker:
+  [[docs/design/test-baseline]]
 - Code Intel structural ratchet: governed scopes, no-new-god-file baseline,
   unsupported boundary rules, and the local gate commands:
   [[docs/design/structural-rules]]
@@ -613,6 +615,10 @@ invariants. Keep this list as a routing surface, not a historical catalog.
    uv run python scripts/check_doc_links.py
    uv run python -m unittest discover -s tests -v
    ```
+
+   On Windows, or whenever the full suite has failures, compare it with the
+   known-failure baseline: `uv run python scripts/check_known_failures.py`
+   must report no new failure ([[docs/design/test-baseline]]).
 
 6. If evaluation semantics, dataset identity, or result hashes changed,
    explicitly record which checked-in fixtures or immutable Runs were

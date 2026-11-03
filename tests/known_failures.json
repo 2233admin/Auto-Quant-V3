@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "kind": "autoquant-known-test-failures",
+  "recordedAt": "2026-11-03",
+  "recordedOn": "main d744d6d, Windows Server 2025 checkout",
+  "note": "Tests that still fail when rerun alone on an idle machine. scripts/check_known_failures.py fails on any failure not listed here and reports listed entries that now pass. Remove an entry in the same change that fixes it.",
+  "failures": [
+    {"id": "test_research.ExternalResearchCampaignTests.test_campaign_drives_keep_revert_then_stop_and_verifies_evidence", "platform": "windows", "category": "product-defect", "cause": "autoquant/research.py starts the researcher with /bin/sh -lc", "issue": 19},
+    {"id": "test_research.ExternalResearchCampaignTests.test_protocol_and_command_failures_restore_the_leader", "platform": "windows", "category": "product-defect", "cause": "autoquant/research.py starts the researcher with /bin/sh -lc", "issue": 19},
+    {"id": "test_research.ExternalResearchCampaignTests.test_turn_budget_is_terminal_evidence", "platform": "windows", "category": "product-defect", "cause": "autoquant/research.py starts the researcher with /bin/sh -lc", "issue": 19},
+    {"id": "test_cli.AgentCliTests.test_json_cli_runs_and_inspects_a_bounded_external_campaign", "platform": "windows", "category": "product-defect", "cause": "autoquant/research.py starts the researcher with /bin/sh -lc", "issue": 19},
+    {"id": "test_factor_lab.OhlcvFactorLabTests.test_bounded_researcher_keep_is_visible_in_studio", "platform": "windows", "category": "product-defect", "cause": "autoquant/research.py starts the researcher with /bin/sh -lc", "issue": 19},
+    {"id": "test_portfolio_lab.OhlcvPortfolioLabTests.test_external_campaign_and_studio_share_portfolio_evidence", "platform": "windows", "category": "product-defect", "cause": "autoquant/research.py starts the researcher with /bin/sh -lc", "issue": 19},
+    {"id": "test_rl_factor_policy_lab.GovernedRlFactorPolicyLabTests.test_campaign_keeps_regime_encoder_and_rejects_nondeterminism", "platform": "windows", "category": "product-defect", "cause": "autoquant/research.py starts the researcher with /bin/sh -lc", "issue": 19},
+    {"id": "test_studio.StudioObservationTests.test_running_progress_is_mutable_then_replaced_by_terminal_campaign", "platform": "windows", "category": "product-defect", "cause": "autoquant/research.py starts the researcher with /bin/sh -lc", "issue": 19},
+    {"id": "test_repository_workspace.RepositoryWorkspaceTests.test_sample_template_owned_files_match_a_fresh_research_desk", "platform": "windows", "category": "test-portability", "cause": "byte comparison sees CRLF checkout against LF template output", "issue": 20},
+    {"id": "test_repository_workspace.RepositoryWorkspaceTests.test_repository_skill_bundle_matches_current_harness", "platform": "windows", "category": "test-portability", "cause": "Skill manifest mismatch, presumed CRLF checkout (not verified)", "issue": 20},
+    {"id": "test_version.VersionContractTests.test_sdist_wheel_and_parent_repo_install_preserve_build_identity", "platform": "windows", "category": "test-portability", "cause": "hard-coded .venv/bin/python; Windows uses .venv/Scripts/python.exe", "issue": 20},
+    {"id": "test_runs.ImmutableRunTests.test_run_freezes_study_request_and_exact_upstream_evidence", "platform": "windows", "category": "unexplained", "cause": "expected 'Frozen upstream artifact differs', got 'Immutable Run files do not match the terminal manifest'", "issue": 20}
+  ]
+}
