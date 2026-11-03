@@ -2885,6 +2885,7 @@ STUDIO_SNAPSHOT_JSON_SCHEMA: dict[str, Any] = {
                 "reviews": {"type": "array"},
                 "intake": {"type": ["object", "null"]},
                 "factorExplorer": {"type": ["object", "null"]},
+                "library": {"type": ["object", "null"]},
                 "portfolioExplorer": {"type": ["object", "null"]},
                 "rlExplorer": {"type": ["object", "null"]},
                 "bookRiskExplorer": {"type": ["object", "null"]},
