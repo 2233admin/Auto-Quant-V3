@@ -5,7 +5,16 @@ import type { PortfolioDiagnostics } from './pages/portfolio/portfolioTypes'
 export type HoldoutState = { present: boolean; status: string | null }
 
 export type LibraryPoint = { split: string; value: number }
+export type FactorRedundancy = {
+  schemaVersion: number; status: 'available' | 'no-comparable-peers' | 'unavailable'
+  reason: string | null; split: 'validation'; authority: 'diagnostic-only'; evaluationMode?: string
+  peers: { projectId: string; label: string; studyId: string; runId: string; sourceHash: string
+    correlation: number | null; residualRankIc: number | null; observations: number
+    pairedAssetObservations: number; residualObservations: number; residualReason: string | null }[]
+  excluded: { projectId: string; reason: string }[]
+}
 export type FactorSummary = {
+  redundancy?: FactorRedundancy | null
   buildStrategy?: StrategyRoute
   studyId: string; verdict: 'Supported' | 'Inconclusive' | 'Not tested' | 'Could not be tested'
   question: string; expression: string; bound: boolean
@@ -307,6 +316,7 @@ export type FactorSpreadStats = {
 export type FactorSpreadSplit = FactorSpreadStats & { split: FactorSplit; role?: string }
 
 export type FactorDiagnostics = {
+  redundancy?: FactorRedundancy
   run: { id: string; studyId: string; startedAt: string; completedAt: string; inputHash?: string; studyHash?: string; sourceHash?: string }
   dataset: { id: string; version: string; hash?: string; universe: string[]; timeRange: { start?: string; end?: string } | null }
   harness?: { id?: string; version?: string; commit?: string; dirty?: boolean; buildProvenance?: string; python?: string; sourceHash?: string }

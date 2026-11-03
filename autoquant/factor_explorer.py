@@ -4420,18 +4420,15 @@ def load_factor_diagnostics(
     run_id: str,
     *,
     point_limit: int = DEFAULT_FACTOR_POINTS,
+    workspace_root: Path | None = None,
 ) -> dict[str, Any]:
     """Verify and project one immutable Factor Run into a bounded read model."""
 
-    # The artifact parsers use column names derived from the per-Run Horizon
-    # Mandate. Keep each complete projection under one lock because Studio may
-    # serve Runs with different horizon policies concurrently.
+    from .factor_redundancy import load_factor_redundancy
     with _HORIZON_CONFIGURATION_LOCK:
-        return _load_factor_diagnostics_unlocked(
-            project,
-            run_id,
-            point_limit=point_limit,
-        )
+        result = _load_factor_diagnostics_unlocked(project, run_id, point_limit=point_limit)
+    result["redundancy"] = load_factor_redundancy(project, load_run(project, run_id), workspace_root=workspace_root)
+    return result
 
 
 _FACTOR_QUALIFICATION_SCHEMA: dict[str, Any] = {
@@ -4867,6 +4864,7 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
         "inputAvailability",
         "factorQualification",
         "factorComponents",
+        "redundancy",
         "horizonProfile",
         "quantileEvidence",
         "spreadSummary",
@@ -4888,6 +4886,7 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
         },
         "harness": {"type": "object"},
         "researchHorizon": RESEARCH_HORIZON_JSON_SCHEMA,
+        "redundancy": {"type": "object"},
         "factorOutcome": {
             "type": "object",
             "additionalProperties": False,

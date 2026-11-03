@@ -2,6 +2,7 @@ import { uiTemplate, uiText, uiValue } from '../i18n'
 import type { ReactNode } from 'react'
 import { bi, metricEntry, type MetricId } from '../metrics/catalogue'
 import { Info } from './Info'
+export type { MetricId } from '../metrics/catalogue'
 
 /**
  * The catalogue definition of one metric: definition, how to read it, what this page's value means (`extra`, supplied by

@@ -50,6 +50,10 @@ has no arbitrary file route, and returns no candidate source.
 
 ## Evidence model
 
+The read model also includes the live validation-only `redundancy` block,
+defined in [[docs/design/factor-redundancy]]. It reads published factor/outcome
+pairs across comparable Workspace Runs and never alters an immutable verdict.
+
 ### Identity and protocol
 
 The projection preserves Run, Study, objective, dataset, Harness, artifact

@@ -45,6 +45,20 @@ const PORTFOLIO_LEDGER: Bi = {
 }
 
 export const METRIC_CATALOGUE = {
+  overlapCorrelation: {
+    label: { en: 'Overlap correlation', zh: '重叠相关性' },
+    definition: { en: 'Validation-only rank association with another published Workspace factor on the same evaluation basis.', zh: '在相同评估基础上，与工作区另一个已发布因子之间仅使用验证集计算的秩相关性。' },
+    read: { en: 'Near +1 or −1 indicates strong overlap. Possible duplicate is a display heuristic: |correlation| ≥ 0.7 and |residual IC| < half |target validation IC|. It never changes a verdict.', zh: '接近 +1 或 −1 表示高度重叠。“可能重复”仅为展示启发式：|相关性| ≥ 0.7 且 |剩余 IC| < |目标验证集 IC| 的一半。它不改变判决。' },
+    core: { en: 'Core matches exact dataset id/hash, prediction population, Judge, split/purge windows, outcome and numerical horizon. It averages per-bar cross-sectional Spearman correlations on common published validation pairs (at least 4 assets). Single-asset Runs use within-validation temporal Spearman correlation.', zh: 'Core 匹配精确的数据集 id/哈希、预测总体、Judge、划分/剔除窗口、结果和数值周期；在共同已发布验证配对上，平均逐 K 线横截面 Spearman 相关性（至少 4 个资产）。单资产运行使用验证集内时间序列 Spearman 相关性。' },
+    caveat: { en: 'Latest successful Run per Project/Study/source; sorted by absolute mean correlation, not mean absolute correlation. Historical Runs without published pairs are unavailable. Negative correlation can still indicate duplication.', zh: '每个项目/研究/源代码仅取最近成功运行；按平均相关性的绝对值排序，并非绝对相关性的均值。缺少配对证据的历史运行不可用。负相关也可能重复。' },
+  },
+  residualRankIc: {
+    label: { en: 'Residual rank IC', zh: '剩余秩 IC' },
+    definition: { en: 'Validation rank IC remaining after removing one peer factor from the target cross-sectionally at each bar.', zh: '逐 K 线在横截面上去除一个已有因子后，目标因子剩余的验证集秩 IC。' },
+    read: { en: 'Small magnitude with high overlap suggests repetition. Possible duplicate uses |correlation| ≥ 0.7 and |residual IC| < half |target validation IC|, solely as a display heuristic, never a verdict.', zh: '高重叠且剩余幅度小提示可能重复。展示启发式为 |相关性| ≥ 0.7 且 |剩余 IC| < |目标验证集 IC| 的一半，绝不是判决。' },
+    core: { en: 'Core reuses component diagnostics: average-tie percentile ranks, centered-rank OLS of target on peer (with intercept), then Spearman of residual against the Judge-published primary forward outcome, averaged over validation bars. Exact zero residual (tolerance 1e−12) contributes 0 rather than ranking floating-point noise.', zh: 'Core 复用组件诊断：并列取平均的百分位秩，对目标和已有因子中心化后做含截距 OLS，再计算残差与 Judge 已发布主周期前瞻结果的 Spearman 相关性，最后平均验证集各 K 线。绝对值不超过 1e−12 的零残差贡献 0，避免对浮点噪声排名。' },
+    caveat: { en: 'Cross-sectional residualization does not apply to single-asset temporal Runs; residual IC is unavailable there. Counts disclose valid bars/pairs and residual bars separately. No test or holdout values enter this diagnostic.', zh: '单资产时间序列运行不适用横截面残差化，其剩余 IC 不可用。有效 K 线/配对数与残差 K 线数分别披露。本诊断不使用测试集或留出集数值。' },
+  },
   deflatedSharpe: {
     label: { en: 'Deflated Sharpe probability', zh: '折减 Sharpe 概率' },
     definition: { en: 'Core probability that the selected validation Sharpe exceeds the trial-family expected maximum.', zh: 'Core 估计所选验证集 Sharpe 超过试验族预期最大值的概率。' },

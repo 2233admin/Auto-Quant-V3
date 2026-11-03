@@ -743,3 +743,12 @@ until its tool closure is verified; arbitrary Python candidate execution is
 blocked until process isolation exists. Supported candidate source writes use
 aq candidate show/save. Live streaming/login/isolation canaries are still
 pending. See [[docs/design/studio-assistant]] and [[plans/studio-assistant]].
+
+## Factor overlap diagnostics
+
+Factor answers and library cards show the strongest comparable Workspace peer's
+validation correlation and residual rank IC, with bilingual catalogue help.
+The Factor Evidence tab lists all peers and their immutable Run identities.
+“Possible duplicate” is a display heuristic, never a Judge verdict. Historical
+Runs without published validation pairs disclose unavailable evidence; Studio
+does not rerun them. See [[docs/design/factor-redundancy]].

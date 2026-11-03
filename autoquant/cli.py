@@ -2791,6 +2791,7 @@ def _run_factor(args: argparse.Namespace) -> CommandResult:
         project,
         args.run,
         point_limit=args.points,
+        workspace_root=Path(args.path) if (Path(args.path) / WORKSPACE_MANIFEST).is_file() else None,
     )
     summary = diagnostics["summary"]
     validation = summary["validation"]

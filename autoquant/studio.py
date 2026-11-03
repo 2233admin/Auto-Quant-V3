@@ -1003,7 +1003,7 @@ def _run_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
     )
 
 
-def _project_snapshot(project: ProjectContext) -> dict[str, Any]:
+def _project_snapshot(project: ProjectContext, workspace_root: Path | None = None) -> dict[str, Any]:
     diagnostics: list[dict[str, str]] = []
     program_path = confined_path(
         project.root_dir,
@@ -1221,6 +1221,7 @@ def _project_snapshot(project: ProjectContext) -> dict[str, Any]:
                 project,
                 factor_candidate.id,
                 point_limit=DEFAULT_FACTOR_POINTS,
+                workspace_root=workspace_root,
             )
         except AutoQuantValidationError as error:
             diagnostics.extend(
@@ -1771,7 +1772,7 @@ def build_studio_snapshot(
         project_id,
     )
     with run_read_memo():
-        observations = [_project_snapshot(project) for project in projects]
+        observations = [_project_snapshot(project, root if workspace else None) for project in projects]
         from .studio_library import library_projection
         for project, observation in zip(projects, observations):
             observation["library"] = library_projection(project, observation, root)
@@ -1948,6 +1949,7 @@ def build_run_diagnostics(
         project,
         requested_run,
         point_limit=DEFAULT_FACTOR_POINTS,
+        workspace_root=None if direct else root,
     )
     return {
         "schemaVersion": SCHEMA_VERSION,

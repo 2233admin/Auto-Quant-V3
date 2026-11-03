@@ -102,6 +102,7 @@ def library_projection(project, snapshot, workspace_root):
             "question": request.get("question") if request else project.manifest.description,
             "request": request, "bound": request is not None, "expression": expression,
             "validation": summary.get("validation") if exact else None,
+            "redundancy": explorer.get("redundancy") if exact else None,
             "trials": evidence["researchFamily"]["totalExecutions"] if evidence else len(runs),
             "updatedAt": latest["startedAt"] if latest else None,
             "protocol": {"testRole": protocol.get("testRole")}, "testAudit": visible,

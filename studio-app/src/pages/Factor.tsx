@@ -26,6 +26,7 @@ import { NotPublished } from '../components/NotPublished'
 import { TrialCounter } from '../components/TrialCounter'
 import './factor.css'
 import { DiagnosticText } from '../components/DiagnosticText'
+import { OverlapLine, RedundancyTable } from './FactorRedundancy'
 
 type Check = { id: string; group: string; state: 'pass' | 'fail' | 'info'; label: string; detail: ReactNode }
 
@@ -350,6 +351,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
               <BuildStrategyAction projectId={project.id} route={project.library?.factor?.buildStrategy} shownRunId={study.run.id} />
               <LoopStatus loop={loop} project={project} />
               <FactorVerdict study={study} adjustment={adjustment} />
+              <OverlapLine redundancy={study.redundancy} validationIc={validation?.meanRankIc} />
               {runState && runRow && (
                 <StatusLine
                   state={runState}
@@ -377,6 +379,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
             panels={{
               evidence: (
                 <>
+                  <RedundancyTable redundancy={study.redundancy} />
                   <Section title={tr('Information coefficient over time', '信息系数随时间变化')} id="sec-ic" caption={testVisible ? tr('Per-timestamp rank IC; validation drives selection, test is a visible audit.', '逐时间点的秩 IC；验证集用于选择，测试集作为可见审计。') : tr('Per-timestamp rank IC; validation drives selection.', '逐时间点的秩 IC；验证集用于选择。')}>
                     <IcOverTime study={study} />
                   </Section>

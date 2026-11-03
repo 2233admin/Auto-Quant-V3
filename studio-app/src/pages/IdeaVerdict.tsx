@@ -94,6 +94,7 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
       {pending ? <div className="idea-empty"><h2>{uiText("Analysis in progress")}</h2><p>{busy || uiText("The fixed Judge is running.")}</p><p className="small muted">{uiText("Preflight → baseline or candidate Run → validation evidence. Trial records are retained even if execution fails.")}</p><p className="small">{uiText("The original question and verdict wording are fixed for this attempt.")}</p></div>
       : !hasAttempt ? <div className="idea-empty"><h2>{uiText("Not tested")}</h2><p>{uiText("Define the factor on the left, then run one bounded analysis.")}</p><p className="small muted">{uiText("You will confirm the exact command and trial count before execution. Inconclusive is a valid stopping point.")}</p></div>
       : <><VerdictBar tone={status === 'Supported' ? 'ok' : status === 'Could not be tested' ? 'bad' : 'warn'} word={status} detail={sentence}>{status === 'Supported' ? uiText("Development evidence only") : status === 'Inconclusive' ? uiText("Not established, not disproved") : uiText("No scientific conclusion")}</VerdictBar>
+        {study && <OverlapLine redundancy={study.redundancy} validationIc={study.summary.validation?.meanRankIc} />}
         <details className="idea-reading" data-measure="reading"><summary>{uiText("How to read this answer")}</summary>
           <ol className="reading-order">{readingOrder({ range: validation && !failedJob && !failedRun ? range : null, horizon: study?.protocol.primaryHorizon ?? '—', executions: count, sources: family?.uniqueSourceTrials ?? count, adjustment: adjustment?.passes === true ? 'passes' : adjustment?.passes === false ? 'fails' : 'none' }).map((step, i) => <li key={i}>{step}</li>)}</ol>
         </details>
@@ -118,3 +119,4 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
     <FactsDialog open={parameters} onClose={() => setParameters(false)} title={uiText("Study parameters")} facts={params} note={uiText("Locked by the Study. Candidate edits cannot change evaluation authority.")} />
   </PaneCard>
 }
+import { OverlapLine } from './FactorRedundancy'

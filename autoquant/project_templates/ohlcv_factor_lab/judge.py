@@ -19,6 +19,7 @@ from autoquant.factor_runtime import (
     factor_contract,
     values_to_wide,
 )
+from autoquant.factor_redundancy import validation_pairs
 from autoquant.factor_claims import (
     FACTOR_CLAIM,
     FORWARD_RETURN_OUTCOME,
@@ -1717,6 +1718,7 @@ def _evaluate() -> tuple[
     pd.DataFrame,
     pd.DataFrame,
     pd.DataFrame,
+    dict[str, Any],
     dict[str, Any] | None,
 ]:
     global HORIZONS, PRIMARY_HORIZON
@@ -2474,6 +2476,8 @@ def _evaluate() -> tuple[
         quantile_evidence,
         qualification_evidence,
         availability_evidence,
+        validation_pairs(factor_panel, outcome_panels[PRIMARY_HORIZON],
+                         split_masks[PRIMARY_HORIZON]["validation"], PRIMARY_HORIZON),
         (
             {
                 "schemaVersion": 1,
@@ -2495,9 +2499,12 @@ def main() -> None:
             quantile_evidence,
             qualification_evidence,
             availability_evidence,
+            redundancy_pairs,
             component_evidence,
         ) = _evaluate()
         artifacts = Path(os.environ["AUTOQUANT_ARTIFACTS_DIR"])
+        (artifacts / "factor-validation-pairs.json").write_text(
+            json.dumps(redundancy_pairs, allow_nan=False) + "\n", encoding="utf-8")
         report_path = artifacts / "factor-report.json"
         report_path.write_text(
             json.dumps(report, indent=2, sort_keys=True) + "\n",
@@ -2545,6 +2552,8 @@ def main() -> None:
                 encoding="utf-8",
             )
         output_artifacts = [
+            {"kind": "factor-validation-pairs", "path": "factor-validation-pairs.json",
+             "description": "Primary-horizon purged validation factor and outcome pairs; no test or holdout values"},
             {
                 "kind": "factor-report",
                 "path": "factor-report.json",
