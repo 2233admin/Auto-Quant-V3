@@ -12,7 +12,11 @@ import { studyTestVisible } from '../src/pages/testGate'
 import { candidateExpression, expressionSource } from '../src/pages/ideaEditor'
 import { ParamGrid, StatusLine, TitleCard } from '../src/components/workbench'
 import type { FactorSummary, StrategySummary } from '../src/api'
-import { FACTOR_FILTERS, factorMetricLine, factorPoints, filterCounts, LibraryCard, strategyMetricLine } from '../src/library/LibraryCards'
+import { FACTOR_FILTERS, factorMetricLine, factorPoints, filterCounts, isFactorProject, LibraryRow, libraryKind, strategyMetricLine } from '../src/library/LibraryCards'
+import { FactorLibrary } from '../src/library/FactorLibrary'
+import { StrategyLibrary } from '../src/library/StrategyLibrary'
+import { ActionsProvider } from '../src/actions/ActionsContext'
+import type { WorkspaceSummary } from '../src/api'
 import { SessionRecovery } from '../src/pages/FactorEditorState'
 import { parseRoute } from '../src/route'
 import { setLanguage, uiTemplate, uiText } from '../src/i18n'
@@ -34,9 +38,10 @@ test('Chinese presentation preserves user names, numerical evidence, commands an
     const summary = { validation: { meanRankIc: 0.8086, hacTStatistic: 17.42 }, trials: 12 } as FactorSummary
     const metric = factorMetricLine(summary)
     assert.equal(metric, '验证集秩 IC +0.809 · HAC t 值 17.4 · 试验 12')
-    const html = renderToStaticMarkup(<LibraryCard name="Run" badge="Supported" metric={metric} points={[]} updated={null} href="/?view=factor&id=Run&idea=1" go={() => {}} />)
+    const html = renderToStaticMarkup(<table><tbody><LibraryRow name="Run" badge="Supported" metric={metric} numbers={[]} points={[]} updated={null} href="/?view=factor&id=Run&idea=1" go={() => {}} /></tbody></table>)
     assert.match(html, />Run<\/a>/)
-    assert.match(html, /因子表达式/)
+    assert.match(html, /无验证数据/)
+    assert.match(html, />支持</)
     assert.match(html, /\+0\.809/)
     assert.equal(ideaVerdict(null, null), 'Could not be tested')
     assert.equal(uiTemplate('Run {0}', ['user-id-Run']), '运行 user-id-Run')
@@ -58,14 +63,15 @@ test('library filter counts include every verdict and zero-result categories', (
   })
 })
 
-test('Factor card uses the idea name, a single validation metric line, and retained trials', () => {
+test('Factor row uses the idea name, a single validation metric line, and retained trials', () => {
   const summary = { validation: { meanRankIc: 0.8086, hacTStatistic: 17.42 }, trials: 1 } as FactorSummary
   const metric = factorMetricLine(summary)
   assert.equal(metric, 'Validation rank IC +0.809 · HAC t 17.4 · Trials 1')
-  const html = renderToStaticMarkup(<LibraryCard name="Five-day momentum" badge="Supported" metric={metric} points={[]} updated={null} href="/?view=factor&id=momentum&idea=1" go={() => {}} />)
+  const html = renderToStaticMarkup(<table><tbody><LibraryRow name="Five-day momentum" badge="Supported" metric={metric} numbers={['17.4', 1]} points={[]} updated={null} href="/?view=factor&id=momentum&idea=1" go={() => {}} /></tbody></table>)
   assert.match(html, /Five-day momentum/)
-  assert.match(html, /Factor expression/)
-  assert.match(html, /Last updated: Not run/)
+  assert.match(html, /No validation data/)
+  assert.match(html, /<td class="library-num">17\.4<\/td><td class="library-num">1<\/td>/)
+  assert.match(html, />Not run</)
   assert.doesNotMatch(html, /OHLCV Factor Quality|Across Runs/)
 })
 
@@ -318,4 +324,33 @@ test('removed verdict is absent from every Studio source file', () => {
   const visit=(dir:string):string[]=>readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?visit(resolve(dir,e.name)):/\.(tsx?|css)$/.test(e.name)?[resolve(dir,e.name)]:[])
   const removed=['Re','futed'].join('')
   for(const path of visit(source)) assert.ok(!readFileSync(path,'utf8').toLowerCase().includes(removed.toLowerCase()),path)
+})
+
+/** The library pages read window.location through the action provider; give the server render a minimal window. */
+function withWindow<T>(render: () => T): T {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'window')
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: '', search: '' }, addEventListener() {}, removeEventListener() {} } })
+  try { return render() } finally { if (previous) Object.defineProperty(globalThis, 'window', previous); else delete (globalThis as { window?: unknown }).window }
+}
+
+test('Factor library lists only Factor Projects; strategies and multi-lane desks go to the Strategy library', () => {
+  const factor = (verdict: string) => ({ verdict, trials: 1, points: [], updatedAt: null, validation: null, redundancy: null, protocol: {}, testAudit: false, question: '', expression: '', studyId: 's' })
+  const strategy = { state: 'Defined', net: null, points: [], updatedAt: null }
+  const projects = [
+    { id: 'momentum', name: 'Momentum factor', library: { factor: factor('Supported'), strategy: null } },
+    { id: 'fixture', name: 'Draft fixture factor', library: { factor: factor('Not tested'), strategy: null } },
+    { id: 'momentum-strategy', name: 'Momentum strategy', library: { factor: factor('Supported'), strategy } },
+    { id: 'desk', name: 'Sample desk', library: { factor: factor('Inconclusive'), strategy } },
+    { id: 'bare', name: 'Bare project', library: { factor: null, strategy: null } },
+  ]
+  assert.deepEqual(projects.map(p => libraryKind(p as never)), ['factor', 'factor', 'strategy', 'strategy', null])
+  assert.deepEqual(projects.filter(p => isFactorProject(p as never)).map(p => p.id), ['momentum', 'fixture'])
+  const workspace = { projects } as unknown as WorkspaceSummary
+  const factors = withWindow(() => renderToStaticMarkup(<ActionsProvider workspace={workspace} routeKey="factors" go={() => {}} refresh={() => {}}><FactorLibrary workspace={workspace} go={() => {}} /></ActionsProvider>))
+  for (const name of ['Momentum factor', 'Draft fixture factor']) assert.match(factors, new RegExp(`>${name}</a>`))
+  for (const name of ['Momentum strategy', 'Sample desk', 'Bare project']) assert.doesNotMatch(factors, new RegExp(`>${name}</a>`))
+  assert.match(factors, /Factors shown: 2/)
+  const strategies = withWindow(() => renderToStaticMarkup(<ActionsProvider workspace={workspace} routeKey="strategies" go={() => {}} refresh={() => {}}><StrategyLibrary workspace={workspace} go={() => {}} /></ActionsProvider>))
+  for (const name of ['Momentum strategy', 'Sample desk']) assert.match(strategies, new RegExp(`>${name}</a>`))
+  assert.doesNotMatch(strategies, />Momentum factor<\/a>/)
 })

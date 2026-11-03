@@ -1,5 +1,3 @@
 .factor-overlap { display: flex; align-items: baseline; gap: var(--space-2); padding-block: var(--space-2); min-width: 0; }
 .factor-overlap > span { overflow-wrap: anywhere; }
 .redundancy-evidence { margin-block: var(--space-4); }
-.library-card:has(.factor-overlap) { height: auto; min-height: 137px; }
-.library-card .factor-overlap { font: var(--type-small); }

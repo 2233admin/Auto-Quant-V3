@@ -17,7 +17,23 @@ import { IdeaVerdict } from '../src/pages/IdeaVerdict'
 import { runMetricGroups } from '../src/pages/run/RunPage'
 import { MetricDetail, portfolioMetricGroups, portfolioStats } from '../src/pages/portfolio/Portfolio'
 import type { PortfolioDiagnostics } from '../src/pages/portfolio/portfolioTypes'
-import { LibraryCard } from '../src/library/LibraryCards'
+import { FactorLibrary } from '../src/library/FactorLibrary'
+import { StrategyLibrary } from '../src/library/StrategyLibrary'
+import { ActionsProvider } from '../src/actions/ActionsContext'
+import type { WorkspaceSummary } from '../src/api'
+
+const libraryWorkspace = { projects: [
+  { id: 'f', name: 'F', library: { factor: { verdict: 'Supported', trials: 2, points: [], updatedAt: null, validation: { meanRankIc: 0.1, hacTStatistic: 2 }, redundancy: null, protocol: {}, testAudit: false, question: '', expression: '', studyId: 's' }, strategy: null } },
+  { id: 's', name: 'S', library: { factor: null, strategy: { state: 'Backtested', net: { totalReturn: 0.05, sharpe: 1, maximumDrawdown: -0.01 }, points: [], updatedAt: null } } },
+] } as unknown as WorkspaceSummary
+
+/** The library pages read window.location through the action provider; give the server render a minimal window. */
+function withWindow<T>(render: () => T): T {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'window')
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { hash: '', search: '' }, addEventListener() {}, removeEventListener() {} } })
+  try { return render() } finally { if (previous) Object.defineProperty(globalThis, 'window', previous); else delete (globalThis as { window?: unknown }).window }
+}
+
 import { StrategyTuning } from '../src/pages/strategy/StrategyTuning'
 import { ComparisonResults } from '../src/pages/compare/ComparisonResults'
 import type { Comparison, HistoryRun } from '../src/library/runHistoryApi'
@@ -124,10 +140,10 @@ const pages = () => {
       <MetricDetail pf={portfolio} split="validation" />
     </>),
     'Strategy tuning': renderToStaticMarkup(<StrategyTuning project={{ ...project, library: { strategy: { evidence: { runId: 'run-base', selectionAdjustment: { status: 'available', interpretation: 'Core adjustment.', statistics: { deflatedSharpeProbability: .9, minimumTrackRecordObservations: 123 } } } } } } as unknown as ProjectSnapshot} />),
-    'Library cards': renderToStaticMarkup(<>
-      <LibraryCard name="F" badge="Supported" metric="m" metrics={['meanRankIc', 'hacT', 'trialsCounted']} points={[]} updated={null} href="/" go={() => {}} />
-      <LibraryCard strategy name="S" badge="Inconclusive" metric="m" metrics={['netTotalReturn', 'netSharpe', 'maxDrawdown']} points={[]} updated={null} href="/" go={() => {}} />
-    </>),
+    'Library lists': withWindow(() => renderToStaticMarkup(<>
+      <ActionsProvider workspace={libraryWorkspace} routeKey="factors" go={() => {}} refresh={() => {}}><FactorLibrary workspace={libraryWorkspace} go={() => {}} /></ActionsProvider>
+      <ActionsProvider workspace={libraryWorkspace} routeKey="strategies" go={() => {}} refresh={() => {}}><StrategyLibrary workspace={libraryWorkspace} go={() => {}} /></ActionsProvider>
+    </>)),
   }
 }
 

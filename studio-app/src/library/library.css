@@ -1,10 +1,10 @@
 /* Library pages: Factors, Runs, Strategies, Tuning. Tokens only; table base styles come from pages.css (.tbl). */
 /* One 32px toolbar row: controls left, result count right. */
-.lib-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
+.lib-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: 32px; padding-bottom: var(--space-2); border-bottom: 1px solid var(--line-strong); }
 .lib-field { display: inline-flex; align-items: center; gap: var(--space-1); font: var(--type-small); color: var(--muted); }
 .lib-field:not(.lib-field--shown) > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.lib-field input, .lib-field select { font: var(--type-small); padding: 0 var(--space-2); height: 32px; box-sizing: border-box; background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); max-width: 100%; }
-.lib-field input[type='search'] { min-width: 14rem; }
+.lib-field input, .lib-field select { font: var(--type-small); padding: 0 var(--space-2); height: 32px; box-sizing: border-box; background: transparent; color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); max-width: 100%; }
+.lib-field input[type='search'] { min-width: 10rem; }
 .lib-field input:focus-visible, .lib-field select:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
 .lib-filters .btn, .lib-filters .seg button { height: 32px; }
 .lib-filters .seg button { padding: 0 var(--space-3); }
