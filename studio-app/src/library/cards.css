@@ -14,6 +14,7 @@
 .library-toolbar .wb-actions-row { margin-left: 0; gap: var(--space-2); }
 .library-toolbar .abtn, .library-toolbar input, .library-toolbar select { height: 32px; min-height: 32px; border-radius: var(--radius-control); font: var(--type-small); }
 .library-toolbar .abtn { padding: 0 var(--space-3); }
+.library-toolbar .abtn--quiet { border-color: var(--line-strong); color: var(--text); }
 .library-toolbar .library-order { width: 32px; padding: 0; }
 .library-toolbar input, .library-toolbar select { min-width: 0; border: 1px solid var(--line-strong); padding: 0 var(--space-3); background: transparent; color: var(--text); }
 .library-toolbar input { flex: 0 1 280px; margin-left: auto; }
