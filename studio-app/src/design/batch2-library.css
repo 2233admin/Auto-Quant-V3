@@ -1,0 +1,48 @@
+/* Batch 2 of direction H (owner feedback 2026-11-04). Tokens only; sign colour is the sign-positive / sign-negative role pair,
+   so the Settings convention switch (default red up, green down) applies. See DESIGN.md, "Batch 2". */
+
+/* ---- Libraries: sort buttons, density, verdict groups, filter cross-fade ---- */
+.library-table { counter-reset: row; }
+.library-table tbody { counter-reset: none; }
+.library-sort { all: unset; display: inline-flex; align-items: center; gap: var(--space-1); cursor: pointer; color: inherit; font: inherit; white-space: nowrap; }
+.library-sort:hover { color: var(--text); }
+.library-sort:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.library-sort-mark { font: var(--type-micro); color: var(--text); }
+.library-table th[aria-sort='ascending'], .library-table th[aria-sort='descending'] { color: var(--text); }
+
+.library-view { display: inline-flex; align-items: center; gap: var(--space-2); flex: none; }
+.library-density { display: inline-flex; height: 32px; border: 1px solid var(--line-strong); }
+.library-density button { display: inline-flex; align-items: center; min-height: 30px; padding: 0 var(--space-3); border: 0; border-right: 1px solid var(--line-strong); background: transparent; color: var(--muted); font: var(--type-small); cursor: pointer; white-space: nowrap; }
+.library-density button:last-child { border-right: 0; }
+.library-density button:hover { color: var(--text); }
+.library-density button[aria-pressed='true'] { color: var(--text); font-weight: 600; background: var(--selected); }
+.library-density button:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+.library-group-toggle[aria-pressed='true'] { color: var(--text); border-color: var(--text); background: var(--selected); }
+
+.library-group th { padding: var(--space-4) 0 var(--space-2); border-bottom: 1px solid var(--line-strong); background: transparent; }
+.library-group button { display: flex; align-items: baseline; gap: var(--space-3); width: 100%; padding: 0; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.library-group button:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.library-group-caret { width: 12px; font: var(--type-small-mono); color: var(--muted); }
+.library-group-name { font: var(--type-section); font-weight: 400; }
+.library-group-count { font: var(--type-micro); letter-spacing: 0.08em; color: var(--faint); }
+.library-group-mean { margin-left: var(--space-3); font: var(--type-small); color: var(--muted); }
+.library-group-value { font: var(--type-small-mono); font-weight: 600; }
+
+/* Compact rows: 32px, one line, the sub line and description hidden, a smaller curve. */
+.library-list[data-density='compact'] .library-row > * { padding-block: 0; height: 32px; vertical-align: middle; }
+.library-list[data-density='compact'] .library-table thead th { height: 28px; }
+.library-list[data-density='compact'] .library-sub, .library-list[data-density='compact'] .library-description { display: none; }
+.library-list[data-density='compact'] .library-name a { font-size: 13px; }
+.library-list[data-density='compact'] .library-spark { height: 16px; width: 88px; }
+.library-list[data-density='compact'] .library-focal .signed-value, .library-list[data-density='compact'] .library-focal .signed-value.type-value-focal { font: var(--type-value); font-weight: 600; }
+.library-list[data-density='compact'] .library-table .library-overlap .factor-overlap { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.library-list[data-density='compact'] .library-group th { height: auto; padding: var(--space-3) 0 var(--space-1); }
+.library-list[data-density='compact'] .library-row > :first-child, .library-list[data-density='compact'] .library-row > :last-child { background-size: 0 0; }
+.library-spark-area { pointer-events: none; }
+
+@keyframes fx-xfade { from { opacity: 0; } to { opacity: 1; } }
+html[data-fx='1'] .library-body { animation: fx-xfade 220ms var(--ease-out) backwards; }
+
+/* Library toolbar: keep create, tabs, split, density, group and search on one row at 1440px. */
+.library-toolbar { gap: var(--space-2) var(--space-3); }
+.library-toolbar input { flex-basis: 190px; }

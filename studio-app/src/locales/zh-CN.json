@@ -2484,5 +2484,14 @@
   "not reconstructed": "未重建",
   "Benchmark Sharpe": "基准夏普",
   "Benchmark, {0} split": "基准，{0} 划分",
-  "System follows the operating system's reduced-motion preference; On plays every effect even when it asks for less.": "“跟随系统”遵循操作系统的“减少动画”偏好；“开”即使系统要求减少动画也会播放全部效果。"
+  "System follows the operating system's reduced-motion preference; On plays every effect even when it asks for less.": "“跟随系统”遵循操作系统的“减少动画”偏好；“开”即使系统要求减少动画也会播放全部效果。",
+  "Row density": "行密度",
+  "Comfortable": "舒适",
+  "Compact": "紧凑",
+  "Group by verdict": "按判决分组",
+  "Mean net return": "平均净收益",
+  "Resize panes": "调整窗格宽度",
+  "Drag to resize. Arrow keys move, Home and End snap, double-click resets to 40/60.": "拖动调整宽度。方向键移动，Home / End 吸附到最小宽度，双击恢复 40/60。",
+  "{0} · {1} Runs": "{0} · {1} 次运行",
+  "Run id": "运行标识"
 }
