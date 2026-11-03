@@ -330,18 +330,18 @@ export function PortfolioChart({
         </text>
 
         <g clipPath={`url(#${clip})`}>
-          {on.gross && hasGross && <path d={line((p) => p.grossGrowth, yG)} fill="none" stroke="var(--muted)" strokeWidth="1.6" strokeDasharray="1.5 3" strokeLinecap="round" />}
-          {on.bench && hasBench && <path d={line((p) => p.benchmarkGrowth, yG)} fill="none" stroke="var(--muted)" strokeWidth="1.7" strokeDasharray="6 3" />}
+          {on.gross && hasGross && <path className="fx-reveal" d={line((p) => p.grossGrowth, yG)} fill="none" stroke="var(--muted)" strokeWidth="1.6" strokeDasharray="1.5 3" strokeLinecap="round" />}
+          {on.bench && hasBench && <path className="fx-reveal fx-late" d={line((p) => p.benchmarkGrowth, yG)} fill="none" stroke="var(--muted)" strokeWidth="1.7" strokeDasharray="6 3" />}
           {on.net && (
             <>
-              <path d={line((p) => p.netGrowth, yG)} fill="none" stroke="var(--bg)" strokeWidth="4" strokeLinejoin="round" />
-              <path d={line((p) => p.netGrowth, yG)} fill="none" stroke="var(--text)" strokeWidth="1.9" strokeLinejoin="round" />
+              <path className="fx-draw" pathLength={1} d={line((p) => p.netGrowth, yG)} fill="none" stroke="var(--bg)" strokeWidth="4" strokeLinejoin="round" />
+              <path className="fx-draw" pathLength={1} d={line((p) => p.netGrowth, yG)} fill="none" stroke="var(--text)" strokeWidth="1.9" strokeLinejoin="round" />
             </>
           )}
           {ddArea && (
             <>
-              <polygon points={ddArea} fill="var(--stroke)" opacity=".4" />
-              <path d={line((p) => p.drawdown, yD)} fill="none" stroke="var(--text)" strokeWidth="1.3" strokeLinejoin="round" />
+              <polygon className="fx-fade" points={ddArea} fill="var(--stroke)" opacity=".4" />
+              <path className="fx-draw fx-late" pathLength={1} d={line((p) => p.drawdown, yD)} fill="none" stroke="var(--text)" strokeWidth="1.3" strokeLinejoin="round" />
             </>
           )}
           {showExpo && (

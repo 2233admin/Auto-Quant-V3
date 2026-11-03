@@ -15,7 +15,7 @@ import { factorStats } from '../src/pages/Factor'
 import { FoldTable, HorizonTable, QualificationBlock, StabilityTables, VerdictReasons } from '../src/pages/FactorEvidence'
 import { IdeaVerdict } from '../src/pages/IdeaVerdict'
 import { runMetricGroups } from '../src/pages/run/RunPage'
-import { MetricDetail, portfolioMetricGroups, portfolioStats } from '../src/pages/portfolio/Portfolio'
+import { MetricDetail, portfolioMetricGroups, portfolioVerdictStats } from '../src/pages/portfolio/Portfolio'
 import type { PortfolioDiagnostics } from '../src/pages/portfolio/portfolioTypes'
 import { FactorLibrary } from '../src/library/FactorLibrary'
 import { StrategyLibrary } from '../src/library/StrategyLibrary'
@@ -135,7 +135,7 @@ const pages = () => {
     </>),
     'Run page': renderToStaticMarkup(<MetricGrid groups={runMetricGroups(s as never, project, true)} />),
     Portfolio: renderToStaticMarkup(<>
-      <StatChips label="Headline" stats={portfolioStats(perf, 'validation')} />
+      <StatChips label="Headline" stats={(({ focal, stats }) => [...(focal ? [focal] : []), ...stats])(portfolioVerdictStats(perf, 0.5, 'validation'))} />
       <MetricGrid groups={portfolioMetricGroups(portfolio, 'validation') ?? []} />
       <MetricDetail pf={portfolio} split="validation" />
     </>),

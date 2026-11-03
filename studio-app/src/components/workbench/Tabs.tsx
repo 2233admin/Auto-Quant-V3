@@ -1,11 +1,12 @@
 import { uiValue } from '../../i18n'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { hashWithJob, sectionOfHash } from '../../actions/jobHash'
+import { Icon, type IconName } from '../../design/icons'
 import { useSlidingHighlight } from '../motion/useSlidingHighlight'
 import '../motion/motion.css'
 import './workbench.css'
 
-export type TabDef<T extends string> = { id: T; label: string; badge?: string }
+export type TabDef<T extends string> = { id: T; label: string; badge?: string; icon?: IconName }
 
 /** Hash-selected tab (`#tab-<id>`, job id kept). `aliases` maps an old section anchor to the tab that now holds it. Same contract as pages/FactorWorkbench. */
 export function useHashTab<T extends string>(ids: readonly T[], fallback: T, aliases: Record<string, T> = {}): [T, (id: T) => void, string | null] {
@@ -78,6 +79,7 @@ export function TabList<T extends string>({
           onClick={() => onSelect(t.id)}
           onKeyDown={(e) => move(e, i)}
         >
+          {t.icon && <Icon name={t.icon} />}
           {uiValue(t.label)}
           {t.badge && <span className="wb-tab-badge">{uiValue(t.badge)}</span>}
         </button>

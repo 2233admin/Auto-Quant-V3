@@ -2,6 +2,7 @@ import { uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 import { formattedSignRole } from '../../design/signConvention'
 import { AnimatedValue } from '../motion/AnimatedValue'
+import { CountUp } from '../../motion/CountUp'
 import { MetricInfo } from '../MetricInfo'
 import type { MetricId } from '../../metrics/catalogue'
 import './workbench.css'
@@ -21,7 +22,7 @@ export function StatChips({ stats, label, scope }: { stats: Stat[]; label: strin
       {stats.map((s) => (
         <div key={s.label} className="wb-stat" title={s.hint ? `${s.label}: ${s.hint}` : undefined}>
           <dt>{uiValue(s.label)}{s.metric && <> <MetricInfo id={s.metric} label={uiValue(s.label)} extra={s.hint} align="end" /></>}</dt>
-          <dd className={s.focal ? "type-value-focal" : "type-value"} data-sign={s.signed ? formattedSignRole(s.value) : undefined}><AnimatedValue value={s.value} /></dd>
+          <dd className={s.focal ? "type-value-focal" : "type-value"} data-sign={s.signed ? formattedSignRole(s.value) : undefined}>{s.focal ? <CountUp value={s.value} /> : <AnimatedValue value={s.value} />}</dd>
         </div>
       ))}
     </dl>

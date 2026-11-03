@@ -89,7 +89,7 @@ test('Strategy tabs and lifecycle use the published lifecycle enum, independentl
       const project = { ...base, library: { factor: null, strategy: { state, net: { sharpe: -100 }, points: [], updatedAt: null } } }
       const html = renderToStaticMarkup(<StrategyPage project={project} go={() => {}} />)
       for (const word of ['Backtest', 'Versions', 'Tuning', 'Analyses', state]) assert.ok(html.includes(word))
-      assert.match(html, /aria-selected="true"[^>]*class="wb-tab"[^>]*>Tuning/)
+      assert.match(html, /aria-selected="true"[^>]*class="wb-tab"[^>]*>(?:<svg[\s\S]*?<\/svg>)?Tuning/)
     }
   } finally { globalThis.window = original }
 })

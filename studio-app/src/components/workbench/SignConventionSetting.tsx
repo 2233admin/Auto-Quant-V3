@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { uiText } from '../../i18n'
 import { applySignConvention, storedSignConvention, type SignConvention } from '../../design/signConvention'
 import { STATE_COPY } from '../stateCopy'
+import { MotionSettingRow } from '../../motion/MotionSetting'
 import { SegmentedToggle } from './SegmentedToggle'
 
 export function SignConventionSetting({ readOnly = false }: { readOnly?: boolean }) {
@@ -12,5 +13,7 @@ export function SignConventionSetting({ readOnly = false }: { readOnly?: boolean
       disabledReason={readOnly ? STATE_COPY.readOnlyReason : undefined}
       onChange={next => { applySignConvention(next); setValue(next) }} /></div>
     <p className="small muted">{uiText("Changes colours only. Numbers, signs and exports stay the same.")}</p>
+    <MotionSettingRow />
+    <p className="small muted">{uiText("System follows the operating system's reduced-motion preference; On plays every effect even when it asks for less.")}</p>
   </section>
 }

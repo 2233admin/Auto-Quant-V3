@@ -25,7 +25,7 @@
 .faint { color: var(--faint); }
 .small { font-size: var(--size-small); line-height: 18px; }
 
-kbd { font: var(--type-label-mono); color: var(--muted); border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 var(--space-1); white-space: nowrap; }
+kbd { font: var(--type-label-mono); color: var(--muted); border: 1px solid var(--line-strong); border-radius: 0; padding: 0 var(--space-1); white-space: nowrap; }
 
 /* ---- Rail ---- */
 .rail {
@@ -36,7 +36,7 @@ kbd { font: var(--type-label-mono); color: var(--muted); border: 1px solid var(-
 .rail a { color: inherit; text-decoration: none; }
 .brand { display: flex; align-items: center; gap: var(--space-2); height: 32px; padding: 0 var(--space-2); font: var(--type-body); color: var(--text); }
 .ws { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 0 var(--space-2) 0 var(--space-8); margin-top: calc(-1 * var(--space-1)); font-size: var(--size-small); line-height: 18px; color: var(--faint); min-width: 0; }
-.demo { flex: none; font: var(--type-label); color: var(--muted); border: 1px solid var(--line-strong); border-radius: 3px; padding: 0 var(--space-1); }
+.demo { flex: none; font: var(--type-label); color: var(--muted); border: 1px solid var(--line-strong); border-radius: 0; padding: 0 var(--space-1); }
 .railfoot { margin-top: 0; display: grid; gap: var(--space-2); padding: var(--space-2); color: var(--faint); font-size: var(--size-small); line-height: 18px; }
 .railfoot-demo { display: flex; gap: var(--space-2); align-items: center; }
 .railgit { justify-self: start; color: var(--faint); text-decoration: none; }
@@ -61,7 +61,7 @@ kbd { font: var(--type-label-mono); color: var(--muted); border: 1px solid var(-
 .nav.is-on::before { content: ''; position: absolute; left: -10px; top: 7px; bottom: 7px; width: 2px; background: var(--text); }
 .nav .count { margin-left: auto; font-size: var(--size-small); color: var(--faint); }
 .nav-short { display: none; }
-.pending { font-size: var(--size-label); line-height: 16px; padding: 0 var(--space-1); border: 1px solid var(--line-strong); border-radius: 4px; color: var(--muted); }
+.pending { font-size: var(--size-label); line-height: 16px; padding: 0 var(--space-1); border: 1px solid var(--line-strong); border-radius: 0; color: var(--muted); }
 .raildirs { list-style: none; margin: 0 0 var(--space-1); padding: 0; }
 .raildirs .railitem { height: 26px; padding-left: var(--space-8); font-size: var(--size-small); }
 .railbottom { margin-top: auto; display: grid; gap: var(--space-1); padding-top: var(--space-2); border-top: 1px solid var(--line); }
@@ -127,9 +127,9 @@ a.railitem:hover { color: var(--text); }
 }
 .live-toggle:hover { background: var(--hover); color: var(--text); }
 .live-toggle[aria-pressed='true'] { color: var(--text); background: var(--raised); box-shadow: none; }
-.seg { display: flex; gap: var(--space-1); padding: var(--space-1); border: 1px solid var(--line-strong); border-radius: 7px; }
+.seg { display: flex; gap: var(--space-1); padding: var(--space-1); border: 1px solid var(--line-strong); border-radius: 0; }
 .seg button {
-  padding: var(--space-1) var(--space-2); border: 1px solid transparent; border-radius: 5px; background: none;
+  padding: var(--space-1) var(--space-2); border: 1px solid transparent; border-radius: 0; background: none;
   color: var(--muted); font: var(--type-small); white-space: nowrap; cursor: pointer;
 }
 .seg button:hover { color: var(--text); }

@@ -2,7 +2,7 @@
  * Motion kit styles. Adapted from animate-ui (https://github.com/imskyleen/animate-ui, MIT + Commons Clause, Copyright (c) 2025
  * Elliot Sutton): kept the behaviours (sliding highlight, collapsible height, progress easing, copy confirmation, theme fade);
  * the CSS is written for Studio's tokens and uses no colour, font or radius of its own. Everything here is switched off under
- * prefers-reduced-motion: reduce.
+ * the Motion setting (off, or system with reduced motion).
  */
 :root { --mo-ease: cubic-bezier(.22, 1, .36, 1); --mo-dur: .26s; }
 
@@ -35,9 +35,9 @@
 /* Table rows: the hover bar is a faint wash drawn above the cells (sticky, opaque cells would hide it underneath). */
 .mo-hl--overlay::after { z-index: 3; background: color-mix(in srgb, var(--text) 6%, transparent); border-radius: 0; }
 
-@media (prefers-reduced-motion: reduce) {
-  .mo-hl::before, .mo-hl::after { transition: none !important; }
-}
+/* Motion setting off (or system + reduced motion): final states at once. */
+html[data-fx='0'] .mo-hl::before, html[data-fx='0'] .mo-hl::after { transition: none !important; }
+
 
 /* ---- Collapse / AutoHeight ---- */
 .mo-collapse { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows var(--mo-dur) var(--mo-ease), visibility 0s linear var(--mo-dur); }
@@ -46,10 +46,9 @@
 .mo-autoheight { overflow: hidden; }
 .info-body:not([hidden]) { animation: mo-pop .16s var(--mo-ease); }
 @keyframes mo-pop { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) {
-  .mo-collapse, .mo-collapse[data-open] { transition: none; }
-  .info-body:not([hidden]) { animation: none; }
-}
+/* Motion setting off (or system + reduced motion): final states at once. */
+html[data-fx='0'] .mo-collapse, html[data-fx='0'] .mo-collapse[data-open] { transition: none; }html[data-fx='0'] .info-body:not([hidden]) { animation: none; }
+
 
 /* ---- Counting number: the final text for assistive technology while the visible digits count ---- */
 .mo-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -61,10 +60,9 @@
   background-size: 40% 100%; background-repeat: no-repeat; background-position: -40% 0; opacity: .7; animation: mo-shimmer 1.8s ease-in-out infinite;
 }
 @keyframes mo-shimmer { from { background-position: -40% 0; } to { background-position: 140% 0; } }
-@media (prefers-reduced-motion: reduce) {
-  .wb-bar.mo-progress > span { transition: none; }
-  .wb-bar.mo-progress.is-indeterminate > span { animation: none; background: var(--muted); opacity: .4; }
-}
+/* Motion setting off (or system + reduced motion): final states at once. */
+html[data-fx='0'] .wb-bar.mo-progress > span { transition: none; }html[data-fx='0'] .wb-bar.mo-progress.is-indeterminate > span { animation: none; background: var(--muted); opacity: .4; }
+
 
 /* ---- Copy confirmation ---- */
 .mo-copy-icon { position: relative; display: inline-grid; width: 14px; height: 14px; flex: none; }
@@ -72,15 +70,17 @@
 .mo-copy-icon-check { opacity: 0; transform: scale(.5); }
 .mo-copy-icon[data-copied] .mo-copy-icon-copy { opacity: 0; transform: scale(.5); }
 .mo-copy-icon[data-copied] .mo-copy-icon-check { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .mo-copy-icon > svg { transition: none; } }
+/* Motion setting off (or system + reduced motion): final states at once. */
+html[data-fx='0'] .mo-copy-icon > svg { transition: none; }
+
 
 /* ---- Theme switch: colours cross-fade for the length of one toggle (class set by startThemeTransition) ---- */
 .mo-theme-anim, .mo-theme-anim *, .mo-theme-anim *::before, .mo-theme-anim *::after {
   transition: background-color .3s ease, color .3s ease, border-color .3s ease, fill .3s ease, stroke .3s ease !important;
 }
-@media (prefers-reduced-motion: reduce) {
-  .mo-theme-anim, .mo-theme-anim *, .mo-theme-anim *::before, .mo-theme-anim *::after { transition: none !important; }
-}
+/* Motion setting off (or system + reduced motion): final states at once. */
+html[data-fx='0'] .mo-theme-anim, html[data-fx='0'] .mo-theme-anim *, html[data-fx='0'] .mo-theme-anim *::before, html[data-fx='0'] .mo-theme-anim *::after { transition: none !important; }
+
 
 /* DataTable rows: opaque sticky row headers keep their own fill, the wash above does the hovering. */
 .mo-hl--overlay .lib-tbl tbody tr:not(.is-picked):hover th[scope='row'] { background: var(--bg); }

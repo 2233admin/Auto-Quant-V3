@@ -1,6 +1,8 @@
 import { uiTemplate, uiText } from '../../i18n'
 import { useCallback, useLayoutEffect, useState, type ReactNode } from 'react'
 import { useFitWidth } from '../../design/useFitWidth'
+import { Icon, type IconName } from '../../design/icons'
+import { RegMarks } from '../../design/marks'
 import { Info } from '../Info'
 import { AnimatedDetails } from '../motion/AnimatedDetails'
 import './workbench.css'
@@ -21,6 +23,8 @@ export function ChartCard({
   table,
   minHeight = 220,
   fill = false,
+  icon = 'runs',
+  micro,
   children,
 }: {
   title: string
@@ -35,6 +39,9 @@ export function ChartCard({
   minHeight?: number
   /** Take the height of the parent (a flush pane body) instead of the default slot height. */
   fill?: boolean
+  /** Pictogram and uppercase micro-label of the header bar (direction H). */
+  icon?: IconName
+  micro?: string
   children: (size: ChartSize) => ReactNode
 }) {
   const [fitRef, width] = useFitWidth<HTMLDivElement>(240)
@@ -59,16 +66,21 @@ export function ChartCard({
   return (
     <figure className={`wb-chart${fill ? ' is-fill' : ''}`}>
       <Header className="wb-chart-head">
-        <span className="wb-chart-title">
-          <strong>{title}</strong>
-          {info && <Info label={uiTemplate("{0}: how to read it", [title])}>{info}</Info>}
+        <span className="sec-bar wb-chart-bar">
+          <Icon name={icon} />
+          <span className="wb-chart-title">
+            <strong>{title}</strong>
+            {info && <Info label={uiTemplate("{0}: how to read it", [title])}>{info}</Info>}
+          </span>
+          {micro && <span className="mk sec-bar-micro" aria-hidden="true">{micro}</span>}
+          {toggle && <span className="wb-chart-toggle">{toggle}</span>}
         </span>
-        {toggle && <span className="wb-chart-toggle">{toggle}</span>}
         {subtitle && <p className="figure-subtitle">{subtitle}</p>}
         {legend && <span className="wb-chart-legend">{legend}</span>}
       </Header>
       <div className="wb-chart-body" ref={ref} style={{ minHeight }}>
         <div className="wb-chart-fill">{height > 0 && children({ width, height })}</div>
+        <RegMarks />
       </div>
       {table && (
         <AnimatedDetails className="wb-chart-table datatable">

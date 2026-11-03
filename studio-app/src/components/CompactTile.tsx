@@ -28,6 +28,7 @@ export function CompactTile({
   toneReason,
   info,
   metric,
+  micro,
 }: {
   label: string
   value: string
@@ -38,12 +39,15 @@ export function CompactTile({
   info?: ReactNode
   /** Catalogue id: the "?" then opens the shared definition, with `info` as this page's context. */
   metric?: MetricId
+  /** Short uppercase English micro-label shown next to the Chinese label (direction H). */
+  micro?: string
 }) {
   const t = tone === 'neutral' ? null : TONE[tone]
   return (
     <div className="ct">
       <dt className="ct-label">
         <span className="ct-label-text">{uiValue(label)}</span>
+        {micro && <i className="mk ct-micro" aria-hidden="true">{micro}</i>}
         {metric ? <MetricInfo id={metric} label={label} extra={info} /> : info && <Info label={uiTemplate("{0}: definition", [label])}>{info}</Info>}
       </dt>
       <dd className="ct-right">

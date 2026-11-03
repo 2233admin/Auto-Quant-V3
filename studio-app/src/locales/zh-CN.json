@@ -2481,5 +2481,8 @@
   "Creates one new research-desk Project from this tested Factor by reference: the exact candidate source, the same market data, the caller-confirmed mandate and the inherited trial count. Runs nothing; the source Project is only read.": "按引用用这个已测试的因子新建一个研究台项目：精确的候选源码、相同的行情数据、调用方确认的授权以及继承的试验计数。不运行任何内容；源项目只被读取。",
   "waiting-current-evidence": "等待当前证据",
   "decision-signal-positive": "决策信号为正",
-  "not reconstructed": "未重建"
+  "not reconstructed": "未重建",
+  "Benchmark Sharpe": "基准夏普",
+  "Benchmark, {0} split": "基准，{0} 划分",
+  "System follows the operating system's reduced-motion preference; On plays every effect even when it asks for less.": "“跟随系统”遵循操作系统的“减少动画”偏好；“开”即使系统要求减少动画也会播放全部效果。"
 }

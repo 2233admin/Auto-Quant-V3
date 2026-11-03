@@ -6,6 +6,8 @@ import { testVisible } from '../pages/testGate'
 import { useSlidingHighlight } from '../components/motion/useSlidingHighlight'
 import { SignedValue } from '../components/workbench/SignedValue'
 import { MetricInfo, type MetricId } from '../components/MetricInfo'
+import { Icon } from '../design/icons'
+import { PageMark } from '../design/marks'
 import './cards.css'
 const labels: Record<string, string> = { All: '全部', Supported: '支持', Inconclusive: '结论不明确', 'Not tested': '未测试', 'Could not be tested': '无法测试', Backtested: '已回测', Tuned: '已调优', Defined: '已定义', Development: '开发' }
 
@@ -36,9 +38,10 @@ export const strategyMetricLine = (s: StrategySummary) => s.net
   : uiText("No Portfolio Run metrics yet")
 export const factorPoints = (s: FactorSummary) => s.points.filter(p => p.split !== 'test' || testVisible(s.protocol, { testAudit: s.testAudit }))
 
-export function LibraryTitle({ strategy = false }: { strategy?: boolean }) {
+export function LibraryTitle({ strategy = false, count }: { strategy?: boolean; count?: number }) {
   const language = useLanguage()
-  return <header className="library-title" data-measure="title"><h1>{strategy ? translate(language, 'Strategies', '策略') : translate(language, 'Factors', '因子')}</h1><p>{strategy ? translate(language, 'Build portfolios from factors and inspect net-of-cost backtests.', '基于因子构建组合，查看扣除成本后的回测。') : translate(language, 'Test factor ideas on staged data; every trial is counted.', '使用准备好的数据检验因子想法；每次试验都会计数。')}</p></header>
+  const micro = `${strategy ? 'STRATEGY LIBRARY' : 'FACTOR LIBRARY'}${count === undefined ? '' : ` / ${String(count).padStart(2, '0')}`}`
+  return <header className="library-title sec-bar" data-measure="title"><Icon name={strategy ? 'strategies' : 'factors'} /><h1>{strategy ? translate(language, 'Strategies', '策略') : translate(language, 'Factors', '因子')}</h1><p>{strategy ? translate(language, 'Build portfolios from factors and inspect net-of-cost backtests.', '基于因子构建组合，查看扣除成本后的回测。') : translate(language, 'Test factor ideas on staged data; every trial is counted.', '使用准备好的数据检验因子想法；每次试验都会计数。')}</p><PageMark kind="barcode" micro={micro} /></header>
 }
 
 /** Verdict or state filter: text tabs with counts, the active one underlined. Reset appears only while a filter is set. */
@@ -55,7 +58,7 @@ export function MiniCurve({ points, label }: { points: LibraryPoint[]; label: st
   if (values.length < 2) return <span className="library-spark library-no-curve" data-measure="sparkline">{translate(language, 'No curve', '无曲线')}</span>
   const low = Math.min(...values), high = Math.max(...values)
   const path = values.map((v, i) => `${i * 104 / (values.length - 1)},${21 - (v - low) / (high - low || 1) * 19}`).join(' ')
-  return <svg className="library-spark" data-measure="sparkline" viewBox="0 0 106 22" role="img" aria-label={label}><polyline points={path} fill="none" stroke="currentColor" strokeWidth="1.25" /></svg>
+  return <svg className="library-spark" data-measure="sparkline" viewBox="0 0 106 22" role="img" aria-label={label}><polyline className="fx-draw" pathLength={1} points={path} fill="none" stroke="currentColor" strokeWidth="1.25" /></svg>
 }
 
 /** `r` right-aligns a metric column, which then carries its catalogue definition; `end` right-aligns a non-metric column. */

@@ -56,3 +56,16 @@ SOFTWARE.
 
 Files adapted: `reducedMotion.ts`, `useSlidingHighlight.ts`, `Collapse.tsx`, `AnimatedDetails.tsx`, `AnimatedValue.tsx`,
 `Progress.tsx`, `CopyIcon.tsx`, `themeTransition.ts`, `motion.css`.
+
+## Studio fonts (direction H, 2026-11-04)
+
+All faces are licensed under the SIL Open Font License 1.1. Licence texts for the vendored files sit in
+`studio-app/src/design/fonts/`; the Noto Sans SC licence ships in its npm package.
+
+- **Smiley Sans 得意黑** (Chinese headings), Copyright (c) 2022-2024 atelierAnchor,
+  [atelier-anchor/smiley-sans](https://github.com/atelier-anchor/smiley-sans), `SmileySans-Oblique.ttf.woff2`
+  vendored unmodified (1.15 MB, no subsetting needed).
+- **0xProto** (every Latin letter and number: labels, values, ids, code), Copyright (c) 0xType Project Authors,
+  [0xType/0xProto](https://github.com/0xType/0xProto) release 2.502; `0xProto-Regular.woff2` and `0xProto-Bold.woff2`
+  vendored unmodified.
+- **Noto Sans SC** (body), Copyright (c) Google / Adobe, via the `@fontsource-variable/noto-sans-sc` npm package.

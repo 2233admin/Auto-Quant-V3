@@ -16,9 +16,10 @@ const ALIASES: Record<string, Tab> = { 'pf-neighborhood': 'tuning', 'pf-book': '
 export function StrategyPage({ project, go }: { project: ProjectSnapshot; go: (href: string) => void }) {
   const [tab, selectTab] = useHashTab<Tab>(TAB_IDS, 'backtest', ALIASES)
   const lifecycle = project.library?.strategy?.state ?? 'Not available'
-  const tabs = TAB_IDS.map(id => ({ id, label: uiText(({ backtest: 'Backtest', versions: 'Versions', tuning: 'Tuning', analyses: 'Analyses' })[id]) }))
+  const ICON = { backtest: 'runs', versions: 'versions', tuning: 'tuning', analyses: 'analysis' } as const
+  const tabs = TAB_IDS.map(id => ({ id, icon: ICON[id], label: uiText(({ backtest: 'Backtest', versions: 'Versions', tuning: 'Tuning', analyses: 'Analyses' })[id]) }))
   return <div className="strategy-workbench">
-    <TitleCard title={project.name} subtitle={project.description} backHref={routeHref({ view: 'strategies' })} backLabel={uiText('Back to Strategies')} type={uiText(lifecycle)} />
+    <TitleCard title={project.name} subtitle={project.description} backHref={routeHref({ view: 'strategies' })} backLabel={uiText('Back to Strategies')} type={uiText(lifecycle)} micro="STRATEGY" />
     <WorkbenchShell right={<PaneCard label={uiText('Strategy workbench')} tabs={<TabList label={uiText('Strategy sections')} tabs={tabs} active={tab} onSelect={selectTab} />} flush={tab === 'backtest'}>
       <div className="strategy-panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === 'backtest' && <PortfolioPage key={project.id} project={project} go={go} embedded provenance={<StrategyOrigin project={project} />} />}

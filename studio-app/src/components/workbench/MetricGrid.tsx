@@ -2,6 +2,7 @@ import { uiTemplate, uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 import { CompactTile, CompactTileGrid } from '../CompactTile'
 import { Info } from '../Info'
+import { SectionBar } from '../../design/marks'
 import './workbench.css'
 
 /** A group with a label longer than this gets wider columns, so the label wraps at words and never one letter per line. */
@@ -10,7 +11,7 @@ const LONG_LABEL = 16
 const pad = (n: number, cols: number) => (cols - (n % cols)) % cols
 
 /** `info` adds a "?" next to the heading (accessible name `infoLabel`, default "About <heading>"). */
-export type MetricGroup = { heading: string; label?: string; info?: ReactNode; infoLabel?: string; tiles: Parameters<typeof CompactTile>[0][] }
+export type MetricGroup = { heading: string; label?: string; info?: ReactNode; infoLabel?: string; micro?: string; tiles: Parameters<typeof CompactTile>[0][] }
 
 /**
  * Metric groups (heading + CompactTileGrid). Fixed columns: 3 from 1280px viewport width, 2 below, last row padded. Put
@@ -22,7 +23,7 @@ export function MetricGrid({ groups, hiddenNote }: { groups: MetricGroup[]; hidd
     <div className="wb-metrics">
       {groups.map((g) => (
         <div key={g.heading} className={`wb-metric-group${g.tiles.some((t) => t.label.length > LONG_LABEL) ? ' has-long' : ''}`}>
-          <h3 className="wb-metric-h">
+          <SectionBar as="h3" icon="analysis" className="wb-metric-h" micro={g.micro}>
             {uiValue(g.heading)}
             {g.info && (
               <>
@@ -30,7 +31,7 @@ export function MetricGrid({ groups, hiddenNote }: { groups: MetricGroup[]; hidd
                 <Info label={g.infoLabel ?? uiTemplate("About {0}", [g.heading])}>{g.info}</Info>
               </>
             )}
-          </h3>
+          </SectionBar>
           <CompactTileGrid label={g.label ?? g.heading}>
             {g.tiles.map((t) => (
               <CompactTile key={t.label} {...t} />

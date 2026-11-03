@@ -5,6 +5,7 @@ import type { WorkspaceSummary } from '../api'
 import { ActionRow } from '../components/workbench'
 import { NewIdeaDialog } from '../pages/NewIdeaDialog'
 import { routeHref } from '../route'
+import { Contour } from '../design/marks'
 import { FACTOR_FILTERS, factorMetricLine, factorPoints, filterCounts, isFactorProject, LibraryFilter, LibraryRow, LibraryTable, LibraryTitle, type LibraryColumn } from './LibraryCards'
 
 const SPLITS = ['All', 'Development', 'Not tested']
@@ -23,7 +24,7 @@ export function FactorLibrary({ workspace, go }: { workspace: WorkspaceSummary |
   const counts = filterCounts(rows, FACTOR_FILTERS, p => p.library!.factor!.verdict)
   const shown = rows.filter(p => (evidence === 'All' || (evidence === 'Development' ? !!p.library!.factor!.validation : !p.library!.factor!.validation)) && (filter === 'All' || p.library!.factor!.verdict === filter) && [p.name, p.library!.factor!.question, p.library!.factor!.expression].join(' ').toLowerCase().includes(query.toLowerCase()))
   const filtered = filter !== 'All' || evidence !== 'All' || query !== ''
-  return <div className="pg object-library factors-library"><LibraryTitle /><div className="library-toolbar" data-measure="toolbar">
+  return <div className="pg object-library factors-library"><LibraryTitle count={rows.length} /><div className="library-toolbar" data-measure="toolbar">
     <ActionRow primary={{ label: translate(language, '+ New factor', '+ 新建因子'), onClick: () => setCreate(true) }} secondary={[{ label: uiText('Import data'), onClick: () => go(routeHref({ view: 'data-intake' })) }]} />
     <LibraryFilter options={FACTOR_FILTERS} counts={counts} selected={filter} onSelect={setFilter} onReset={filtered ? () => { setFilter("All"); setQuery(""); setEvidence("All") } : undefined} />
     <select className="library-split" aria-label={uiText("Split")} value={evidence} onChange={e => setEvidence(e.target.value)}>{SPLITS.map(s => <option key={s} value={s}>{s === 'All' ? uiText("All splits") : uiText(s)} ({filterCounts(rows, SPLITS, p => p.library!.factor!.validation ? "Development" : "Not tested")[s]})</option>)}</select>
@@ -32,5 +33,6 @@ export function FactorLibrary({ workspace, go }: { workspace: WorkspaceSummary |
     <LibraryTable kind="factor" columns={COLUMNS} footer={shown.length ? uiTemplate("Factors shown: {0}", [shown.length]) : uiText('No evidence in this Project')}>
       {shown.map(p => { const s = p.library!.factor!; const v = s.validation && s.verdict !== "Could not be tested" ? s.validation : null; return <LibraryRow key={p.id} name={p.name} badge={s.verdict} metric={s.verdict === "Could not be tested" ? uiTemplate("{0} · Trials {1}", [uiText("Could not be tested"), s.trials]) : factorMetricLine(s)} headline={v ? { value: v.meanRankIc, digits: 3, label: "Rank IC" } : undefined} numbers={[v?.hacTStatistic == null ? '—' : v.hacTStatistic.toFixed(1), s.trials]} overlap={<OverlapLine redundancy={s.redundancy} validationIc={s.validation?.meanRankIc} />} points={factorPoints(s)} updated={s.updatedAt} href={routeHref({ view: 'factor', id: p.id, study: s.studyId }) + '&idea=1'} go={go} /> })}
     </LibraryTable>
+    <Contour className="library-topo" width={1200} height={640} seed={11} opacity={0.05} />
     <NewIdeaDialog open={create} onClose={() => setCreate(false)} /></div>
 }

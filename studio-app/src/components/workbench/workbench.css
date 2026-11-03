@@ -111,11 +111,13 @@
 .wb-status-line > .glyph { flex: none; }
 .wb-status[data-state='failed'] .wb-status-text { color: var(--signal); }
 .wb-status-text { flex: 0 1 auto; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
-.wb-bar { position: relative; flex: 1 1 60px; min-width: 60px; height: 6px; background: var(--selected); border-radius: 3px; overflow: hidden; }
+.wb-bar { position: relative; flex: 1 1 60px; min-width: 60px; height: 6px; background: var(--selected); border-radius: 0; overflow: hidden; }
 .wb-bar > span { display: block; height: 100%; background: var(--text); transition: width .3s; }
 .wb-bar.is-indeterminate > span { width: 28%; background: var(--muted); animation: wb-slide 1.4s ease-in-out infinite; }
 @keyframes wb-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(360%); } }
-@media (prefers-reduced-motion: reduce) { .wb-bar.is-indeterminate > span { animation: none; width: 100%; opacity: .4; } }
+/* Motion setting off (or system + reduced motion): final states at once. */
+html[data-fx='0'] .wb-bar.is-indeterminate > span { animation: none; width: 100%; opacity: .4; }
+
 .wb-status-pct { flex: none; min-width: 3em; text-align: right; }
 .wb-status-time { flex: none; }
 .wb-status-line .abtn { min-height: 24px; flex: none; margin-left: auto; }

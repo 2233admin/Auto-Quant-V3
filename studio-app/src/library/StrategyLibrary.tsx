@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { WorkspaceSummary } from '../api'
 import { BuildStrategyAction } from '../actions/BuildStrategyAction'
 import { routeHref } from '../route'
+import { Contour } from '../design/marks'
 import { filterCounts, LibraryFilter, LibraryRow, LibraryTable, LibraryTitle, strategyMetricLine, type LibraryColumn } from './LibraryCards'
 const FILTERS = ['All', 'Tuned', 'Backtested', 'Defined']
 const COLUMNS: LibraryColumn[] = [
@@ -22,7 +23,7 @@ export function StrategyLibrary({ workspace, go }: { workspace: WorkspaceSummary
   const selected = factors.find(p => p.id === source)
   const shown = rows.filter(p => (filter === 'All' || p.library!.strategy!.state === filter) && [p.name, p.description].join(' ').toLowerCase().includes(query.toLowerCase())).sort((a,b) => (ascending ? 1 : -1) * (sort === 'name' ? a.name.localeCompare(b.name) : (a.library!.strategy!.updatedAt ?? '').localeCompare(b.library!.strategy!.updatedAt ?? '')))
   const filtered = filter !== 'All' || query !== '' || sort !== 'updated' || ascending
-  return <div className="pg object-library strategies-library"><LibraryTitle strategy /><div className="library-toolbar" data-measure="toolbar">
+  return <div className="pg object-library strategies-library"><LibraryTitle strategy count={rows.length} /><div className="library-toolbar" data-measure="toolbar">
     <LibraryFilter options={FILTERS} counts={filterCounts(rows, FILTERS, p => p.library!.strategy!.state)} selected={filter} onSelect={setFilter} label={uiText("Status")} onReset={filtered ? () => { setFilter("All"); setQuery(""); setSort("updated"); setAscending(false) } : undefined} />
     <input data-measure="search" aria-label={t('Search strategies', '搜索策略')} type="search" placeholder={t('Search name or question', '搜索名称或问题')} value={query} onChange={e => setQuery(e.target.value)} />
     <select aria-label={uiText("Sort strategies")} value={sort} onChange={e => setSort(e.target.value)}><option value="updated">{uiText("Last updated")}</option><option value="name">{uiText("Name")}</option></select><button className="abtn library-order" aria-label={ascending ? uiText("Sort descending") : uiText("Sort ascending")} onClick={() => setAscending(v => !v)}>{ascending ? '↑' : '↓'}</button>
@@ -33,5 +34,6 @@ export function StrategyLibrary({ workspace, go }: { workspace: WorkspaceSummary
     <aside className="library-unavailable strategy-build"><label>{uiText('Source factor')} <select aria-label={uiText('Source factor')} value={source} onChange={e => setSource(e.target.value)}><option value="">{uiText('Select a source factor')}</option>{factors.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
       {selected ? <BuildStrategyAction key={selected.id} projectId={selected.id} route={selected.library?.factor?.buildStrategy} /> : <><button type="button" className="abtn" disabled>{uiText('Build strategy')}</button><p className="small muted">{uiText('Select a source factor to inspect its Core-supported Strategy route.')}</p></>}
     </aside>
+    <Contour className="library-topo" width={1200} height={640} seed={23} opacity={0.05} />
   </div>
 }

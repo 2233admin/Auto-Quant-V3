@@ -1,66 +1,98 @@
-/* AutoQuant Studio design tokens, ported from the Shinka Research dark-instrument system.
-   Dark is the default; [data-theme="light"] on <html> switches every token. */
+/* AutoQuant Studio design tokens, direction H (owner decision 2026-11-04): black / white / grey, hairline rules,
+   square corners with 8px chamfers on a few marked surfaces, Smiley Sans headings, 0xProto for every Latin letter
+   and number. Dark is the default; [data-theme="light"] on <html> inverts every token. */
 
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0a0a0b;
-  --rail: #0e0e10;
-  --raised: #16161a;
-  --hover: #1c1c21;
-  --selected: #232329;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.16);
-  --text: #ededef;
-  --muted: #a1a1aa;
-  --faint: #8a8a93;
-  /* Signal orange: text and graphics share one value in dark. */
-  --signal: #f2622e;
-  --signal-graphic: #f2622e;
-  --stroke: #6d6d76;
-  --grid: #34343b;
-  /* Error-notice ground, kept from the Carbon notice the app used until 2026-10-22. */
-  --notice-error-bg: #262626;
+  --bg: #080808;
+  --rail: #0d0d0d;
+  --raised: #111111;
+  --hover: #1a1a1a;
+  --selected: #1d1d1d;
+  --line: #222222;
+  --line-strong: #383838;
+  --text: #ececec;
+  --muted: #9b9b9b;
+  --faint: #808080;
+  /* White is the primary contrast device: it replaces the old signal orange for limits, failures and selection. */
+  --signal: #ffffff;
+  --signal-graphic: #ffffff;
+  --stroke: #555555;
+  --grid: #2a2a2a;
+  /* White-on-black primary surface: the button face, the tag square, the logo tile. */
+  --contrast: #f2f2f2;
+  --on-contrast: #080808;
+  /* Section header bar and verdict ground. */
+  --bar: #2e2e2e;
+  --bar-text: #ffffff;
+  --verdict-bg: #161616;
+  --notice-error-bg: #1c1c1c;
+  --hatch-ink: rgba(255, 255, 255, 0.07);
+  --contour-ink: #ffffff;
+  --brk: rgba(255, 255, 255, 0.55);
   /* Score ramp for lineage: lowest score -> best score. */
   --ramp-0: #606066;
   --ramp-1: #f1f1f3;
+  /* Signed colour (option C): red-up / green-down, only on focal numbers. */
+  --up: #e06a82;
+  --dn: #5bd0a0;
 }
 
 [data-theme='light'] {
   color-scheme: light;
-  --bg: #ffffff;
-  --rail: #f6f6f7;
+  --bg: #f4f4f4;
+  --rail: #ececec;
   --raised: #ffffff;
-  --hover: #efeff1;
-  --selected: #e7e7ea;
-  --line: rgba(0, 0, 0, 0.08);
-  --line-strong: rgba(0, 0, 0, 0.16);
-  --text: #18181b;
-  --muted: #52525b;
-  --faint: #66666f;
-  --signal: #b83e0b;
-  --signal-graphic: #e3550c;
-  --stroke: #82828b;
-  --grid: #d4d4d8;
-  --notice-error-bg: #fff1f1;
+  --hover: #e6e6e6;
+  --selected: #dedede;
+  --line: #d4d4d4;
+  --line-strong: #b4b4b4;
+  --text: #111111;
+  --muted: #4d4d4d;
+  --faint: #66666b;
+  --signal: #000000;
+  --signal-graphic: #000000;
+  --stroke: #8a8a8a;
+  --grid: #d0d0d0;
+  --contrast: #111111;
+  --on-contrast: #f4f4f4;
+  --bar: #d6d6d6;
+  --bar-text: #111111;
+  --verdict-bg: #ffffff;
+  --notice-error-bg: #ececec;
+  --hatch-ink: rgba(0, 0, 0, 0.09);
+  --contour-ink: #000000;
+  --brk: rgba(0, 0, 0, 0.55);
   --ramp-0: #8d8d90;
   --ramp-1: #18181b;
+  --up: #b3294a;
+  --dn: #1b7f58;
 }
 
 :root {
-  /* Prose and UI in Inter with a CJK sans fallback; mono only for numbers, ids, hashes, code and commands. */
-  --font-sans: 'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Noto Sans SC', 'Microsoft YaHei', monospace;
+  /* Four roles, each swappable in one place:
+     --font-heading  Chinese headings (Smiley Sans 得意黑); its Latin glyphs are acceptable in headings.
+     --font-sans     body and UI prose (Noto Sans SC).
+     --font-display  Latin micro-labels, big numbers (0xProto).
+     --font-mono     numbers, ids, hashes, code (0xProto). */
+  --font-heading: 'Smiley Sans', 'Noto Sans SC Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  --font-sans: 'Noto Sans SC Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  --font-display: '0xProto', 'Noto Sans SC Variable', 'Microsoft YaHei', ui-monospace, Consolas, monospace;
+  --font-mono: '0xProto', 'Noto Sans SC Variable', 'Microsoft YaHei', ui-monospace, Consolas, monospace;
 
-  /* Type scale (direction B, one step smaller, owner 2026-11-04): weight size/line-height family.
-     Weights in use: 400, 500, 600. Nothing renders below 11px. */
+  /* Type scale, one role per line: weight size/line-height family. Nothing renders below 10px (the micro-label). */
+  --type-micro: 400 10px/16px var(--font-display);
   --type-label: 400 11px/16px var(--font-sans);
   --type-small: 400 12px/18px var(--font-sans);
   --type-body: 400 13px/20px var(--font-sans);
-  --type-section: 600 14px/20px var(--font-sans);
-  --type-page-title: 600 18px/26px var(--font-sans);
-  --type-value: 500 13px/20px var(--font-mono);
-  --type-value-focal: 600 22px/28px var(--font-mono);
+  --type-nav: 400 14px/20px var(--font-sans);
+  --type-section: 400 14px/20px var(--font-heading);
+  --type-page-title: 400 18px/26px var(--font-heading);
+  --type-verdict: 400 24px/32px var(--font-heading);
+  --type-value: 400 13px/20px var(--font-mono);
+  --type-value-lg: 400 20px/28px var(--font-display);
+  --type-value-focal: 400 32px/36px var(--font-display);
   /* Mono at label and small size: ids, hashes and timestamps only, never prose. */
   --type-label-mono: 400 11px/16px var(--font-mono);
   --type-small-mono: 400 12px/18px var(--font-mono);
@@ -69,12 +101,13 @@
   --size-body: 13px;
   --size-small: 12px;
   --size-label: 11px;
-  --sign-positive: var(--err);
-  --sign-negative: var(--ok);
+  /* Uppercase tracked micro-label: always sits next to its Chinese label, never replaces it. */
+  --micro-tracking: 0.16em;
+  --sign-positive: var(--up);
+  --sign-negative: var(--dn);
   --sign-neutral: var(--text);
 
-  /* Spacing: 4 / 8 / 12 / 16 / 24 / 32 only. 4 inside a cell or label-to-value; 8 between items of a group;
-     12 between rows of a group and pane padding; 24 between sections; 32 page top and bottom. */
+  /* Spacing: 4 / 8 / 12 / 16 / 24 / 32 only. */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -82,10 +115,15 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  /* Controls and panes 6px; popovers, menus and dialogs 8px. */
-  --radius-control: 6px;
-  --radius-float: 8px;
+  /* Square corners everywhere. The only cut corner is the 8px chamfer (primary button, verdict block, one card
+     corner, selected nav marker); see .chamfer in foundation.css. */
+  --radius-control: 0;
+  --radius-float: 0;
+  --chamfer: 8px;
+  --rule: 1px;
+  --hatch: repeating-linear-gradient(135deg, var(--hatch-ink) 0 1px, transparent 1px 5px);
 
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --focus-ring: 2px solid var(--text);
 }
 
@@ -97,13 +135,11 @@
   --base: var(--bg);
   --accent: var(--signal-graphic);
   --accent-text: var(--signal);
-  --ok: #9cd1ac;
-  --warn: #e5c06f;
-  --err: #ffa095;
+  --ok: var(--dn);
+  --warn: #d8d8d8;
+  --err: var(--up);
 }
 
 [data-theme='light'] {
-  --ok: #2f7a4a;
-  --warn: #8a6410;
-  --err: #b3261e;
+  --warn: #333333;
 }

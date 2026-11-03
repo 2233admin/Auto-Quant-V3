@@ -5,6 +5,7 @@ import { useOptionalActions } from '../../actions/ActionsContext'
 import { StartSessionDialog } from '../../actions/StartSessionDialog'
 import { Modal } from '../../shell/Modal'
 import { routeHref } from '../../route'
+import { SectionBar } from '../../design/marks'
 
 const pct = (v: number | undefined | null) => typeof v === 'number' ? `${(v * 100).toFixed(1)}%` : '—'
 
@@ -24,7 +25,7 @@ export function StrategyOrigin({ project }: { project: ProjectSnapshot }) {
   const benchmark = !b ? '—' : b.kind === 'cash' ? uiText('Cash') : b.kind === 'asset' ? b.symbol : uiTemplate('Fixed weights: {0}', [Object.entries(b.weights).map(([s, w]) => `${s} ${pct(w)}`).join(', ')])
   const firstRun = strategy?.state === 'Defined' && !!strategy.studyId
   return <section className="strategy-origin" aria-label={uiText('Strategy origin')}>
-    <h2 className="type-section">{uiText('Built from a standalone Factor')}</h2>
+    <SectionBar as="h2" icon="factors" micro="PROVENANCE">{uiText('Built from a standalone Factor')}</SectionBar>
     <dl className="convert-facts">
       <dt>{uiText('Source Factor Project')}</dt><dd><a href={routeHref({ view: 'factor', id: lineage.sourceProjectId ?? '' })} translate="no">{lineage.sourceProjectId}</a></dd>
       <dt>{uiText('Source Factor Run')}</dt><dd className="mono" translate="no">{lineage.sourceRunId}</dd>

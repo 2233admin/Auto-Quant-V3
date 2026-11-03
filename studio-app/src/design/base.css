@@ -99,6 +99,6 @@ code { font-family: var(--font-mono); font-size: var(--size-small); font-variant
 * { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 *::-webkit-scrollbar { width: 8px; height: 8px; }
 *::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+*::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 0; }
 *::-webkit-scrollbar-thumb:hover { background: var(--text-muted, var(--line-strong)); }
 input[type="checkbox"], input[type="radio"] { margin: 0; }

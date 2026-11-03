@@ -1,8 +1,6 @@
 import { createRoot } from 'react-dom/client'
-import '@fontsource-variable/inter'
-import '@fontsource/ibm-plex-mono/latin-400.css'
-import '@fontsource/ibm-plex-mono/latin-500.css'
-import '@fontsource/ibm-plex-mono/latin-600.css'
+import '@fontsource-variable/noto-sans-sc/wght.css'
+import './design/fonts/fonts.css'
 import './design/base.css'
 import './design/tokens.css'
 import './shell/shell.css'
@@ -11,7 +9,11 @@ import './design/layout.css'
 import './actions/actions.css'
 import App from './App'
 import './design/foundation.css'
+import './design/direction-h.css'
 import { applySignConvention, storedSignConvention } from './design/signConvention'
+import { applyMotion, storedMotion } from './motion/motion'
+import './motion/motion.css'
 
 applySignConvention(storedSignConvention())
+applyMotion(storedMotion())
 createRoot(document.getElementById('root')!).render(<App />)

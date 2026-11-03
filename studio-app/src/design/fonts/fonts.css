@@ -1,0 +1,24 @@
+/* Vendored faces (both SIL OFL 1.1; licence texts sit beside the files). Noto Sans SC comes from
+   @fontsource-variable/noto-sans-sc. Smiley Sans 得意黑 is the Chinese heading face; 0xProto is every Latin
+   letter and number (labels, values, ids, code). */
+@font-face {
+  font-family: 'Smiley Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./SmileySans-Oblique.woff2) format('woff2');
+}
+@font-face {
+  font-family: '0xProto';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./0xProto-Regular.woff2) format('woff2');
+}
+@font-face {
+  font-family: '0xProto';
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url(./0xProto-Bold.woff2) format('woff2');
+}

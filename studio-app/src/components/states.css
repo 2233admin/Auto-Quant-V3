@@ -9,5 +9,7 @@
 .st-body a { color: var(--text); text-underline-offset: 3px; }
 .st-spin { width: 16px; height: 16px; border: 2px solid var(--line-strong); border-top-color: var(--text); border-radius: 50%; animation: st-spin .9s linear infinite; }
 @keyframes st-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .st-spin { animation: none; border-top-color: var(--line-strong); border-style: dotted; } }
+/* Motion setting off (or system + reduced motion): final states at once. */
+html[data-fx='0'] .st-spin { animation: none; border-top-color: var(--line-strong); border-style: dotted; }
+
 .st-end { margin: 0; padding: var(--space-2) 0; text-align: center; font: var(--type-small); color: var(--faint); }

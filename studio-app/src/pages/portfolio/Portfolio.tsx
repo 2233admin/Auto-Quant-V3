@@ -6,14 +6,15 @@ import { routeHref } from '../../route'
 import { PathTable, PortfolioChart, PortfolioChartInfo, type SplitWindow } from './PortfolioChart'
 import { BookBlock, EpisodesTable, NeighborhoodBlock, TransitionsTable, ViabilityBlock } from './PortfolioBlocks'
 import type { PerfSummary, PortfolioDiagnostics } from './portfolioTypes'
+import type { VerdictStat } from '../../components/workbench'
 import { Block, day, finite, fn, Kv, NA, SplitToggle, sp, up } from './pfmt'
 import { Info } from '../../components/Info'
-import { ActionRow, FigureCard, FactChips, FactsDialog, MetricGrid, PaneCard, StatChips, StatusLine, Tabs, useHashTab, VerdictBar, WorkbenchShell, type ActionButton, type Fact, type MetricGroup, type Stat, type TabDef, type VerdictReason } from '../../components/workbench'
+import { Icon } from '../../design/icons'
+import { ActionRow, FigureCard, FactChips, FactsDialog, MetricGrid, PaneCard, StatusLine, Tabs, useHashTab, VerdictBlock, WorkbenchShell, type ActionButton, type Fact, type MetricGroup, type TabDef, type VerdictReason } from '../../components/workbench'
 import { downloadJson } from '../../download'
 import { signedNumber } from '../../design/signConvention'
 import { portfolioCaption } from '../figureEvidence'
 import { TEST_HIDDEN_NOTE } from '../testGate'
-import { when } from '../../format'
 import { RunSelect } from '../run/RunSelect'
 import { otherLaneOf } from '../run/runTypes'
 import './portfolio.css'
@@ -66,6 +67,12 @@ const SHORT: Record<string, string> = {
   informationRatio: 'Information ratio',
 }
 
+/** Uppercase micro-labels shown next to each metric's Chinese label (direction H). Decorative, never the only name. */
+const MICRO: Record<string, string> = {
+  totalReturn: 'NET RET', annualReturn: 'NET ANN', sharpe: 'NET SR', sortino: 'NET SORT', maximumDrawdown: 'MAX DD', calmar: 'CALMAR',
+  annualVolatility: 'VOL', expectedShortfall95: 'ES 95', positiveRate: 'POS RATE', activeAnnualReturn: 'ACTIVE', informationRatio: 'IR',
+}
+
 const fmtMetric = (m: Metric, x: number | null | undefined) => (m.kind === 'pct' ? (m.key === 'maximumDrawdown' || m.key.endsWith('Return') ? sp(x) : up(x, 1)) : fn(x))
 
 /** The published headline metrics (Calmar and expected shortfall included) as compact tiles; the benchmark value is in each tile's "?". */
@@ -77,33 +84,40 @@ export function portfolioMetricGroups(pf: PortfolioDiagnostics, split: Split): M
   return [
     {
       heading: label,
+      micro: `METRICS / ${split === 'validation' ? 'VALID' : 'TEST'}`,
       label: uiTemplate("Core numbers, {0} split", [split]),
       tiles: [
         ...METRICS.filter((m) => m.key !== 'calmar' || finite(v.net?.calmar)).map((m) => {
           const bench = v.benchmark?.[m.key]
           return {
             label: SHORT[m.key] ?? m.label,
+            micro: MICRO[m.key],
             value: fmtMetric(m, v.net?.[m.key]),
             info: m.vsBench && finite(bench) ? <p>{uiValue(m.label)}{uiText(". Benchmark value: ")}{fmtMetric(m, bench)}.</p> : m.label,
             metric: m.metric,
           }
         }),
-        { label: uiText("1-way turnover / yr"), value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—', info: 'Annualized one-way turnover: traded notional per year, one way.', metric: 'turnover' },
-        { label: uiText("Total cost drag"), value: up(f?.totalCostDrag, 2), info: `Total cost drag at ${finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade.`, metric: 'costDrag' },
+        { label: uiText("1-way turnover / yr"), micro: 'TURNOVER', value: finite(f?.annualizedOneWayTurnover) ? `${fn(f?.annualizedOneWayTurnover, 1)}x` : '—', info: 'Annualized one-way turnover: traded notional per year, one way.', metric: 'turnover' },
+        { label: uiText("Total cost drag"), micro: 'COST', value: up(f?.totalCostDrag, 2), info: `Total cost drag at ${finite(f?.baseCostBps) ? `${fn(f?.baseCostBps, 1)} bps` : '—'} per one-way trade.`, metric: 'costDrag' },
       ],
     },
   ]
 }
 
-/** The headline chips of the shown split, each tied to its catalogue definition. */
-export function portfolioStats(netSplit: PerfSummary | null | undefined, effective: Split): Stat[] {
-  return netSplit
-    ? [
-        { label: uiText("Net Sharpe"), value: signedNumber(netSplit.sharpe), hint: uiTemplate("{0} split, after costs", [effective]), metric: 'netSharpe' },
-        { label: uiText("Net return"), value: signedNumber(netSplit.totalReturn == null ? null : netSplit.totalReturn * 100, 2, '%'), signed: true, focal: true, hint: uiTemplate("Total return, {0} split, after costs", [effective]), metric: 'netTotalReturn' },
-        { label: uiText("Max drawdown"), value: signedNumber(netSplit.maximumDrawdown == null ? null : netSplit.maximumDrawdown * 100, 2, '%'), hint: uiTemplate("{0} split", [effective]), metric: 'maxDrawdown' },
-      ]
-    : []
+/**
+ * The verdict block's numbers for the shown split: net Sharpe is the focal number (the one that takes sign colour), the
+ * neighbours are plain. Values arrive formatted from Core; nothing is recomputed.
+ */
+export function portfolioVerdictStats(netSplit: PerfSummary | null | undefined, benchSharpe: number | null | undefined, effective: Split): { focal?: VerdictStat; stats: VerdictStat[] } {
+  if (!netSplit) return { stats: [] }
+  return {
+    focal: { label: uiText("Net Sharpe"), micro: 'NET SHARPE', metric: 'netSharpe', value: signedNumber(netSplit.sharpe), signed: true, hint: uiTemplate("{0} split, after costs", [effective]) },
+    stats: [
+      { label: uiText("Net return"), micro: 'NET RET', metric: 'netTotalReturn', value: signedNumber(netSplit.totalReturn == null ? null : netSplit.totalReturn * 100, 2, '%'), hint: uiTemplate("Total return, {0} split, after costs", [effective]) },
+      { label: uiText("Max drawdown"), micro: 'MAX DD', metric: 'maxDrawdown', value: signedNumber(netSplit.maximumDrawdown == null ? null : netSplit.maximumDrawdown * 100, 2, '%'), hint: uiTemplate("{0} split", [effective]) },
+      { label: uiText("Benchmark Sharpe"), micro: 'BM SR', metric: 'netSharpe', value: signedNumber(benchSharpe), hint: uiTemplate("Benchmark, {0} split", [effective]) },
+    ],
+  }
 }
 
 /** Gross, net and benchmark side by side for every headline metric, behind a disclosure. */
@@ -276,16 +290,16 @@ export function PortfolioPage({ project, go, embedded = false, provenance }: { p
   ]
 
   const netSplit = pf.strategyViability?.[effective]?.net
-  const stats = portfolioStats(netSplit, effective)
+  const { focal, stats } = portfolioVerdictStats(netSplit, pf.strategyViability?.[effective]?.benchmark?.sharpe, effective)
   const runRow = project.runs.find((r) => r.id === run?.id)
   const duration = typeof runRow?.durationMs === 'number' ? `${(runRow.durationMs / 1000).toFixed(1)} s` : undefined
   const exportButton: ActionButton = testVisible
-    ? { label: uiText("Export JSON"), onClick: () => downloadJson(`${run?.id ?? 'portfolio'}-portfolio-evidence.json`, pf), title: uiText("Download the Portfolio evidence snapshot of this Run as JSON") }
-    : { label: uiText("Export JSON"), disabled: true, disabledReason: uiText("No test audit is published for this Run: the raw snapshot is exported only when every number in it may be shown.") }
+    ? { label: <><Icon name="export" />{uiText("Export JSON")}</>, onClick: () => downloadJson(`${run?.id ?? 'portfolio'}-portfolio-evidence.json`, pf), title: uiText("Download the Portfolio evidence snapshot of this Run as JSON") }
+    : { label: <><Icon name="export" />{uiText("Export JSON")}</>, disabled: true, disabledReason: uiText("No test audit is published for this Run: the raw snapshot is exported only when every number in it may be shown.") }
   const resultActions: ActionButton[] = [
-    { label: uiText("Parameters"), onClick: () => setParamsOpen(true), title: uiText("Show the parameters of the Study and the Run") },
-    { label: uiText("Open Project"), href: routeHref({ view: 'project', id: project.id }) },
-    ...(run?.id ? [{ label: uiText("Run summary"), href: routeHref({ view: 'run', id: project.id, run: run.id }) }] : []),
+    { label: <><Icon name="params" />{uiText("Parameters")}</>, onClick: () => setParamsOpen(true), title: uiText("Show the parameters of the Study and the Run") },
+    { label: <><Icon name="folder" />{uiText("Open Project")}</>, href: routeHref({ view: 'project', id: project.id }) },
+    ...(run?.id ? [{ label: <><Icon name="doc" />{uiText("Run summary")}</>, href: routeHref({ view: 'run', id: project.id, run: run.id }) }] : []),
     exportButton,
   ]
 
@@ -307,45 +321,43 @@ export function PortfolioPage({ project, go, embedded = false, provenance }: { p
   const right = (
     <PaneCard
       label={uiText("Results")}
-      actions={
-        <div className="wb-resultbar">
-          {selector}
-          <ActionRow secondary={resultActions} />
-        </div>
-      }
       status={
-        <div className="fr-status">
+        <div className="runrow fr-status">
+          <span className="mk runmk" translate="no">Run</span>
+          {selector}
           {runRow && (
             <StatusLine
               state={runRow.status === 'succeeded' ? 'done' : 'failed'}
-              text={runRow.status === 'succeeded' ? `Run succeeded · ${when(runRow.startedAt)} UTC` : `Run ${runRow.status} · ${when(runRow.startedAt)} UTC`}
+              text={runRow.status === 'succeeded' ? uiText('Run succeeded') : uiTemplate('Run {0}', [runRow.status])}
               elapsed={duration}
             />
           )}
-          <div className="answer-strip" data-measure="answer">
-            <VerdictBar tone="warn" word={WORD[verdict]} reasons={reasons.map((r) => ({ tone: r.tone, text: r.text, field: r.field }))} detail={sentence}>
-              {clause}
-            </VerdictBar>
-            <StatChips label={uiTemplate("Headline numbers, {0} split", [effective])} scope={effective === 'test' ? 'Test · development' : 'Validation · development'} stats={stats} />
-          </div>
         </div>
       }
     >
+      <ActionRow secondary={resultActions} align="start" />
+      <div className="answer-strip" data-measure="answer">
+        <VerdictBlock tone="warn" word={WORD[verdict]} reasons={reasons.map((r) => ({ tone: r.tone, text: r.text, field: r.field }))} detail={sentence} clause={clause} focal={focal} stats={stats} />
+      </div>
       {!embedded && <h1 className="type-page-title">{uiText("Portfolio")}</h1>}
       <div className="result-pair">
-      {points.length >= 2 ? (
-        <FigureCard label={uiText("FIG A")} subtitle={uiText("Published net growth and drawdown.")} caption={portfolioCaption(netSplit?.totalReturn, effective, testVisible)} development title={uiText("Growth and drawdown")} info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} toggle={splitControl} minHeight={260}>
-          {() => <PortfolioChart points={points} windows={windows} transitions={transitions.map((r) => r.timestamp)} totalRows={pf.path?.totalRows} sampledRows={pf.path?.sampledRows} />}
-        </FigureCard>
-      ) : (
-        <Empty title={uiText("Not available")}>
-          <p>{uiText("not available: the Run publishes ")}{allPoints.length}{uiText(" path points")}{testVisible ? '' : uiText(" outside the test split")}{uiText(", too few to draw a curve.")}</p>
-        </Empty>
-      )}
-      {points.length < 2 && splitControl}
-      {groups ? <MetricGrid groups={groups} hiddenNote={testVisible ? undefined : hiddenNote} /> : <p><NA why={`strategyViability.${effective}.net is not in the payload`} /></p>}
+        <div className="rp-left">
+          {groups ? <MetricGrid groups={groups} hiddenNote={testVisible ? undefined : hiddenNote} /> : <p><NA why={`strategyViability.${effective}.net is not in the payload`} /></p>}
+          {provenance}
+        </div>
+        <div className="rp-right">
+          {points.length >= 2 ? (
+            <FigureCard label={uiText("FIG A")} subtitle={uiText("Published net growth and drawdown.")} caption={portfolioCaption(netSplit?.totalReturn, effective, testVisible)} development title={uiText("Growth and drawdown")} micro="EQUITY" info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} toggle={splitControl} minHeight={260}>
+              {() => <PortfolioChart points={points} windows={windows} transitions={transitions.map((r) => r.timestamp)} totalRows={pf.path?.totalRows} sampledRows={pf.path?.sampledRows} />}
+            </FigureCard>
+          ) : (
+            <Empty title={uiText("Not available")}>
+              <p>{uiText("not available: the Run publishes ")}{allPoints.length}{uiText(" path points")}{testVisible ? '' : uiText(" outside the test split")}{uiText(", too few to draw a curve.")}</p>
+            </Empty>
+          )}
+          {points.length < 2 && splitControl}
+        </div>
       </div>
-      {provenance}
       <FactChips
         label={uiText("What was run")}
         locked

@@ -1,0 +1,88 @@
+/* Studio's own motion layer, direction H (see docs/design/studio-design/MOTION.md). Hand-written; nothing here is taken
+   from the animate-ui based kit in components/motion. Everything plays only under html[data-fx='1'] (the Motion setting
+   resolved in motion.ts); with Motion off every element is simply in its final state. Entrance effects are CSS animations
+   that start when an element is created, each under 900 ms. Only transform, opacity, clip-path and stroke-dashoffset
+   animate (plus stroke colour on registration marks). */
+
+.fx-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- Hover states (transitions only exist while motion plays; the states themselves always work) ---- */
+html[data-fx='1'] .library-row > :first-child,
+html[data-fx='1'] .library-row > :last-child { transition: background-size 140ms var(--ease-out); }
+html[data-fx='1'] .regmark .reg { transition: stroke 140ms linear; }
+html[data-fx='1'] .nav .icon { transition: transform 140ms var(--ease-out); }
+html[data-fx='1'] .nav:hover .icon { transform: translateX(2px); }
+html[data-fx='1'] .abtn--primary:hover:not(:disabled)::after { opacity: 1; animation: fx-sweep 420ms var(--ease-out); }
+
+/* ---- Entrances ---- */
+html[data-fx='1'] .sec-bar { animation: fx-wipe 320ms var(--ease-out) backwards; }
+html[data-fx='1'] .sec-bar::after { animation: fx-hatch 380ms var(--ease-out) 120ms backwards; }
+html[data-fx='1'] .wb-title-card::after, html[data-fx='1'] .runrow::after, html[data-fx='1'] .wb-pane-head::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--stroke); transform-origin: left; pointer-events: none; animation: fx-hairline 800ms var(--ease-out) backwards; }
+html[data-fx='1'] .runrow::after { animation-delay: 120ms; }
+html[data-fx='1'] .library-row, html[data-fx='1'] .ct, html[data-fx='1'] .wb-actions-row .abtn,
+html[data-fx='1'] .strategy-origin .convert-facts > *, html[data-fx='1'] .rp-right .wb-chart-head ~ * { animation: fx-rise 260ms var(--ease-out) backwards; }
+html[data-fx='1'] .verd { animation: fx-rise 260ms var(--ease-out) 80ms backwards; }
+html[data-fx='1'] .verd::before { transform-origin: top; animation: fx-grow 360ms var(--ease-out) 220ms backwards; }
+html[data-fx='1'] .verd .brk i { animation: fx-snap 260ms var(--ease-out) 240ms backwards; }
+html[data-fx='1'] .verd .scan { display: block; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, transparent calc(100% - 1px), rgb(255 255 255 / 0.4) 0); animation: fx-scan 550ms linear 380ms backwards; }
+html[data-fx='1'] .bar9 { animation: fx-ticks 420ms steps(14, end) 160ms backwards; }
+html[data-fx='1'] .fx-draw { stroke-dasharray: 1; animation: fx-draw 700ms var(--ease-out) 150ms backwards; }
+html[data-fx='1'] .fx-draw.fx-late { animation-delay: 300ms; }
+html[data-fx='1'] .fx-reveal { transform-box: fill-box; transform-origin: left center; animation: fx-reveal 700ms var(--ease-out) 270ms backwards; }
+html[data-fx='1'] .fx-reveal.fx-late { animation-delay: 420ms; }
+html[data-fx='1'] .fx-fade { animation: fx-fade 260ms linear 600ms backwards; }
+
+/* ---- Ambient ---- */
+html[data-fx='1'] .topo { animation: fx-drift 60s linear infinite alternate; }
+html[data-fx='1'] .runmk { animation: fx-blink 5s linear infinite; }
+
+/* Stagger: 40 ms per item, first dozen only (the rest share the last delay). */
+html[data-fx='1'] .library-row:nth-child(1) { animation-delay: 80ms; }
+html[data-fx='1'] .library-row:nth-child(2) { animation-delay: 120ms; }
+html[data-fx='1'] .library-row:nth-child(3) { animation-delay: 160ms; }
+html[data-fx='1'] .library-row:nth-child(4) { animation-delay: 200ms; }
+html[data-fx='1'] .library-row:nth-child(5) { animation-delay: 240ms; }
+html[data-fx='1'] .library-row:nth-child(6) { animation-delay: 280ms; }
+html[data-fx='1'] .library-row:nth-child(7) { animation-delay: 320ms; }
+html[data-fx='1'] .library-row:nth-child(8) { animation-delay: 360ms; }
+html[data-fx='1'] .library-row:nth-child(9) { animation-delay: 400ms; }
+html[data-fx='1'] .library-row:nth-child(10) { animation-delay: 440ms; }
+html[data-fx='1'] .library-row:nth-child(11) { animation-delay: 480ms; }
+html[data-fx='1'] .library-row:nth-child(12) { animation-delay: 520ms; }
+html[data-fx='1'] .ct:nth-child(1) { animation-delay: 260ms; }
+html[data-fx='1'] .ct:nth-child(2) { animation-delay: 285ms; }
+html[data-fx='1'] .ct:nth-child(3) { animation-delay: 310ms; }
+html[data-fx='1'] .ct:nth-child(4) { animation-delay: 335ms; }
+html[data-fx='1'] .ct:nth-child(5) { animation-delay: 360ms; }
+html[data-fx='1'] .ct:nth-child(6) { animation-delay: 385ms; }
+html[data-fx='1'] .ct:nth-child(7) { animation-delay: 410ms; }
+html[data-fx='1'] .ct:nth-child(8) { animation-delay: 435ms; }
+html[data-fx='1'] .ct:nth-child(9) { animation-delay: 460ms; }
+html[data-fx='1'] .ct:nth-child(10) { animation-delay: 485ms; }
+html[data-fx='1'] .ct:nth-child(11) { animation-delay: 510ms; }
+html[data-fx='1'] .ct:nth-child(12) { animation-delay: 535ms; }
+html[data-fx='1'] .ct:nth-child(13) { animation-delay: 560ms; }
+html[data-fx='1'] .ct:nth-child(14) { animation-delay: 585ms; }
+html[data-fx='1'] .ct:nth-child(15) { animation-delay: 610ms; }
+html[data-fx='1'] .ct:nth-child(16) { animation-delay: 635ms; }
+html[data-fx='1'] .wb-actions-row .abtn:nth-child(1) { animation-delay: 140ms; }
+html[data-fx='1'] .wb-actions-row .abtn:nth-child(2) { animation-delay: 180ms; }
+html[data-fx='1'] .wb-actions-row .abtn:nth-child(3) { animation-delay: 220ms; }
+html[data-fx='1'] .wb-actions-row .abtn:nth-child(4) { animation-delay: 260ms; }
+
+@keyframes fx-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes fx-hatch { from { transform: translateX(72px); } }
+@keyframes fx-hairline { 0% { transform: scaleX(0); opacity: 1; } 60% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+@keyframes fx-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes fx-grow { from { transform: scaleY(0); } }
+@keyframes fx-snap { from { opacity: 0; transform: translate(calc(var(--bx) * 2), calc(var(--by) * 2)); } }
+@keyframes fx-scan { 0% { transform: translateX(-100%); opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { transform: translateX(0); opacity: 0; } }
+@keyframes fx-ticks { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes fx-draw { from { stroke-dashoffset: 1; } }
+@keyframes fx-reveal { from { transform: scaleX(0); } }
+@keyframes fx-fade { from { opacity: 0; } }
+@keyframes fx-sweep { to { transform: translateX(260%); } }
+@keyframes fx-drift { from { transform: translate(0, 0); } to { transform: translate(-6px, 4px); } }
+@keyframes fx-blink { 0%, 90%, 100% { opacity: 1; } 95% { opacity: 0.35; } }
