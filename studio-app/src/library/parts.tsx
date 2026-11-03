@@ -1,7 +1,8 @@
 import { uiTemplate, uiText, uiValue } from '../i18n'
 import type { ReactNode } from 'react'
 import { Info } from '../components/Info'
-import { Glyph } from '../design/icons'
+import { Glyph, Icon, type IconName } from '../design/icons'
+import { PageMark } from '../design/marks'
 import { plural } from '../format'
 import { Notice } from '../Notice'
 import { Empty as EmptyState } from '../components/States'
@@ -28,14 +29,16 @@ export function VerdictBadge({ verdict, none, detail }: { verdict: Verdict | nul
   )
 }
 
-export function PageHead({ title, lede, info }: { title: string; lede: ReactNode; info?: ReactNode }) {
+export function PageHead({ title, lede, info, icon = 'runs', micro }: { title: string; lede: ReactNode; info?: ReactNode; icon?: IconName; micro?: string }) {
   return (
-    <header className="pg-head">
+    <header className="pg-head sec-bar">
+      <Icon name={icon} />
       <h1>{title}</h1>
       <p className="muted small">
         {uiValue(lede)}
         {info && <Info label={uiTemplate("About {0}", [title])}>{info}</Info>}
       </p>
+      {micro && <PageMark kind="ruler" micro={micro} />}
     </header>
   )
 }

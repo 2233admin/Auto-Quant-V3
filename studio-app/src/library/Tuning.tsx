@@ -95,6 +95,7 @@ function Index({ workspace, go }: { workspace: WorkspaceSummary | null; go: (hre
   return (
     <div className="pg">
       <PageHead
+        icon="tuning" micro="TUNING"
         title={t('Tuning tasks', '调优任务')}
         lede={language === 'zh' ? `共 ${rows.length} 个会话，来自 ${new Set(rows.map((r) => r.project.id)).size} 个项目。点击行以查看详情。` : uiTemplate("{0} across {1}. Click a row to open it.", [plural(rows.length, 'Session'), plural(new Set(rows.map((r) => r.project.id)).size, 'Project')])}
         info={<p>{t('A Session is the closest thing here to a tuning task: a baseline and its recorded candidate trials.', '会话包含一个基线及其记录的候选试验。')}</p>}
@@ -273,7 +274,7 @@ function Detail({ workspace, id, go }: { workspace: WorkspaceSummary | null; id:
   const session = sessions.find((s) => sessionOf(s).id === chosen) ?? sessions[0]
   return (
     <div className="pg">
-      <PageHead title={`${tr('Tuning', '调优')} · ${project.name}`} lede={language === 'zh' ? `${sessions.length} 个会话。仅供查看。` : uiTemplate("{0}. Read-only.", [plural(sessions.length, 'Session')])} info={<p>{tr('The per-trial view reads the Session decision matrix; nothing is run or changed from here.', '逐次试验视图读取会话决策矩阵；此处不会运行或修改内容。')}</p>} />
+      <PageHead icon="tuning" micro="TUNING" title={`${tr('Tuning', '调优')} · ${project.name}`} lede={language === 'zh' ? `${sessions.length} 个会话。仅供查看。` : uiTemplate("{0}. Read-only.", [plural(sessions.length, 'Session')])} info={<p>{tr('The per-trial view reads the Session decision matrix; nothing is run or changed from here.', '逐次试验视图读取会话决策矩阵；此处不会运行或修改内容。')}</p>} />
       {sessions.length > 1 && (
         <label className="lib-field">
           <span>{tr('Session', '会话')}</span>

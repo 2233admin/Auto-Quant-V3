@@ -1,5 +1,5 @@
 import { uiTemplate, uiText, uiValue } from '../i18n'
-import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { EndOfList } from '../components/States'
 import { useSlidingHighlight } from '../components/motion/useSlidingHighlight'
 import '../components/motion/motion.css'
@@ -14,6 +14,8 @@ export type Col<T> = {
   /** First cell: rendered as the row header (the link that opens the row). */
   rowHeader?: boolean
   title?: string
+  /** Extra class on the body cells and the header cell (for example a quiet id column). */
+  className?: string
 }
 
 export type SortState = { id: string; dir: 1 | -1 }
@@ -32,6 +34,9 @@ export function DataTable<T>({
   caption,
   selected,
   slideHover = false,
+  className = '',
+  edge,
+  dayOf,
 }: {
   rows: T[]
   cols: Col<T>[]
@@ -43,6 +48,11 @@ export function DataTable<T>({
   selected?: (row: T) => boolean
   /** Hover wash that glides between rows instead of jumping. Off by default. */
   slideHover?: boolean
+  className?: string
+  /** Sign colour of a row's left edge marker and faint tint: the headline metric's sign, or 'muted' for a failed row. */
+  edge?: (row: T) => 'positive' | 'negative' | 'muted' | undefined
+  /** Day of a row; while sorted by the `started` column a thin divider row introduces each day. */
+  dayOf?: (row: T) => string
 }) {
   const [sort, setSort] = useState<SortState | null>(initial ?? null)
   const wrap = useRef<HTMLDivElement>(null)
@@ -85,12 +95,12 @@ export function DataTable<T>({
     <>
       {overflow && <p className="faint small lib-scrollhint" aria-hidden="true">{uiText("Scroll sideways for more columns →")}</p>}
       <div className={`tablewrap lib-scroll${slideHover ? ' mo-hl mo-hl--overlay' : ''}`} ref={wrap} tabIndex={0} role="region" aria-label={uiTemplate("{0}, scrollable", [caption])}>
-      <table className="tbl lib-tbl">
+      <table className={`tbl lib-tbl${className ? ` ${className}` : ''}`}>
         <caption className="sr">{uiValue(caption)}</caption>
         <thead>
           <tr>
             {cols.map((c) => (
-              <th key={c.id} scope="col" className={c.align} title={c.title} aria-sort={sort?.id === c.id ? (sort.dir === 1 ? 'ascending' : 'descending') : c.sort ? 'none' : undefined}>
+              <th key={c.id} scope="col" className={[c.align, c.className].filter(Boolean).join(' ') || undefined} title={c.title} aria-sort={sort?.id === c.id ? (sort.dir === 1 ? 'ascending' : 'descending') : c.sort ? 'none' : undefined}>
                 {c.sort ? (
                   <button type="button" className="lib-sort" onClick={() => toggle(c.id)}>
                     {uiValue(c.label)}
@@ -104,17 +114,24 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {sorted.map((row) => (
-            <tr key={rowKey(row)} className={`${href ? 'is-open' : ''}${selected?.(row) ? ' is-picked' : ''}`} onClick={(e) => open(e, row)}>
-              {cols.map((c) =>
-                c.rowHeader ? (
-                  <th key={c.id} scope="row" className={c.align}>{c.render(row)}</th>
-                ) : (
-                  <td key={c.id} className={c.align === 'r' ? 'r num' : undefined}>{c.render(row)}</td>
-                ),
-              )}
-            </tr>
-          ))}
+          {sorted.map((row, index) => {
+            const day = dayOf && sort?.id === 'started' ? dayOf(row) : null
+            const newDay = day !== null && (index === 0 || dayOf!(sorted[index - 1]) !== day)
+            return (
+              <Fragment key={rowKey(row)}>
+                {newDay && <tr className="lib-day"><th scope="colgroup" colSpan={cols.length}>{uiTemplate('{0} · {1} Runs', [day, sorted.filter((r) => dayOf!(r) === day).length])}</th></tr>}
+                <tr className={`${href ? 'is-open' : ''}${selected?.(row) ? ' is-picked' : ''}`} data-edge={edge?.(row)} onClick={(e) => open(e, row)}>
+                  {cols.map((c) =>
+                    c.rowHeader ? (
+                      <th key={c.id} scope="row" className={c.align}>{c.render(row)}</th>
+                    ) : (
+                      <td key={c.id} className={[c.align === 'r' ? 'r num' : '', c.className ?? ''].filter(Boolean).join(' ') || undefined}>{c.render(row)}</td>
+                    ),
+                  )}
+                </tr>
+              </Fragment>
+            )
+          })}
         </tbody>
       </table>
       </div>

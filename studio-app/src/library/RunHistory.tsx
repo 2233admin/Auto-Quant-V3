@@ -4,9 +4,10 @@ import type { WorkspaceSummary } from '../api'
 import { routeHref } from '../route'
 import { DataTable } from './DataTable'
 import { Empty, PageHead } from './parts'
+import { dayOf } from './data'
 import { emptyFilters, matchesRun, RunFilters } from './RunFilters'
 import { compareUrl, runKey, useHistory, useRead, type Comparison } from './runHistoryApi'
-import { runColumns } from './runColumns'
+import { runColumns, runEdge } from './runColumns'
 import { compareReason } from '../pages/compare/comparisonCopy'
 
 export function CompareSelection({ count, decision, error, onCompare }: { count: number; decision?: Comparison; error?: string; onCompare: () => void }) {
@@ -32,16 +33,18 @@ export function RunHistory({ workspace, go, projectId, lane, revision }: { works
     if (two.length === 2) go(routeHref({ view: 'compare', id: two[0].project.id, a: two[0].id, b: two[1].id, projectB: two[1].project.id }))
   }
   const href = (r: typeof rows[number]) => routeHref({ view: 'run', id: r.project.id, run: r.id })
-  return <div className="pg">
-    <PageHead title={uiText(projectId ? 'Strategy versions' : 'Run history')} lede={uiText(projectId ? 'Portfolio Runs in this Project over time. Select two to check their evaluation baseline before comparing.' : 'Every immutable Run across objects and lanes. Select two Runs with the same evaluation baseline.')} />
+  return <div className="pg run-history">
+    <PageHead icon={projectId ? 'versions' : 'runs'} micro={projectId ? 'VERSIONS' : 'RUN HISTORY'} title={uiText(projectId ? 'Strategy versions' : 'Run history')} lede={uiText(projectId ? 'Portfolio Runs in this Project over time. Select two to check their evaluation baseline before comparing.' : 'Every immutable Run across objects and lanes. Select two Runs with the same evaluation baseline.')} />
     {history.loading && <p role="status">{uiText('Loading…')}</p>}
     {history.error && <p role="alert">{uiText('Could not load Run history.')} {history.error}</p>}
     {history.warnings && <details className="small muted"><summary>{uiText('Workspace diagnostics; verified Runs remain listed.')}</summary><p>{history.warnings}</p></details>}
     <RunFilters rows={rows} value={filters} onChange={setFilters} />
-    <p className="small muted">{uiTemplate('{0} of {1} Runs', [shown.length, rows.length])}</p>
-    <CompareSelection count={picked.length} decision={check?.data} error={check?.error} onCompare={openCompare} />
-    {picked.length > 0 && <button className="btn" onClick={() => setPicked([])}>{uiText('Clear selection')}</button>}
+    <div className="run-bar">
+      <p className="small muted run-count">{uiTemplate('{0} of {1} Runs', [shown.length, rows.length])}</p>
+      <CompareSelection count={picked.length} decision={check?.data} error={check?.error} onCompare={openCompare} />
+      {picked.length > 0 && <button className="btn" onClick={() => setPicked([])}>{uiText('Clear selection')}</button>}
+    </div>
     {!history.loading && !shown.length && <Empty>{uiText('No Run matches these filters.')}</Empty>}
-    {shown.length > 0 && <DataTable rows={shown} cols={runColumns(picked, toggle)} rowKey={runKey} href={href} go={go} initial={{ id: 'started', dir: -1 }} caption={uiText(projectId ? 'Portfolio Runs in this Project' : 'Runs across all Projects')} selected={r => picked.includes(runKey(r))} />}
+    {shown.length > 0 && <DataTable rows={shown} cols={runColumns(picked, toggle)} rowKey={runKey} href={href} go={go} className="lib-tbl--runs" edge={runEdge} dayOf={r => dayOf(r.startedAt)} initial={{ id: 'started', dir: -1 }} caption={uiText(projectId ? 'Portfolio Runs in this Project' : 'Runs across all Projects')} selected={r => picked.includes(runKey(r))} />}
   </div>
 }

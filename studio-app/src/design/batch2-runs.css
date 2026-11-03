@@ -1,0 +1,36 @@
+/* Batch 2 of direction H (owner feedback 2026-11-04). Tokens only; sign colour is the sign-positive / sign-negative role pair,
+   so the Settings convention switch (default red up, green down) applies. See DESIGN.md, "Batch 2". */
+
+/* ---- Run history: human columns first, the technical id quiet at the far right, a sign edge on every row ---- */
+.run-history { display: grid; gap: var(--space-4); align-content: start; }
+.run-history .lib-filters { flex-wrap: nowrap; gap: var(--space-2); overflow-x: auto; padding-bottom: var(--space-2); scrollbar-width: thin; }
+.run-history .lib-field { flex: 0 0 auto; }
+.run-history .lib-field input[type='search'] { min-width: 0; width: 11rem; }
+.run-history .lib-field select { max-width: 9.5rem; }
+.run-history .lib-field input[type='date'] { width: 9.5rem; }
+.run-bar { display: flex; align-items: center; gap: var(--space-4); min-height: 32px; }
+.run-bar .lib-bar { min-height: 0; flex: 1 1 auto; min-width: 0; }
+.run-bar .run-count { margin: 0; flex: none; font-variant-numeric: tabular-nums; }
+.run-bar .small { margin: 0; }
+
+.lib-tbl--runs { width: 100%; }
+.lib-tbl--runs thead th { padding-block: var(--space-2); white-space: nowrap; }
+.lib-tbl--runs tbody td, .lib-tbl--runs tbody th[scope='row'] { height: 38px; padding-block: 0; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-tbl--runs .run-project { display: block; max-width: 24ch; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.lib-tbl--runs .run-metric { font: var(--type-small); color: var(--muted); }
+.lib-tbl--runs .run-value { font: var(--type-value); font-weight: 600; }
+.lib-tbl--runs .run-state { font: var(--type-small); color: var(--muted); }
+.lib-tbl--runs .run-verdict { font-weight: 500; }
+.lib-tbl--runs .run-id { width: 200px; max-width: 200px; text-align: right; }
+.lib-tbl--runs td.run-id a { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--type-micro); letter-spacing: 0.02em; color: var(--faint); text-decoration: none; }
+.lib-tbl--runs td.run-id a:hover { color: var(--muted); text-decoration: underline; }
+.lib-tbl--runs tbody tr { --edge: transparent; --tint: transparent; box-shadow: none; }
+.lib-tbl--runs tbody tr[data-edge='positive'] { --edge: var(--sign-positive); --tint: color-mix(in srgb, var(--sign-positive) 5%, var(--bg)); }
+.lib-tbl--runs tbody tr[data-edge='negative'] { --edge: var(--sign-negative); --tint: color-mix(in srgb, var(--sign-negative) 5%, var(--bg)); }
+.lib-tbl--runs tbody tr[data-edge='muted'] { --edge: var(--line-strong); color: var(--muted); }
+.lib-tbl--runs tbody tr[data-edge] > * { background: var(--tint); }
+.lib-tbl--runs tbody tr[data-edge='positive']:hover > *, .lib-tbl--runs tbody tr[data-edge='negative']:hover > * { background: color-mix(in srgb, var(--edge) 13%, var(--bg)); }
+.lib-tbl--runs tbody tr[data-edge] > :first-child { box-shadow: inset 3px 0 0 var(--edge); }
+.lib-tbl--runs tbody tr.is-picked > * { background: var(--selected); }
+.lib-tbl--runs .lib-day th { position: static; height: auto; padding: var(--space-4) 0 var(--space-1); border-bottom: 1px solid var(--line-strong); background: transparent; text-align: left; font: var(--type-micro); letter-spacing: var(--micro-tracking); text-transform: uppercase; color: var(--muted); }
+.lib-tbl--runs tbody tr:first-child.lib-day th { padding-top: var(--space-2); }

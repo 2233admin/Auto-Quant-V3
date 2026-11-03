@@ -21,6 +21,7 @@ export function AttentionPage({ workspace }: { workspace: WorkspaceSummary | nul
   return (
     <div className="pg">
       <PageHead
+        icon="attention" micro="ATTENTION"
         title={t('Attention', '待处理')}
         lede={items.length === 0 ? t('Everything in this Workspace verifies.', '工作区中的所有项目均已通过验证。') : language === 'zh' ? `有 ${items.length} 项需要查看。` : uiTemplate("{0} {1} a look.", [items.length, items.length === 1 ? 'item needs' : 'items need'])}
       />
