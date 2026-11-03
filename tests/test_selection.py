@@ -299,6 +299,10 @@ class ResearchFamilyTests(unittest.TestCase):
                 "autoquant.selection.load_run",
                 side_effect=lambda _project, run_id: runs[run_id],
             ),
+            mock.patch(
+                "autoquant.selection.inheritance_projection",
+                return_value=None,
+            ),
         ):
             observed = build_research_family(object(), anchor)
 

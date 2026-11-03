@@ -1176,6 +1176,7 @@ class AgentCliTests(unittest.TestCase):
                 "project.templates",
                 "project.create",
                 "project.intake",
+                "project.from-factor",
                 "project.list",
                 "project.default",
                 "project.program",
