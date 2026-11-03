@@ -114,6 +114,15 @@ DECIDED (owner, 2026-11-04, after comparing rendered mock-ups A to H and reviewi
 - Motion: Studio's own layer, with a Motion setting (see `MOTION.md`).
 - Type roles: page title 18 (Smiley Sans), section 14 (Smiley Sans), verdict word 24 (Smiley Sans), body 13, label 11, micro-label 10 (0xProto, uppercase, 0.16em), value 13 (0xProto), value-lg 20 (library headline), value-focal 32 (verdict block).
 
+### Batch 2 (owner feedback 2026-11-04: "much better, but it lacks rhythm; a research workbench, not a rigid fixed thing; too much text; use colour to separate money-making from money-losing")
+
+- Sign colour is extended to lists and curves (see "Signed numbers").
+- Run history: human columns first (Project, object, verdict, headline metric and its sign-coloured value, start, duration); the Run id and Study id, the log-like column, sit at the far right in faint 0xProto on one truncated line with the full ids in a tooltip. One line per row (38px), a thin day divider ("2026-11-03 · 7 Runs") while sorted by start time, the compare checkbox kept, the filter toolbar on one line.
+- Libraries at scale (50 to 200 Factors): the aligned rows stay. Added: a density toggle (Comfortable, Compact: 32px rows with the sub line and description hidden), persisted in localStorage (`aq-studio-library-density`); sortable column headers (headline metric, HAC t, trials, last updated, name; missing values sort last); optional collapsible verdict sections (Supported, Inconclusive, Not tested, Could not be tested; for Strategies Tuned, Backtested, Defined), each with its count and a sign-coloured mean, persisted as `aq-studio-library-grouped`. Switching a filter cross-fades the new rows in. A synthetic 120-Factor snapshot exists only as a UI test fixture (`studio-app/tests/libraryFixture.ts`).
+- Resizable workbench: the two panes of `WorkbenchShell` are separated by a draggable vertical splitter (`role="separator"`, `aria-valuenow` = left share in percent). Pointer drag; arrow keys move 2 points (Shift 10); Home and End snap to the minimum widths (left 320px, right 480px); Enter or a double-click resets to 40/60. The share persists per user and workbench (`aq-studio-split:<id>`). The code editor inside the left pane grows with the pane height. Pure rules live in `components/workbench/splitter.ts` and are unit tested.
+- Rhythm: 8px inside a group, 16px between groups, 24 to 32px between sections; every major section has a section header bar with an icon and a micro-label (Run history, Settings sections, Assistant inspector, the candidate editor); corner brackets stay on the single focal verdict block of a page; rules instead of boxes.
+- State glyphs are squares (the circle shapes of batch 1 are retired; the glyph still sits next to its word). Lifecycle: a Strategy is Tuned only with a counted tuning task (issue #21; see `docs/design/studio-information-architecture.md`).
+
 Where an older line below disagrees (Inter, IBM Plex Mono, the 6px radius, signal orange, "no gradient", "line icons"), direction H wins. The hatch strip and the contour texture are the only decoration; both are token-driven and sit on dark grey or on the ground, never behind text that must be read.
 
 ## Overview
@@ -183,11 +192,21 @@ The kit is recorded in `design-system/components/`: FloatingShell, PaneCard, Tab
 3. What must recede: navigation, tabs not selected, derived actions (save as version, export), labels (`label`, muted), hairlines, provenance facts, the second and later runs.
 4. Tension is made by size and weight steps, not by colour. Allowed contrast devices: the inverted primary or selected treatment (once per region) and one step of type size. Not allowed: a second accent colour, a fill behind a coloured number, filled coloured badges, sign colour outside the focal row (rule 5a).
 5. Two colour roles exist and never merge. State colour appears only on state: `signal` on Could not be tested and on failure words, a tab badge for a count needing attention. A normal number, label or chart series is never state-coloured, and state colour never colours a number for its sign.
-5a. Sign colour (option C, decided) appears only on the focal row of numbers in the verdict area, with a +/- glyph on each; every other number is neutral. See "Signed numbers".
+5a. Sign colour appears on the focal row of numbers in the verdict area and, since batch 2 (owner 2026-11-04), on Run history values and row edges, library sparklines and group means, and net / long-short curves, always with a +/- glyph on printed numbers; every other number is neutral. See "Signed numbers".
 6. A uncertain result must look uncertain: Inconclusive uses a dashed rule and the word, never a softer green. Evidence strength is shown as a sentence and facts, not as a score badge that looks like a verdict.
 7. At most one primary (inverted) button per card or pane head.
 
 ## Signed numbers
+
+DECIDED (owner, 2026-11-04, batch 2): sign colour is extended to lists and curves so that money-making and money-losing read at a glance. This supersedes the "focal row only" part of option C and rules 1 and 6 below where they disagree; the rest of the rules, the glyph requirement and the Settings convention switch stand. What is coloured, always through the `sign-positive` / `sign-negative` roles (default red up, green down):
+
+- Run history: the metric value column, and a 3px left edge marker plus a 5 percent tint on each row, in the sign of the row's headline metric. Only signed metrics colour (rank IC, net Sharpe, net return, terminal book return); counts, concentration and volatility stay neutral. A failed, crashed or reverted Run is neutral grey and shows its state word in the verdict column (for example failed or REVERT), never a coloured number.
+- Library rows (Factor and Strategy): the headline metric (already coloured) and the validation sparkline, drawn in the sign colour of its end value against the curve's starting level (1.0 for growth multiples) with an area fill under it at 10 percent opacity. Group headings in a verdict-grouped library carry a sign-coloured mean ("Mean IC +0.041").
+- Net and long-short curves (Strategy growth chart, Factor group-return chart): the part of the curve above the starting level is drawn in the positive colour and the part below in the negative colour, with a 10 percent area between the curve and the starting level, and the end value is labelled in the sign colour. Benchmark, gross, group curves and every other series stay neutral grey. Implementation: `studio-app/src/components/SignedCurve.tsx`.
+- Verdict words are NOT recoloured by profit: a verdict is not a P&L and keeps the state colour role.
+- Both chart crosshairs snap to the nearest published point and show the date and value in a small tag next to the crosshair; the net value in the tag takes the sign role.
+
+The first paragraph below is the earlier decision, kept for its role table and glyph rules.
 
 DECIDED (owner): option C, hybrid. Sign colour appears only on the focal row of numbers in the verdict area, for example the headline stat chips next to the run selector and the long-short headline numbers. All other numbers are neutral. The paired-figure pattern (see "Data figure anatomy") applies to figures: baseline grey, subject one accent, value labels at bar ends, a caption stating the takeaway. This replaces the first draft's rule that values are never coloured by sign, and it narrows the owner's earlier choice of colouring every signed number: only the focal row is coloured. State colour (verdict words, failure) is a separate role and stays as before.
 

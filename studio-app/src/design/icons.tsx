@@ -1,47 +1,47 @@
 import type { ReactNode } from 'react'
 
-// Shapes from the approved high-fidelity package (hifi/build.mjs › glyphs). Direction states are
-// squares and hypothesis states circles, so the two never share a shape; a glyph always sits next to
+// Shapes from the approved high-fidelity package (hifi/build.mjs › glyphs). Every state glyph is
+// a square since the batch-2 owner decision (2026-11-04); direction and hypothesis states differ by fill and stroke; a glyph always sits next to
 // its word, never alone.
 
 const CUT = { stroke: 'var(--bg)' }
 
 const GLYPHS = {
-  supported: <circle cx="7" cy="7" r="5.5" fill="currentColor" />,
+  supported: <rect x="1.5" y="1.5" width="11" height="11" fill="currentColor" />,
   confirmed: (
     <>
-      <circle cx="7" cy="7" r="5.5" fill="currentColor" />
+      <rect x="1.5" y="1.5" width="11" height="11" fill="currentColor" />
       <path d="M4.4 7.2l1.8 1.8 3.4-3.6" style={CUT} strokeWidth="1.5" fill="none" />
     </>
   ),
   inconclusive: (
     <>
-      <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M7 2a5 5 0 0 1 0 10z" fill="currentColor" />
+      <rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M7 2h5v10H7z" fill="currentColor" />
     </>
   ),
   running: (
     <>
-      <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeDasharray="2.2 1.9" />
-      <circle cx="7" cy="7" r="1.8" fill="currentColor" />
+      <rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeDasharray="2.2 1.9" />
+      <rect x="5.2" y="5.2" width="3.6" height="3.6" fill="currentColor" />
     </>
   ),
   challenged: (
     <>
-      <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <path d="M7 4v3.4" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="7" cy="9.6" r=".9" fill="currentColor" />
+      <rect x="6.1" y="8.7" width="1.8" height="1.8" fill="currentColor" />
     </>
   ),
-  proposed: <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.3" strokeDasharray="1 2.1" />,
-  selected: <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.3" />,
+  proposed: <rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.3" strokeDasharray="1 2.1" />,
+  selected: <rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.3" />,
   unconfirmed: (
     <>
-      <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <path d="M4.8 4.8l4.4 4.4m0-4.4l-4.4 4.4" stroke="currentColor" strokeWidth="1.3" />
     </>
   ),
-  dropped: <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 2" />,
+  dropped: <rect x="2" y="2" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 2" />,
   'dir-active': (
     <>
       <rect x="2" y="2" width="10" height="10" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -68,7 +68,7 @@ const GLYPHS = {
     <>
       <path d="M7 1.6l5.8 10.2H1.2z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
       <path d="M7 5.4v3" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="7" cy="10" r=".8" fill="currentColor" />
+      <rect x="6.2" y="9.2" width="1.6" height="1.6" fill="currentColor" />
     </>
   ),
   // Nothing to show yet (hifi `empty`): rounder corners and longer dashes than a new direction's square.

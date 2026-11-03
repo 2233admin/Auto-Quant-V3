@@ -4,6 +4,7 @@ import type { WorkspaceSummary } from '../api'
 import { ACTIONS_OFF_COPY, useActions } from '../actions/ActionsContext'
 import { actionCall, errorCopy } from '../actions/client'
 import { routeHref } from '../route'
+import { Icon, SectionBar } from '../design/marks'
 import './assistant.css'
 import { DiagnosticText } from '../components/DiagnosticText'
 
@@ -314,7 +315,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
   return (
     <div className={'assistant' + (drawer ? ' assistant--drawer' : '')}>
       <header className="assistant-head">
-        <div><h1>{t('Assistant', '研究助手')}</h1><p>{t('Research with your local agent.', '与本地智能体一起开展研究。')}</p></div>
+        <div className="assistant-title"><Icon name="assistant" /><div><h1>{t('Assistant', '研究助手')}</h1><p>{t('Research with your local agent.', '与本地智能体一起开展研究。')}</p></div><span className="mk" aria-hidden="true" translate="no">ASSISTANT</span></div>
         <label htmlFor={providerField}>{t('Local agent', '本地智能体')}
           <select id={providerField} value={session?.provider ?? provider} disabled={busy || !index} onChange={(event) => newChat(event.target.value)}>
             {!providers.some((item) => item.id === (session?.provider ?? provider)) && <option value={session?.provider ?? provider}>{t('Choose an agent', '选择智能体')}</option>}
@@ -348,7 +349,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
         </aside>
         <section className="assistant-conversation" aria-label={uiText("Conversation")}>
           <div className="assistant-conversation-head">
-            <h2>{session?.title || t('New chat', '新建对话')}</h2>
+            <Icon name="assistant" /><h2>{session?.title || t('New chat', '新建对话')}</h2>
             <span role="status">{loading && !session ? t('Loading…', '加载中…') : session ? (language === 'zh' ? statusZh[session.status] : statusCopy[session.status]) : t('Ready when you are', '准备就绪')}</span>
             {working && <button type="button" className="abtn" disabled={busy} onClick={() => void changeSession('cancel')}>{t('Stop', '停止')}</button>}
           </div>
@@ -372,9 +373,9 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
           </form>
         </section>
         <aside className="assistant-inspector" aria-label={uiText("Research context")}>
-          <h2>{t('Research overview', '研究概览')}</h2>
+          <SectionBar as="h2" icon="analysis" micro="OVERVIEW">{t('Research overview', '研究概览')}</SectionBar>
           <div className="assistant-stage" role="status"><span>{t('Current step', '当前步骤')}</span><strong>{uiValue(stage)}</strong><p>{session?.pendingAction ? t('Review the proposed action in the conversation before it runs.', '运行前请在对话中审阅提议的操作。') : session?.status === 'running' ? t('Follow the recorded activity in the conversation.', '在对话中查看操作过程。') : session?.status === 'error' ? t('See the conversation for the error and next action.', '在对话中查看错误和下一步。') : session?.messages.length ? t('Review the response and any recorded results below.', '查看回复和下方记录的结果。') : t('Choose a project and tell the assistant what you want to investigate.', '选择项目，告诉助手你想研究什么。')}</p></div>
-          <h2>{t('Research context', '研究上下文')}</h2>
+          <SectionBar as="h2" icon="params" micro="CONTEXT">{t('Research context', '研究上下文')}</SectionBar>
           <label htmlFor={projectField}>{t('Project', '项目')}
             <select id={projectField} value={boundProject ?? ''} disabled={!!context || !!session || busy} onChange={(event) => setProject(event.target.value)}>
               <option value="">{t('Workspace', '工作区')}</option>
@@ -389,7 +390,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
             <input id={budgetField} type="number" min={0} max={100} step={1} value={session?.trialBudget ?? budget} disabled={!!session || busy} onChange={(event) => setBudget(Math.max(0, Math.min(100, Math.floor(Number(event.target.value) || 0))))} />
           </label>
           <p className="assistant-subtle">{session ? (language === 'zh' ? `已使用或预留 ${session.usedTrials} / ${session.trialBudget} 次试验。` : session.usedTrials + ' of ' + session.trialBudget + ' trials spent or reserved.') : t('Fixed when the chat starts. Each proposed trial still requires your confirmation.', '对话开始时固定预算；每次试验仍需你确认。')}</p>
-          <h2>{t('Artifacts', '研究成果')}</h2>
+          <SectionBar as="h2" icon="doc" micro="ARTIFACTS">{t('Artifacts', '研究成果')}</SectionBar>
           <ArtifactLinks session={session} />
           <p className="assistant-subtle">{t('Unsupported execution is blocked by the server. Provider and isolation errors appear in the conversation.', '不受支持的执行会被服务端阻止；智能体和隔离错误会显示在对话中。')}</p>
         </aside>

@@ -7,8 +7,9 @@ import { CopyButton } from '../actions/CopyButton'
 import type { Catalog, CatalogAction } from '../actions/types'
 import { Loading } from '../components/States'
 import { Glyph } from '../design/icons'
+import { PageHead } from '../library/parts'
 import { Notice } from '../Notice'
-import { SignConventionSetting } from '../components/workbench'
+import { SectionBar, SignConventionSetting } from '../components/workbench'
 import { STATE_COPY } from '../components/stateCopy'
 import './ideas.css'
 const ENABLE_COMMAND = 'aq studio serve --allow-actions'
@@ -59,7 +60,7 @@ function ActionsSection({ workspace }: { workspace: WorkspaceSummary }) {
   const root = workspace.source.rootDir
   return (
     <section className="set-sec" aria-labelledby="set-actions">
-      <h2 id="set-actions">{t('Actions', '操作权限')}</h2>
+      <SectionBar as="h2" id="set-actions" icon="lock" micro="ACTIONS">{t('Actions', '操作权限')}</SectionBar>
       <p>
         <Glyph kind={on ? 'supported' : 'empty'} /> {on ? t('On: Studio can start local jobs from the Project pages.', '已开启：Studio 可以从项目页面启动本地任务。') : STATE_COPY.readOnlyReason}
       </p>
@@ -104,7 +105,7 @@ function WorkspaceSection({ workspace }: { workspace: WorkspaceSummary }) {
   const ws = workspace.source.workspace
   return (
     <section className="set-sec" aria-labelledby="set-workspace">
-      <h2 id="set-workspace">{t('Workspace', '工作区')}</h2>
+      <SectionBar as="h2" id="set-workspace" icon="folder" micro="WORKSPACE">{t('Workspace', '工作区')}</SectionBar>
       <KV
         rows={[
           [t('Path', '路径'), workspace.source.rootDir, true],
@@ -143,12 +144,12 @@ export function SettingsPage({ workspace }: { workspace: WorkspaceSummary | null
   const version = `AQ ${h.version}${h.commit ? `@${h.commit.slice(0, 7)}` : ''}${h.dirty ? '+dirty' : ''}`
   return (
     <div className="settings-page">
-          <h1>{t('Settings', '设置')}</h1>
+          <PageHead icon="settings" micro="SETTINGS" title={t('Settings', '设置')} lede={t('Where this Studio runs and what it may do.', '此 Studio 的运行位置与权限。')} />
           <SignConventionSetting readOnly={!workspace.actions?.enabled} />
           <ActionsSection workspace={workspace} />
           <WorkspaceSection workspace={workspace} />
           <section className="set-sec" aria-labelledby="set-rules">
-            <h2 id="set-rules">{t('Research rules', '研究规则')}</h2>
+            <SectionBar as="h2" id="set-rules" icon="check" micro="RULES">{t('Research rules', '研究规则')}</SectionBar>
             <p className="small muted">{t('Fixed by the Judge. Read-only.', '由判定器固定，仅供查看。')}</p>
             <ul>
               {RULES.map((r, i) => (
@@ -157,7 +158,7 @@ export function SettingsPage({ workspace }: { workspace: WorkspaceSummary | null
             </ul>
           </section>
           <section className="set-sec" aria-labelledby="set-about">
-            <h2 id="set-about">{t('About', '关于')}</h2>
+            <SectionBar as="h2" id="set-about" icon="doc" micro="ABOUT">{t('About', '关于')}</SectionBar>
             <KV rows={[['Studio', version, true]]} />
             <p className="small">
               <a href="/legacy">{t('Open Legacy Studio', '打开旧版 Studio')}</a> <span className="muted">{t('for lanes that have no native page yet.', '查看尚无新版页面的研究方向。')}</span>
