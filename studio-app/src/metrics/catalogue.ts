@@ -1,4 +1,5 @@
 import { getLanguage } from '../i18n'
+import { TEAR_SHEET_METRICS } from './tearSheetCatalogue'
 
 /**
  * The one place Studio defines the numbers it displays. Every entry describes how AutoQuant Core actually computes the
@@ -45,6 +46,7 @@ const PORTFOLIO_LEDGER: Bi = {
 }
 
 export const METRIC_CATALOGUE = {
+  ...TEAR_SHEET_METRICS,
   overlapCorrelation: {
     label: { en: 'Overlap correlation', zh: '重叠相关性' },
     definition: { en: 'Validation-only rank association with another published Workspace factor on the same evaluation basis.', zh: '在相同评估基础上，与工作区另一个已发布因子之间仅使用验证集计算的秩相关性。' },

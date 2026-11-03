@@ -20,6 +20,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/full-factor-tear-sheet]] | Publish frozen 3/5/10-group Factor diagnostics and a gated bilingual Studio tear sheet without rewriting historical evidence. | 2026-11-03 |
 | [[plans/factor-redundancy]] | Diagnose validation overlap and residual IC against comparable Workspace factors without changing verdicts. | 2026-11-03 |
 | [[plans/strategy-workbench]] | Open Strategy evidence tabs and offer only Core-supported, confirmed Factor-to-Portfolio routes. | 2026-11-03 |
 | [[plans/run-history-compare]] | Browse immutable Runs across the Workspace and compare two only under the same evaluation authority, refusing with the exact differing fields. | 2026-11-03 |

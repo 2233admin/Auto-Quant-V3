@@ -50,6 +50,10 @@ has no arbitrary file route, and returns no candidate source.
 
 ## Evidence model
 
+`tearSheet` projects the separate versioned Judge artifact defined in
+[[docs/design/full-factor-tear-sheet]]. Its full-history validation precedes
+sampling; historical absence is explicit and never privately recomputed.
+
 The read model also includes the live validation-only `redundancy` block,
 defined in [[docs/design/factor-redundancy]]. It reads published factor/outcome
 pairs across comparable Workspace Runs and never alters an immutable verdict.

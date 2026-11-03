@@ -585,6 +585,7 @@ CLI_COMMANDS = [
             argument("judge", "option", "string", True, "Project-relative Python Judge entrypoint."),
             argument("judge-path", "option", "string", False, "Repeatable fixed Judge file or trailing /** closure.", default="Judge entrypoint"),
             argument("judge-arg", "option", "string", False, "Repeatable fixed Judge argument.", default="None"),
+            argument("quantiles", "option", "integer", False, "Frozen Factor tear-sheet groups: 3, 5 or 10; absent means 3.", default="None"),
             argument(
                 "editable",
                 "option",

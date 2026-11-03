@@ -497,6 +497,8 @@ class OhlcvFactorLabTests(unittest.TestCase):
                     "factor-availability",
                     "factor-qualification",
                     "factor-components",
+                    "factor-validation-pairs",
+                    "factor-tear-sheet",
                 },
             )
             artifacts = {

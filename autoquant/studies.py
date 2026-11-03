@@ -46,6 +46,7 @@ class StudyJudge:
     paths: list[str]
     arguments: list[str]
     timeout_seconds: int
+    quantiles: int | None = None
 
 
 @dataclass(frozen=True)
@@ -110,6 +111,8 @@ class StudyDefinition:
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
+        if self.judge.quantiles is None:
+            value["judge"].pop("quantiles")
         if self.dataset.paths is None:
             value["dataset"].pop("paths")
         if self.dependencies is None:
@@ -572,11 +575,14 @@ def parse_study_definition(raw: dict[str, Any], path: Path) -> StudyDefinition:
                 "paths",
                 "arguments",
                 "timeout_seconds",
-            },
+            } | ({"quantiles"} if "quantiles" in judge_raw else set()),
             path=f"{path}/judge",
         )
     )
     judge_kind = _string(judge_raw.get("kind"), f"{path}/judge/kind", issues)
+    quantiles = judge_raw.get("quantiles")
+    if "quantiles" in judge_raw and (type(quantiles) is not int or quantiles not in (3, 5, 10)):
+        issues.append(_issue(f"{path}/judge/quantiles", "schema.choice", "Quantiles must be 3, 5 or 10"))
     if judge_kind and judge_kind != "python":
         issues.append(
             _issue(
@@ -732,6 +738,8 @@ def parse_study_definition(raw: dict[str, Any], path: Path) -> StudyDefinition:
                     "Dataset universe assets must be unique",
                 )
             )
+    if type(quantiles) is int and len(universe) < quantiles:
+        issues.append(_issue(f"{path}/judge/quantiles", "study.quantile-population", "Quantiles require at least one asset per group"))
     dataset_paths_raw = dataset_raw.get("paths")
     dataset_paths: list[str] | None = None
     if "paths" in dataset_raw:
@@ -825,6 +833,7 @@ def parse_study_definition(raw: dict[str, Any], path: Path) -> StudyDefinition:
             judge_paths,
             judge_arguments,
             timeout,
+            quantiles,
         ),
         objective=StudyObjective(
             metric,
@@ -1798,6 +1807,7 @@ STUDY_JSON_SCHEMA: dict[str, Any] = {
                     "items": {"type": "string", "minLength": 1},
                 },
                 "arguments": {"type": "array", "items": {"type": "string"}},
+                "quantiles": {"type": "integer", "enum": [3, 5, 10]},
                 "timeout_seconds": {
                     "type": "integer",
                     "minimum": 1,

@@ -106,6 +106,10 @@ surface.
 
 ## Fixed Judge semantics
 
+New template Judges also publish the diagnostic-only
+[[docs/design/full-factor-tear-sheet]] contract. Study `judge.quantiles` freezes
+3 (default), 5 or 10 groups; old pinned Judges and legacy tertiles stay unchanged.
+
 The Judge owns target construction and evaluation:
 
 1. Load and strictly validate each declared OHLCV CSV.

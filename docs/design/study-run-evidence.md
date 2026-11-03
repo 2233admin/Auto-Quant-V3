@@ -56,6 +56,11 @@ remains layered above that protocol.
 
 ## Study identity
 
+Optional `judge.quantiles` freezes a Factor diagnostic group count of 3, 5 or
+10; `aq study create --quantiles` sets it. Absent fields retain byte-identical
+historical serialization and mean 3. Explicit values enter `studyHash` and
+cannot be edited during candidate work. See [[docs/design/full-factor-tear-sheet]].
+
 A Study contains:
 
 - stable id, name, description, and human program;

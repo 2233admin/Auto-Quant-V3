@@ -36,7 +36,6 @@ from .workspace import (
     confined_path,
 )
 
-
 FACTOR_DIAGNOSTICS_KIND = "autoquant-factor-diagnostics"
 DEFAULT_FACTOR_POINTS = 180
 MIN_FACTOR_POINTS = 40
@@ -142,7 +141,6 @@ AVAILABILITY_COLUMNS = [
 ]
 _HORIZON_CONFIGURATION_LOCK = threading.RLock()
 
-
 def _configure_horizons(
     run: RunContext,
     report: dict[str, Any],
@@ -208,14 +206,11 @@ def _configure_horizons(
     ]
     return horizon
 
-
 def _issue(path: Path | str, code: str, message: str) -> ValidationIssue:
     return ValidationIssue(str(path), code, message)
 
-
 def _fail(path: Path | str, code: str, message: str) -> None:
     raise AutoQuantValidationError([_issue(path, code, message)])
-
 
 def _finite(value: Any, path: Path | str) -> float:
     try:
@@ -4425,9 +4420,12 @@ def load_factor_diagnostics(
     """Verify and project one immutable Factor Run into a bounded read model."""
 
     from .factor_redundancy import load_factor_redundancy
+    from .factor_tearsheet_reader import load_tearsheet
     with _HORIZON_CONFIGURATION_LOCK:
         result = _load_factor_diagnostics_unlocked(project, run_id, point_limit=point_limit)
-    result["redundancy"] = load_factor_redundancy(project, load_run(project, run_id), workspace_root=workspace_root)
+    run = load_run(project, run_id)
+    result["redundancy"] = load_factor_redundancy(project, run, workspace_root=workspace_root)
+    result["tearSheet"] = load_tearsheet(run, point_limit=point_limit)
     return result
 
 
@@ -4865,6 +4863,7 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
         "factorQualification",
         "factorComponents",
         "redundancy",
+        "tearSheet",
         "horizonProfile",
         "quantileEvidence",
         "spreadSummary",
@@ -4887,6 +4886,7 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
         "harness": {"type": "object"},
         "researchHorizon": RESEARCH_HORIZON_JSON_SCHEMA,
         "redundancy": {"type": "object"},
+        "tearSheet": {"type": "object"},
         "factorOutcome": {
             "type": "object",
             "additionalProperties": False,

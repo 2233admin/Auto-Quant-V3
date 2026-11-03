@@ -610,6 +610,7 @@ def build_parser() -> RaisingArgumentParser:
     study_create.add_argument("--judge", required=True)
     study_create.add_argument("--judge-path", action="append")
     study_create.add_argument("--judge-arg", action="append", default=[])
+    study_create.add_argument("--quantiles", type=int, choices=(3, 5, 10), help="Freeze Factor tear-sheet group count (default 3).")
     editable_surface = study_create.add_mutually_exclusive_group(required=True)
     editable_surface.add_argument(
         "--editable",
@@ -2259,6 +2260,7 @@ def _study_create(args: argparse.Namespace) -> CommandResult:
             args.judge_path or [args.judge],
             args.judge_arg,
             args.timeout,
+            args.quantiles,
         ),
         objective=StudyObjective(
             args.metric,

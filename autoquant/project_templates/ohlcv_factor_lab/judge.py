@@ -20,6 +20,7 @@ from autoquant.factor_runtime import (
     values_to_wide,
 )
 from autoquant.factor_redundancy import validation_pairs
+from autoquant.factor_tearsheet import publish_tearsheet
 from autoquant.factor_claims import (
     FACTOR_CLAIM,
     FORWARD_RETURN_OUTCOME,
@@ -66,7 +67,6 @@ from judges.factor_diagnostics import (
     style_proxy_panels,
 )
 
-
 REQUIRED_COLUMNS = ("timestamp", "open", "high", "low", "close", "volume")
 MIN_ASSETS_PER_DATE = 4
 MIN_IC_DATES_PER_SPLIT = 20
@@ -75,19 +75,16 @@ TEMPORAL_QUALIFICATION_METHOD = (
     "request-claim-aware-one-style-temporal-neutralization-v1"
 )
 
-
 class JudgeFailure(ValueError):
     def __init__(self, code: str, message: str):
         self.code = code
         super().__init__(message)
-
 
 def _write_output(value: dict[str, Any]) -> None:
     Path(os.environ["AUTOQUANT_RUN_OUTPUT"]).write_text(
         json.dumps(value, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-
 
 def _load_contract() -> tuple[dict[str, Any], Path]:
     study = json.loads(
@@ -97,7 +94,6 @@ def _load_contract() -> tuple[dict[str, Any], Path]:
     if not data_root.is_dir():
         raise JudgeFailure("dataset.root", "AUTOQUANT_DATA_ROOT is not a directory")
     return study, data_root
-
 
 def _load_horizon() -> dict[str, Any]:
     path = Path(os.environ["AUTOQUANT_PROJECT_ROOT"]) / RESEARCH_HORIZON
@@ -109,7 +105,6 @@ def _load_horizon() -> dict[str, Any]:
             f"Invalid fixed Horizon Mandate: {error}",
         ) from error
 
-
 def _load_factor_claim() -> dict[str, Any]:
     path = Path(os.environ["AUTOQUANT_PROJECT_ROOT"]) / FACTOR_CLAIM
     try:
@@ -119,7 +114,6 @@ def _load_factor_claim() -> dict[str, Any]:
             "factor-claim.contract",
             f"Invalid fixed Factor claim: {error}",
         ) from error
-
 
 def _load_prediction_universe(
     research_universe: list[str],
@@ -148,7 +142,6 @@ def _load_prediction_universe(
         population.authority,
         population.evaluation_mode,
     )
-
 
 def _load_asset(data_root: Path, asset: str, start: str, end: str) -> pd.DataFrame:
     try:
@@ -209,7 +202,6 @@ def _load_asset(data_root: Path, asset: str, start: str, end: str) -> pd.DataFra
         )
     return selected.reset_index(drop=True)
 
-
 def _split_metrics(values: pd.Series) -> dict[str, Any]:
     if len(values) < MIN_IC_DATES_PER_SPLIT:
         raise JudgeFailure(
@@ -221,7 +213,6 @@ def _split_metrics(values: pd.Series) -> dict[str, Any]:
         minimum_observations=MIN_IC_DATES_PER_SPLIT,
     )
 
-
 def _component_split_metrics(values: pd.Series) -> dict[str, Any]:
     """Disclose sparse component evidence without failing a valid final factor."""
 
@@ -230,10 +221,8 @@ def _component_split_metrics(values: pd.Series) -> dict[str, Any]:
         minimum_observations=MIN_IC_DATES_PER_SPLIT,
     )
 
-
 def _masked(values: pd.Series, mask: pd.Series) -> pd.Series:
     return values.reindex(mask.index[mask]).dropna()
-
 
 def _temporal_correlation_contributions(
     left: pd.Series,
@@ -270,7 +259,6 @@ def _temporal_correlation_contributions(
         left_centered * right_centered / denominator
     )
     return result
-
 
 def _temporal_daily(
     left_panel: pd.DataFrame,
@@ -2262,6 +2250,8 @@ def _evaluate() -> tuple[
         )
     ):
         raise JudgeFailure("judge.non-finite", "Judge produced non-finite metrics")
+    metrics["factor_tear_sheet"] = publish_tearsheet(study, factor_panel, close_panel, research_horizon, outcome_kind, evaluation_mode,
+        os.environ["AUTOQUANT_INPUT_HASH"], os.environ["AUTOQUANT_PROJECT_ROOT"], os.environ["AUTOQUANT_ARTIFACTS_DIR"])
     report = {
         "schemaVersion": 1,
         "inputHash": os.environ["AUTOQUANT_INPUT_HASH"],
@@ -2552,6 +2542,7 @@ def main() -> None:
                 encoding="utf-8",
             )
         output_artifacts = [
+            {"kind": "factor-tear-sheet", "path": "factor-tear-sheet.json", "description": "Frozen quantile returns, turnover, costs, IC decay and rank persistence; diagnostics only"},
             {"kind": "factor-validation-pairs", "path": "factor-validation-pairs.json",
              "description": "Primary-horizon purged validation factor and outcome pairs; no test or holdout values"},
             {

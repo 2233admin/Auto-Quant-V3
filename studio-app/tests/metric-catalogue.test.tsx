@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import { FactorTearSheet } from '../src/pages/FactorTearSheet'
+import { tearStudy } from './tearSheetFixture'
 import { test } from 'node:test'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { FactorDiagnostics, ProjectSnapshot, RunRow } from '../src/api'
@@ -100,6 +102,7 @@ const pages = () => {
   const runRow = { id: 'run-one', studyId: 'ohlcv-factor-quality', status: 'succeeded' } as RunRow
   const idea = { hypothesis: 'Does this ranking help?', hypothesisSha256: 'q', verdictPolicy: 'factor-idea-development-v1', bindings: [], evidence: { runId: 'run-one', selectionAdjustment: { passes: true } } } as unknown as Idea
   return {
+    'Full factor tear sheet': renderToStaticMarkup(<FactorTearSheet study={tearStudy()} />),
     'Custom Run comparison': renderToStaticMarkup(<ComparisonResults comparison={{ status: 'comparable', differences: [], a: { primaryMetric: 'validation_custom', primaryValue: 0.1 } as HistoryRun, b: { primaryMetric: 'validation_custom', primaryValue: 0.2 } as HistoryRun } as Comparison} />),
     'Factor answer card': renderToStaticMarkup(<IdeaVerdict project={project} idea={idea} study={sealed} run={runRow} job={null} busy="" />),
     'Factor workbench': renderToStaticMarkup(<>

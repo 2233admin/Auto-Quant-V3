@@ -1,5 +1,19 @@
 # Third-party notices
 
+## Factor tear-sheet formula references
+
+`autoquant/factor_tearsheet.py`, its numerical parity tests, and the Studio
+metric catalogue use independently written implementations of the methods in
+[JoinQuant/jqfactor_analyzer](https://github.com/JoinQuant/jqfactor_analyzer)
+(`performance.py`, MIT) and [Alphalens / alphalens-reloaded](https://github.com/stefan-jansen/alphalens-reloaded)
+(`performance.py`, Apache-2.0; original Alphalens Copyright 2017 Quantopian, Inc.).
+No implementation source was copied or vendored and neither analyzer is a runtime
+dependency. Group means, entrants/current-name turnover, rank autocorrelation
+and per-horizon Spearman IC follow those reference formulas. Core deliberately
+retains its ordinal bins, split purging, unannualized units, raw forward outcomes,
+HAC inference and descriptive multi-bar compounding. Exact differences and
+cost assumptions are documented in `docs/design/full-factor-tear-sheet.md`.
+
 ## animate-ui
 
 Studio's motion kit (`studio-app/src/components/motion/`) is adapted from the behaviour of

@@ -1,4 +1,5 @@
 import type { ActionsBootstrap } from './actions/types'
+import type { FactorTearSheet } from './pages/tearSheetTypes'
 import type { PortfolioDiagnostics } from './pages/portfolio/portfolioTypes'
 /** Wire types for the Studio routes this app reads. Only fields the pages use are typed. */
 
@@ -316,6 +317,7 @@ export type FactorSpreadStats = {
 export type FactorSpreadSplit = FactorSpreadStats & { split: FactorSplit; role?: string }
 
 export type FactorDiagnostics = {
+  tearSheet?: FactorTearSheet
   redundancy?: FactorRedundancy
   run: { id: string; studyId: string; startedAt: string; completedAt: string; inputHash?: string; studyHash?: string; sourceHash?: string }
   dataset: { id: string; version: string; hash?: string; universe: string[]; timeRange: { start?: string; end?: string } | null }

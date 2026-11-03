@@ -9,6 +9,7 @@ import { Section } from '../design/layout'
 import { Notice } from '../Notice'
 import { routeHref } from '../route'
 import { FactorHero, spreadGroups } from './GroupReturn'
+import { FactorTearSheet } from './FactorTearSheet'
 import { IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
@@ -380,6 +381,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
               evidence: (
                 <>
                   <RedundancyTable redundancy={study.redundancy} />
+                  <FactorTearSheet study={study} />
                   <Section title={tr('Information coefficient over time', '信息系数随时间变化')} id="sec-ic" caption={testVisible ? tr('Per-timestamp rank IC; validation drives selection, test is a visible audit.', '逐时间点的秩 IC；验证集用于选择，测试集作为可见审计。') : tr('Per-timestamp rank IC; validation drives selection.', '逐时间点的秩 IC；验证集用于选择。')}>
                     <IcOverTime study={study} />
                   </Section>

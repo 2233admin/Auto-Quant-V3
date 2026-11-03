@@ -115,6 +115,11 @@ never enter the target contrast.
 
 ### Quantile behavior
 
+New template Runs additionally publish the versioned configurable 3/5/10-group
+contract in [[docs/design/full-factor-tear-sheet]], including costs, turnover,
+complete IC decay and rank persistence. The following tertile evidence remains
+the unchanged legacy compatibility surface and never substitutes for that artifact.
+
 Each cross-sectional date sorts valid assets by factor and partitions them into fixed
 low/middle/high groups. Each split/horizon reports:
 
@@ -123,8 +128,8 @@ low/middle/high groups. Each split/horizon reports:
 - rank correlation between group order and group mean outcome as monotonicity;
 - valid observation count.
 
-With the small reference universe, tertiles are honest; pretending to have
-stable deciles or quintiles would create mostly singleton bins.
+With the small reference universe, tertiles remain the default. Explicitly
+requested quintiles/deciles require sufficient names and disclose singleton bins.
 Single-asset temporal V1 emits an empty, reconciled quantile artifact and
 declares quantiles unavailable; it does not manufacture one-asset groups.
 
