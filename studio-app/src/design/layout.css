@@ -32,11 +32,11 @@
    the segmented control itself aligned to the page column. */
 .secnav {
   grid-column: full; position: sticky; top: 52px; z-index: 5; background: var(--bg);
-  padding: 6px max(var(--gutter), calc((100% - var(--page-max)) / 2)); margin-block: calc(-1 * var(--space-2)) calc(-1 * var(--space-1));
+  padding: var(--space-2) max(var(--gutter), calc((100% - var(--page-max)) / 2)); margin-block: calc(-1 * var(--space-2)) calc(-1 * var(--space-1));
 }
-.secnav ul { display: flex; width: max-content; max-width: 100%; gap: 2px; margin: 0; padding: 2px; list-style: none; overflow-x: auto; border: 1px solid var(--line-strong); background: var(--raised); }
+.secnav ul { display: flex; width: max-content; max-width: 100%; gap: var(--space-1); margin: 0; padding: var(--space-1); list-style: none; overflow-x: auto; border: 1px solid var(--line-strong); background: var(--raised); }
 .secnav a {
-  display: block; padding: 4px 12px; color: var(--muted); text-decoration: none;
+  display: block; padding: var(--space-1) var(--space-3); color: var(--muted); text-decoration: none;
   font: var(--type-small); white-space: nowrap;
 }
 .secnav a:hover { color: var(--text); background: var(--hover); }
@@ -45,7 +45,7 @@
 /* Summary band: verdict, headline numbers and next move, compact, above the fold. */
 .band { display: grid; gap: var(--space-3); border: 1px solid var(--line-strong); background: var(--raised); padding: var(--space-4); }
 .band > * { min-width: 0; }
-.band .verdict { border: 0; border-left: 4px solid var(--line-strong); padding: 0 0 0 var(--space-5); background: none; }
+.band .verdict { border: 0; border-left: 4px solid var(--line-strong); padding: 0 0 0 var(--space-6); background: none; }
 .band .verdict--pass { border-left-color: var(--ok); }
 .band .verdict--fail { border-left-color: var(--signal); }
 .band .verdict--inconclusive { border-left-color: var(--warn); }
@@ -55,12 +55,12 @@
 /* Folded sections: the whole heading row is the control. */
 .sec--fold > details > summary {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-4); cursor: pointer; list-style: none;
-  padding-bottom: 6px; border-bottom: 1px solid var(--line);
+  padding-bottom: var(--space-2); border-bottom: 1px solid var(--line);
 }
 .sec--fold > details > summary::-webkit-details-marker { display: none; }
 .sec--fold > details > summary h2 { margin: 0; padding: 0; border: 0; }
 .sec--fold > details > summary .sec-cap { margin: 0; flex: 1; }
-.sec--fold > details > summary::after { content: 'Show'; margin-left: auto; font: var(--type-label-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.sec--fold > details > summary::after { content: 'Show'; margin-left: auto; font: var(--type-label); color: var(--faint); }
 .sec--fold > details[open] > summary::after { content: 'Hide'; }
 html[lang="zh-CN"] .sec--fold > details > summary::after { content: '展开'; }
 html[lang="zh-CN"] .sec--fold > details[open] > summary::after { content: '收起'; }

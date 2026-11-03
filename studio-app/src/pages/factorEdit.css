@@ -1,8 +1,8 @@
 /* Candidate editor card of the Factor workbench (the card, tabs, action row and status line are the workbench kit's). Tokens only. */
 .fe { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; }
 .fe p { margin: 0; }
-.fe-h { display: flex; align-items: center; gap: 6px; margin: 0; font: var(--type-label-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.fe-trial-chip { display: inline-block; padding: 0 5px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: var(--type-label-mono); color: var(--muted); white-space: nowrap; cursor: help; }
+.fe-h { display: flex; align-items: center; gap: var(--space-1); margin: 0; font: var(--type-label); color: var(--muted); }
+.fe-trial-chip { display: inline-block; padding: 0 var(--space-1); border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: var(--type-label); color: var(--muted); white-space: nowrap; cursor: help; }
 
 /* The editor header is a size container (the kit's pane head): in a narrow card the chip drops the word "Trial". */
 @container (max-width: 380px) {
@@ -14,16 +14,16 @@
 .fe-line.is-error .fe-line-t { color: var(--signal); }
 .fe-line > * { flex: none; }
 .fe-line > .fe-line-t { flex: 1 1 auto; }
-.fe-line .abtn { min-height: 22px; padding: 0 8px; font-size: var(--size-label); }
+.fe-line .abtn { min-height: 22px; padding: 0 var(--space-2); font-size: var(--size-label); }
 .fe-more { font: var(--type-small); color: var(--muted); }
 
-.fe-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: var(--space-3); padding: 10px; }
+.fe-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-2); }
 .fe-scroll > .wb-facts-wrap { flex: none; }
-.fe-pad { padding: 4px 0; }
+.fe-pad { padding: var(--space-1) 0; }
 
-.fe-cand { flex: 1 1 auto; min-height: 200px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fe-cand { flex: 1 1 auto; min-height: 200px; display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .fe-cand-head { flex: none; display: flex; align-items: center; gap: var(--space-2); min-height: 24px; min-width: 0; }
-.fe-chip { padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: var(--type-label-mono); color: var(--muted); white-space: nowrap; }
+.fe-chip { padding: 0 var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: var(--type-label); color: var(--muted); white-space: nowrap; }
 .fe-chip.is-dirty { color: var(--text); border-color: var(--text); }
 .fe-reset { flex: none; }
 .fe-meta { margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -34,7 +34,7 @@
 .fe-conflict { flex: none; display: grid; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--signal); border-left-width: 4px; border-radius: var(--radius-control); }
 .fe-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 
-.fe-hyp { flex: none; display: flex; align-items: center; gap: var(--space-2); padding: 8px 10px; border-top: 1px solid var(--line); background: var(--raised); }
+.fe-hyp { flex: none; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-2); border-top: 1px solid var(--line); background: var(--raised); }
 .fe-hyp-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .fe-input { flex: 1 1 auto; min-width: 0; box-sizing: border-box; min-height: 30px; padding: 0 var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--bg); color: var(--text); font: var(--type-body); }
 .fe-input:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
@@ -43,7 +43,7 @@
 
 .fe-hist { overflow: auto; }
 .fe-hist-t { font: var(--type-small); }
-.fe-hist-t th, .fe-hist-t td { padding: 5px var(--space-2) 5px 0; }
+.fe-hist-t th, .fe-hist-t td { padding: var(--space-1) var(--space-2) var(--space-1) 0; }
 .fe-hist-t tbody tr { cursor: default; }
 
 /* Below 1000px the kit stacks the cards and the page scrolls: the editor takes its natural height. */
@@ -55,9 +55,9 @@
 .fe-sid { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-2) 0 0; overflow-wrap: anywhere; }
 
 /* Hypothesis first: a labelled two-line field with the same border weight as the code field. */
-.fe-hypo { flex: none; display: grid; gap: 4px; }
+.fe-hypo { flex: none; display: grid; gap: var(--space-1); }
 .fe-hypo-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
-.fe-hypo-t { display: block; width: 100%; resize: none; padding: 6px var(--space-3); line-height: 20px; font: var(--type-body); }
+.fe-hypo-t { display: block; width: 100%; resize: none; padding: var(--space-2) var(--space-3); line-height: 20px; font: var(--type-body); }
 .fe-expand { flex: none; font: var(--type-small); color: var(--muted); }
 .fe-scroll.is-expanded .fe-cand { min-height: 0; }
 .fe-cand-head .fe-h { flex: none; white-space: nowrap; }

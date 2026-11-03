@@ -1,8 +1,8 @@
 /* Last-result line of the Factor workbench (the progress line is the kit's StatusLine). Tokens only. */
-.lr { border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--raised); padding: 4px var(--space-3); display: grid; gap: 4px; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; border-left: 4px solid var(--ok); }
+.lr { border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--raised); padding: var(--space-1) var(--space-3); display: grid; gap: var(--space-1); grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; border-left: 4px solid var(--ok); }
 .lr.is-bad { border-left-color: var(--signal); }
 .lr-line { margin: 0; font: var(--type-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lr-body { display: grid; gap: 4px; min-width: 0; overflow: hidden; }
+.lr-body { display: grid; gap: var(--space-1); min-width: 0; overflow: hidden; }
 .lr .abtn { min-height: 24px; }
 .lp-note { margin: 0; }
 .lp-more > summary { cursor: pointer; width: max-content; font: var(--type-small); color: var(--muted); }

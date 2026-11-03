@@ -25,49 +25,39 @@ colors:
   err: "#ffa095"
   primary: "#ededef"
 typography:
-  headline:
-    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
-    fontSize: 28px
-    fontWeight: 600
-    lineHeight: 40px
-  title:
-    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
-    fontSize: 26px
-    fontWeight: 590
-    lineHeight: 34px
   page-title:
-    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
-    fontSize: 20px
+    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
+    fontSize: 18px
     fontWeight: 600
-    lineHeight: 28px
+    lineHeight: 26px
   section:
-    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
-    fontSize: 15px
-    fontWeight: 590
-    lineHeight: 22px
+    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
+    fontSize: 14px
+    fontWeight: 600
+    lineHeight: 20px
   body:
-    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
     fontSize: 13px
     fontWeight: 400
     lineHeight: 20px
   small:
-    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
     fontSize: 12px
     fontWeight: 400
     lineHeight: 18px
   label:
-    fontFamily: "'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif"
+    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
     fontSize: 11px
     fontWeight: 400
     lineHeight: 16px
   value:
-    fontFamily: "'IBM Plex Mono', 'PingFang SC', 'Microsoft YaHei', monospace"
+    fontFamily: "'IBM Plex Mono', 'Noto Sans SC', 'Microsoft YaHei', monospace"
     fontSize: 13px
     fontWeight: 500
     lineHeight: 20px
   value-focal:
-    fontFamily: "'IBM Plex Mono', 'PingFang SC', 'Microsoft YaHei', monospace"
-    fontSize: 20px
+    fontFamily: "'IBM Plex Mono', 'Noto Sans SC', 'Microsoft YaHei', monospace"
+    fontSize: 22px
     fontWeight: 600
     lineHeight: 28px
 rounded:
@@ -78,15 +68,13 @@ spacing:
   space-2: 8px
   space-3: 12px
   space-4: 16px
-  space-5: 20px
   space-6: 24px
   space-8: 32px
-  space-10: 40px
 ---
 
 # AutoQuant Studio
 
-Status: DRAFT foundation, revised after the owner's rejection of the first extraction (type scale and radii confirmed; number colouring, motion licence and two further references changed; sign option C and the Settings convention switch decided). The owner has not confirmed this revision. The values live in `design-system/tokens.json`; the usage rules live in `design-system/README.md`. This file holds product identity, hierarchy, templates and wording, and points at the package instead of repeating it.
+Status: DECIDED for type, spacing and lines. On 2026-11-04 the owner chose visual direction B ("dense terminal, clear layers", one of three rendered directions compared for issue #22) and asked for it one size step smaller; the type scale, spacing scale and line rules below replace the DRAFT values. Colour, sign option C and the Settings convention switch are unchanged. The values live in `design-system/tokens.json`; the usage rules live in `design-system/README.md`. This file holds product identity, hierarchy, templates and wording, and points at the package instead of repeating it.
 
 ## Overview
 
@@ -102,25 +90,34 @@ The colour system is the existing Studio token set (dark default, light theme), 
 
 ## Typography
 
-Fonts are unchanged: Inter Variable for text and IBM Plex Mono for values (the owner did not choose a different set; this is an open question, not a decision to change). Existing steps are kept; two are proposed.
+DECIDED (owner, 2026-11-04): direction B, one step smaller than the mock. Prose and UI are set in Inter Variable with a CJK sans fallback (`'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif`). IBM Plex Mono is used ONLY for numbers, ids, hashes, code and commands, always with `font-variant-numeric: tabular-nums`; never for prose, labels, buttons or headings. Weights in use: 400, 500 and 600 only (590 is retired). Nothing renders below 11px.
 
-| Step | Size / line | Weight | Status | Role |
-| --- | --- | --- | --- | --- |
-| headline | 28 / 40 | 600 | existing | home statement or full-page empty state only |
-| title | 26 / 34 | 590 | existing, unused | candidate to merge into headline |
-| page-title | 20 / 28 | 600 | proposed | page header title, the anchor of each page |
-| section | 15 / 22 | 590 | existing | pane, card and block headings |
-| body | 13 / 20 | 400 | existing | evidence sentences, form text |
-| small | 12 / 18 | 400 | existing | descriptions, status, buttons in dense rows |
-| label | 11 / 16 | 400 | proposed (formalises the 11px already in use) | metric labels, muted |
-| value | 13 / 20 mono | 500 | existing in code | numbers and ids in cells |
-| value-focal | 20 / 28 mono | 600 | proposed | the one headline number of a card or run bar |
+| Step | Size / line | Weight | Role |
+| --- | --- | --- | --- |
+| page-title | 18 / 26 | 600 | page header title, the anchor of each page |
+| section | 14 / 20 | 600 | section and pane headings; the verdict word of an answer strip |
+| body | 13 / 20 | 400 | default text |
+| small | 12 / 18 | 400 | secondary lines, captions, the split/state line under a row name |
+| label | 11 / 16 | 400 | column headers, metadata keys, chip text; muted |
+| value | 13 / 20 mono | 500 | numbers in tables and metric grids; a library row's focal metric uses weight 600 |
+| value-focal | 22 / 28 mono | 600 | the headline numbers of an answer strip |
 
-Four visible tiers per page: page-title 20, section 15, body 13 / small 12, label 11. Ratio title to section is 1.33, section to body 1.15, body to label 1.18.
+The former headline (28/40) and title (26/34, weight 590) steps are retired; the page title is the largest text on a page except the answer strip's focal numbers.
+
+## Lines instead of boxes
+
+DECIDED with direction B. Structure comes from a column grid, alignment and type contrast, not from boxes.
+
+- A hairline (`line`) separates rows of a list, table or key/value table.
+- One `line-strong` rule sits under a section heading, a toolbar or an answer strip.
+- No border around a group that already sits in a pane; no box in a box (chips inside cards inside panes). Chips and tags inside a pane are text.
+- One outer border only where a surface must separate from the ground: a pane, a popover, a dialog. The rail is flat with one right hairline; library pages sit directly on the ground.
+- Radius `radius-control` 6px on controls and pane edges; `radius-float` 8px on popovers and dialogs only.
+- Alignment: numbers right-aligned in tables and metric grids, labels left, consistent column widths, header row in `label`.
 
 ## Layout
 
-Desktop only, 1280 to 1920 wide, no mobile. A 4px baseline (`space-1` to `space-10`); `space-3` (12px) is the rhythm between cards and the pane padding, `space-4` between sections. The shell is a left rail (240 expanded, 68 collapsed) and a page area on `bg`, 8px outer margin and 8px gaps. Workbenches are two panes, 40fr left (minimum 340px) and 60fr right. Maximum width 1800px, centred beyond. Below 1000px the panes stack and the page scrolls.
+Desktop only, 1280 to 1920 wide, no mobile. Spacing uses only 4 / 8 / 12 / 16 / 24 / 32 (`space-1`, `space-2`, `space-3`, `space-4`, `space-6`, `space-8`; the 20px and 40px steps and every 5/7/9/10px literal are retired): 4 inside a cell or between a label and its value, 8 between items of one group, 12 between rows of a group and as pane padding, 24 between sections, 32 at the page top and bottom where there is room. The shell is a left rail (240 expanded, 68 collapsed) and a page area on `bg`, 8px outer margin and 8px gaps. Workbenches are two panes, 40fr left (minimum 340px) and 60fr right. Maximum width 1800px, centred beyond. Below 1000px the panes stack and the page scrolls.
 
 ## Elevation & Depth
 

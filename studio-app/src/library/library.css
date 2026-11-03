@@ -1,16 +1,16 @@
 /* Library pages: Factors, Runs, Strategies, Tuning. Tokens only; table base styles come from pages.css (.tbl). */
 /* One 32px toolbar row: controls left, result count right. */
 .lib-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
-.lib-field { display: inline-flex; align-items: center; gap: 6px; font: var(--type-small); color: var(--muted); }
+.lib-field { display: inline-flex; align-items: center; gap: var(--space-1); font: var(--type-small); color: var(--muted); }
 .lib-field:not(.lib-field--shown) > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.lib-field input, .lib-field select { font: var(--type-small); padding: 0 10px; height: 32px; box-sizing: border-box; background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); max-width: 100%; }
+.lib-field input, .lib-field select { font: var(--type-small); padding: 0 var(--space-2); height: 32px; box-sizing: border-box; background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); max-width: 100%; }
 .lib-field input[type='search'] { min-width: 14rem; }
 .lib-field input:focus-visible, .lib-field select:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
 .lib-filters .btn, .lib-filters .seg button { height: 32px; }
-.lib-filters .seg button { padding: 0 12px; }
+.lib-filters .seg button { padding: 0 var(--space-3); }
 .lib-count { margin-left: auto; align-self: center; font-variant-numeric: tabular-nums; }
 .lib-more { position: relative; }
-.lib-more > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; cursor: pointer; font: var(--type-small); color: var(--muted); background: var(--raised); border: 1px solid var(--line-strong); border-radius: var(--radius-control); }
+.lib-more > summary { list-style: none; display: inline-flex; align-items: center; gap: var(--space-1); height: 32px; padding: 0 var(--space-3); cursor: pointer; font: var(--type-small); color: var(--muted); background: var(--raised); border: 1px solid var(--line-strong); border-radius: var(--radius-control); }
 .lib-more > summary::-webkit-details-marker { display: none; }
 .lib-more > summary:hover, .lib-more[open] > summary { color: var(--text); background: var(--hover); }
 .lib-more > summary:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
@@ -20,15 +20,15 @@
 .lib-bar { display: flex; align-items: center; gap: var(--space-3); min-height: 28px; }
 .lib-tbl th[scope='row'] { min-width: 12rem; }
 .lib-tbl td { vertical-align: middle; white-space: nowrap; }
-.lib-tbl th, .lib-tbl td { padding-block: 4px; }
+.lib-tbl th, .lib-tbl td { padding-block: var(--space-1); }
 .lib-tbl th[scope='row'] { vertical-align: middle; display: table-cell; white-space: nowrap; }
 .lib-tbl th[scope='row'] > * { display: block; }
 .lib-tbl thead th { vertical-align: bottom; }
 .lib-tbl tbody tr.is-open { cursor: pointer; }
 .lib-tbl tbody tr.is-picked { background: var(--selected); }
 .lib-tbl td > .small, .lib-tbl td > .faint { display: block; }
-.lib-tbl td .pc-badge + .small { margin-top: 2px; }
-.lib-sort { all: unset; cursor: pointer; display: inline-block; font: inherit; letter-spacing: inherit; color: inherit; white-space: nowrap; padding: 2px 0; }
+.lib-tbl td .pc-badge + .small { margin-top: var(--space-1); }
+.lib-sort { all: unset; cursor: pointer; display: inline-block; font: inherit; letter-spacing: inherit; color: inherit; white-space: nowrap; padding: var(--space-1) 0; }
 .lib-sort:hover { color: var(--text); }
 .lib-sort:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .lib-tbl thead th[aria-sort='ascending'], .lib-tbl thead th[aria-sort='descending'] { color: var(--text); }
@@ -36,15 +36,15 @@
 .lib-tbl input[type='checkbox'] { width: 16px; height: 16px; }
 
 .lib-counters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: 0 0 var(--space-3); max-width: 40rem; }
-.lib-matrix { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.lib-cell { display: inline-flex; align-items: center; gap: 6px; min-width: 44px; height: 30px; padding: 0 8px; border: 1px solid var(--line-strong); background: var(--raised); color: var(--text); text-decoration: none; font-size: var(--size-small); }
+.lib-matrix { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.lib-cell { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 44px; height: 30px; padding: 0 var(--space-2); border: 1px solid var(--line-strong); background: var(--raised); color: var(--text); text-decoration: none; font-size: var(--size-small); }
 .lib-cell:hover { background: var(--hover); }
 .lib-cell:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .lib-cell.is-failed { border-style: dashed; }
 .lib-cell.is-queued, .lib-cell.is-running { border-color: var(--faint); }
 .lib-cell.is-leader { outline: 2px solid var(--accent); outline-offset: 1px; }
-.lib-na { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font: var(--type-body); }
-.lib-na li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.lib-na { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); font: var(--type-body); }
+.lib-na li { padding: var(--space-2) 0; border-bottom: 1px solid var(--line); }
 
 @media (max-width: 767px) {
   .lib-counters { grid-template-columns: repeat(2, minmax(0, 1fr)); }

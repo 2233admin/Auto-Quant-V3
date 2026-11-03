@@ -1,7 +1,7 @@
 /* Governed RL policy lane page. Tokens only; verdict, chart frame, legend and tables come from factor.css, layout.css and portfolio.css. */
 .rl-bar-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .rl-sw { vertical-align: -2px; flex: none; }
-.rl-th { display: inline-flex; align-items: center; gap: 6px; }
+.rl-th { display: inline-flex; align-items: center; gap: var(--space-1); }
 .rl .chart { max-width: none; }
 .rl-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4); }
 .rl-card { border: 1px solid var(--line); background: var(--bg); padding: var(--space-3) var(--space-4); }
@@ -10,11 +10,11 @@
 .rl-sel .badge { margin-left: var(--space-2); }
 .rl-diag { margin: 0; max-width: 90ch; font: var(--type-body); border-left: 4px solid var(--line-strong); padding-left: var(--space-4); }
 .rl-chain { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: var(--space-3); }
-.rl-step { display: grid; gap: 2px; align-content: start; border: 1px solid var(--line-strong); border-top-width: 4px; background: var(--raised); padding: var(--space-3) var(--space-4); }
-.rl-step small { font: var(--type-label-mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.rl-step { display: grid; gap: var(--space-1); align-content: start; border: 1px solid var(--line-strong); border-top-width: 4px; background: var(--raised); padding: var(--space-3) var(--space-4); }
+.rl-step small { font: var(--type-label); color: var(--muted); }
 .rl-step b { font: var(--type-value); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .rl-step i { font: var(--type-small); font-style: normal; color: var(--muted); }
-.rl-step em { font: var(--type-label-mono); letter-spacing: .04em; text-transform: uppercase; font-style: normal; margin-top: 2px; }
+.rl-step em { font: var(--type-label); font-style: normal; margin-top: var(--space-1); }
 .rl-step--ok { border-top-color: var(--ok); border-top-style: solid; }
 .rl-step--bad { border-top-color: var(--signal); border-top-style: dashed; }
 .rl-step--bad em { color: var(--signal); }

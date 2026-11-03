@@ -20,7 +20,7 @@
 
 .alabel {
   display: inline-block; padding: 0 var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-control);
-  font: var(--type-label-mono); letter-spacing: 0.04em; color: var(--muted); white-space: nowrap;
+  font: var(--type-label); color: var(--muted); white-space: nowrap;
 }
 
 /* ---- Confirm dialog ---- */
@@ -32,8 +32,8 @@
 .adialog[open] { display: flex; flex-direction: column; }
 .adialog::backdrop { background: rgb(0 0 0 / 50%); }
 .adialog-body { display: flex; flex-direction: column; min-height: 0; max-height: inherit; }
-.adialog-head { padding: var(--space-5) var(--space-6) var(--space-3); border-bottom: 1px solid var(--line); }
-.adialog-head h2 { font: var(--type-title); margin: 0 0 var(--space-1); }
+.adialog-head { padding: var(--space-6) var(--space-6) var(--space-3); border-bottom: 1px solid var(--line); }
+.adialog-head h2 { font: var(--type-page-title); margin: 0 0 var(--space-1); }
 .adialog-head p { margin: 0; font: var(--type-small); }
 .adialog-scroll { display: grid; gap: var(--space-4); padding: var(--space-4) var(--space-6); overflow-y: auto; min-height: 0; }
 .adialog-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-6); border-top: 1px solid var(--line); }
@@ -66,11 +66,11 @@
 
 /* ---- Stage pipeline ---- */
 .stages-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; border: 1px solid var(--line); }
-.stage { display: grid; gap: 2px; padding: var(--space-2) var(--space-3); border-right: 1px solid var(--line); font: var(--type-small); min-width: 0; }
+.stage { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border-right: 1px solid var(--line); font: var(--type-small); min-width: 0; }
 .stage:last-child { border-right: 0; }
 .stage-n { font: var(--type-label-mono); color: var(--faint); }
 .stage-label { font-weight: 500; overflow-wrap: anywhere; }
-.stage-state { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.stage-state { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--muted); }
 .stage.is-current { background: var(--selected); }
 .stage.is-current .stage-state, .stage.is-done .stage-state { color: var(--text); }
 .stage.is-failed { box-shadow: none; }

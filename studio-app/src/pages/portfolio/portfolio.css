@@ -1,7 +1,7 @@
 /* Portfolio lane page. Tokens only; chart frames and legends come from factor.css. */
 .pf-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .pf-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--space-3); margin: 0; }
-.pf-tile { display: grid; gap: 2px; align-content: start; border: 1px solid var(--line); background: var(--bg); padding: var(--space-3) var(--space-4); }
+.pf-tile { display: grid; gap: var(--space-1); align-content: start; border: 1px solid var(--line); background: var(--bg); padding: var(--space-3) var(--space-4); }
 .pf-tile dt { font: var(--type-small); color: var(--muted); }
 .pf-tile dd { margin: 0; font: var(--type-value-focal); font-variant-numeric: tabular-nums; }
 .pf-sub { font: var(--type-small); color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -11,7 +11,7 @@
 .pf-diag p { margin: 0 0 var(--space-2); max-width: 90ch; }
 .pf-diag .kv { margin: var(--space-3) 0 0; }
 
-.pf-toggle { display: inline-flex; align-items: center; gap: 6px; font: var(--type-small); color: var(--muted); background: none; border: 1px solid var(--line-strong); padding: 3px 10px; cursor: pointer; }
+.pf-toggle { display: inline-flex; align-items: center; gap: var(--space-1); font: var(--type-small); color: var(--muted); background: none; border: 1px solid var(--line-strong); padding: var(--space-1) var(--space-2); cursor: pointer; }
 .pf-toggle:hover:not(:disabled) { background: var(--hover); color: var(--text); }
 .pf-toggle[aria-pressed='true'] { background: var(--selected); color: var(--text); border-color: var(--text); }
 .pf-toggle:disabled { opacity: .55; cursor: not-allowed; border-style: dashed; }
@@ -28,12 +28,12 @@
 
 .pf-matrix-fig { margin: 0; display: grid; gap: var(--space-2); }
 .pf-matrix { border-collapse: separate; border-spacing: 3px; width: 100%; font: var(--type-small); }
-.pf-matrix th { font-weight: 500; text-align: left; color: var(--muted); padding: 4px 6px 4px 0; white-space: nowrap; }
-.pf-matrix thead th { text-align: center; font: var(--type-label-mono); letter-spacing: .04em; }
-.pf-matrix td { border: 1px solid var(--line); padding: 8px 6px; text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; min-width: 84px; }
+.pf-matrix th { font-weight: 500; text-align: left; color: var(--muted); padding: var(--space-1) var(--space-2) var(--space-1) 0; white-space: nowrap; }
+.pf-matrix thead th { text-align: center; font: var(--type-label); }
+.pf-matrix td { border: 1px solid var(--line); padding: var(--space-2) var(--space-2); text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; min-width: 84px; }
 .pf-matrix td.is-base { outline: 2px solid var(--text); outline-offset: 1px; }
-.pf-cell-v { display: inline-flex; align-items: center; gap: 5px; font-size: var(--size-body); }
-.pf-cell-tag { display: block; font: var(--type-label-mono); letter-spacing: .04em; text-transform: uppercase; color: var(--text); margin-top: 2px; }
+.pf-cell-v { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--size-body); }
+.pf-cell-tag { display: block; font: var(--type-label); color: var(--text); margin-top: var(--space-1); }
 
 .pf .tbl td > .faint.small { display: block; }
 .pf .nowrap { white-space: nowrap; }
@@ -50,10 +50,10 @@
 .pf-allmetrics[open] > summary { margin-bottom: var(--space-3); }
 
 /* Sticky result header: verdict line and split selector stay visible under the section bar while the page scrolls. */
-.pf-sticky { position: sticky; top: calc(52px + var(--secnav-h, 44px)); z-index: 4; display: flex; align-items: stretch; gap: var(--space-3); background: var(--bg); padding-block: 4px; margin-block: -4px; }
+.pf-sticky { position: sticky; top: calc(52px + var(--secnav-h, 44px)); z-index: 4; display: flex; align-items: stretch; gap: var(--space-3); background: var(--bg); padding-block: var(--space-1); margin-block: calc(-1 * var(--space-1)); }
 .pf-sticky .hero-line { flex: 1; min-width: 0; }
 .pf-sticky .pf-split, .pf-sticky .pf-bar { align-self: center; flex: none; }
-.pf-hero-head { margin-bottom: 4px; }
+.pf-hero-head { margin-bottom: var(--space-1); }
 @media (max-width: 767px) { .pf-sticky { flex-wrap: wrap; } }
 
 /* Workbench layout (kit): chart slot, selector row, embedded chart. */

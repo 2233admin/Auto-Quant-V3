@@ -1,35 +1,35 @@
 /* Factor evidence page: chart frames, SVG text classes, legends, horizon toggle, check ledger. */
 .chart { margin: 0 0 var(--space-4); max-width: none; min-width: 0; display: grid; gap: var(--space-2); }
 .plot-wrap { min-width: 0; width: 100%; }
-.chart figcaption h3 { font: var(--type-section); margin: 0 0 2px; }
+.chart figcaption h3 { font: var(--type-section); margin: 0 0 var(--space-1); }
 .chart figcaption p { margin: 0; max-width: 90ch; }
 .chart-title { display: flex; align-items: center; gap: var(--space-2); }
 .chart-title h3 { margin: 0; }
 .chart-cap { overflow-wrap: anywhere; }
-.chart-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
+.chart-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-6); }
 .chart-note { margin: 0; max-width: 80ch; }
 .plot { width: 100%; height: auto; display: block; border: 1px solid var(--line); background: var(--raised); }
-.plot .ax { font: 400 11px var(--font-mono); fill: var(--muted); }
+.plot .ax { font: var(--type-label); fill: var(--muted); }
 .plot .ax.faint { fill: var(--faint); }
-.plot .val { font: 500 11px var(--font-mono); fill: var(--text); }
-.plot .grp { font: 500 12px var(--font-sans); fill: var(--text); }
+.plot .val { font: var(--type-label-mono); font-weight: 500; fill: var(--text); }
+.plot .grp { font: var(--type-small); font-weight: 500; fill: var(--text); }
 
 .legend { display: inline-flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font: var(--type-small); color: var(--muted); }
-.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-item { display: inline-flex; align-items: center; gap: var(--space-1); }
 
 .seg { display: inline-flex; border: 1px solid var(--line-strong); }
-.seg button { font: var(--type-small); padding: 3px 12px; background: none; color: var(--muted); border: 0; border-right: 1px solid var(--line-strong); cursor: pointer; }
+.seg button { font: var(--type-small); padding: var(--space-1) var(--space-3); background: none; color: var(--muted); border: 0; border-right: 1px solid var(--line-strong); cursor: pointer; }
 .seg button:last-child { border-right: 0; }
 .seg button:hover { background: var(--hover); color: var(--text); }
 .seg button[aria-pressed='true'] { background: var(--selected); color: var(--text); }
 .seg button:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
 
-.datatable summary { cursor: pointer; font: var(--type-small); color: var(--muted); width: max-content; padding: 2px 0; }
+.datatable summary { cursor: pointer; font: var(--type-small); color: var(--muted); width: max-content; padding: var(--space-1) 0; }
 .datatable summary:hover { color: var(--text); }
 .datatable summary:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .datatable[open] .tablewrap { max-height: 320px; overflow: auto; margin-top: var(--space-2); }
 
-.empty { border: 1px dashed var(--line-strong); background: none; padding: var(--space-5); display: grid; gap: var(--space-2); justify-items: start; }
+.empty { border: 1px dashed var(--line-strong); background: none; padding: var(--space-6); display: grid; gap: var(--space-2); justify-items: start; }
 .empty p { margin: 0; font: var(--type-body); max-width: 70ch; }
 
 .ledger th[scope='row'] { font-weight: 500; }
@@ -38,11 +38,11 @@
 .ledger td:nth-child(2) { white-space: nowrap; }
 
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--space-6); }
-.h-small { font: var(--type-label-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 var(--space-2); }
-.bullets { list-style: disc; padding-left: 1.2em; display: grid; gap: var(--space-2); font: var(--type-body); }
+.h-small { font: var(--type-label); color: var(--muted); margin: 0 0 var(--space-2); }
+.bullets { list-style: disc; padding-left: var(--space-4); display: grid; gap: var(--space-2); font: var(--type-body); }
 .plot .val { paint-order: stroke; stroke: var(--raised); stroke-width: 3px; stroke-linejoin: round; }
 
-.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px var(--space-5); margin: 0 0 var(--space-4); font: var(--type-body); }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-1) var(--space-6); margin: 0 0 var(--space-4); font: var(--type-body); }
 .kv dt { color: var(--muted); font: var(--type-small); padding-top: 1px; }
 .kv dd { margin: 0; overflow-wrap: anywhere; }
 .kv .kv-row { display: contents; }
@@ -56,7 +56,7 @@
 .fr-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1) var(--space-4); width: 100%; min-width: 0; }
 .fr-head .runsel { flex: 1 1 160px; min-width: 0; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
 .fr-head .runsel select { min-width: 0; width: 100%; }
-.fr-status { display: grid; gap: 6px; min-width: 0; }
+.fr-status { display: grid; gap: var(--space-1); min-width: 0; }
 .fr-head { flex: 1 1 auto; }
 .fr-links { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font: var(--type-small); margin-left: auto; }
 .fr-links a { white-space: nowrap; }
@@ -67,13 +67,13 @@
 .wb-pane .sec-cap { margin-bottom: var(--space-2); }
 
 /* Run selector bar and tab-panel details shared by the Factor tabs */
-.runsel--bar select { font: var(--type-small); height: 30px; padding: 0 8px; background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); width: 100%; min-width: 0; max-width: 100%; }
+.runsel--bar select { font: var(--type-small); height: 30px; padding: 0 var(--space-2); background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-control); width: 100%; min-width: 0; max-width: 100%; }
 .wb-tabpanel .cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
-.wb-tabpanel .tbl caption .info { margin-left: 6px; }
-.h-small .info { margin-left: 6px; }
+.wb-tabpanel .tbl caption .info { margin-left: var(--space-2); }
+.h-small .info { margin-left: var(--space-2); }
 
 /* Verdict reasons list (Checks tab) */
-.verdict-reasons { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font: var(--type-small); }
+.verdict-reasons { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); font: var(--type-small); }
 .verdict-reasons li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: var(--space-2); align-items: start; color: var(--muted); }
-.verdict-reasons li > svg { margin-top: 2px; }
+.verdict-reasons li > svg { margin-top: var(--space-1); }
 .verdict-field { overflow-wrap: anywhere; margin: 0; }

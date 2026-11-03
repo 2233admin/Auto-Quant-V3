@@ -48,41 +48,41 @@
 }
 
 :root {
-  --font-sans: 'Inter Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'PingFang SC', 'Microsoft YaHei', monospace;
+  /* Prose and UI in Inter with a CJK sans fallback; mono only for numbers, ids, hashes, code and commands. */
+  --font-sans: 'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Noto Sans SC', 'Microsoft YaHei', monospace;
 
-  /* Type scale: size / line height, weight on the role. */
-  --type-headline: 600 28px/40px var(--font-sans);
-  --type-title: 590 26px/34px var(--font-sans);
-  --type-page-title: 600 20px/28px var(--font-sans);
+  /* Type scale (direction B, one step smaller, owner 2026-11-04): weight size/line-height family.
+     Weights in use: 400, 500, 600. Nothing renders below 11px. */
   --type-label: 400 11px/16px var(--font-sans);
+  --type-small: 400 12px/18px var(--font-sans);
+  --type-body: 400 13px/20px var(--font-sans);
+  --type-section: 600 14px/20px var(--font-sans);
+  --type-page-title: 600 18px/26px var(--font-sans);
   --type-value: 500 13px/20px var(--font-mono);
-  --type-value-focal: 600 20px/28px var(--font-mono);
+  --type-value-focal: 600 22px/28px var(--font-mono);
+  /* Mono at label and small size: ids, hashes and timestamps only, never prose. */
   --type-label-mono: 400 11px/16px var(--font-mono);
   --type-small-mono: 400 12px/18px var(--font-mono);
-  --size-page-title: 20px;
-  --size-section: 15px;
+  --size-page-title: 18px;
+  --size-section: 14px;
   --size-body: 13px;
   --size-small: 12px;
   --size-label: 11px;
   --sign-positive: var(--err);
   --sign-negative: var(--ok);
   --sign-neutral: var(--text);
-  --type-section: 590 15px/22px var(--font-sans);
-  --type-body: 400 13px/20px var(--font-sans);
-  --type-small: 400 12px/18px var(--font-sans);
 
-  /* 4px baseline. */
+  /* Spacing: 4 / 8 / 12 / 16 / 24 / 32 only. 4 inside a cell or label-to-value; 8 between items of a group;
+     12 between rows of a group and pane padding; 24 between sections; 32 page top and bottom. */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
-  --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
-  --space-10: 40px;
 
-  /* Panes and controls 6px; floating layers 8px. */
+  /* Controls and panes 6px; popovers, menus and dialogs 8px. */
   --radius-control: 6px;
   --radius-float: 8px;
 

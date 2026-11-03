@@ -18,7 +18,7 @@
 .lane-bars .mk { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text); }
 .lane-bars .vl { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
 .lane-key { display: flex; flex-wrap: wrap; gap: var(--space-4); font: var(--type-small); color: var(--muted); margin: 0 0 var(--space-2); }
-.lane-key i { display: inline-block; vertical-align: middle; margin-right: 6px; }
+.lane-key i { display: inline-block; vertical-align: middle; margin-right: var(--space-2); }
 .lane-key .k-fill { width: 18px; height: 10px; background: var(--stroke); border: 1px solid var(--line); }
 .lane-key .k-mark { width: 2px; height: 14px; background: var(--text); }
 
@@ -30,9 +30,9 @@
 .lane-div .fl.neg { right: 50%; left: auto; background: none; opacity: .75; }
 
 .lane-corr { border-collapse: separate; border-spacing: 3px; font: var(--type-small); }
-.lane-corr th { font-weight: 500; color: var(--muted); text-align: left; padding: 4px 8px 4px 0; white-space: nowrap; }
-.lane-corr thead th { font: var(--type-label-mono); text-align: center; }
-.lane-corr td { border: 1px solid var(--line); text-align: center; padding: 8px 10px; min-width: 76px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.lane-corr th { font-weight: 500; color: var(--muted); text-align: left; padding: var(--space-1) var(--space-2) var(--space-1) 0; white-space: nowrap; }
+.lane-corr thead th { font: var(--type-label); text-align: center; }
+.lane-corr td { border: 1px solid var(--line); text-align: center; padding: var(--space-2) var(--space-2); min-width: 76px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .lane-corr td.self { color: var(--muted); }
 .lane-ep-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: var(--space-6); }
 .lane-ep-grid h4 { margin: 0 0 var(--space-2); font: var(--type-small); font-weight: 600; }
