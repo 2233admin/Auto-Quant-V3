@@ -255,3 +255,17 @@ html[data-fx='0'] .wb-bar.is-indeterminate > span { animation: none; width: 100%
 /* Result actions read as buttons: an outline, text colour; the primary keeps its inverted fill. */
 .wb-resultbar .abtn--quiet, .idea-action-chips .abtn--quiet { border-color: var(--line-strong); color: var(--text); padding-inline: var(--space-3); }
 .wb-resultbar .abtn--quiet[aria-disabled='true'], .idea-action-chips .abtn--quiet[aria-disabled='true'] { color: var(--faint); border-color: var(--line); }
+
+/* ---- Splitter between the two panes (drag, arrows, Home / End, double-click reset). The columns come from the inline
+   grid-template-columns; the handle is a 17px track with a 1px rule that thickens on hover, focus and drag. ---- */
+@media (min-width: 1000px) {
+  .wb-shell.has-split > .wb-col, .wb-shell.has-split > .wb-col:first-child { padding: 0; border: 0; }
+  .wb-split { position: relative; z-index: 3; cursor: col-resize; touch-action: none; outline: none; }
+  .wb-split::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-50%); background: var(--line); }
+  .wb-split::after { content: ''; position: absolute; top: 50%; left: 50%; width: 5px; height: 40px; transform: translate(-50%, -50%); background: var(--line-strong); opacity: 0; clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 0 100%); }
+  .wb-split:hover::before, .wb-split:focus-visible::before, .wb-shell.is-dragging .wb-split::before { background: var(--text); width: 2px; }
+  .wb-split:hover::after, .wb-split:focus-visible::after, .wb-shell.is-dragging .wb-split::after { opacity: 1; }
+  .wb-split:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+  .wb-shell.is-dragging { user-select: none; cursor: col-resize; }
+}
+@media (max-width: 999px) { .wb-split { display: none; } }

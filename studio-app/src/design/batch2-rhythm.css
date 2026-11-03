@@ -1,0 +1,52 @@
+/* Batch 2 of direction H (owner feedback 2026-11-04). Tokens only; sign colour is the sign-positive / sign-negative role pair,
+   so the Settings convention switch (default red up, green down) applies. See DESIGN.md, "Batch 2". */
+
+/* ---- Rhythm: 8 inside a group, 16 between groups, 24-32 between sections ---- */
+.pg-head.sec-bar { height: 40px; padding: 0 84px 0 var(--space-4); gap: var(--space-3); }
+.pg-head.sec-bar h1 { color: var(--bar-text); font: var(--type-page-title); }
+.pg-head.sec-bar p { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-head.sec-bar .mkw { margin-left: 0; }
+.pg-head.sec-bar > svg.icon { width: 20px; height: 20px; }
+
+/* The Idea editor pane body must be a flex column in every language: the older rule keys on the English aria-label, which
+   is translated, so the code editor stopped growing with the pane in Chinese. */
+.idea-workbench .wb-pane-body:has(> .idea-form) { display: flex; flex-direction: column; padding-top: var(--space-3); }
+.idea-workbench .idea-form { flex: 1; min-height: 0; }
+.idea-workbench .idea-source { flex: 1 1 180px; min-height: 160px; }
+.idea-workbench .idea-source .cf-area { height: 100%; min-height: 0; }
+
+/* ---- Settings and Assistant: section bars instead of bare headings, rules instead of boxes ---- */
+.settings-page { max-width: 960px; padding: var(--space-6) var(--space-6) var(--space-8); display: grid; gap: var(--space-6); }
+.settings-page .pg-head { margin: 0; }
+.settings-page .set-sec { display: grid; gap: var(--space-3); padding: 0; border: 0; }
+.settings-page .set-sec + .set-sec { padding: 0; border: 0; }
+.settings-page .set-sec .sec-bar { margin: 0; }
+.settings-page .set-sec > :not(.sec-bar) { margin-inline: var(--space-3); }
+.settings-page .setting-row { align-items: center; padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
+.settings-page .setting-row > span:first-child { font: var(--type-body); color: var(--text); }
+.settings-page .set-kv { gap: var(--space-2) var(--space-6); }
+.settings-page .set-kv dd { color: var(--text); }
+.settings-page .set-sec .cmdrow, .settings-page .set-sec .cmd { margin-block: 0; }
+.set-sec .sec-bar { font: var(--type-section); }
+
+.assistant-head { align-items: center; gap: var(--space-4); border-bottom: 1px solid var(--line-strong); }
+.assistant-title { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.assistant-title > svg.icon { width: 24px; height: 24px; flex: none; }
+.assistant-title .mk { align-self: flex-start; margin-left: var(--space-3); }
+.assistant-inspector { display: grid; align-content: start; gap: var(--space-3); }
+.assistant-inspector .sec-bar { margin: var(--space-3) 0 0; min-height: 28px; padding-right: 56px; }
+.assistant-inspector .sec-bar:first-child { margin-top: 0; }
+.assistant-inspector .sec-bar::after { width: 48px; }
+.assistant-inspector .sec-bar .sec-bar-micro { display: none; }
+.assistant-conversation-head > svg.icon { width: 16px; height: 16px; flex: none; color: var(--muted); }
+
+.assistant-inspector > .sec-bar, .assistant-inspector > .sec-bar:not(:first-child) { padding: 0 56px 0 var(--space-3); border-top: 0; font: var(--type-section); font-weight: 400; }
+.pg-head.sec-bar { flex-wrap: nowrap; align-items: center; }
+.pg-head.sec-bar h1 { line-height: 1.2; }
+
+/* ---- Factor workbench rhythm: 16 between groups, 8 inside a group; the candidate section carries its own bar ---- */
+.idea-workbench .idea-form { gap: var(--space-4); }
+.idea-workbench .idea-source { gap: var(--space-2); }
+.idea-workbench .idea-source > .sec-bar { min-height: 28px; font: var(--type-section); font-weight: 400; }
+.idea-workbench .idea-source > .sec-bar::after { width: 56px; }
+.idea-workbench .idea-parameters { padding-block: var(--space-2); }

@@ -335,6 +335,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
   const metricGroups = [...coreGroups({ study, project, validation, testAudit: study.summary.testAudit, testVisible, defs: study.protocol.semantics }), ...(study.quantileEvidence.status === 'available' ? spreadGroups(study, testVisible) : [])]
   return (
     <WorkbenchShell
+      id="factor"
       ratio={40}
       left={<FactorEditor project={project} study={study} />}
       right={

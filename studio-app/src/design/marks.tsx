@@ -1,6 +1,8 @@
 import { useMemo, type ReactNode } from 'react'
 import { Icon, type IconName } from './icons'
 
+export { Icon }
+
 /* Direction H industrial marks. All are original, drawn as inline SVG or CSS; they carry no data and are decorative
    (aria-hidden) unless stated. Colours are tokens, so light and dark both work. */
 
