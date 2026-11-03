@@ -50,24 +50,41 @@ class StudioStrategyTests(unittest.TestCase):
         self.assertEqual(route["runId"], portfolio["latestRun"]["id"])
         self.assertEqual(route["factorRunId"], factor["latestRun"]["id"])
         summary = snapshot["library"]["strategy"]
-        self.assertEqual(summary["state"], "Tuned")
+        # Issue #21: the sample has one evaluation and only the pre-declared neighbourhood, so it is Backtested.
+        self.assertEqual(summary["state"], "Backtested")
         self.assertEqual(summary["evidence"]["runId"], snapshot["portfolioExplorer"]["run"]["id"])
         self.assertIsNotNone(summary["evidence"]["selectionAdjustment"])
 
-    def test_lifecycle_needs_published_net_run_and_neighborhood_not_positive_signs(self):
+    def test_lifecycle_needs_published_net_run_and_a_counted_tuning_task_not_positive_signs(self):
         with tempfile.TemporaryDirectory() as directory:
             workspace, project = make_project(directory)
+            state = lambda snap: library_projection(project, snap, workspace.root_dir)["strategy"]["state"]
             snapshot = {"studies": [{"id": "portfolio", "primaryMetric": "validation_net_sharpe"}],
                         "runs": [], "portfolioExplorer": None}
-            self.assertEqual(library_projection(project, snapshot, workspace.root_dir)["strategy"]["state"], "Defined")
+            self.assertEqual(state(snapshot), "Defined")
             snapshot["runs"] = [{"id": "run-base", "studyId": "portfolio", "status": "succeeded", "startedAt": "2026-01-01"},
                                 {"id": "run-rejected", "studyId": "portfolio", "status": "failed", "startedAt": "2026-02-01"}]
             snapshot["portfolioExplorer"] = {"run": {"id": "run-base"}, "strategyViability": {"validation": {"net": {"sharpe": -2.0}}}}
-            self.assertEqual(library_projection(project, snapshot, workspace.root_dir)["strategy"]["state"], "Backtested")
+            self.assertEqual(state(snapshot), "Backtested")
+            # The pre-declared neighbourhood every Portfolio Run publishes is not a tuning task (issue #21).
             snapshot["portfolioExplorer"]["parameterNeighborhood"] = {"available": True}
-            self.assertEqual(library_projection(project, snapshot, workspace.root_dir)["strategy"]["state"], "Tuned")
+            self.assertEqual(state(snapshot), "Backtested")
+            # Starting a Session only records the baseline: still Backtested.
+            snapshot["sessions"] = [{"session": {"id": "s0", "studyId": "portfolio", "status": "active"},
+                                     "selectionIntegrity": {"candidateTrials": 0}, "experiments": []}]
+            self.assertEqual(state(snapshot), "Backtested")
+            # A candidate Experiment on the Portfolio Study is a counted tuning task.
+            snapshot["sessions"] = [{"session": {"id": "s1", "studyId": "portfolio", "status": "active"},
+                                     "selectionIntegrity": {"candidateTrials": 2}, "experiments": [{}, {}]}]
+            self.assertEqual(state(snapshot), "Tuned")
+            snapshot["sessions"] = [{"session": {"id": "s2", "studyId": "other-study", "status": "active"},
+                                     "selectionIntegrity": {"candidateTrials": 2}, "experiments": [{}, {}]}]
+            self.assertEqual(state(snapshot), "Backtested")
+            # Several unique source trials in the research family are also counted tuning.
+            with patch("autoquant.studio_library.load_run"),                  patch("autoquant.studio_library.build_research_family", return_value=type("F", (), {"projection": {"uniqueSourceTrials": 3, "totalExecutions": 3}})()),                  patch("autoquant.studio_library.build_selection_adjustment", return_value={"passes": False}):
+                self.assertEqual(state(snapshot), "Tuned")
             snapshot["portfolioExplorer"]["run"]["id"] = "run-rejected"
-            self.assertEqual(library_projection(project, snapshot, workspace.root_dir)["strategy"]["state"], "Defined")
+            self.assertEqual(state(snapshot), "Defined")
 
     def setup_service(self, directory):
         workspace, project = make_project(directory)

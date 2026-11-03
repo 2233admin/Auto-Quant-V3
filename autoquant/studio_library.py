@@ -15,6 +15,24 @@ from .studio_actions import _is_link, confine_workspace_path
 from .workspace import AutoQuantValidationError
 
 
+def _counted_tuning(snapshot, portfolio_ids, evidence):
+    """A counted tuning task: a Session on a Portfolio Study with at least one candidate Experiment beyond its baseline,
+    or more than one unique source trial in the research family.
+
+    Starting a Session only runs and records the baseline, and the pre-declared parameter neighbourhood every Portfolio
+    Run publishes is robustness context, so neither alone makes a Strategy Tuned (issue #21).
+    """
+    for entry in snapshot.get("sessions") or []:
+        study = (entry.get("session") or {}).get("studyId") or entry.get("studyId")
+        if study not in portfolio_ids:
+            continue
+        trials = (entry.get("selectionIntegrity") or {}).get("candidateTrials")
+        if (isinstance(trials, int) and trials > 0) or entry.get("experiments"):
+            return True
+    trials = ((evidence or {}).get("researchFamily") or {}).get("uniqueSourceTrials")
+    return isinstance(trials, int) and trials > 1
+
+
 def _read(project, relative):
     try:
         path = confine_workspace_path(project.root_dir, relative, "library source")
@@ -130,7 +148,7 @@ def library_projection(project, snapshot, workspace_root):
                 pass
         state = "Defined"
         if exact and validation.get("net"):
-            state = "Tuned" if (explorer.get("parameterNeighborhood") or {}).get("available") is True else "Backtested"
+            state = "Tuned" if _counted_tuning(snapshot, portfolio_ids, evidence) else "Backtested"
         result["strategy"] = {
             "state": state, "evidence": evidence,
             "net": validation.get("net") if exact else None,

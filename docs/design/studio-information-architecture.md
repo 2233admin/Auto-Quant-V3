@@ -50,7 +50,7 @@ There is no Refuted state: Core has no falsification protocol for arbitrary ques
 ### Strategy (a portfolio built from one or more factors)
 
 A Strategy maps to a Portfolio Project and its Studies. Lifecycle: Defined (construction parameters set), Backtested (a
-net-of-cost Run exists), Tuned (a neighborhood or tuning task exists). Paper trading and live execution are outside
+net-of-cost Run exists), Tuned (a counted tuning task exists: a Session on the Portfolio Study with at least one candidate Experiment beyond its baseline, or more than one unique source trial in the Project's research family (starting a Session only records the baseline); the pre-declared parameter neighborhood every Portfolio Run publishes is robustness context and does not count). Paper trading and live execution are outside
 AutoQuant, so no state exists for them.
 
 ### Run (an immutable measurement)
@@ -129,7 +129,11 @@ Strategy cards represent Projects with Portfolio Studies; RL and Allocation rema
 net Sharpe and maximum drawdown come from the Portfolio validation summary. The curve contains train and validation
 net-growth observations. Defined means there is no verified current net-of-cost
 Portfolio evidence. Backtested means that evidence exists; Tuned additionally
-requires its published `parameterNeighborhood.available=true`. Neither implies
+requires a counted tuning task (a Session on a Portfolio Study with a candidate
+Experiment beyond its baseline, or more than one unique source trial in the
+research family; starting a Session records only the baseline). The pre-declared
+`parameterNeighborhood` is robustness context only and never makes a Strategy
+Tuned (issue #21). Neither implies
 a positive result, successful optimization or independent confirmation. A newer
 rejected attempt cannot replace the explorer's current Run or its lifecycle.
 
