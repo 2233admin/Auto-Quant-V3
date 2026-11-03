@@ -4,13 +4,13 @@
 .rl-th { display: inline-flex; align-items: center; gap: var(--space-1); }
 .rl .chart { max-width: none; }
 .rl-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4); }
-.rl-card { border: 1px solid var(--line); background: var(--bg); padding: var(--space-3) var(--space-4); }
+.rl-card { border: 0; border-top: 1px solid var(--line-strong); background: transparent; padding: var(--space-3) 0; }
 .rl-card .kv { margin: 0; }
 .rl-sel { font-weight: 600; outline: 1px solid var(--text); outline-offset: -2px; background: var(--selected); }
 .rl-sel .badge { margin-left: var(--space-2); }
 .rl-diag { margin: 0; max-width: 90ch; font: var(--type-body); border-left: 4px solid var(--line-strong); padding-left: var(--space-4); }
 .rl-chain { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: var(--space-3); }
-.rl-step { display: grid; gap: var(--space-1); align-content: start; border: 1px solid var(--line-strong); border-top-width: 4px; background: var(--raised); padding: var(--space-3) var(--space-4); }
+.rl-step { display: grid; gap: var(--space-1); align-content: start; border: 0; border-top: 2px solid var(--line-strong); background: transparent; padding: var(--space-2) 0; }
 .rl-step small { font: var(--type-label); color: var(--muted); }
 .rl-step b { font: var(--type-value); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .rl-step i { font: var(--type-small); font-style: normal; color: var(--muted); }

@@ -1,6 +1,6 @@
 /* Compare page: locked-basis banner and before/after table. */
 .cmp-pick { display: flex; flex-wrap: wrap; gap: var(--space-6); }
-div.basis { border: 1px solid var(--line-strong); border-left-width: 4px; padding: var(--space-3) var(--space-4); background: var(--raised); }
+div.basis { border: 0; border-left: 2px solid var(--line-strong); padding: var(--space-2) 0 var(--space-2) var(--space-3); background: transparent; }
 div.basis--locked { border-left-color: var(--text); }
 div.basis--open { border-left-color: var(--faint); }
 div.basis > .basis-title { font: var(--type-body); }

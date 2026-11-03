@@ -1,7 +1,7 @@
 /* Portfolio lane page. Tokens only; chart frames and legends come from factor.css. */
 .pf-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .pf-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--space-3); margin: 0; }
-.pf-tile { display: grid; gap: var(--space-1); align-content: start; border: 1px solid var(--line); background: var(--bg); padding: var(--space-3) var(--space-4); }
+.pf-tile { display: grid; gap: var(--space-1); align-content: start; border: 0; border-top: 1px solid var(--line-strong); background: transparent; padding: var(--space-2) 0; }
 .pf-tile dt { font: var(--type-small); color: var(--muted); }
 .pf-tile dd { margin: 0; font: var(--type-value-focal); font-variant-numeric: tabular-nums; }
 .pf-sub { font: var(--type-small); color: var(--muted); font-variant-numeric: tabular-nums; }

@@ -62,6 +62,7 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
           <span className="nav-short">{t('Assistant', '助手')}</span>
         </a>
         <button type="button" className="rail-new" onClick={() => setNewIdea(true)} aria-label={t('New factor', '新建因子')}>+<span>{t('New factor', '新建因子')}</span></button>
+        {recentProjects.length > 0 && <div className="railhead" aria-hidden="true">{uiText("Recent")}</div>}
         {(
           <ul className="raildirs" aria-label={uiText("Open recent")}>
             {recentProjects.map((p) => (
@@ -78,6 +79,7 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
             ))}
           </ul>
         )}
+        <div className="railhead" aria-hidden="true">{uiText("Workspace")}</div>
         {LIBRARY_NAV.filter((item) => item.view !== 'assistant').map((item) => (
           <a key={item.view} className={route.view === item.view ? 'nav is-on' : 'nav'} href={routeHref({ view: item.view })} aria-current={route.view === item.view ? 'page' : undefined}>
             <Icon name={item.icon} />

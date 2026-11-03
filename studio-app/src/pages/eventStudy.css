@@ -1,17 +1,17 @@
 /* Event Study page: result cards, interval bars, stability halves, per-year chips, event ledger. */
 .ocards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-3); }
-.ocard { border: 1px solid var(--line); background: var(--raised); padding: var(--space-4); display: grid; gap: var(--space-2); align-content: start; }
+.ocard { border: 0; border-top: 1px solid var(--line-strong); background: transparent; padding: var(--space-3) 0; display: grid; gap: var(--space-2); align-content: start; }
 .ocard header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
 .ocard h3 { font: var(--type-section); margin: 0; }
 .ocard h4 { font: var(--type-label); color: var(--muted); margin: var(--space-3) 0 0; }
 .ocard p { margin: 0; font: var(--type-body); }
 .ocard .big { font: var(--type-value-focal); }
 
-.badge { font: var(--type-label); padding: 1px var(--space-2); border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
-.badge.is-warn { border-color: var(--signal-graphic); color: var(--signal); }
+.badge { font: var(--type-label); padding: 0; border: 0; color: var(--muted); white-space: nowrap; }
+.badge.is-warn { color: var(--signal); }
 
 /* Interval bar: a 0-100% track, the 95% interval as a block, the estimate as a tick. */
-.ibar { position: relative; height: 10px; background: var(--hover); border: 1px solid var(--line); }
+.ibar { position: relative; height: 10px; background: var(--hover); border: 0; }
 .ibar.is-empty { background: none; }
 .ibar-half { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--grid); }
 .ibar-range { position: absolute; top: 0; bottom: 0; background: var(--stroke); opacity: .7; }
@@ -21,7 +21,7 @@
 .half { display: grid; gap: var(--space-1); }
 
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.chip { display: inline-flex; gap: var(--space-2); align-items: baseline; padding: var(--space-1) var(--space-2); border: 1px solid var(--line-strong); font: var(--type-small); }
+.chip { display: inline-flex; gap: var(--space-1); align-items: baseline; padding: 0; border: 0; font: var(--type-small); }
 
 .tbl caption { text-align: left; padding: var(--space-2) 0; }
 .tbl tr.is-excluded td { color: var(--muted); }

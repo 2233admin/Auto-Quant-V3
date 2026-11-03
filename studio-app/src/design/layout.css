@@ -43,7 +43,7 @@
 .secnav a[aria-current='location'] { color: var(--text); background: var(--selected); }
 .secnav a:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
 /* Summary band: verdict, headline numbers and next move, compact, above the fold. */
-.band { display: grid; gap: var(--space-3); border: 1px solid var(--line-strong); background: var(--raised); padding: var(--space-4); }
+.band { display: grid; gap: var(--space-3); border: 0; border-bottom: 1px solid var(--line-strong); background: transparent; padding: 0 0 var(--space-4); }
 .band > * { min-width: 0; }
 .band .verdict { border: 0; border-left: 4px solid var(--line-strong); padding: 0 0 0 var(--space-6); background: none; }
 .band .verdict--pass { border-left-color: var(--ok); }

@@ -8,7 +8,7 @@
 .chart-cap { overflow-wrap: anywhere; }
 .chart-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-6); }
 .chart-note { margin: 0; max-width: 80ch; }
-.plot { width: 100%; height: auto; display: block; border: 1px solid var(--line); background: var(--raised); }
+.plot { width: 100%; height: auto; display: block; border: 0; background: transparent; }
 .plot .ax { font: var(--type-label); fill: var(--muted); }
 .plot .ax.faint { fill: var(--faint); }
 .plot .val { font: var(--type-label-mono); font-weight: 500; fill: var(--text); }
@@ -40,13 +40,13 @@
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--space-6); }
 .h-small { font: var(--type-label); color: var(--muted); margin: 0 0 var(--space-2); }
 .bullets { list-style: disc; padding-left: var(--space-4); display: grid; gap: var(--space-2); font: var(--type-body); }
-.plot .val { paint-order: stroke; stroke: var(--raised); stroke-width: 3px; stroke-linejoin: round; }
+.plot .val { paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
 
 .kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-1) var(--space-6); margin: 0 0 var(--space-4); font: var(--type-body); }
 .kv dt { color: var(--muted); font: var(--type-small); padding-top: 1px; }
 .kv dd { margin: 0; overflow-wrap: anywhere; }
 .kv .kv-row { display: contents; }
-.box { border: 1px solid var(--line); background: var(--raised); padding: var(--space-4); }
+.box { border: 0; border-top: 1px solid var(--line-strong); background: transparent; padding: var(--space-3) 0; }
 .hash { font-size: var(--size-label); word-break: break-all; }
 .stack { display: grid; gap: var(--space-6); }
 .stack .tbl caption { padding-top: 0; }

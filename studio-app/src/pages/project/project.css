@@ -2,7 +2,7 @@
 .pj-sub { font: var(--type-section); margin: var(--space-4) 0 var(--space-2); }
 .pj-sub:first-child { margin-top: 0; }
 .pj-na { color: var(--faint); font: var(--type-body); }
-.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 1px var(--space-2); border: 1px solid var(--line-strong); font: var(--type-label); white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-control); font: var(--type-label); white-space: nowrap; }
 .chip[data-v='KEEP'] { background: var(--text); color: var(--bg); border-color: var(--text); }
 .chip[data-v='REVERT'] { color: var(--muted); }
 .chip[data-v='CRASH'] { color: var(--signal); border-color: var(--signal); }
@@ -35,7 +35,7 @@
 .pj-fig .pt.crash { stroke: var(--signal-graphic); }
 .pj-fig .lbl { fill: var(--text); }
 
-.pj-callout { border: 1px solid var(--line-strong); border-left: 3px solid var(--signal-graphic); background: var(--raised); padding: var(--space-3) var(--space-4); margin: var(--space-3) 0; font: var(--type-body); }
+.pj-callout { border: 0; border-left: 2px solid var(--signal-graphic); background: transparent; padding: var(--space-1) 0 var(--space-1) var(--space-3); margin: var(--space-3) 0; font: var(--type-body); }
 .pj-callout p { margin: 0 0 var(--space-2); }
 .pj-callout p:last-child { margin: 0; }
 .pj-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-1) var(--space-4); margin: var(--space-2) 0; font: var(--type-body); }

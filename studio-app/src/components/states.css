@@ -1,7 +1,7 @@
 /* Shared empty, loading and end-of-list states. Tokens only. */
 .st { display: grid; place-content: center; justify-items: center; gap: var(--space-1); text-align: center; padding: var(--space-4); min-height: 96px; }
 .st--empty { border: 1px dashed var(--line-strong); background: none; }
-.st--loading { border: 1px solid var(--line); background: var(--raised); grid-auto-flow: row; }
+.st--loading { border: 0; background: transparent; grid-auto-flow: row; }
 .st-title { margin: 0; font: var(--type-body); color: var(--muted); }
 .st-body { max-width: 70ch; font: var(--type-small); color: var(--muted); }
 .st-body p { margin: 0; }

@@ -24,7 +24,7 @@ p { font: var(--type-body); }
 input, select, textarea { border-radius: var(--radius-control); }
 .modal, .adialog, .palette, .info-body, .term-pop { border-radius: var(--radius-float); box-shadow: none; }
 .wb-actions-reason { white-space: normal; overflow: visible; text-overflow: clip; font: var(--type-label); }
-.wb-pill { font: var(--type-page-title); }
+.wb-pill { font: var(--type-section); }
 .wb-verdict-text { font: var(--type-body); }
 .floating-shell .nav, .floating-shell .railitem { color: var(--muted); font-weight: 400; }
 .floating-shell .nav.is-on { color: var(--text); }
@@ -47,16 +47,17 @@ input, select, textarea { border-radius: var(--radius-control); }
 .idea-status .wb-status-text { font-weight: 400; color: var(--muted); }
 .idea-status .wb-status[data-state='failed'] .wb-status-text { color: var(--signal); }
 .idea-answer .wb-chart { overflow: visible; }
-.wb-chart { height: auto; min-height: 390px; }
-.wb-chart-body { flex: 1 0 220px; }
+/* min-content: a chart card grows to hold its head, plot, data table and caption instead of letting the caption spill. */
+.wb-chart { height: auto; min-height: min-content; }
+.wb-chart-body { flex: 1 0 260px; }
 .wb-chart-head { align-content: start; }
 .figure-subtitle { flex-basis: 100%; font: var(--type-small); color: var(--muted); margin: 0; }
 .development-tag { display: inline-block; margin-left: var(--space-2); font: var(--type-label); color: var(--muted); }
-.figure-caption { flex: none; display: flex; align-items: baseline; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--line); font: var(--type-small); color: var(--muted); }
+.figure-caption { flex: none; display: flex; align-items: baseline; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--line); font: var(--type-small); color: var(--muted); }
 .figure-label { font: var(--type-label); white-space: nowrap; }
 .figure-export { margin-left: auto; font: var(--type-label); }
-.comparison-figure { margin: 0; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--raised); }
-.comparison-figure header, .comparison-body { padding: var(--space-3); }
+.comparison-figure { margin: 0; border: 0; border-top: 1px solid var(--line-strong); border-radius: 0; background: transparent; }
+.comparison-figure header, .comparison-body { padding: var(--space-3) 0; }
 .comparison-figure h3 { font: var(--type-section); margin: 0; }
 .comparison-figure header p { font: var(--type-small); color: var(--muted); }
 .comparison-group h4 { font: var(--type-label); color: var(--muted); margin-bottom: var(--space-2); }
