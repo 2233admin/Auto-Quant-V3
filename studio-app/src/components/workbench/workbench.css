@@ -34,7 +34,8 @@
   .wb-actions-row .abtn--primary { padding-left: 6px; padding-right: 6px; }
 }
 .wb-pane-status:empty { display: none; }
-.wb-pane-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--space-3); display: grid; align-content: start; gap: var(--space-3); }
+/* position: relative keeps absolutely positioned descendants (the .sr-only captions) inside this scroll box; without it they resolve to <body> and stretch the document by thousands of pixels. */
+.wb-pane-body { position: relative; flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--space-3); display: grid; align-content: start; gap: var(--space-3); }
 .wb-pane-body > * { min-width: 0; }
 .wb-pane-body.is-flush { padding: 0; overflow: hidden; display: flex; flex-direction: column; gap: 0; }
 .wb-pane-body.is-flush > * { flex: 1; min-height: 0; }
