@@ -1,6 +1,7 @@
 import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { useCallback, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { niceTicks } from '../factorMath'
+import { curveSign, SignedCurve, type CurvePoint } from '../../components/SignedCurve'
 import type { PathPoint } from './portfolioTypes'
 
 const m = { l: 60, r: 16, t: 28, b: 40 }
@@ -178,6 +179,8 @@ export function PortfolioChart({
     })
     return parts.join(' ')
   }
+  const netPts: CurvePoint[] = points.flatMap((p, i): CurvePoint[] => (finite(p.netGrowth) ? [[x(t[i]), yG(p.netGrowth)]] : []))
+  const lastNet = [...points].reverse().find((p) => finite(p.netGrowth))
   const ddArea = (() => {
     const pts = points.map((p, i) => (finite(p.drawdown) ? `${x(t[i]).toFixed(1)},${yD(p.drawdown).toFixed(1)}` : null)).filter((s): s is string => !!s)
     if (!pts.length) return ''
@@ -204,6 +207,8 @@ export function PortfolioChart({
       setHover((h) => Math.max(0, Math.min(points.length - 1, (h ?? (step < 0 ? points.length : -1)) + step)))
     } else if (e.key === 'Escape') setHover(null)
   }
+  const TAG_W = 132
+  const tagX = (px: number) => (px + 12 + TAG_W > W - m.r ? px - 12 - TAG_W : px + 12)
   const hp = hover === null ? null : points[hover]
   const clip = `${id}-clip`
 
@@ -333,10 +338,7 @@ export function PortfolioChart({
           {on.gross && hasGross && <path className="fx-reveal" d={line((p) => p.grossGrowth, yG)} fill="none" stroke="var(--muted)" strokeWidth="1.6" strokeDasharray="1.5 3" strokeLinecap="round" />}
           {on.bench && hasBench && <path className="fx-reveal fx-late" d={line((p) => p.benchmarkGrowth, yG)} fill="none" stroke="var(--muted)" strokeWidth="1.7" strokeDasharray="6 3" />}
           {on.net && (
-            <>
-              <path className="fx-draw" pathLength={1} d={line((p) => p.netGrowth, yG)} fill="none" stroke="var(--bg)" strokeWidth="4" strokeLinejoin="round" />
-              <path className="fx-draw" pathLength={1} d={line((p) => p.netGrowth, yG)} fill="none" stroke="var(--text)" strokeWidth="1.9" strokeLinejoin="round" />
-            </>
+            <SignedCurve pts={netPts} baseY={yG(1)} x0={m.l} x1={W - m.r} top={gTop} bottom={gBot} casing />
           )}
           {ddArea && (
             <>
@@ -359,7 +361,15 @@ export function PortfolioChart({
             {on.bench && hasBench && finite(hp.benchmarkGrowth) && <circle cx={x(t[hover])} cy={yG(hp.benchmarkGrowth)} r="3.4" fill="var(--muted)" stroke="var(--bg)" strokeWidth="1.5" />}
             {on.gross && hasGross && finite(hp.grossGrowth) && <circle cx={x(t[hover])} cy={yG(hp.grossGrowth)} r="3" fill="var(--muted)" stroke="var(--bg)" strokeWidth="1.5" />}
             {finite(hp.drawdown) && <circle cx={x(t[hover])} cy={yD(hp.drawdown)} r="3.2" fill="var(--text)" stroke="var(--bg)" strokeWidth="1.5" />}
+            <g className="cross-tag" transform={`translate(${tagX(x(t[hover]))} ${gTop + 4})`}>
+              <rect width={TAG_W} height="36" fill="var(--raised)" stroke="var(--line-strong)" />
+              <text x="8" y="14" className="ax">{hp.timestamp.slice(0, 10)}{hp.split ? ` · ${hp.split}` : ''}</text>
+              <text x="8" y="29" className="val" data-sign={curveSign([hp.netGrowth as number], 1)}>{uiText("net ")}{g3(hp.netGrowth)}</text>
+            </g>
           </g>
+        )}
+        {on.net && lastNet && !hp && (
+          <text x={W - m.r - 4} y={yG(lastNet.netGrowth as number) + ((lastNet.netGrowth as number) >= 1 ? 18 : -8)} textAnchor="end" className="val end-label" data-sign={curveSign([lastNet.netGrowth as number], 1)}>{g3(lastNet.netGrowth)}</text>
         )}
       </svg>
       </div>

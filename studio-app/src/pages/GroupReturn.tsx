@@ -2,7 +2,8 @@ import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { FactorCumulativePoint, FactorDiagnostics, FactorSpreadSplit } from '../api'
 import { FigureCard, SegmentedToggle, StatChips, type MetricGroup } from '../components/workbench'
-import { signedNumber } from '../design/signConvention'
+import { signedNumber, signRole } from '../design/signConvention'
+import { SignedCurve, type CurvePoint } from '../components/SignedCurve'
 import { groupReturnCaption } from './figureEvidence'
 import { num, pct } from '../format'
 import { IcByHorizonCard } from './FactorCharts'
@@ -41,6 +42,7 @@ function GroupPlot({ points, width: W, height: H, label }: { points: FactorCumul
   const x = (ms: number) => m.l + ((ms - t0) / (t1 - t0 || 1)) * (W - m.l - m.r)
   const y = (v: number) => m.t + ((hi - v) / (hi - lo || 1)) * (H - m.t - m.b)
   const path = (key: LineKey) => points.map((p, i) => `${i ? 'L' : 'M'}${x(t[i]).toFixed(1)} ${y(p[key]).toFixed(1)}`).join(' ')
+  const spreadPts: CurvePoint[] = points.map((p, i) => [x(t[i]), y(p.spread)])
   const years: number[] = []
   for (let yr = new Date(t0).getUTCFullYear() + 1; yr <= new Date(t1).getUTCFullYear(); yr++) years.push(Date.UTC(yr, 0, 1))
   // Split boundaries come from the drawn points: the first point of each later split.
@@ -102,12 +104,12 @@ function GroupPlot({ points, width: W, height: H, label }: { points: FactorCumul
       ))}
     <text x={m.l} y={H - 8} textAnchor="start" className="ax faint">{day(t0)}</text>
     <text x={W - m.r} y={H - 8} textAnchor="end" className="ax faint">{day(t1)}</text>
-    {LINES.map((l) => (
-      <g key={l.key}>
-        {l.key === 'spread' && <path d={path(l.key)} fill="none" stroke="var(--bg)" strokeWidth="4.4" strokeLinejoin="round" />}
-        <path d={path(l.key)} fill="none" stroke={l.stroke} strokeWidth={l.width} strokeDasharray={l.dash} strokeLinejoin="round" strokeLinecap={l.round ? 'round' : undefined} />
-      </g>
+    {LINES.filter((l) => l.key !== 'spread').map((l) => (
+      <path key={l.key} d={path(l.key)} fill="none" stroke={l.stroke} strokeWidth={l.width} strokeDasharray={l.dash} strokeLinejoin="round" strokeLinecap={l.round ? 'round' : undefined} />
     ))}
+    {/* The long-short curve: above the starting 1.0 in the positive sign colour, below in the negative one. Groups stay neutral. */}
+    <SignedCurve pts={spreadPts} baseY={y(1)} x0={m.l} x1={W - m.r} top={m.t} bottom={H - m.b} width={2.2} casing />
+    <text x={W - m.r - 4} y={y(points[points.length - 1].spread) + (points[points.length - 1].spread >= 1 ? 18 : -8)} textAnchor="end" className="val end-label" data-sign={signRole(points[points.length - 1].spread - 1)}>{growth(points[points.length - 1].spread)}</text>
     {hp && hover !== null && (
       <g pointerEvents="none">
         <line x1={x(t[hover])} x2={x(t[hover])} y1={m.t} y2={H - m.b} stroke="var(--text)" strokeWidth="1" strokeDasharray="2 2" />
@@ -117,7 +119,7 @@ function GroupPlot({ points, width: W, height: H, label }: { points: FactorCumul
         <rect x={bx} y={m.t + 4} width={boxW} height={boxH} fill="var(--raised)" stroke="var(--line-strong)" />
         <text x={bx + 8} y={m.t + 20} className="ax">{hp.timestamp.slice(0, 10)} · {SPLIT_LABEL[hp.split]}</text>
         {[...LINES].reverse().map((l, i) => (
-          <text key={l.key} x={bx + 8} y={m.t + 38 + i * 18} className="val">
+          <text key={l.key} x={bx + 8} y={m.t + 38 + i * 18} className="val" data-sign={l.key === 'spread' ? signRole(hp.spread - 1) : undefined}>
             {l.key === 'spread' ? uiText("Long-short") : l.label.replace(' group', '')}: {growth(hp[l.key])}
           </text>
         ))}

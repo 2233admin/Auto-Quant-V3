@@ -58,6 +58,7 @@ Source: static mock-up `MOTION-H` (owner-approved). All effects are CSS animatio
 | Barcode or ruler ticks in segment by segment | created | 420 ms, 14 steps |
 | Net line and drawdown line draw (stroke-dashoffset), dashed benchmark and gross reveal (scaleX), sparklines draw | created | 700 ms |
 | Focal number count-up, ends on the exact text | created, once | 600 ms |
+| Library filter, verdict grouping or density switch: the new rows cross-fade in (`fx-xfade`, opacity only) | filter change | 220 ms |
 | Library row hover: four corner brackets grow in | hover | 140 ms |
 | Rail hover: icon shifts 2 px, hairline marker | hover | 140 ms |
 | Active navigation marker and tab underline slide between items | click | 260 ms |
@@ -65,7 +66,7 @@ Source: static mock-up `MOTION-H` (owner-approved). All effects are CSS animatio
 | Registration marks brighten | hover over chart | 140 ms |
 | Contour texture drift (6 px), RUN label blink | ambient | 60 s alternate, 5 s cycle |
 
-Not built in batch 1 (listed for batch 2): the chart crosshair readout with IDX / NAV chips (the Portfolio chart keeps its existing hover line and text readout), the filter-tab grid crossfade, and the rail Motion toggle (the setting lives in Settings only).
+Batch 2 built the chart crosshair readout (a snapping tag with the date and value next to the crosshair on the Strategy growth chart and the Factor group-return chart, in addition to the existing text readout) and the library crossfade. Still not built: the IDX / NAV chips of the mock-up and the rail Motion toggle (the setting lives in Settings only).
 
 The layer is our own code: no animate-ui file was copied (see the licence note below); the kit in `components/motion` remains for the sliding highlight, collapse, progress, copy confirmation and theme fade where it is already wired.
 
