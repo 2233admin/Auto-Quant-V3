@@ -8,10 +8,14 @@ hosted Workspaces render the same Core snapshot. An operator can opt in to a
 small local action layer with `--allow-actions` (see "Local actions" below);
 without that flag Studio is strictly read-only.
 
-Studio uses a shared hierarchy: 20px page titles and focal values, 15px section
-headings, 13px body and numerical values, 12px secondary text and 11px labels.
-Inter and IBM Plex Mono and both theme palettes are unchanged. Panes and controls
-have 6px corners; floating layers have 8px corners, without shadows or gradients.
+Studio's visual language is direction H (owner decision 2026-11-04, see
+`docs/design/studio-design/DESIGN.md`): black, white and grey with square corners,
+8px chamfers on a few marked surfaces, dark grey section bars with a hatch strip,
+Smiley Sans headings, Noto Sans SC body and 0xProto for every Latin label and
+number (the type scale is 18px page titles, 14px section headings, 13px body,
+12px secondary text, 11px labels, 10px micro-labels, 32px focal values). Both
+theme palettes follow the same tokens. Settings also has **Motion** (On, System,
+Off; default On) that controls the animation layer (`MOTION.md`).
 
 Settings has a Display group with **Price colours**. Red up, green down is the
 default; Green up, red down changes only the viewer's presentation. The choice

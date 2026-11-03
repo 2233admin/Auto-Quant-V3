@@ -1,68 +1,91 @@
 ---
 version: alpha
 name: AutoQuant Studio
-description: Dark-instrument research workbench; one focal point per screen, state colour only on state, sign colour only on the focal row of numbers.
+description: Black / white / grey instrument research workbench (direction H); white is the contrast device, square corners with 8px chamfers on marked surfaces, sign colour only on focal numbers.
 colors:
-  bg: "#0a0a0b"
-  rail: "#0e0e10"
-  raised: "#16161a"
-  hover: "#1c1c21"
-  selected: "#232329"
-  line: "rgba(255, 255, 255, 0.08)"
-  line-strong: "rgba(255, 255, 255, 0.16)"
-  text: "#ededef"
-  muted: "#a1a1aa"
-  faint: "#8a8a93"
-  signal: "#f2622e"
-  signal-graphic: "#f2622e"
-  stroke: "#6d6d76"
-  grid: "#34343b"
-  notice-error-bg: "#262626"
+  bg: "#080808"
+  rail: "#0d0d0d"
+  raised: "#111111"
+  hover: "#1a1a1a"
+  selected: "#1d1d1d"
+  line: "#222222"
+  line-strong: "#383838"
+  text: "#ececec"
+  muted: "#9b9b9b"
+  faint: "#808080"
+  signal: "#ffffff"
+  signal-graphic: "#ffffff"
+  stroke: "#555555"
+  grid: "#2a2a2a"
+  contrast: "#f2f2f2"
+  on-contrast: "#080808"
+  bar: "#2e2e2e"
+  verdict-bg: "#161616"
+  notice-error-bg: "#1c1c1c"
   ramp-0: "#606066"
   ramp-1: "#f1f1f3"
-  ok: "#9cd1ac"
-  warn: "#e5c06f"
-  err: "#ffa095"
-  primary: "#ededef"
+  up: "#e06a82"
+  dn: "#5bd0a0"
+  ok: "#5bd0a0"
+  warn: "#d8d8d8"
+  err: "#e06a82"
+  primary: "#f2f2f2"
 typography:
   page-title:
-    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
+    fontFamily: "'Smiley Sans', 'Noto Sans SC Variable', 'Microsoft YaHei', system-ui, sans-serif"
     fontSize: 18px
-    fontWeight: 600
+    fontWeight: 400
     lineHeight: 26px
   section:
-    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
+    fontFamily: "'Smiley Sans', 'Noto Sans SC Variable', 'Microsoft YaHei', system-ui, sans-serif"
     fontSize: 14px
-    fontWeight: 600
+    fontWeight: 400
     lineHeight: 20px
+  verdict:
+    fontFamily: "'Smiley Sans', 'Noto Sans SC Variable', 'Microsoft YaHei', system-ui, sans-serif"
+    fontSize: 24px
+    fontWeight: 400
+    lineHeight: 32px
   body:
-    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
+    fontFamily: "'Noto Sans SC Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
     fontSize: 13px
     fontWeight: 400
     lineHeight: 20px
   small:
-    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
+    fontFamily: "'Noto Sans SC Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
     fontSize: 12px
     fontWeight: 400
     lineHeight: 18px
   label:
-    fontFamily: "'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
+    fontFamily: "'Noto Sans SC Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif"
     fontSize: 11px
     fontWeight: 400
     lineHeight: 16px
+  micro:
+    fontFamily: "'0xProto', 'Noto Sans SC Variable', 'Microsoft YaHei', monospace"
+    fontSize: 10px
+    fontWeight: 400
+    lineHeight: 16px
+    letterSpacing: 0.16em
   value:
-    fontFamily: "'IBM Plex Mono', 'Noto Sans SC', 'Microsoft YaHei', monospace"
+    fontFamily: "'0xProto', 'Noto Sans SC Variable', 'Microsoft YaHei', monospace"
     fontSize: 13px
-    fontWeight: 500
+    fontWeight: 400
     lineHeight: 20px
-  value-focal:
-    fontFamily: "'IBM Plex Mono', 'Noto Sans SC', 'Microsoft YaHei', monospace"
-    fontSize: 22px
-    fontWeight: 600
+  value-lg:
+    fontFamily: "'0xProto', 'Noto Sans SC Variable', 'Microsoft YaHei', monospace"
+    fontSize: 20px
+    fontWeight: 400
     lineHeight: 28px
+  value-focal:
+    fontFamily: "'0xProto', 'Noto Sans SC Variable', 'Microsoft YaHei', monospace"
+    fontSize: 32px
+    fontWeight: 400
+    lineHeight: 36px
 rounded:
-  radius-control: 6px
-  radius-float: 8px
+  radius-control: 0px
+  radius-float: 0px
+  chamfer: 8px
 spacing:
   space-1: 4px
   space-2: 8px
@@ -76,21 +99,38 @@ spacing:
 
 Status: DECIDED for type, spacing and lines. On 2026-11-04 the owner chose visual direction B ("dense terminal, clear layers", one of three rendered directions compared for issue #22) and asked for it one size step smaller; the type scale, spacing scale and line rules below replace the DRAFT values. Colour, sign option C and the Settings convention switch are unchanged. The values live in `design-system/tokens.json`; the usage rules live in `design-system/README.md`. This file holds product identity, hierarchy, templates and wording, and points at the package instead of repeating it.
 
+## Direction H (owner decision 2026-11-04)
+
+DECIDED (owner, 2026-11-04, after comparing rendered mock-ups A to H and reviewing `result.html` of direction H: "good, just change the fonts"). Direction H supersedes direction B's VISUAL layer only; every structural decision of direction B stays: flat rail with one right hairline, aligned library rows, a Factor library that lists only Factor Projects, the answer strip first on result pages with provenance below, no box in a box, the 4 / 8 / 12 / 16 / 24 / 32 spacing scale.
+
+- Reference: QUBE (PandaAI) skeleton, Tsutomu Nihei industrial look, original Endfield-style graphic assets. The owner reversed the earlier "structure only" rule: QUBE colours and structure may now be followed. Nothing is copied or traced from a game, a wiki or a font; every mark and pictogram is our own drawing.
+- Palette: black, white and grey only. White is the primary contrast device: the primary button is white fill with black text and one 8px 45-degree chamfer; the selected navigation item is white text with a white left bar; `signal` and `signal-graphic` are now white (no orange, no yellow, no cyan). The one chromatic exception is the sign colour of option C, red up (`up`) and green down (`dn`), on FOCAL numbers only (a library row's headline IC, the verdict block's net Sharpe), still switchable in Settings.
+- Shape: square corners everywhere (this replaces the 6px / 8px radius rule: `radius-control` and `radius-float` are 0). The 8px chamfer (`chamfer`) appears only on the primary button, the verdict block, a card's one corner and the selected navigation marker. Hairline rules (`line`, `line-strong`), 1px.
+- Section header bars: dark grey (`bar`, #2b2b2b to #2e2e2e) with white text, a pictogram, and a low-opacity diagonal hatch strip (72px) at the right end. They carry uppercase tracked micro-labels (VERDICT, NET SHARPE, METRICS / VALID, FACTOR LIBRARY / 04) beside the Chinese labels, never replacing them. Index numbers (01-05 on rail items, F01... on library rows) are faint 0xProto.
+- Industrial marks: corner brackets on the focal verdict block; registration crosshair marks on chart corners; a barcode (library) or segmented ruler (result page) beside the page-header micro-label; a very faint (3-6 percent) topographic contour texture in at most two places (the library's empty canvas, behind the verdict block).
+- Fonts (OFL, all vendored or from npm; see THIRD_PARTY_NOTICES.md): Chinese headings in Smiley Sans 得意黑, body text in Noto Sans SC, and every Latin letter and number that is a label, value or id in 0xProto (`--font-display` and `--font-mono` both point to it). The owner first picked Oxanium plus JetBrains Mono, then replaced both with 0xProto on 2026-11-04; each role is one token, so the face can be swapped in one place. Smiley Sans has a single weight and is intrinsically oblique; headings are therefore weight 400. Project and Factor names are data and use the body face, not the heading face.
+- Icons: 21 original blocky pictograms on a 24-unit grid, filled with `currentColor` (`studio-app/src/design/icons.tsx`).
+- Logo L4, "sealed block": a 3x3 grid of squares whose bottom-right cell is an empty frame, the test split sealed until audit and the nine cells the trial count. Used as the rail mark, the favicon (`studio-app/public/assets/favicon.svg`) and in the wordmark lockup.
+- Motion: Studio's own layer, with a Motion setting (see `MOTION.md`).
+- Type roles: page title 18 (Smiley Sans), section 14 (Smiley Sans), verdict word 24 (Smiley Sans), body 13, label 11, micro-label 10 (0xProto, uppercase, 0.16em), value 13 (0xProto), value-lg 20 (library headline), value-focal 32 (verdict block).
+
+Where an older line below disagrees (Inter, IBM Plex Mono, the 6px radius, signal orange, "no gradient", "line icons"), direction H wins. The hatch strip and the contour texture are the only decoration; both are token-driven and sit on dark grey or on the ground, never behind text that must be read.
+
 ## Overview
 
 AutoQuant Studio has one job: a quantitative factor researcher puts a factor idea in and honestly sees whether it holds, how strong the evidence is, what is uncertain and what the next step is. Verdicts come only from Core; the interface never invents one and there is no Refuted state.
 
-The posture is a dark instrument: flat matte panes, hairline borders, no shadow, no gradient, no decoration. The page earns trust by being quiet and exact. Signal orange is the only chromatic hue and it means state. The one other use of colour is sign colour on the focal row of numbers (option C), mapped onto existing tokens.
+The posture is a dark instrument: flat matte panes, hairline borders, no shadow. The page earns trust by being quiet and exact. Direction H: white is the contrast device and there is no chromatic hue except sign colour on focal numbers. The one other use of colour is sign colour on the focal row of numbers (option C), mapped onto existing tokens.
 
 Hierarchy and tension rules, and the page templates, are below and are the main new decisions of this extraction.
 
 ## Colors
 
-The colour system is the existing Studio token set (dark default, light theme), recorded unchanged in `design-system/tokens.json`: ground `bg`, surfaces `rail` / `raised` / `hover` / `selected`, hairlines `line` / `line-strong`, text `text` / `muted` / `faint`, state `signal` (text) and `signal-graphic` (marks), `stroke` and `grid` for chart marks, plus `notice-error-bg`, the lineage ramp and the legacy `ok` / `warn` / `err`. No colour was added, removed or changed. The primary action and the selected state share one inverted treatment (`text` fill on `bg`), not an orange fill. Sign colour is allowed on focal numbers only, through the roles in "Signed numbers" below; this reverses the first draft, which forbade it. Nothing is added to the token set: the sign roles are aliases of existing tokens.
+Direction H replaced the palette with black / white / grey (see the section above; `signal` is white, the sign colours are `up` and `dn`). The token set (dark default, light theme) is recorded in `design-system/tokens.json`: ground `bg`, surfaces `rail` / `raised` / `hover` / `selected`, hairlines `line` / `line-strong`, text `text` / `muted` / `faint`, state `signal` (text) and `signal-graphic` (marks), `stroke` and `grid` for chart marks, plus `notice-error-bg`, the lineage ramp and the legacy `ok` / `warn` / `err`. No colour was added, removed or changed. The primary action and the selected state share one inverted treatment (`text` fill on `bg`), not an orange fill. Sign colour is allowed on focal numbers only, through the roles in "Signed numbers" below; this reverses the first draft, which forbade it. Nothing is added to the token set: the sign roles are aliases of existing tokens.
 
 ## Typography
 
-DECIDED (owner, 2026-11-04): direction B, one step smaller than the mock. Prose and UI are set in Inter Variable with a CJK sans fallback (`'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif`). IBM Plex Mono is used ONLY for numbers, ids, hashes, code and commands, always with `font-variant-numeric: tabular-nums`; never for prose, labels, buttons or headings. Weights in use: 400, 500 and 600 only (590 is retired). Nothing renders below 11px.
+SUPERSEDED for families, weights and the focal size by direction H (section above): headings are Smiley Sans, body Noto Sans SC, labels and numbers 0xProto, `value-focal` is 32px. The B baseline follows. DECIDED (owner, 2026-11-04): direction B, one step smaller than the mock. Prose and UI are set in Inter Variable with a CJK sans fallback (`'Inter Variable', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif`). IBM Plex Mono is used ONLY for numbers, ids, hashes, code and commands, always with `font-variant-numeric: tabular-nums`; never for prose, labels, buttons or headings. Weights in use: 400, 500 and 600 only (590 is retired). Nothing renders below 11px.
 
 | Step | Size / line | Weight | Role |
 | --- | --- | --- | --- |
@@ -112,7 +152,7 @@ DECIDED with direction B. Structure comes from a column grid, alignment and type
 - One `line-strong` rule sits under a section heading, a toolbar or an answer strip.
 - No border around a group that already sits in a pane; no box in a box (chips inside cards inside panes). Chips and tags inside a pane are text.
 - One outer border only where a surface must separate from the ground: a pane, a popover, a dialog. The rail is flat with one right hairline; library pages sit directly on the ground.
-- Radius `radius-control` 6px on controls and pane edges; `radius-float` 8px on popovers and dialogs only.
+- Radius: superseded by direction H, every corner is square (`radius-control` and `radius-float` are 0); the only cut is the 8px chamfer on marked surfaces. (Direction B had 6px on controls and pane edges and 8px on popovers.)
 - Alignment: numbers right-aligned in tables and metric grids, labels left, consistent column widths, header row in `label`.
 
 ## Layout
@@ -125,7 +165,7 @@ None. Depth is a fill step (`bg` to `raised` to `selected`) and a 1px hairline. 
 
 ## Shapes
 
-Radius `radius-control` 6px for controls and pane edges; `radius-float` 8px for menus, popovers and dialogs only. The reference's large rounded floating-card look is rejected by the owner and is removed: since direction B (2026-11-04) the rail, the top bar and library pages are flat on the ground with hairlines, and workbench panes are separated by one column hairline instead of an outer box. No shadow, no gradient.
+Direction H: square corners everywhere; an 8px 45-degree chamfer only on the primary button, the verdict block, one card corner and the selected navigation marker. (Direction B: `radius-control` 6px, `radius-float` 8px.) The reference's large rounded floating-card look is rejected by the owner and is removed: since direction B (2026-11-04) the rail, the top bar and library pages are flat on the ground with hairlines, and workbench panes are separated by one column hairline instead of an outer box. No shadow, no gradient.
 
 ## Components
 
@@ -256,8 +296,8 @@ The wording for stale session, read-only, hidden test split and the error title 
 - Do keep one focal point per screen and the type tiers to four.
 - Do use only tokens from `design-system/tokens.json`; do set numbers, ids, hashes, code and commands in mono (tabular) and everything else in the sans; do give every coloured number a leading + or minus glyph; do keep the up/down convention a Settings switch.
 - Do show the reason beside every disabled control.
-- Don't colour a number for anything but its sign, and only on the focal row; don't fill a cell or badge with sign colour; don't signal sign by colour alone; don't colour HAC t, p-values, counts or hit rates; don't add an accent colour or a new hue.
-- Don't use shadows, gradients, blur or the large rounded floating-card look.
+- Don't colour a number for anything but its sign, and only on a focal number (a library row's headline IC, the verdict block's net Sharpe); don't fill a cell or badge with sign colour; don't signal sign by colour alone; don't colour HAC t, p-values, counts or hit rates; don't add an accent colour or a new hue (white is the contrast device).
+- Don't use shadows, blur or the large rounded floating-card look. Direction H allows exactly two pieces of decoration: the diagonal hatch strip on section bars and the faint contour texture; nothing else.
 - Don't use any colour, font, icon, copy or brand mark from a reference product.
 - Don't show a Refuted state or compute a verdict in the interface.
 - Don't ship a screen without its empty, loading, error, stale, read-only, hidden-split and long-value states.
@@ -269,7 +309,7 @@ The wording for stale session, read-only, hidden test split and the error title 
 - Surface: desktop browser 1280 to 1920 wide, dark primary with a light theme, no mobile.
 - Content: real verified Workspace snapshot data; verdicts only from Core.
 - Required states: empty, loading, error, stale session, read-only (actions off), test split hidden, long values (ids and expressions).
-- Assets: no brand logo, built-in line icons, existing fonts (Inter + IBM Plex Mono), colour tokens unchanged.
+- Assets (direction H): logo L4 (sealed block), 21 original filled pictograms, Smiley Sans + Noto Sans SC + 0xProto, black / white / grey tokens.
 - Intake record: `brief.md` and `.design-pipeline/state.json`. Real brands: none.
 
 ## Source Decisions
@@ -290,8 +330,8 @@ The original action-chip row was not adopted wholesale. Issue #7 explicitly
 requests Build strategy on the Factor answer action row and in the Strategies
 library; this one action now follows the confirmed local-action rules, with
 visible refusal and CLI guidance when Core cannot perform the conversion.
-Other undecided actions remain outside this change. Fonts remain Inter and
-IBM Plex Mono. Screenshots are technical review evidence, not owner visual
+Other undecided actions remain outside this change. Fonts were Inter and
+IBM Plex Mono until direction H (2026-11-04) replaced them with Smiley Sans, Noto Sans SC and 0xProto. Screenshots are technical review evidence, not owner visual
 acceptance.
 
 Existing system: colour, spacing and radius tokens are recorded unchanged from `studio-app/src/design/tokens.css`; the workbench kit is recorded from `studio-app/src/components/workbench`. The design-system package is `design-system/`. The graybox comparison and Spec Reconciliation are deliver-stage work (they need a running build with a graybox mode).
