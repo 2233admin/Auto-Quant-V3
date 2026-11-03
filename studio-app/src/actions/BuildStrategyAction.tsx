@@ -6,12 +6,17 @@ import { previewAction, launchPreviewed } from './candidateApi'
 import type { Preview } from './types'
 import { CopyButton } from './CopyButton'
 import { Modal } from '../shell/Modal'
+import { ConvertStrategyDialog } from './ConvertStrategyDialog'
 import { routeHref } from '../route'
 import '../pages/strategy/strategy.css'
 
 const REASONS: Record<string, string> = {
   'risk-outcome': 'This Factor predicts future realized volatility. Core cannot translate a risk forecast into a forward-return Portfolio claim; a different caller-owned assignment is required.',
-  'no-coordinated-program': 'This Project has no coordinated Factor-to-Portfolio program. Core cannot convert a standalone Factor Lab or bind its evidence into a new Portfolio Project.',
+  'no-coordinated-program': 'This Project has no coordinated Factor-to-Portfolio program and is not a request-bound standalone Factor Lab that Core can convert.',
+  'source-not-tested': 'The source Factor has no successful Factor Run; test it before building a strategy.',
+  'source-changed': 'The source candidate changed after its latest Factor Run; re-test the exact source before building a strategy.',
+  'data-not-reusable': 'The source dataset package could not be found unchanged under Workspace staging, so the same market data cannot be proven.',
+  'data-mismatch': 'The supplied dataset package is not the exact market data the source Factor was tested on.',
   'active-session': 'Finish the active research Session before starting Portfolio: Factor, Portfolio and RL share source authority.',
   'failed-evidence': 'Inspect the retained failed Portfolio Run and its failure disposition before declaring new work.',
   'no-start-command': 'Core does not offer a Portfolio Session start for this state.',
@@ -26,6 +31,7 @@ export function BuildStrategyAction({ projectId, route, shownRunId }: { projectI
   const [busy, setBusy] = useState(false)
   const [second, setSecond] = useState(false)
   const [error, setError] = useState('')
+  const [converting, setConverting] = useState(false)
   const differentRun = !!shownRunId && !!route?.factorRunId && shownRunId !== route.factorRunId
   const open = route?.mode === 'open' && !differentRun
   const reason = !route ? uiText('No verified Factor-to-Portfolio route is published for this Project.')
@@ -35,6 +41,7 @@ export function BuildStrategyAction({ projectId, route, shownRunId }: { projectI
     : !open && !bootstrap ? uiText('Read-only session: actions are off.') : null
   const prepare = async () => {
     if (!bootstrap || reason) return
+    if (route?.mode === 'convert') { setConverting(true); return }
     setBusy(true); setError(''); setSecond(false)
     try { setPreview(await previewAction(bootstrap, 'strategy.build', projectId, {})) }
     catch (e) { setError(e instanceof Error ? e.message : String(e)) }
@@ -62,6 +69,11 @@ export function BuildStrategyAction({ projectId, route, shownRunId }: { projectI
       <pre className="cmd mono" translate="no">{route.display}</pre><CopyButton text={route.display} label={uiText('Copy command')} />
     </details>}
     {error && <p role="alert">{uiText('Could not build strategy. Preview again after inspecting the refusal.')} {error}</p>}
+    {route?.mode === 'convert' && route.conversion && <p className="small muted strategy-reason">{uiText('Creates a new research desk from this exact Factor by reference; you confirm every Portfolio fact first.')}</p>}
+    <Modal open={converting} onClose={() => setConverting(false)} label={uiText('Build strategy from this Factor')} className="adialog">
+      {converting && bootstrap && route?.conversion && <ConvertStrategyDialog bootstrap={bootstrap} projectId={projectId} conversion={route.conversion}
+        onClose={() => setConverting(false)} onDone={(href) => { setConverting(false); actions?.go(href) }} />}
+    </Modal>
     <Modal open={!!preview} onClose={() => { if (!busy) setPreview(null) }} label={uiText('Build strategy')} className="adialog">
       {preview && <div className="adialog-body"><header className="adialog-head"><h2>{uiText('Build strategy')}</h2><p>{uiText('Review the exact command before confirming. Nothing has run yet.')}</p></header>
         <div className="adialog-scroll">

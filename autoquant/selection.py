@@ -9,6 +9,7 @@ from datetime import datetime
 from statistics import NormalDist
 from typing import Any
 
+from .factor_lineage import inheritance_projection
 from .runs import RunContext, list_runs, load_run
 from .studies import hash_json
 from .workspace import ProjectContext
@@ -169,7 +170,28 @@ def build_research_family(
         "reproducible": inconsistent == 0,
         "inconsistentSourceTrials": inconsistent,
     }
+    inheritance = inheritance_projection(project)
+    if inheritance is not None:
+        # A desk built from a standalone Factor Project continues that
+        # search: its fixed family is new, but the selection is not fresh.
+        projection["inheritedSourceTrials"] = inheritance["inheritedSourceTrials"]
+        projection["effectiveSourceTrials"] = (
+            unique_sources + inheritance["inheritedSourceTrials"]
+        )
+        projection["inheritance"] = inheritance
     return ResearchFamily(projection, tuple(successful_values))
+
+
+def family_trial_count(projection: dict[str, Any]) -> int:
+    """Trials that selection adjustment must account for.
+
+    Own unique sources plus any inherited source-Project trials; identical to
+    ``uniqueSourceTrials`` for every Project without Factor lineage.
+    """
+
+    return int(
+        projection.get("effectiveSourceTrials", projection["uniqueSourceTrials"])
+    )
 
 
 def probabilistic_sharpe_probability(
@@ -266,7 +288,7 @@ def _factor_adjustment(
     )
     if raw_p is None or observed is None:
         return _unsupported("missing-factor-hac-evidence", family)
-    trials = max(1, family.projection["uniqueSourceTrials"])
+    trials = max(1, family_trial_count(family.projection))
     adjusted_p = min(1.0, raw_p * trials)
     passes = observed > 0.0 and adjusted_p <= 1.0 - CONFIDENCE_LEVEL
     return {
@@ -332,10 +354,8 @@ def _portfolio_adjustment(
         return _unsupported("invalid-portfolio-return-moments", family)
     if not family.projection["reproducible"]:
         return _unsupported("non-reproducible-research-family", family)
-    if (
-        family.projection["uniqueSourceTrials"] > 1
-        and len(family.successful_values) < 2
-    ):
+    trials = family_trial_count(family.projection)
+    if trials > 1 and len(family.successful_values) < 2:
         return _unsupported(
             "insufficient-successful-sharpe-trials",
             family,
@@ -347,7 +367,7 @@ def _portfolio_adjustment(
     try:
         expected_maximum, dispersion = expected_maximum_sharpe(
             successful_period_sharpes,
-            max(1, family.projection["uniqueSourceTrials"]),
+            max(1, trials),
         )
         psr = probabilistic_sharpe_probability(
             period_sharpe,
@@ -415,7 +435,7 @@ def _portfolio_adjustment(
             "returnSkewness": skewness,
             "returnKurtosis": kurtosis,
             "successfulSharpeTrials": len(successful_period_sharpes),
-            "uniqueTrials": family.projection["uniqueSourceTrials"],
+            "uniqueTrials": trials,
             "trialSharpeDispersionPeriod": dispersion,
             "trialSharpeDispersionAnnualized": dispersion
             * math.sqrt(annualization),

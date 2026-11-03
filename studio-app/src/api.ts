@@ -25,8 +25,30 @@ export type FactorSummary = {
   trials: number; updatedAt: string | null; points: LibraryPoint[]
   protocol: { testRole?: string }; testAudit: boolean
 }
+export type StrategyMandate = {
+  schemaVersion: 1; kind: 'autoquant-strategy-mandate'; question: string; direction: 'long' | 'short' | 'long-short'
+  positionRoles: Record<string, 'long-only' | 'short-only' | 'two-sided' | 'context-only'>
+  benchmarkPolicy: { kind: 'cash'; symbol: null } | { kind: 'asset'; symbol: string } | { kind: 'fixed-weights'; weights: Record<string, number> }
+  portfolioPolicy: { grossLimit: number; maxAbsWeight: number; assetMaxAbsWeights: Record<string, number>; annualizedVolatilityCeiling: number; baseCostBps: number; noTradeOneWay: number; referenceNav: number; decisionSchedule: { kind: 'every-bars'; bars: number; anchor: 'dataset-start' | 'session-start' } | { kind: 'calendar-month-end' } }
+  callerConfirmed: boolean
+}
+export type StrategyConversion = {
+  sourceRunId: string; sourceHash: string; inheritedSourceTrials: number
+  sourceFamilies: { id: string; studyId: string; uniqueSourceTrials: number; totalExecutions: number }[]
+  assets: string[]; predictionAssets: string[]; datasetPackage: string; observations: number; rlLaneSufficient: boolean
+  suggestedProjectId: string; defaults: StrategyMandate; defaultsNotice: string
+}
+export type StrategyLineage = {
+  valid: boolean; error?: string; lineageHash?: string; sourceProjectId?: string; sourceRunId?: string
+  sourceQualificationStage?: string | null; sourceSelectionAdjustment?: { status: string; method: string | null; passes: boolean | null }
+  sourceRunCount?: number; sourceHash?: string; inheritedSourceTrials?: number; sameMarketData?: boolean; marketIdentity?: string
+  observations?: number; rlLaneSufficient?: boolean; rlRequiredObservations?: number; callerProvidedFields?: string[]
+  mandate?: { direction: string | null; positionRoles: Record<string, string | null>; benchmarkPolicy: StrategyMandate['benchmarkPolicy'] | null; portfolioPolicy: StrategyMandate['portfolioPolicy'] | null }
+  factorGate?: { status: string; explanation: string } | null
+}
 export type StrategySummary = {
   state: 'Backtested' | 'Defined' | 'Tuned'; updatedAt: string | null; points: LibraryPoint[]
+  studyId?: string | null; lineage?: StrategyLineage | null
   evidence?: { runId: string; researchFamily: SelectionIntegrity['researchFamily']; selectionAdjustment: StrategyAdjustment } | null
   net: { totalReturn?: number | null; sharpe?: number | null; maximumDrawdown?: number | null } | null
 }
@@ -34,7 +56,8 @@ export type StrategyAdjustment = Omit<NonNullable<SelectionIntegrity['selectionA
   statistics: { deflatedSharpeProbability?: number | null; minimumTrackRecordObservations?: number | null } | null
 }
 export type StrategyRoute = {
-  mode: 'blocked' | 'start' | 'open'; reasonCode: string; reason: string
+  mode: 'blocked' | 'start' | 'open' | 'convert'; reasonCode: string; reason: string
+  conversion?: StrategyConversion
   template: string; argv: string[]; display: string; studyId: string | null; runId: string | null
   factorRunId?: string | null
 }
@@ -390,7 +413,7 @@ export type SelectionIntegrity = {
   externalHoldoutRequired?: boolean | null
   externalHoldoutReason?: string
   warning?: string
-  researchFamily?: { id: string; uniqueSourceTrials: number; failedSourceTrials?: number; successfulSourceTrials?: number; totalExecutions: number; trialCountAssumption: string; reproducible: boolean }
+  researchFamily?: { id: string; uniqueSourceTrials: number; inheritedSourceTrials?: number; effectiveSourceTrials?: number; inheritance?: { sourceProjectId: string; lineageHash: string }; failedSourceTrials?: number; successfulSourceTrials?: number; totalExecutions: number; trialCountAssumption: string; reproducible: boolean }
   selectionAdjustment?: {
     status: string
     method: string | null

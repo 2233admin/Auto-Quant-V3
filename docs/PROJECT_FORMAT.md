@@ -146,6 +146,14 @@ comparison rule. See [[docs/design/ohlcv-factor-lab]],
 [[docs/design/signal-policy-and-attribution]], and
 [[docs/design/mechanical-position-lifecycle-evidence]].
 
+A research desk created by `aq project from-factor` additionally contains a
+Project-root `factor-lineage.json` (`autoquant-factor-lineage` V1): the source
+Factor Project, anchor and all source Factor Runs, exact candidate hashes,
+source/target snapshot and market identities, the caller mandate hash and
+fields, and `trials.inheritedSourceTrials`. It is written once at
+construction, read strictly, and enters every research-family projection of
+that desk. See [[docs/design/factor-to-portfolio-conversion]].
+
 Every quantitative reference Project contains the fixed
 `strategies/factor-population.json` and
 `strategies/research-horizon.json`. Factor Studies bind both. The Factor

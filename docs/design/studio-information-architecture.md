@@ -134,13 +134,15 @@ a positive result, successful optimization or independent confirmation. A newer
 rejected attempt cannot replace the explorer's current Run or its lifecycle.
 
 Build strategy follows the template fit contract: Factor-to-Portfolio work
-belongs in `ohlcv-research-desk`. Standalone Factor Labs have no Core conversion
-command, so the control stays disabled with its exact reason and a copyable
-`aq project intake ... --template ohlcv-research-desk --request ... --dataset ...`
-Agent path. The Agent must first agree caller-owned construction policy, retain
-a complete compatible dataset, author the factor, and establish/report counted
-Factor evidence in the sibling desk. Creating a scaffold does not transfer
-evidence. No defaults are invented to fill that authority gap.
+belongs in `ohlcv-research-desk`. A tested standalone Factor Lab is converted by
+`aq project from-factor`: the dialog collects every caller-owned Portfolio fact
+(roles, benchmark, cadence, cost, risk) from displayed starting values that the
+user must confirm, previews the exact command, and needs a second
+confirmation. The new desk opens in its Strategy workbench at Defined, shows
+the source lineage, inherited trial count and its own Core Factor gate, and
+offers the existing governed Portfolio Session start as the first evaluation.
+Untested, changed, risk-outcome or data-unprovable sources stay disabled with
+their exact reason. See [[docs/design/factor-to-portfolio-conversion]].
 
 In an existing coordinated desk, current Portfolio evidence opens its Strategy.
 Otherwise `strategy.build` may preview the existing Core `session.start` command

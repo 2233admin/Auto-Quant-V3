@@ -431,6 +431,65 @@ CLI_COMMANDS = [
         ],
     ),
     descriptor(
+        "project.from-factor",
+        "aq project from-factor <workspace-dir> <source-project> <project-id> "
+        "--mandate FILE [--dataset FILE] [--name NAME] [--json]",
+        "Create a research desk whose Factor and Portfolio Studies consume a "
+        "tested standalone Factor Lab's exact candidate source over the same "
+        "market data, recording the source Project, Runs, snapshot identity "
+        "and inherited trial count by reference; the source is never modified.",
+        "creates-artifact",
+        [
+            argument(
+                "workspace-dir",
+                "positional",
+                "string",
+                True,
+                "Existing AutoQuant Workspace directory.",
+            ),
+            argument(
+                "source-project",
+                "positional",
+                "string",
+                True,
+                "Request-bound ohlcv-factor-lab Project with a current successful Factor Run.",
+            ),
+            argument(
+                "project-id",
+                "positional",
+                "string",
+                True,
+                "New lowercase kebab-case research-desk Project id.",
+            ),
+            argument(
+                "mandate",
+                "option",
+                "string",
+                True,
+                "Caller-confirmed autoquant-strategy-mandate JSON with question, "
+                "direction, a role for every source asset, benchmarkPolicy and a "
+                "complete portfolioPolicy. Core never defaults these facts.",
+            ),
+            argument(
+                "dataset",
+                "option",
+                "string",
+                False,
+                "Exact source dataset-package manifest; found under Workspace "
+                "staging by its recorded hash when omitted.",
+            ),
+            argument(
+                "name",
+                "option",
+                "string",
+                False,
+                "Project display name.",
+                default="Source title + strategy",
+            ),
+            JSON_ARGUMENT,
+        ],
+    ),
+    descriptor(
         "project.list",
         "aq project list <workspace-dir> [--json]",
         "List immediate self-contained Workspace Projects.",

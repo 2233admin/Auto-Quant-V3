@@ -1794,6 +1794,9 @@ def _apply_ohlcv_research_desk(
         _template_text("research.md", template="ohlcv_research_desk"),
         encoding="utf-8",
     )
+    if intake is not None and intake.factor_seed is not None:
+        # Exact source bytes and lineage land before any Study identity.
+        intake.factor_seed.apply(project)
 
     shared_dataset = StudyDataset(
         str(dataset["id"]),

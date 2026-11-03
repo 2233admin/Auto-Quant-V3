@@ -63,6 +63,17 @@ and a reproducibility flag without sending an unbounded trial list to Studio.
 Unique source count is a conservative upper-bound proxy for independent trials,
 not an estimate of effective independent strategies.
 
+### Inherited trials
+
+A research desk created by `aq project from-factor` continues the search of
+its standalone source Factor Project. Its fixed families are new, but its
+`factor-lineage.json` records `inheritedSourceTrials`, the distinct candidate
+sources tried in the source Project. Every family projection of that desk adds
+`inheritedSourceTrials`, `effectiveSourceTrials`, and an `inheritance` block,
+and both Factor Bonferroni and Portfolio DSR use the effective count as `N`.
+Projects without lineage keep the exact historical projection. See
+[[docs/design/factor-to-portfolio-conversion]].
+
 ## As-of semantics
 
 Live Session and comparison projections use every current matching Project
@@ -177,7 +188,9 @@ format probabilities but cannot calculate them.
 ## Invariants
 
 1. Session restart cannot erase Project-wide fixed-family trial history.
-2. Fixed evaluator/data/dependency changes start a distinct family.
+2. Fixed evaluator/data/dependency changes start a distinct family; a family
+   in a desk converted from a standalone Factor still counts the inherited
+   source trials recorded in its lineage.
 3. Identical source reruns do not inflate unique trial count.
 4. A Report family is complete as of publication and immutable afterward.
 5. Test returns never enter selection adjustment.

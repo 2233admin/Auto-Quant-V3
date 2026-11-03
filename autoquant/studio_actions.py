@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator, Protocol
 
 from .runs import list_runs, load_run
-from .selection import build_research_family
+from .selection import build_research_family, family_trial_count, inheritance_projection
 from .sessions import (
     SessionContext,
     list_sessions,
@@ -299,6 +299,7 @@ class Job:
     truncated: bool = False
     result: dict[str, Any] | None = None
     created_refs: dict[str, str] = field(default_factory=dict)
+    stages: tuple[tuple[str, str], ...] | None = None
     cancel_requested: threading.Event = field(default_factory=threading.Event)
     done: threading.Event = field(default_factory=threading.Event)
 
@@ -323,7 +324,9 @@ class Job:
             "stageMode": "whole-action",
             "stages": [
                 {"id": stage_id, "label": label, "state": state}
-                for stage_id, label in STAGES_BY_ACTION.get(self.action_id, STAGES)
+                for stage_id, label in (
+                    self.stages or STAGES_BY_ACTION.get(self.action_id, STAGES)
+                )
             ],
             "stdoutTail": bytes(self.stdout).decode("utf-8", "replace"),
             "stderrTail": bytes(self.stderr).decode("utf-8", "replace"),
@@ -389,6 +392,7 @@ class JobRunner:
         timeout: float,
         cwd: str,
         audit_fields: dict[str, Any] | None = None,
+        stages: tuple[tuple[str, str], ...] | None = None,
     ) -> Job:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         job = Job(
@@ -399,6 +403,7 @@ class JobRunner:
             display=display,
             command_hash=command_hash,
             timeout=timeout,
+            stages=stages,
         )
         with self._lock:
             active = self._active.get(project)
@@ -585,6 +590,10 @@ class JobRunner:
             return
         job.result = envelope
         data = envelope.get("data")
+        if isinstance(data, dict) and job.action_id == BUILD_ID and "lineage" in data:
+            if isinstance(data.get("projectId"), str):
+                job.created_refs = {"projectId": data["projectId"]}
+            return
         if isinstance(data, dict) and job.action_id in {START_ID, BUILD_ID}:
             refs: dict[str, str] = {}
             session = data.get("session")
@@ -1074,6 +1083,13 @@ class ActionService:
             raise ActionError(409, "studio.busy",
                               "Another Studio job or candidate writer owns this Project") from None
 
+    @staticmethod
+    def _strategy():
+        # Lazy: studio_strategy imports this module at load time.
+        from . import studio_strategy
+
+        return studio_strategy
+
     # -- request gates -------------------------------------------------------
 
     def bind_port(self, port: int) -> None:
@@ -1140,7 +1156,7 @@ class ActionService:
         n = integrity["candidateTrials"] + 1
         trial = {
             "n": n,
-            "m": family["uniqueSourceTrials"] + 1,
+            "m": family_trial_count(family) + 1,
             "sessionTrial": n,
             "familyId": family["id"],
             "adjustment": adjustment,
@@ -1220,15 +1236,17 @@ class ActionService:
     def _start_trial(self, project: ProjectContext, study_id: str) -> dict[str, Any]:
         runs = list_runs(project, study_id)
         family_id: str | None = None
-        count = 0
+        inheritance = inheritance_projection(project)
+        inherited = inheritance["inheritedSourceTrials"] if inheritance else 0
+        count = inherited
         if runs:
             latest = max(runs, key=lambda item: (item.started_at, item.id))
             projection = build_research_family(
                 project, load_run(project, latest.id)
             ).projection
             family_id = projection["id"]
-            count = projection["uniqueSourceTrials"]
-        return {
+            count = family_trial_count(projection)
+        trial = {
             "studyId": study_id,
             "familyId": family_id,
             "currentFamilyTrials": count,
@@ -1236,6 +1254,10 @@ class ActionService:
             "m": count + 1,
             "notice": START_NOTICE,
         }
+        if inheritance is not None:
+            trial["inheritedSourceTrials"] = inherited
+            trial["inheritedFrom"] = inheritance["sourceProjectId"]
+        return trial
 
     def catalog(self, project_id: str | None = None) -> dict[str, Any]:
         projects = self._load_projects()
@@ -1341,8 +1363,7 @@ class ActionService:
                     "targets": targets[action_id],
                 }
             )
-        from .studio_strategy import catalog_entry
-        actions.append(catalog_entry(self, {pid: project for pid, project in projects.items()
+        actions.append(self._strategy().catalog_entry(self, {pid: project for pid, project in projects.items()
                                            if project_id is None or pid == project_id}))
         if self.scope == "workspace" and project_id is None:
             actions.extend([
@@ -1371,8 +1392,7 @@ class ActionService:
             raise _validation("body", "schema.object", "Request body must be an object")
         action_id = body.get("actionId")
         if action_id == BUILD_ID:
-            from .studio_strategy import prepare_build
-            return prepare_build(self, body)
+            return self._strategy().prepare_build(self, body)
         if action_id not in {EVALUATE_ID, START_ID, CHECK_ID}:
             raise ActionError(404, "studio.unknown-action", f"Unknown action: {action_id!r}")
         project = self._project(body.get("project"))
@@ -1413,6 +1433,9 @@ class ActionService:
         )
 
     def preview(self, body: Any) -> dict[str, Any]:
+        strategy = self._strategy()
+        if strategy.conversion_requested(self, body):
+            return strategy.preview_conversion(self, body)
         if isinstance(body, dict) and body.get("actionId") == "data.check":
             from .studio_data import check_preview
             return check_preview(self, body)
@@ -1447,6 +1470,10 @@ class ActionService:
         }
 
     def create(self, body: Any) -> dict[str, Any]:
+        strategy = self._strategy()
+        if strategy.conversion_requested(self, body):
+            with self._idea_launch_lock:
+                return strategy.launch_conversion(self, body)
         if isinstance(body, dict) and body.get("actionId") == "data.check":
             from .studio_data import data_check
             return data_check(self, body)

@@ -571,6 +571,9 @@ Read the relevant linked document before changing a subsystem:
   [[docs/design/research-program-orchestration]]
 - Read-only cross-Study source dependencies and governed Factor-to-RL fusion:
   [[docs/design/cross-study-factor-dependencies]]
+- Tested standalone Factor Lab converted into a research desk by reference,
+  caller-confirmed strategy mandate, same-market-data proof, and inherited
+  trial counting: [[docs/design/factor-to-portfolio-conversion]]
 - Resumable Agent worktrees, KEEP/REVERT/CRASH Experiments, and Report-bound
   delegated source promotion: [[docs/design/research-session-loop]]
 - Provider-neutral external Researcher turns, budgets, restoration, and

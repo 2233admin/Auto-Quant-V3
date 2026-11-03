@@ -36,6 +36,8 @@ def _points(points, field, visible):
 
 
 def library_projection(project, snapshot, workspace_root):
+    from .studio_strategy import lineage_summary, observed_strategy_route
+
     studies = snapshot["studies"]
     factor_ids = {s["id"] for s in studies if s.get("primaryMetric") == "validation_mean_ic"}
     portfolio_ids = {s["id"] for s in studies if s.get("primaryMetric") == "validation_net_sharpe"}
@@ -108,7 +110,6 @@ def library_projection(project, snapshot, workspace_root):
             "protocol": {"testRole": protocol.get("testRole")}, "testAudit": visible,
             "points": _points(((explorer.get("quantilePath") or {}).get("cumulative") or {}).get("points", []), "spread", visible) if exact and verdict in ("Supported", "Inconclusive") else [],
         }
-        from .studio_strategy import observed_strategy_route
         result["factor"]["buildStrategy"] = observed_strategy_route(
             project, snapshot.get("researchProgramStatus"), workspace_root,
             outcome=claim.get("outcome"))
@@ -136,5 +137,7 @@ def library_projection(project, snapshot, workspace_root):
             "updatedAt": latest["startedAt"] if latest else None,
             # Validation metrics and development path only; no test audit is inferred from Portfolio presence.
             "points": _points((explorer.get("path") or {}).get("points", []), "netGrowth", False) if exact else [],
+            "studyId": sorted(portfolio_ids)[0] if portfolio_ids else None,
         }
+        result["strategy"]["lineage"] = lineage_summary(project, snapshot)
     return result

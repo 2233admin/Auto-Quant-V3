@@ -1,4 +1,4 @@
-import { uiText, uiValue } from '../i18n'
+import { uiTemplate, uiText, uiValue } from '../i18n'
 import type { ProjectSnapshot, SelectionIntegrity } from '../api'
 import { Glyph } from '../design/icons'
 import { plural } from '../format'
@@ -53,6 +53,7 @@ export function TrialCounter({ project }: { project: ProjectSnapshot }) {
         <p>
           {plural(fam.totalExecutions, 'trial')}{uiText(" counted in this research family (")}{fam.uniqueSourceTrials}{uiText(" unique ")}{fam.uniqueSourceTrials === 1 ? uiText("source") : uiText("sources")}).
         </p>
+        {!!fam.inheritedSourceTrials && <p>{uiTemplate("Plus {0} source trials inherited from Factor Project {1}; the adjustment counts {2}.", [fam.inheritedSourceTrials, fam.inheritance?.sourceProjectId ?? '—', fam.effectiveSourceTrials ?? '—'])}</p>}
         <p>{uiValue(status)}</p>
         <p>
           {passes

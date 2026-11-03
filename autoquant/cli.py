@@ -511,6 +511,36 @@ def build_parser() -> RaisingArgumentParser:
     project_intake.set_defaults(command_id="project.intake")
     _json_argument(project_intake)
 
+    project_from_factor = project_actions.add_parser(
+        "from-factor",
+        help=(
+            "create a research desk whose Portfolio Study consumes a tested "
+            "standalone Factor Lab's exact source, by reference"
+        ),
+    )
+    project_from_factor.add_argument("workspace")
+    project_from_factor.add_argument("source_project")
+    project_from_factor.add_argument("project_id")
+    project_from_factor.add_argument(
+        "--mandate",
+        required=True,
+        help=(
+            "caller-confirmed autoquant-strategy-mandate JSON: question, "
+            "direction, every position role, benchmarkPolicy and complete "
+            "portfolioPolicy; nothing is defaulted"
+        ),
+    )
+    project_from_factor.add_argument(
+        "--dataset",
+        help=(
+            "the source's exact dataset-package manifest; when omitted Core "
+            "finds it under Workspace staging by its recorded hash"
+        ),
+    )
+    project_from_factor.add_argument("--name")
+    project_from_factor.set_defaults(command_id="project.from-factor")
+    _json_argument(project_from_factor)
+
     project_list = project_actions.add_parser("list", help="list Workspace Projects")
     project_list.add_argument("workspace")
     project_list.set_defaults(command_id="project.list")
@@ -1846,6 +1876,78 @@ def _project_intake(args: argparse.Namespace) -> CommandResult:
         project_context(project),
         artifacts,
         next_actions,
+    )
+
+
+def _project_from_factor(args: argparse.Namespace) -> CommandResult:
+    from .factor_conversion import FACTOR_LINEAGE, convert_factor_project
+
+    project, lineage, source_check = convert_factor_project(
+        args.workspace,
+        args.source_project,
+        args.project_id,
+        args.mandate,
+        dataset=args.dataset,
+        name=args.name,
+    )
+    if not source_check["unchanged"]:
+        raise AutoQuantValidationError(
+            [
+                ValidationIssue(
+                    args.source_project,
+                    "conversion.source-mutated",
+                    "The source Project changed during conversion; inspect both Projects.",
+                )
+            ]
+        )
+    intake = load_project_intake(project)
+    assert intake is not None
+    portfolio_study = "ohlcv-portfolio-quality"
+    trials = lineage["trials"]["inheritedSourceTrials"]
+    return CommandResult(
+        "project.from-factor",
+        {
+            "projectId": project.manifest.id,
+            "projectDir": str(project.root_dir),
+            "manifest": project.manifest.to_dict(),
+            "lineage": lineage,
+            "sourceUnchanged": source_check,
+            "intake": intake,
+        },
+        (
+            f"Created research desk '{project.manifest.id}' from Factor Project "
+            f"'{args.source_project}'\n"
+            f"Factor source {lineage['candidate']['sourceHash'][:12]} and market data "
+            f"inherited by reference; {trials} counted source trials continue here\n"
+            f"Source Project unchanged: {source_check['after']['hash'][:12]} "
+            f"({source_check['after']['files']} files)\n"
+        ),
+        project_context(project),
+        [
+            artifact("project", project.manifest.id, project.root_dir / PROJECT_MANIFEST, immutable=False),
+            artifact("factor-lineage", lineage["source"]["projectId"], project.root_dir / FACTOR_LINEAGE, immutable=False),
+            artifact("research-request", intake["manifest"]["requestHash"], project.root_dir / PROJECT_REQUEST, immutable=False),
+            artifact("research-program", project.manifest.id, project.root_dir / RESEARCH_PROGRAM_MANIFEST, immutable=False),
+        ],
+        [
+            next_action(
+                "project.program",
+                "Inspect the coordinated lanes; the desk's own Factor gate is reported separately from the inherited evidence.",
+                ["aq", "project", "program", str(project.root_dir), "--json"],
+                "read-only",
+            ),
+            next_action(
+                "session.start",
+                "Start the first governed Portfolio evaluation of the inherited Factor; its baseline Run is a counted trial.",
+                [
+                    "aq", "session", "start", str(project.root_dir),
+                    "--study", portfolio_study,
+                    "--request", str(project.root_dir / PROJECT_REQUEST),
+                    "--json",
+                ],
+                "creates-artifact",
+            ),
+        ],
     )
 
 
@@ -6015,6 +6117,8 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
         return _project_templates(args)
     if args.command_id == "project.intake":
         return _project_intake(args)
+    if args.command_id == "project.from-factor":
+        return _project_from_factor(args)
     if args.command_id == "project.list":
         return _project_list(args)
     if args.command_id == "project.default":

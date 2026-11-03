@@ -221,6 +221,19 @@ offers Open strategy and spends no trial. This narrow action supersedes the
 old blanket exclusion of `strategy.build`; it does not enable arbitrary Project
 or Study creation from a factor.
 
+For a Project without a coordinated program, `strategy.build` instead previews
+`aq project from-factor <workspace> <source> <new-id> --mandate <file>
+--dataset <package> --json` when Core reports the standalone Factor Lab as
+convertible. Params are exactly `newProject` and a complete caller-confirmed
+`mandate`; preview runs all Core checks without writing and returns the argv,
+mandate, composed request, inherited trial count and command hash. Launch
+requires confirmation, the unchanged hash and `secondConfirm`, writes the
+mandate to the confined `.autoquant/strategy-mandates/<new-id>.json`, and runs
+under the new Project's job slot. Refusals (source not tested or changed, data
+not reusable or different, risk outcome, actions off) stay explicit. The audit
+carries Project ids, source Run/hash, mandate hash, inherited trials and the
+caller-provided field list. See [[docs/design/factor-to-portfolio-conversion]].
+
 ## Job model
 
 ### Routes

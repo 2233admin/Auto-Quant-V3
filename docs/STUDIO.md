@@ -55,11 +55,12 @@ scientific verdicts. A neighborhood makes the object Tuned even when its base
 return is negative; it does not establish a successful optimization.
 
 Build strategy appears on Factor answer cards and in the Strategies library's
-source selector. Standalone Factor Labs expose a disabled reason and a sibling
-research-desk intake CLI path. An admitted existing research desk can preview
-and confirm its existing Portfolio Study's governed Session command. The flow
-does not create a new Portfolio Project from standalone Factor evidence or
-invent caller-owned construction policy. See
+source selector. A tested standalone Factor Lab opens a mandate dialog and,
+after two confirmations, runs `aq project from-factor` to create a research
+desk by reference; untested or unprovable sources show their exact reason. An
+admitted existing research desk can preview and confirm its existing Portfolio
+Study's governed Session command. Studio never invents caller-owned
+construction policy. See
 [[docs/design/studio-information-architecture]] and
 [[docs/design/studio-local-actions]].
 

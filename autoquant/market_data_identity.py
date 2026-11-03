@@ -61,3 +61,24 @@ def market_data_identity(project, run):
     definition = {k: v for k, v in dataset.items() if k not in {"hash", "sourceHashes"}}
     files = {k: v for k, v in hashes.items() if k not in manifests}
     return hash_json({"definition": definition, "files": files, "snapshots": manifests})
+
+
+# Construction labels name the Project route that materialized the snapshot,
+# not the market content. A research desk rebuilt from a standalone Factor Lab
+# over the exact same package differs only here and in request-only fields.
+CONSTRUCTION_ONLY_SNAPSHOT_FIELDS = frozenset({"template", "studyId"})
+
+
+def snapshot_market_identity(snapshot):
+    """Market-content identity of one verified intake snapshot manifest.
+
+    Uses the same exclusion rule as ``market_data_identity`` for request-only
+    fields and additionally ignores the two construction labels above. Every
+    per-asset source/normalized hash, the package manifest hash, the market
+    clock, adjustment, frequency, universe and time range remain bound.
+    """
+
+    if not isinstance(snapshot, dict) or snapshot.get("kind") != DATASET_SNAPSHOT_KIND:
+        return None
+    excluded = REQUEST_ONLY_SNAPSHOT_FIELDS | CONSTRUCTION_ONLY_SNAPSHOT_FIELDS
+    return hash_json({k: v for k, v in snapshot.items() if k not in excluded})

@@ -87,7 +87,7 @@ class StudioStrategyTests(unittest.TestCase):
             self.assertIn("ohlcv-research-desk", route["argv"])
             self.assertNotIn("ohlcv-portfolio-lab", route["argv"])
             with patch("autoquant.studio_strategy.load_research_program", return_value=None):
-                with self.assertRaisesRegex(ActionError, "cannot convert"):
+                with self.assertRaisesRegex(ActionError, "not a request-bound standalone Factor Lab"):
                     service.preview(body)
                 entry = next(a for a in service.catalog()["actions"] if a["id"] == "strategy.build")
                 self.assertFalse(entry["targets"][0]["available"])

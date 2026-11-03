@@ -601,6 +601,9 @@ class PreparedIntake:
     assets: tuple[PreparedAsset, ...]
     start: str
     end: str
+    # Optional exact Factor source and lineage carried by `aq project
+    # from-factor` into a research desk; None for every ordinary intake.
+    factor_seed: Any = None
 
     @property
     def universe(self) -> list[str]:

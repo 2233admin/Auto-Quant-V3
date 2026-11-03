@@ -76,6 +76,7 @@ aq project intake <workspace-dir> <project-id> \
   --dataset ohlcv-dataset-package.json \
   [--template ohlcv-factor-lab|ohlcv-portfolio-lab|ohlcv-rl-factor-lab|ohlcv-book-risk-lab|ohlcv-event-study-lab|ohlcv-allocation-lab|ohlcv-research-desk] \
   [--name NAME] [--json]
+aq project from-factor <workspace-dir> <source-project> <project-id>   --mandate strategy-mandate.json [--dataset ohlcv-dataset-package.json]   [--name NAME] [--json]
 aq project list <workspace-dir> [--json]
 aq project default <workspace-dir> <project-id> [--json]
 aq project program <project-or-workspace-dir> [--project ID] [--json]
@@ -83,6 +84,20 @@ aq orient <project-or-workspace-dir> [--project ID] [--json]
 aq validate <project-or-workspace-dir> [--project ID] [--json]
 aq inspect <project-or-workspace-dir> [--project ID] [--json]
 ```
+
+`project from-factor` turns a tested request-bound standalone
+`ohlcv-factor-lab` into a new `ohlcv-research-desk` whose Factor and Portfolio
+Studies start from the exact tested candidate bytes over the same market data.
+The caller-confirmed `autoquant-strategy-mandate` must supply question,
+direction, a role for every asset, `benchmarkPolicy`, a complete
+`portfolioPolicy`, and `callerConfirmed: true`; nothing is defaulted. Without
+`--dataset`, Core finds the source package under Workspace staging by its
+recorded manifest hash. The desk records `factor-lineage.json`; its research
+families expose `inheritedSourceTrials` and `effectiveSourceTrials`. The
+source Project is only read, and `data.sourceUnchanged` reports its tree digest
+before and after. Refusals use stable `conversion.*` issue codes. Next actions
+are the program view and the first governed Portfolio `session start`. See
+[[docs/design/factor-to-portfolio-conversion]].
 
 `workspace init` requires an absent or empty target by default. If caller or
 host inputs are already staged inside the intended desk,
