@@ -102,31 +102,35 @@
 .idea-history li { margin-bottom: var(--space-4); overflow-wrap: anywhere; }
 .idea-workbench .wb-pane[aria-label='Idea verdict'] > .wb-pane-body { padding: var(--space-6) var(--space-6) var(--space-3); display: block; }
 .idea-answer { display: flex; flex-direction: column; gap: 0; }
-.idea-run-selector { display: flex; align-items: center; gap: var(--space-2); height: 30px; min-height: 30px; padding: 0 var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--hover); }
-.idea-run-selector select { min-width: 0; flex: 1; border: 0; background: transparent; color: var(--text); font: var(--type-body); }
+/* Run line: the Run select on the left, the result actions on the right, a hairline under it. */
+.idea-run-selector { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); height: auto; min-height: 32px; padding: 0 0 var(--space-2); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+.idea-run-selector select { min-width: 0; flex: 1 1 220px; max-width: 420px; height: 32px; padding: 0 var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: transparent; color: var(--text); font: var(--type-body); }
 .idea-run-selector .wb-stats { flex: none; gap: var(--space-2); }
 .idea-run-selector .wb-stat + .wb-stat { padding-left: var(--space-2); }
 .idea-run-selector .wb-stat dd { font: var(--type-small); }
-.idea-action-chips { margin-top: var(--space-1); align-self: flex-start; min-height: 28px; }
+.idea-action-chips { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: 28px; }
+.idea-action-chips .wb-actions-row { margin-left: 0; }
 .idea-action-chips .abtn { border-radius: var(--radius-control); padding-inline: var(--space-3); font: var(--type-small); }
-.idea-status { margin: var(--space-6) var(--space-6) 0; height: 28px; flex: none; }
+.idea-status { margin: var(--space-2) 0 0; height: 28px; flex: none; }
 .idea-status .wb-status-line { flex-wrap: nowrap; }
 .idea-status .wb-status-text { font-weight: 400; }
 .idea-status .wb-status-time { font: var(--type-small); }
 .idea-answer > .wb-verdict { margin-top: 0; height: 28px; flex: none; border: 0; border-left: 2px solid var(--line-strong); background: transparent; }
 .idea-answer .wb-verdict-line { min-height: 28px; }
 .idea-answer > .wb-verdict:has(.wb-verdict-more) { height: auto; }
-.idea-answer .wb-chart { margin-inline: var(--space-1) calc(-1 * var(--space-1)); height: 415px; flex: none; border-radius: var(--radius-control); overflow: hidden; }
+.idea-answer .wb-chart { margin: 0; height: 415px; flex: none; border-radius: 0; overflow: hidden; }
 .idea-answer .wb-chart-body { flex: 1 1 0; }
 .idea-answer .wb-chart-head { border: 0; padding-top: var(--space-3); }
 .idea-answer .wb-chart-table { border: 0; }
-.idea-core-metrics { margin: var(--space-3) calc(-1 * var(--space-1)) var(--space-3) var(--space-1); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-control); }
+.idea-core-metrics { margin: 0; padding: 0; border: 0; border-radius: 0; }
+.idea-answer .result-pair { margin-top: var(--space-4); }
+.idea-core-metrics > .set-title { padding-bottom: var(--space-2); border-bottom: 1px solid var(--line-strong); }
 .idea-core-metrics .set-title { padding: 0; }
 .idea-core-metrics .idea-conclusion { margin: var(--space-1) 0 var(--space-2); }
 .idea-core-metrics .wb-metrics { gap: var(--space-2); }
 .idea-core-metrics .wb-metric-h { margin-bottom: var(--space-1); }
-.idea-core-metrics .ctg { gap: var(--space-1); border: 0; }
-.idea-core-metrics .ct { border: 1px solid var(--line-strong); border-radius: var(--radius-control); min-height: 34px; padding: var(--space-1) var(--space-2); }
+.idea-core-metrics .ctg { gap: 0 var(--space-6); border: 0; }
+.idea-core-metrics .ct { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; min-height: 32px; padding: 0; }
 .idea-core-metrics .ct-label-text { font: var(--type-small); }
 .idea-answer > .set-kv { margin: var(--space-2) 0; }
 .idea-empty { padding: var(--space-6) var(--space-1); display: grid; gap: var(--space-3); }
@@ -141,7 +145,6 @@
   .idea-run-selector .wb-stats .wb-stat:last-child { display: none; }
   .idea-action-chips .abtn { padding-inline: var(--space-2); }
   .idea-status { margin-inline: 0; }
-  .idea-core-metrics .ct { padding-inline: var(--space-2); }
 }
 @media (max-width: 999px) {
   .idea-workbench .wb-shell { height: auto; }

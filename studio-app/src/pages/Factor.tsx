@@ -343,16 +343,11 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
           actions={
             <div className="wb-resultbar">
               <RunSelector project={project} shown={study.run.id} loading={!!loadingRun} go={go} />
-              <StatChips label={uiText("Headline numbers of this Run")} scope="Validation · development" stats={stats} />
+              <ActionRow secondary={resultActions} />
             </div>
           }
           status={
             <div className="fr-status">
-              <ActionRow align="start" secondary={resultActions} />
-              <BuildStrategyAction projectId={project.id} route={project.library?.factor?.buildStrategy} shownRunId={study.run.id} />
-              <LoopStatus loop={loop} project={project} />
-              <FactorVerdict study={study} adjustment={adjustment} />
-              <OverlapLine redundancy={study.redundancy} validationIc={validation?.meanRankIc} />
               {runState && runRow && (
                 <StatusLine
                   state={runState}
@@ -360,16 +355,25 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
                   elapsed={duration}
                 />
               )}
+              <div className="answer-strip" data-measure="answer">
+                <FactorVerdict study={study} adjustment={adjustment} />
+                <StatChips label={uiText("Headline numbers of this Run")} scope="Validation · development" stats={stats} />
+              </div>
+              <OverlapLine redundancy={study.redundancy} validationIc={validation?.meanRankIc} />
+              <LoopStatus loop={loop} project={project} />
+              <BuildStrategyAction projectId={project.id} route={project.library?.factor?.buildStrategy} shownRunId={study.run.id} />
             </div>
           }
         >
           <h1 className="sr-only">{uiText("Factor evidence ")}<span translate="no">{study.run.id}</span></h1>
-          <FactorHero study={study} />
-          {validation ? (
-            <MetricGrid groups={metricGroups} hiddenNote={testVisible && study.summary.testAudit ? undefined : uiText(TEST_HIDDEN_NOTE)} />
-          ) : (
-            <p className="muted small">{uiText("The Run published no validation summary.")}</p>
-          )}
+          <div className="result-pair">
+            <div className="result-figure"><FactorHero study={study} /></div>
+            {validation ? (
+              <MetricGrid groups={metricGroups} hiddenNote={testVisible && study.summary.testAudit ? undefined : uiText(TEST_HIDDEN_NOTE)} />
+            ) : (
+              <p className="muted small">{uiText("The Run published no validation summary.")}</p>
+            )}
+          </div>
           <TrialCounter project={project} />
 
           <Tabs

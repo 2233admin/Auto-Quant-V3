@@ -21,7 +21,7 @@ export function StrategyPage({ project, go }: { project: ProjectSnapshot; go: (h
     <TitleCard title={project.name} subtitle={project.description} backHref={routeHref({ view: 'strategies' })} backLabel={uiText('Back to Strategies')} type={uiText(lifecycle)} />
     <WorkbenchShell right={<PaneCard label={uiText('Strategy workbench')} tabs={<TabList label={uiText('Strategy sections')} tabs={tabs} active={tab} onSelect={selectTab} />} flush={tab === 'backtest'}>
       <div className="strategy-panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === 'backtest' && <><StrategyOrigin project={project} /><PortfolioPage key={project.id} project={project} go={go} embedded /></>}
+        {tab === 'backtest' && <PortfolioPage key={project.id} project={project} go={go} embedded provenance={<StrategyOrigin project={project} />} />}
         {tab === 'versions' && <RunHistory workspace={null} go={go} projectId={project.id} lane="Portfolio" revision={project.library?.strategy?.updatedAt ?? ''} />}
         {tab === 'tuning' && <StrategyTuning project={project} />}
         {tab === 'analyses' && <StrategyAnalyses project={project} go={go} />}

@@ -38,8 +38,6 @@ input, select, textarea { border-radius: var(--radius-control); }
 .idea-workbench .wb-tab { position: relative; }
 .idea-answer > .wb-verdict { height: auto; min-height: 38px; }
 .idea-readonly-label { color: var(--muted); }
-.idea-run-selector { height: auto; min-height: 38px; flex-wrap: wrap; padding-block: var(--space-1); }
-.idea-run-selector select { flex-basis: 230px; }
 .idea-run-selector .wb-stats { flex-wrap: wrap; }
 .idea-run-selector .wb-stat dd { font: var(--type-value); }
 .idea-run-selector .wb-stat dd.type-value-focal { font: var(--type-value-focal); }

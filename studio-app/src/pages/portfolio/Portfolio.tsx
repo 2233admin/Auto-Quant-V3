@@ -1,5 +1,5 @@
 import { uiTemplate, uiText, uiValue } from '../../i18n'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { ProjectSnapshot } from '../../api'
 import { Section } from '../../design/layout'
 import { routeHref } from '../../route'
@@ -99,9 +99,9 @@ export function portfolioMetricGroups(pf: PortfolioDiagnostics, split: Split): M
 export function portfolioStats(netSplit: PerfSummary | null | undefined, effective: Split): Stat[] {
   return netSplit
     ? [
-        { label: uiText("Net Sharpe"), value: signedNumber(netSplit.sharpe), signed: true, hint: uiTemplate("{0} split, after costs", [effective]), metric: 'netSharpe' },
+        { label: uiText("Net Sharpe"), value: signedNumber(netSplit.sharpe), hint: uiTemplate("{0} split, after costs", [effective]), metric: 'netSharpe' },
         { label: uiText("Net return"), value: signedNumber(netSplit.totalReturn == null ? null : netSplit.totalReturn * 100, 2, '%'), signed: true, focal: true, hint: uiTemplate("Total return, {0} split, after costs", [effective]), metric: 'netTotalReturn' },
-        { label: uiText("Max drawdown"), value: signedNumber(netSplit.maximumDrawdown == null ? null : netSplit.maximumDrawdown * 100, 2, '%'), signed: true, hint: uiTemplate("{0} split", [effective]), metric: 'maxDrawdown' },
+        { label: uiText("Max drawdown"), value: signedNumber(netSplit.maximumDrawdown == null ? null : netSplit.maximumDrawdown * 100, 2, '%'), hint: uiTemplate("{0} split", [effective]), metric: 'maxDrawdown' },
       ]
     : []
 }
@@ -157,7 +157,8 @@ const ANCHOR_TAB: Record<string, TabId> = {
   'pf-episodes': 'episodes',
 }
 
-export function PortfolioPage({ project, go, embedded = false }: { project: ProjectSnapshot; go?: (href: string) => void; embedded?: boolean }) {
+/** `provenance` (a desk's Factor lineage) is shown below the answer, chart and metrics, never above them. */
+export function PortfolioPage({ project, go, embedded = false, provenance }: { project: ProjectSnapshot; go?: (href: string) => void; embedded?: boolean; provenance?: ReactNode }) {
   const pf = project.portfolioExplorer
   const [split, setSplit] = useState<Split>('validation')
   const [paramsOpen, setParamsOpen] = useState(false)
@@ -179,6 +180,7 @@ export function PortfolioPage({ project, go, embedded = false }: { project: Proj
             <a href={routeHref({ view: 'project', id: project.id })}>{uiText("Back to the Project")}</a>
           </p>
         </Empty>
+        {provenance}
       </div>
     )
   }
@@ -308,15 +310,11 @@ export function PortfolioPage({ project, go, embedded = false }: { project: Proj
       actions={
         <div className="wb-resultbar">
           {selector}
-          <StatChips label={uiTemplate("Headline numbers, {0} split", [effective])} scope={effective === 'test' ? 'Test · development' : 'Validation · development'} stats={stats} />
+          <ActionRow secondary={resultActions} />
         </div>
       }
       status={
         <div className="fr-status">
-          <ActionRow align="start" secondary={resultActions} />
-          <VerdictBar tone="warn" word={WORD[verdict]} reasons={reasons.map((r) => ({ tone: r.tone, text: r.text, field: r.field }))} detail={sentence}>
-            {clause}
-          </VerdictBar>
           {runRow && (
             <StatusLine
               state={runRow.status === 'succeeded' ? 'done' : 'failed'}
@@ -324,10 +322,30 @@ export function PortfolioPage({ project, go, embedded = false }: { project: Proj
               elapsed={duration}
             />
           )}
+          <div className="answer-strip" data-measure="answer">
+            <VerdictBar tone="warn" word={WORD[verdict]} reasons={reasons.map((r) => ({ tone: r.tone, text: r.text, field: r.field }))} detail={sentence}>
+              {clause}
+            </VerdictBar>
+            <StatChips label={uiTemplate("Headline numbers, {0} split", [effective])} scope={effective === 'test' ? 'Test · development' : 'Validation · development'} stats={stats} />
+          </div>
         </div>
       }
     >
       {!embedded && <h1 className="type-page-title">{uiText("Portfolio")}</h1>}
+      <div className="result-pair">
+      {points.length >= 2 ? (
+        <FigureCard label={uiText("FIG A")} subtitle={uiText("Published net growth and drawdown.")} caption={portfolioCaption(netSplit?.totalReturn, effective, testVisible)} development title={uiText("Growth and drawdown")} info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} toggle={splitControl} minHeight={260}>
+          {() => <PortfolioChart points={points} windows={windows} transitions={transitions.map((r) => r.timestamp)} totalRows={pf.path?.totalRows} sampledRows={pf.path?.sampledRows} />}
+        </FigureCard>
+      ) : (
+        <Empty title={uiText("Not available")}>
+          <p>{uiText("not available: the Run publishes ")}{allPoints.length}{uiText(" path points")}{testVisible ? '' : uiText(" outside the test split")}{uiText(", too few to draw a curve.")}</p>
+        </Empty>
+      )}
+      {points.length < 2 && splitControl}
+      {groups ? <MetricGrid groups={groups} hiddenNote={testVisible ? undefined : hiddenNote} /> : <p><NA why={`strategyViability.${effective}.net is not in the payload`} /></p>}
+      </div>
+      {provenance}
       <FactChips
         label={uiText("What was run")}
         locked
@@ -344,17 +362,6 @@ export function PortfolioPage({ project, go, embedded = false }: { project: Proj
           </>
         }
       />
-      {points.length >= 2 ? (
-        <FigureCard label={uiText("FIG A")} subtitle={uiText("Published net growth and drawdown.")} caption={portfolioCaption(netSplit?.totalReturn, effective, testVisible)} development title={uiText("Growth and drawdown")} info={<PortfolioChartInfo transitions={transitions.map((r) => r.timestamp)} note={hiddenNote} />} toggle={splitControl} minHeight={260}>
-          {() => <PortfolioChart points={points} windows={windows} transitions={transitions.map((r) => r.timestamp)} totalRows={pf.path?.totalRows} sampledRows={pf.path?.sampledRows} />}
-        </FigureCard>
-      ) : (
-        <Empty title={uiText("Not available")}>
-          <p>{uiText("not available: the Run publishes ")}{allPoints.length}{uiText(" path points")}{testVisible ? '' : uiText(" outside the test split")}{uiText(", too few to draw a curve.")}</p>
-        </Empty>
-      )}
-      {points.length < 2 && splitControl}
-      {groups ? <MetricGrid groups={groups} hiddenNote={testVisible ? undefined : hiddenNote} /> : <p><NA why={`strategyViability.${effective}.net is not in the payload`} /></p>}
       <Tabs
         label={uiText("Portfolio sections")}
         tabs={embedded ? tabs.filter(t => t.id !== 'neighborhood') : tabs}

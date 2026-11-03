@@ -363,7 +363,7 @@ export function PortfolioChart({
         )}
       </svg>
       </div>
-      <p className="pf-readout mono small" aria-live="off">
+      <p className="pf-readout small" aria-live="off">
         {hp ? (
           <>
             <b>{hp.timestamp.slice(0, 10)}</b>

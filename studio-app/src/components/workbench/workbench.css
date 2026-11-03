@@ -180,7 +180,7 @@
 
 /* ---- Result bar: Run selector + stat chips in one row ---- */
 .wb-resultbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); width: 100%; min-width: 0; padding: var(--space-1) 0; }
-.wb-resultbar > .runsel { flex: 1 1 240px; min-width: 0; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
+.wb-resultbar > .runsel { flex: 1 1 240px; max-width: 440px; min-width: 0; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
 .wb-resultbar > .runsel select { min-width: 0; width: 100%; }
 .wb-resultbar > .wb-stats { flex: 0 1 auto; }
 .wb-resultbar > .wb-split { flex: none; display: inline-flex; align-items: center; gap: var(--space-2); font: var(--type-small); color: var(--muted); }
@@ -220,3 +220,36 @@
 /* Result action row: visible button outlines so the links read as buttons. */
 .wb-actions--start .abtn--quiet { border-color: var(--line-strong); color: var(--text); }
 .wb-actions--start .abtn--quiet[aria-disabled='true'] { color: var(--faint); border-color: var(--line); }
+
+/* ---- Answer strip (direction B): verdict and its reason left, the headline numbers right, one rule under ---- */
+.wb-pane-body { container-type: inline-size; }
+.answer-strip { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3) var(--space-6); padding: var(--space-3) 0; border-bottom: 1px solid var(--line-strong); min-width: 0; }
+.answer-strip:has(> .wb-verdict[data-tone='warn']) { border-bottom-style: dashed; }
+.answer-strip:has(> .wb-verdict[data-tone='bad']) { border-bottom-color: var(--signal-graphic); }
+.answer-strip > .wb-verdict { flex: 1 1 260px; border: 0; min-width: 0; }
+.answer-strip .wb-verdict-line { flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); min-height: 0; padding: 0; }
+.answer-strip .wb-pill { flex-basis: 100%; font: var(--type-section); }
+.answer-strip .wb-verdict-text { flex: 1 1 200px; white-space: normal; overflow: visible; font: var(--type-small); color: var(--muted); }
+.answer-strip .wb-verdict-more { padding-top: var(--space-2); }
+.answer-strip .wb-verdict-line .wb-link { margin-left: 0; }
+.answer-strip > .wb-stats { flex: 0 1 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: flex-end; gap: var(--space-2) var(--space-6); }
+.answer-strip .wb-stats-scope { align-self: flex-end; font: var(--type-label); color: var(--faint); }
+.answer-strip .wb-stats .wb-stat { display: grid; justify-items: end; gap: var(--space-1); padding: 0; border: 0; }
+.answer-strip .wb-stats .wb-stat dt { font: var(--type-label); color: var(--muted); }
+.answer-strip .wb-stats .wb-stat dd, .answer-strip .wb-stats .wb-stat dd.type-value, .answer-strip .wb-stats .wb-stat dd.type-value-focal { font: var(--type-value-focal); }
+
+/* ---- Result pair: chart (8 columns) and metric list (4 columns) side by side when the pane has room ---- */
+.result-pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); align-items: start; min-width: 0; }
+.result-pair > * { min-width: 0; }
+.result-figure { display: grid; gap: var(--space-3); min-width: 0; }
+@container (min-width: 700px) {
+  .result-pair { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); }
+  .wb-pane-body .result-pair .wb-metrics .ctg, .wb-pane-body .result-pair .wb-metrics .has-long .ctg { grid-template-columns: minmax(0, 1fr); }
+  .wb-pane-body .result-pair .wb-metrics .ct-pad { display: none; }
+}
+
+/* ---- Run line: selector left, result actions right ---- */
+.wb-resultbar > .wb-actions-row, .wb-resultbar .wb-actions-row { margin-left: auto; flex: none; }
+/* Result actions read as buttons: an outline, text colour; the primary keeps its inverted fill. */
+.wb-resultbar .abtn--quiet, .idea-action-chips .abtn--quiet { border-color: var(--line-strong); color: var(--text); padding-inline: var(--space-3); }
+.wb-resultbar .abtn--quiet[aria-disabled='true'], .idea-action-chips .abtn--quiet[aria-disabled='true'] { color: var(--faint); border-color: var(--line); }

@@ -197,7 +197,7 @@ export function AllocationChart({
           </g>
         )}
       </svg>
-      <p className="pf-readout mono small" aria-live="off">
+      <p className="pf-readout small" aria-live="off">
         {hp ? (
           <>
             <b>{hp.timestamp.slice(0, 10)}</b>{uiText(" · candidate ")}{sp(hp.candidateNetReturn, 2)}{uiText(" · reference ")}{sp(hp.referenceNetReturn, 2)}{uiText(" · forecast vol ")}{up(hp.candidateForecastVolatility, 1)}{uiText(" · gross exposure ")}{up(hp.candidateGrossExposure, 0)}
