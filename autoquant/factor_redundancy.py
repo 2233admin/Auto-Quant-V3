@@ -10,6 +10,7 @@ import math
 
 import pandas as pd
 
+from .market_data_identity import market_data_identity
 from .project_templates.ohlcv_factor_lab.factor_diagnostics import cross_sectional_rank_residual
 from .run_compare import compare_protocols, protocol_of
 from .runs import list_runs, load_run
@@ -53,10 +54,19 @@ def evaluation_basis(run):
     return protocol
 
 
-def comparable(a, b):
+def comparable(a, b, market_identities=(None, None)):
+    """Exact basis; equal verified market-data identities replace the dataset hash.
+
+    The dataset hash binds the intake snapshot's request fields, so the same
+    market data under two research questions differs there. Redundancy compares
+    factors on market data; Run comparison itself remains strict.
+    """
     left, right = evaluation_basis(a), evaluation_basis(b)
     if not all(_complete_basis(p) for p in (left, right)):
         return False
+    market, peer_market = market_identities
+    if market is not None and market == peer_market:
+        left["datasetHash"] = right["datasetHash"] = "market:" + market
     if compare_protocols(left, right)["status"] != "comparable":
         return False
     return all(left.get(k) and left[k] == right.get(k)
@@ -193,6 +203,7 @@ def load_factor_redundancy(project, run, *, workspace_root=None, peer_projects=N
         mode = run.result["metrics"]["prediction_universe"]["evaluation_mode"]
         result["evaluationMode"] = mode
         projects = peer_projects if peer_projects is not None else _projects(project, workspace_root)
+        market = market_data_identity(project, run)
     except (OSError, ValueError, KeyError, TypeError, AutoQuantValidationError) as error:
         result["reason"] = str(error)
         return result
@@ -205,7 +216,7 @@ def load_factor_redundancy(project, run, *, workspace_root=None, peer_projects=N
                 peer = load_run(owner, summary.id)
                 if owner.root_dir == project.root_dir and peer.result["id"] == run.result["id"]:
                     continue
-                if not comparable(run, peer):
+                if not comparable(run, peer, (market, market and market_data_identity(owner, peer))):
                     continue
                 key = (owner.manifest.id, peer.result["study"]["id"], peer.result["subject"]["sourceHash"])
                 # An identical source in the target Study is the same candidate.

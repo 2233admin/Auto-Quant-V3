@@ -19,7 +19,12 @@ dataset id and content hash, complete split windows, research horizon, cost
 contract and objective. Candidate source hashes may differ: that is the change
 being measured. Study equivalence is not inferred; this version has no explicit
 equivalent-protocol registry. Even across Projects, matching dataset names or
-Study names alone cannot establish equivalence.
+Study names alone cannot establish equivalence. The dataset content hash
+includes the intake snapshot's request fields, so the same market bytes under
+two different Research Requests are deliberately not comparable here. Factor
+redundancy uses a separate request-independent market-data identity for its
+diagnostic peer set ([[docs/design/factor-redundancy]]); that relaxation never
+flows back into this protocol check.
 
 All differing fields are returned as `not-comparable` reasons. Missing required
 authority also refuses comparison, even when both values are missing. Factor

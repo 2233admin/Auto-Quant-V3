@@ -27,8 +27,8 @@ They must remain unavailable rather than reconstructing candidate or Judge outpu
 - [x] Core/CLI/Studio parity, bilingual catalogue, table and overlap line.
 - [x] Synthetic regression coverage and all required verification commands executed.
 - [x] Copied Workspace served read-only; Chinese/English 1440x900 boundary screenshots.
-- [ ] Requested numeric momentum/reversal proof: historical Runs lack pairs and
-  their dataset hashes differ; new coherent proof authority remains unapproved.
+- [x] Requested numeric momentum/reversal proof in the scratch copy
+  `D:/tmp/redundancy/ws-proof`: correlation -1.00, residual rank IC 0.00.
 - [ ] Entire requested Python suite green: two failures also reproduce on HEAD.
 
 ## Work
@@ -47,6 +47,16 @@ They must remain unavailable rather than reconstructing candidate or Judge outpu
   `22dfc589c8ba80753f878effebceb1716d77a9931250261764cfd9719f169016` and
   reversal hash is `11c8b6612158f9f2cff6613b91355b8778823fbdbeecafcf64f521ecb337f2c6`.
   Exact content authority is retained rather than relaxed for screenshots.
+- 2026-11-03: Root cause of the missing peer: the dataset hash includes the
+  intake `snapshot.json`, whose only difference between the two Projects is
+  `requestHash`; all ohlcv CSV and README hashes are equal. Redundancy now uses
+  a verified market-data identity (`autoquant/market_data_identity.py`) that
+  drops only `requestHash` and `requestedAssets`; `run_compare` stays strict.
+- 2026-11-03: The existing Project-owned Judges predate the pairs artifact and
+  no CLI refreshes a fixed Judge. In the scratch copy only, each Project got the
+  current template Judge as `judges/ohlcv_factor_pairs.py` and a sibling Study
+  `ohlcv-factor-pairs-proof` (`aq study create`, same dataset paths,
+  dependencies, editable closure and objective), then `aq run execute`.
 - 2026-11-03: Browser Bridge skill delegated read-only capture to
   `/root/browser_proof`, with exclusive ownership of new Edge tab 445300433;
   root independently inspected workbench, library and peer-section screenshots.
@@ -95,6 +105,21 @@ was necessary because the host default `E:/cache/uv` is outside writable roots.
 - Actual 1440x900 screenshots in `D:/tmp/redundancy/`:
   `workbench-zh-clean.png`, `peers-zh.png`, `library-zh.png`, `evidence-en.png`.
   Browser console: 0 errors. These prove unavailable states, not numeric overlap.
+
+- Market-data identity follow-up: `uv run python -m unittest tests.test_factor_redundancy
+  tests.test_run_compare tests.test_factor_explorer` exit 0 (37 tests);
+  `npx tsc -b --noEmit` exit 0; `node studio-app/tests/run-idea-answer.cjs`
+  exit 0 (63/63); sentrux autoquant exit 0 (coupling 116.51 -> 115.95, god
+  files 41 -> 41) and studio-app/src exit 0 (no baseline re-save);
+  `check_doc_links.py` exit 0 (1959 links).
+- `aq run factor D:/tmp/redundancy/ws-proof --project five-day-reversal --run
+  run-20261103T003010981278Z-65aac9125923 --json`: peer five-day-momentum Run
+  `run-20261103T003006895130Z-6e62c94e5f3f`, correlation -0.9999999999999998,
+  residual rank IC 0.0, 35 bars / 175 asset pairs. Dataset hashes still differ
+  (`22dfc589...` vs `11c8b661...`); `compare_runs` still refuses the pair.
+- Chinese 1440x900 screenshots from port 8963, 0 console errors:
+  `D:/tmp/redundancy/proof-workbench-overlap-zh.png`,
+  `proof-evidence-peers-zh.png`, `proof-library-card-zh.png`.
 
 ## Progress log
 

@@ -40,7 +40,36 @@ Redundancy additionally requires the same Judge hash, prediction assets/mode/pai
 complete split/purge protocol and forward-outcome contract. Unlike a Run delta
 comparison, caller-owned Study/request identities, horizon provenance ids and
 source-bound dependency hashes are not numerical evaluation basis. No general
-Study-equivalence registry or relaxed dataset-hash matching is introduced.
+Study-equivalence registry is introduced.
+
+### Market-data identity versus request-bound dataset hash
+
+A Run's dataset hash covers every data file, including the intake
+`snapshot.json`. That manifest records `requestHash` (the digest of the
+Project's own Research Request) and `requestedAssets` (validated at intake to
+equal the request's asset symbols). Two Projects asking different questions
+over byte-identical market data therefore carry different dataset hashes. For
+redundancy that is exactly the pair that must be compared, so
+`autoquant/market_data_identity.py` derives a market-data identity:
+
+- the Run dataset definition (id, version, paths, time range, universe, interval
+  surface) without its aggregate hash;
+- every recorded data-file content hash except the snapshot manifests;
+- each snapshot manifest with only `requestHash` and `requestedAssets` removed.
+
+Everything else stays bound, including universe and per-asset records,
+normalized file hashes, market calendar/clock/timezone, price adjustment,
+frequency or interval surface, time range, availability/panel policy,
+provider/source claims, package manifest hash, template and Study id. Provider
+and package claims are retained because they carry the caller's calendar and
+adjustment claims and cannot be proven request-only. The snapshot is re-read
+from the owning Project data root and must hash to the value the Run
+content-locked; a missing, symlinked, rewritten or non-snapshot file yields no
+identity. Two Runs are peers when their dataset hashes are exactly equal or
+when both verified market-data identities are equal; any other combination is
+refused. This relaxation is local to redundancy: `run_compare` and the Run
+compare page still require the exact dataset hash, because a different question
+is not a comparable verdict baseline.
 
 ## Mathematics and counts
 

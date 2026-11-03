@@ -14,7 +14,10 @@ import pandas as pd
 from autoquant.factor_redundancy import (
     _pairs, comparable, load_factor_redundancy, pair_diagnostics, validation_pairs,
 )
+from autoquant.market_data_identity import market_data_identity
+from autoquant.run_compare import compare_runs
 from autoquant.runs import RunContext
+from autoquant.studies import hash_file, hash_json
 from autoquant.runs import execute_study, load_run
 from autoquant.factor_explorer import load_factor_diagnostics
 from autoquant.workspace import create_project, initialize_workspace
@@ -47,6 +50,33 @@ def run_at(root, values, *, run_id="run-target", source="source", completed="202
     (root / "pairs.json").write_text(json.dumps({"schemaVersion": 1, "split": "validation",
                                                 "horizon": 1, "rows": rows}), encoding="utf-8")
     return RunContext(root, {"files": {"pairs.json": "verified-by-load-run"}}, result)
+
+
+SNAPSHOT = {
+    "schemaVersion": 1, "kind": "autoquant-ohlcv-dataset-snapshot", "id": "shared-daily",
+    "version": "v1", "assetClass": "equity", "frequency": "1d",
+    "market": {"calendar": "XNYS", "clock": "session", "timezone": "America/New_York"},
+    "priceAdjustment": "provider-adjusted", "packageManifestHash": "package",
+    "provider": {"name": "fixture", "retrievedAt": None, "sourceUri": None, "terms": "test"},
+    "requestHash": "request-a", "requestedAssets": ["A0", "A1", "A2", "A3"],
+    "universe": ["A0", "A1", "A2", "A3"], "timeRange": {"start": "2026-01-01", "end": "2026-02-28"},
+    "template": "ohlcv-factor-lab", "studyId": "s",
+    "assets": [{"symbol": f"A{i}", "normalizedPath": f"ohlcv/A{i}.csv"} for i in range(4)],
+}
+
+
+def with_market_data(root, run, snapshot, csv="timestamp,close\n2026-01-01,1\n"):
+    """Lay out a Project data root and bind the Run dataset to its exact bytes."""
+    data = root / "data" / "ohlcv"
+    data.mkdir(parents=True, exist_ok=True)
+    (data / "snapshot.json").write_text(json.dumps(snapshot), encoding="utf-8")
+    (data / "A0.csv").write_text(csv, encoding="utf-8")
+    hashes = {f"ohlcv/{p.name}": hash_file(p) for p in sorted(data.iterdir())}
+    definition = {"id": "shared-daily", "version": "v1", "paths": ["ohlcv/**"]}
+    run.result["dataset"] = {**definition, "hash": hash_json({"definition": definition, "sourceHashes": hashes}),
+                             "sourceHashes": hashes}
+    return SimpleNamespace(root_dir=root, manifest=SimpleNamespace(
+        id=root.name, name=root.name, directories={"data": "data"}))
 
 
 class FactorRedundancyTests(unittest.TestCase):
@@ -194,6 +224,61 @@ class FactorRedundancyTests(unittest.TestCase):
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "population"):
                 _pairs(run)
+
+
+    def test_same_market_data_under_different_requests_are_peers_but_not_run_comparable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = run_at(root / "target-run", frame([[1, 2, 3, 4]]))
+            peer = run_at(root / "peer-run", frame([[-1, -2, -3, -4]], np.array([[1, 2, 3, 4]])),
+                          run_id="run-peer", source="peer")
+            target_project = with_market_data(root / "momentum", target, SNAPSHOT)
+            other = {**SNAPSHOT, "requestHash": "request-b", "requestedAssets": ["A3", "A2", "A1", "A0"]}
+            peer_project = with_market_data(root / "reversal", peer, other)
+            self.assertNotEqual(target.result["dataset"]["hash"], peer.result["dataset"]["hash"])
+            identities = (market_data_identity(target_project, target), market_data_identity(peer_project, peer))
+            self.assertIsNotNone(identities[0])
+            self.assertEqual(*identities)
+            self.assertFalse(comparable(target, peer))
+            self.assertTrue(comparable(target, peer, identities))
+            # The Run compare page keeps the request-bound dataset hash authority.
+            decision = compare_runs(target, peer)
+            self.assertEqual(decision["status"], "not-comparable")
+            self.assertIn("datasetHash", [d["field"] for d in decision["differences"]])
+            summary = [SimpleNamespace(id="run-peer", status="succeeded", primary_metric="validation_mean_ic")]
+            with patch("autoquant.factor_redundancy.list_runs", return_value=summary), patch(
+                    "autoquant.factor_redundancy.load_run", return_value=peer):
+                result = load_factor_redundancy(target_project, target, peer_projects=[peer_project])
+            self.assertEqual(result["status"], "available", result)
+            self.assertEqual(result["peers"][0]["projectId"], "reversal")
+            self.assertAlmostEqual(result["peers"][0]["correlation"], -1)
+            self.assertEqual(result["peers"][0]["residualRankIc"], 0)
+
+    def test_market_semantics_and_unverifiable_snapshots_are_not_peers(self):
+        variants = {
+            "adjustment": ({**SNAPSHOT, "priceAdjustment": "raw"}, None),
+            "calendar": ({**SNAPSHOT, "market": {**SNAPSHOT["market"], "calendar": "XLON"}}, None),
+            "assets": ({**SNAPSHOT, "universe": ["A0", "A1", "A2", "A4"]}, None),
+            "time-range": ({**SNAPSHOT, "timeRange": {"start": "2026-01-02", "end": "2026-02-28"}}, None),
+            "bytes": ({**SNAPSHOT, "requestHash": "request-b"}, "timestamp,close\n2026-01-01,2\n"),
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = run_at(root / "target-run", frame([[1, 2, 3, 4]]))
+            market = market_data_identity(with_market_data(root / "target", target, SNAPSHOT), target)
+            for name, (snapshot, csv) in variants.items():
+                with self.subTest(name=name):
+                    peer = run_at(root / f"{name}-run", frame([[1, 2, 3, 4]]), run_id=name, source=name)
+                    owner = with_market_data(root / name, peer, {**snapshot, "requestHash": "request-b"},
+                                             **({"csv": csv} if csv else {}))
+                    peer_market = market_data_identity(owner, peer)
+                    self.assertNotEqual(market, peer_market)
+                    self.assertFalse(comparable(target, peer, (market, peer_market)))
+            # Changed snapshot bytes no longer match the Run's content lock.
+            peer = run_at(root / "tampered-run", frame([[1, 2, 3, 4]]), run_id="tampered", source="t")
+            owner = with_market_data(root / "tampered", peer, {**SNAPSHOT, "requestHash": "request-b"})
+            (root / "tampered/data/ohlcv/snapshot.json").write_text(json.dumps(SNAPSHOT), encoding="utf-8")
+            self.assertIsNone(market_data_identity(owner, peer))
 
 
 if __name__ == "__main__":
