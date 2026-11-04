@@ -18,6 +18,15 @@ It is deliberately not a second current-status page or release checklist:
 - the linked completed plan owns exact proof for that release;
 - Git tags remain the immutable version authority.
 
+## 3.x series
+
+V3 uses its own `3.x` line so its tags never collide with upstream AutoQuant V2
+`0.9.x` tags. Its Git history contains upstream through `v0.9.34`.
+
+| Release | Bounded outcome | Exact evidence |
+| --- | --- | --- |
+| `v3.0.0` | First V3 release since upstream `v0.9.31`: rebuilt Studio frontend in visual direction H (Ideas home, Factor/Strategy libraries, workbench panes, Chinese default with English), governed local Assistant, staged data intake with quality reports, Run history and same-authority Run compare, Strategy workbench, Factor redundancy diagnostics, full frozen Factor tear sheet, Factor-to-Strategy conversion by reference, the OpenAlice `HARNESS_*` host contract merged from upstream `v0.9.34`, the Windows researcher launch fix, and a recorded known-failure test baseline. | [[plans/product-maturity-roadmap]], [[plans/studio-assistant]], [[plans/factor-to-portfolio-conversion]], [[docs/design/openalice-hosting]] |
+
 ## 0.9 series
 
 | Release | Bounded outcome | Exact evidence |

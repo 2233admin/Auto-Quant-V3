@@ -1,10 +1,11 @@
-# AutoQuant V2 current status
+# AutoQuant current status
 
-Status: `v0.9.34` is the current AutoQuant release and `v0.8.31`
-remains the Harness currently consumed by OpenAlice until the host deliberately
-selects a newer tag.
+Status: `3.0.0` is the current AutoQuant V3 release candidate (untagged until
+the owner publishes it). V3 uses its own `3.x` line; its history contains
+upstream AutoQuant V2 through `v0.9.34`. OpenAlice's catalog pins upstream V2
+`v0.9.34` until the host deliberately selects a newer tag.
 
-Updated: 2026-08-22.
+Updated: 2026-11-04.
 
 Related: [[README]], [[docs/CHANGELOG]], [[docs/ARCHITECTURE]],
 [[docs/design/agent-native-quant-workbench]],
@@ -16,6 +17,25 @@ honest boundary. Concise release history lives in [[docs/CHANGELOG]]; exact
 historical proof remains in completed plans and immutable Git tags.
 
 ## Current milestone
+
+`3.0.0` versions V3 on its own line. Since upstream `v0.9.31` V3 added the
+rebuilt Studio frontend (visual direction H; Ideas home, Factor and Strategy
+libraries, resizable workbench panes, Simplified Chinese default with English),
+a governed local Assistant, staged data intake with quality reports, Run
+history with same-authority Run compare, the Strategy workbench, Factor
+redundancy diagnostics, a full frozen Factor tear sheet, Factor-to-Strategy
+conversion by reference, `aq capabilities --summary`, the Windows researcher
+launch fix, and a known-failure test baseline (`tests/known_failures.json`,
+checked by `scripts/check_known_failures.py`; one known product defect, issue
+20: the sample desk judge predates the template judge).
+
+Upstream `v0.9.32`-`v0.9.34` (the OpenAlice Harness integration) is merged as
+Git history. Its managed-launch implementation is the only one; V3 adds only an
+optional snapshot `host` marker under managed launch. See
+[[docs/design/openalice-hosting]]. The upstream `0.9.34` milestone text below
+remains accurate for the merged host contract.
+
+## Upstream 0.9.34 milestone
 
 The `0.9.34` release fixes the prepared source-Workspace launch boundary found
 by real `0.9.33` host acceptance. A clone prepared independently with
@@ -162,8 +182,10 @@ AutoQuant evidence without moving live-trading authority into the quant desk.
   materialization route without turning Core into a downloader.
 - Studio is a verified observation surface, not a full interactive research
   authoring or orchestration UI.
-- OpenAlice remains deliberately pinned to `0.8.31`; host-side adoption of a
-  later release is independent of package publication.
+- OpenAlice's catalog defaults to upstream V2 `v0.9.34`; host-side adoption
+  of a V3 release is independent of package publication. With automatic
+  updates on, OpenAlice applies the newest stable SemVer tag of the canonical
+  repository it watches.
 - Fixed Studies, Session Reports, and multi-lane Dossiers do not collapse into
   one universal outward-deliverable type.
 

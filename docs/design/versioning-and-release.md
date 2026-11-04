@@ -1,6 +1,6 @@
 # Versioning and release
 
-Status: active pre-1.0 release policy.
+Status: active release policy (V3 `3.x` line; upstream V2 `0.x` history).
 
 Related: [[README]], [[docs/STATUS]], [[docs/CHANGELOG]],
 [[docs/ARCHITECTURE]], [[AGENTS]], [[PLANS]], and
@@ -38,18 +38,31 @@ evidence never relies on the mutable checkout's current label alone.
 Exact build and runtime-closure semantics are defined in
 [[docs/design/distribution-build-identity]].
 
+## V3 version line
+
+AutoQuant V3 versions itself on its own `3.x` line, starting at `3.0.0`. V3's
+history contains upstream AutoQuant V2 through `v0.9.34` (a real merge), but
+its releases must never reuse an upstream `0.9.x` (or later V2) version, so a
+V3 tag can never collide with or be mistaken for an upstream V2 tag. OpenAlice
+selects the newest stable SemVer tag of the canonical repository it watches;
+a `3.x` tag on that repository sorts above every V2 `0.9.x` tag, and a desk
+created from V2 `v0.9.34` can merge it because the histories are related. The
+increment rules below apply within the `3.x` line.
+
 ## Increment policy
 
-AutoQuant is pre-1.0. Compatibility matters, but a pre-1.0 version is not a
+Upstream V2 was pre-1.0, and V3 `3.0.0` keeps the same caution: the major
+number marks the separate V3 line, not a stability guarantee. Compatibility
+matters, but a version is not a
 promise that every mutable Workspace checkout can be upgraded automatically.
 
-- Patch increments (`0.9.17` to `0.9.18`) are the default. Use them for bounded
+- Patch increments (`3.0.0` to `3.0.1`) are the default. Use them for bounded
   correctness fixes, one proven research route, read-model completion, Agent
   ergonomics, or compatible contract refinement.
-- Minor increments (`0.9.x` to `0.10.0`) require a meaningful product layer,
+- Minor increments (`3.0.x` to `3.1.0`) require a meaningful product layer,
   lifecycle change, or broad public-contract expansion.
-- Major versions are reserved for a genuinely stable new generation. They are
-  not a counter for nights of development or the number of shipped features.
+- Major versions beyond `3` are reserved for a genuinely new generation. They
+  are not a counter for nights of development or the number of shipped features.
 
 Bump the version late, after focused implementation and candidate behavior are
 credible. Several commits may belong to one unreleased patch candidate.
