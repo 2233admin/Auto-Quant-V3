@@ -187,6 +187,7 @@ from .research_program import (
     load_research_program,
 )
 from .studio import STUDIO_SNAPSHOT_JSON_SCHEMA, build_studio_snapshot, serve_studio
+from .studio_host import resolve_host_contract
 from .templates import (
     PROJECT_TEMPLATE_IDS,
     TEMPLATE_STUDY_IDS,
@@ -1417,8 +1418,8 @@ def build_parser() -> RaisingArgumentParser:
     )
     studio_serve.add_argument("path")
     studio_serve.add_argument("--project")
-    studio_serve.add_argument("--host", default="127.0.0.1")
-    studio_serve.add_argument("--port", type=int, default=8765)
+    studio_serve.add_argument("--host", default=None)
+    studio_serve.add_argument("--port", type=int, default=None)
     studio_serve.add_argument("--no-open", action="store_true")
     studio_serve.add_argument("--allow-actions", action="store_true")
     studio_serve.set_defaults(command_id="studio.serve")
@@ -5621,13 +5622,25 @@ def _studio_snapshot(args: argparse.Namespace) -> CommandResult:
 
 
 def _studio_serve(args: argparse.Namespace) -> CommandResult:
+    hosted = resolve_host_contract()
+    if hosted is not None:
+        for flag, explicit, injected in (
+            ("--host", args.host, hosted.host),
+            ("--port", args.port, hosted.port),
+        ):
+            if explicit is not None and explicit != injected:
+                raise CliUsageError(
+                    f"{flag} {explicit} conflicts with the supervisor-injected "
+                    f"{injected}; hosted Studio binds HARNESS_HOST/HARNESS_PORTS only"
+                )
     serve_studio(
         args.path,
         project_id=args.project,
-        host=args.host,
-        port=args.port,
-        open_browser=not args.no_open,
+        host=hosted.host if hosted else args.host or "127.0.0.1",
+        port=hosted.port if hosted else 8765 if args.port is None else args.port,
+        open_browser=not args.no_open and hosted is None,
         allow_actions=args.allow_actions,
+        host_block=hosted.snapshot_block() if hosted else None,
     )
     return CommandResult(
         "studio.serve",

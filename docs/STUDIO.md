@@ -131,6 +131,20 @@ aq studio serve . --port 8877 --no-open
 A direct Project path is also valid. A Workspace can be restricted to one
 Project with `--project ID`.
 
+## Hosted by a supervisor (OpenAlice)
+
+`harness.json` at the repository root declares a Manifest v1 `studio`
+capability. A supervisor launches `aq studio serve . --no-open` and injects
+`HARNESS_CAPABILITY=studio`, `HARNESS_HOST`, `HARNESS_PORTS` (for example
+`{"http":49321}`) and `HARNESS_NO_OPEN=1`. With `HARNESS_CAPABILITY=studio`
+Studio is hosted: it binds `HARNESS_HOST:HARNESS_PORTS.http`, never opens a
+browser, and exits non-zero with a clear message when the port is missing or
+invalid. It never falls back to 8765. `--host`/`--port` that disagree with the
+injected values are a usage error. Readiness is `GET /api/v1/health`.
+The snapshot then carries `host: {"kind": "openalice", "capability": "studio"}`
+so the UI can hide the in-process Assistant. Design:
+[[docs/design/openalice-hosting]].
+
 ## Local actions (opt in)
 
 ```bash

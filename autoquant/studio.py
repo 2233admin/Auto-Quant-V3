@@ -1766,6 +1766,7 @@ def build_studio_snapshot(
     directory: str | Path,
     *,
     project_id: str | None = None,
+    host: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     scope, root, workspace, projects, diagnostics = _resolve_source(
         directory,
@@ -1777,7 +1778,7 @@ def build_studio_snapshot(
         for project, observation in zip(projects, observations):
             observation["library"] = library_projection(project, observation, root)
     harness = harness_identity()
-    return {
+    snapshot = {
         "schemaVersion": SCHEMA_VERSION,
         "kind": STUDIO_KIND,
         "generatedAt": datetime.now(timezone.utc).isoformat(),
@@ -1793,6 +1794,9 @@ def build_studio_snapshot(
         "diagnostics": diagnostics,
         "projects": observations,
     }
+    if host is not None:
+        snapshot["host"] = host
+    return snapshot
 
 
 def _project_summary(project: dict[str, Any]) -> dict[str, Any]:
@@ -2106,6 +2110,7 @@ def _handler(
     directory: Path,
     project_id: str | None,
     actions: ActionService | None = None,
+    host: dict[str, Any] | None = None,
 ) -> type[BaseHTTPRequestHandler]:
     cache = SnapshotCache(directory)
 
@@ -2416,7 +2421,7 @@ def _handler(
             try:
                 from .studio_compare import serve_history
                 if serve_history(self, path, directory, project_id,
-                                 lambda: cache.get("snapshot", None, lambda: build_studio_snapshot(directory, project_id=project_id)).payload,
+                                 lambda: cache.get("snapshot", None, lambda: build_studio_snapshot(directory, project_id=project_id, host=host)).payload,
                                  head_only):
                     return
                 if path == "/api/v1/health":
@@ -2447,6 +2452,7 @@ def _handler(
                         lambda: build_studio_snapshot(
                             directory,
                             project_id=project_id,
+                            host=host,
                         ),
                         head_only,
                         with_actions=True,
@@ -2463,6 +2469,7 @@ def _handler(
                                 lambda: build_studio_snapshot(
                                     directory,
                                     project_id=project_id,
+                                    host=host,
                                 ),
                             ).payload
                         ),
@@ -2643,6 +2650,7 @@ def create_studio_server(
     port: int = 8765,
     allow_actions: bool = False,
     action_options: dict[str, Any] | None = None,
+    host_block: dict[str, Any] | None = None,
 ) -> AutoQuantStudioServer:
     if not isinstance(port, int) or isinstance(port, bool) or not 0 <= port <= 65535:
         raise AutoQuantValidationError(
@@ -2680,7 +2688,7 @@ def create_studio_server(
         )
     server = AutoQuantStudioServer(
         (host, port),
-        _handler(root, project_id, actions),
+        _handler(root, project_id, actions, host_block),
     )
     server.actions = actions
     if actions is not None:
@@ -2700,6 +2708,7 @@ def serve_studio(
     port: int = 8765,
     open_browser: bool = True,
     allow_actions: bool = False,
+    host_block: dict[str, Any] | None = None,
 ) -> None:
     server = create_studio_server(
         directory,
@@ -2707,6 +2716,7 @@ def serve_studio(
         host=host,
         port=port,
         allow_actions=allow_actions,
+        host_block=host_block,
     )
     display_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
     url = f"http://{display_host}:{server.server_port}"
@@ -2795,6 +2805,15 @@ STUDIO_SNAPSHOT_JSON_SCHEMA: dict[str, Any] = {
         "diagnostics": {
             "type": "array",
             "items": {"$ref": "#/$defs/diagnostic"},
+        },
+        "host": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["kind", "capability"],
+            "properties": {
+                "kind": {"type": "string", "minLength": 1},
+                "capability": {"type": "string", "minLength": 1},
+            },
         },
         "projects": {
             "type": "array",
