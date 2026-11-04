@@ -51,7 +51,10 @@ def _template_owned_files(root: Path) -> dict[str, bytes]:
         relative = path.relative_to(root)
         if relative.parts[0] in excluded_roots or relative.as_posix() == "research.md":
             continue
-        result[relative.as_posix()] = path.read_bytes()
+        # Generated text is written in text mode, so Windows emits CRLF while the
+        # checked-in sample is LF (.gitattributes). Line endings are not the
+        # contract here; every other byte is compared.
+        result[relative.as_posix()] = path.read_bytes().replace(b"\r\n", b"\n")
     return result
 
 

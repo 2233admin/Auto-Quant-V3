@@ -32,7 +32,12 @@ def _sha256(path: Path) -> str:
 
 def _skill_files(skill_root: Path) -> list[dict[str, str]]:
     files: list[dict[str, str]] = []
-    for path in sorted(skill_root.rglob("*")):
+    # Sort by the POSIX relative string: Windows Path ordering is case-insensitive,
+    # which put SKILL.md after agents/ and broke the recorded manifest order.
+    for path in sorted(
+        skill_root.rglob("*"),
+        key=lambda item: item.relative_to(skill_root).as_posix(),
+    ):
         relative_parts = path.relative_to(skill_root).parts
         if "__pycache__" in relative_parts or path.suffix == ".pyc":
             continue
@@ -55,7 +60,7 @@ def bundled_workspace_skills() -> tuple[dict[str, Any], ...]:
             f"Bundled Skill source is unavailable: {SKILL_SOURCE_ROOT}"
         )
     skills: list[dict[str, Any]] = []
-    for path in sorted(SKILL_SOURCE_ROOT.iterdir()):
+    for path in sorted(SKILL_SOURCE_ROOT.iterdir(), key=lambda item: item.name):
         if path.name.startswith("."):
             continue
         if path.is_symlink() or not path.is_dir():
