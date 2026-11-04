@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import os
+import shlex
+import subprocess
+import sys
 from pathlib import Path
 
 from autoquant.studies import (
@@ -155,3 +159,9 @@ def study_definition(
         research_request=research_request,
         upstream_evidence=upstream_evidence,
     )
+
+
+def python_command(script: str | Path) -> str:
+    """Shell command string running `script` with this interpreter on any platform."""
+    argv = [sys.executable, str(script)]
+    return subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)

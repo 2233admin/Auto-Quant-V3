@@ -140,7 +140,7 @@ class ImmutableRunTests(unittest.TestCase):
             frozen_artifact.write_text("tampered\n", encoding="utf-8")
             manifest_path = run.root_dir / "manifest.json"
             manifest = json.loads(manifest_path.read_text())
-            relative = str(frozen_artifact.relative_to(run.root_dir))
+            relative = frozen_artifact.relative_to(run.root_dir).as_posix()
             manifest["files"][relative] = hash_file(frozen_artifact)
             manifest_path.write_text(json.dumps(manifest))
             with self.assertRaisesRegex(

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import math
-import shlex
 import sys
 import tempfile
 import unittest
@@ -12,6 +11,7 @@ import numpy as np
 import pandas as pd
 import jsonschema
 
+from tests.study_helpers import python_command
 from autoquant.factor_claims import FACTOR_CLAIM, build_factor_claim
 from autoquant.prediction_modes import (
     FACTOR_POPULATION,
@@ -1073,7 +1073,7 @@ print(json.dumps({
             campaign = run_campaign(
                 project,
                 session.manifest["id"],
-                f"{shlex.quote(sys.executable)} {shlex.quote(str(researcher))}",
+                python_command(researcher),
                 max_turns=1,
                 max_wall_seconds=90,
                 turn_timeout_seconds=5,

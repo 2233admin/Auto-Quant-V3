@@ -164,6 +164,11 @@ class VersionContractTests(unittest.TestCase):
             parent_repo.mkdir()
             subprocess.run(["git", "init", "-q"], cwd=parent_repo, check=True)
             venv = parent_repo / ".venv"
+            venv_python = (
+                venv / "Scripts/python.exe"
+                if sys.platform == "win32"
+                else venv / "bin/python"
+            )
             subprocess.run(
                 ["uv", "venv", "--python", "3.11", str(venv)],
                 cwd=parent_repo,
@@ -178,7 +183,7 @@ class VersionContractTests(unittest.TestCase):
                     "install",
                     "--no-deps",
                     "--python",
-                    str(venv / "bin/python"),
+                    str(venv_python),
                     str(rebuilt_wheel),
                 ],
                 cwd=parent_repo,
@@ -188,7 +193,7 @@ class VersionContractTests(unittest.TestCase):
             )
             observed = subprocess.run(
                 [
-                    str(venv / "bin/python"),
+                    str(venv_python),
                     "-c",
                     (
                         "import json; from autoquant.version import "

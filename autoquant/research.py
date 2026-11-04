@@ -7,7 +7,6 @@ import math
 import os
 import re
 import shutil
-import signal
 import subprocess
 import time
 import uuid
@@ -16,6 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .shell_launch import kill_process_tree, launch_shell_command
 from .sessions import (
     EXPERIMENT_ID,
     SessionContext,
@@ -355,15 +355,10 @@ def _invoke_researcher(
     stdout = ""
     stderr = ""
     try:
-        process = subprocess.Popen(
-            ["/bin/sh", "-lc", command],
+        process = launch_shell_command(
+            command,
             cwd=session.worktree_project.root_dir,
             env=environment,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
         )
         try:
             stdout, stderr = process.communicate(
@@ -375,10 +370,7 @@ def _invoke_researcher(
             timed_out = True
             stdout = _text(error.stdout)
             stderr = _text(error.stderr)
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            kill_process_tree(process)
             final_stdout, final_stderr = process.communicate()
             stdout = final_stdout or stdout
             stderr = final_stderr or stderr

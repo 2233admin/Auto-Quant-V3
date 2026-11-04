@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import math
-import shlex
 import sys
 import tempfile
 import unittest
@@ -11,6 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from tests.study_helpers import python_command
 from autoquant.project_templates.ohlcv_portfolio_lab.portfolio_core import (
     LONG_ENTRY_PERCENTILE,
     SHORT_ENTRY_PERCENTILE,
@@ -1559,7 +1559,7 @@ print(json.dumps({
             campaign = run_campaign(
                 project,
                 session.manifest["id"],
-                f"{shlex.quote(sys.executable)} {shlex.quote(str(researcher))}",
+                python_command(researcher),
                 max_turns=1,
                 max_wall_seconds=240,
                 turn_timeout_seconds=5,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shlex
 import sys
 import tempfile
 import unittest
@@ -11,6 +10,7 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 
+from tests.study_helpers import python_command
 from autoquant.briefs import validate_research_request
 from autoquant.mandates import build_portfolio_mandate
 from autoquant.project_templates.ohlcv_rl_factor_lab import rl_core
@@ -1083,7 +1083,7 @@ print(json.dumps({{
             campaign = run_campaign(
                 project,
                 session.manifest["id"],
-                f"{shlex.quote(sys.executable)} {shlex.quote(str(researcher))}",
+                python_command(researcher),
                 max_turns=1,
                 max_wall_seconds=180,
                 turn_timeout_seconds=30,

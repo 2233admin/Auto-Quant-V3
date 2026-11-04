@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shlex
 import sys
 import tempfile
 import unittest
@@ -11,7 +10,7 @@ from autoquant.research import list_campaigns, load_campaign, run_campaign
 from autoquant.sessions import list_experiments, load_session, start_session
 from autoquant.studies import create_study, hash_file
 from autoquant.workspace import AutoQuantValidationError
-from tests.study_helpers import SUCCESS_JUDGE, make_project, study_definition
+from tests.study_helpers import SUCCESS_JUDGE, make_project, python_command, study_definition
 
 
 RESEARCHER = """\
@@ -60,7 +59,7 @@ class ExternalResearchCampaignTests(unittest.TestCase):
     def _script(self, directory: str, source: str) -> str:
         path = Path(directory) / "researcher.py"
         path.write_text(source, encoding="utf-8")
-        return f"{shlex.quote(sys.executable)} {shlex.quote(str(path))}"
+        return python_command(path)
 
     def test_campaign_drives_keep_revert_then_stop_and_verifies_evidence(
         self,

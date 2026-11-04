@@ -14,10 +14,21 @@ restoration, and immutable Campaign evidence.
 It does not own one model vendor, credentials, OS sandboxing, Judge semantics,
 verdicts, promotion, or Studio presentation.
 
+## Platform differences
+
+The command string is shell syntax, so quote it for the platform shell. The
+launcher (`autoquant/shell_launch.py`) puts the child in its own process group
+(`start_new_session` on POSIX, `CREATE_NEW_PROCESS_GROUP` on Windows) and a
+timeout ends the whole tree (`killpg` on POSIX, `taskkill /T /F` on Windows).
+On Windows the child also gets `PYTHONUTF8=1` unless the caller sets it, and
+stdio is UTF-8 on both platforms. Portable commands are
+`python script.py`-style invocations of an interpreter path.
+
 ## Connector contract
 
 `aq research run` receives one explicit `--agent-command`. AutoQuant invokes it
-through the platform shell with:
+through the platform shell (`/bin/sh -lc` on POSIX, `cmd.exe /d /s /c` on
+Windows; see Platform differences) with:
 
 - current working directory set to the Session worktree;
 - one versioned Research brief JSON on stdin;

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shlex
 import subprocess
 import sys
 import tempfile
@@ -23,7 +22,7 @@ from autoquant.workspace import (
     create_project,
     initialize_workspace,
 )
-from tests.study_helpers import make_project, study_definition
+from tests.study_helpers import make_project, python_command, study_definition
 
 
 SLOW_RESEARCHER = """\
@@ -58,7 +57,7 @@ class StudioObservationTests(unittest.TestCase):
     def _script(self, directory: str, source: str) -> str:
         path = Path(directory) / "studio-researcher.py"
         path.write_text(source, encoding="utf-8")
-        return f"{shlex.quote(sys.executable)} {shlex.quote(str(path))}"
+        return python_command(path)
 
     def test_workspace_and_project_snapshots_share_verified_contract(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

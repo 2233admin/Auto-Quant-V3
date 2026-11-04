@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shlex
 import subprocess
 import sys
 import tempfile
@@ -22,6 +21,7 @@ from tests.intake_helpers import (
 from tests.study_helpers import (
     SUCCESS_JUDGE,
     make_project,
+    python_command,
     request_definition,
     study_definition,
 )
@@ -2894,7 +2894,7 @@ print(json.dumps({
                 encoding="utf-8",
             )
             command = (
-                f"{shlex.quote(sys.executable)} {shlex.quote(str(researcher))}"
+                python_command(researcher)
             )
 
             executed = run_cli(
