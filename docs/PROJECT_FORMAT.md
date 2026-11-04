@@ -1310,6 +1310,22 @@ Dossier plus later Runs; `assessment.md` is deterministic review prose; and
 the manifest pins every file. State becomes `assessed` only when all objects
 still reconcile. This is not a cross-lane Core pass rule.
 
+## Desk trial families and research policy
+
+Two optional Workspace-root entries are tracked in Git:
+
+- `trial-families/<family-id>.json` (`autoquant-trial-family`, V1): one file
+  per desk trial family with its question fingerprint, member Project
+  Studies, caller declarations and every registered trial. Written only by
+  `aq`; append-only; malformed files fail closed.
+- `autoquant-research-policy.json` (`autoquant-research-policy`, V1):
+  `trialBudget.maxCountedTrialsPerFamily` and `trialBudget.windowDays`.
+
+Each Project may also contain `handoffs/<subject-id>/handoff.json`
+(`autoquant-research-handoff`, V1), a regenerable projection. See
+[[docs/design/desk-trial-families]], [[docs/design/core-trial-gate]] and
+[[docs/design/research-handoff]].
+
 ## Canonical schemas
 
 Machine-readable JSON Schemas are available without loading a Project:

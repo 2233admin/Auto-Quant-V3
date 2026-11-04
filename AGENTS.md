@@ -164,6 +164,23 @@ brief that another Agent can recover from the filesystem.
    evidence.” A different hypothesis, data package, Study type, or authority
    is separately declared work.
 
+Every counted trial passes the Core trial gate. `aq run execute`,
+`aq session start`, `aq experiment evaluate` and `aq research run` on a Study
+with editable source refuse with `trial-gate.confirmation-required` until you
+pass `--confirm-trial`; pass it only after deciding the trial is worth
+spending. `trial-gate.budget-exhausted` (desk policy
+`autoquant-research-policy.json`, default 20 per family per 30 days) and
+`trial-gate.family-declaration-required` are not overridable by a flag. The
+desk counts trials per question across Projects: before creating a Project for
+a question, read `aq family list` and `aq orient --json`
+(`deskResearch.trialFamilies`); continue the existing Project instead of
+re-asking. When creation output lists a possible related family, ask the
+caller whether it is the same hypothesis and record the answer with
+`aq family declare ... --same-family ID` or `--new-hypothesis`; never guess
+it. When hosted, the external holdout stays with the host and never enters
+the desk; record only its digest and audit result in the handoff. See
+[[docs/design/desk-trial-families]] and [[docs/design/core-trial-gate]].
+
 Before the first Factor Run, choose `factorPolicy` from the caller's claim,
 not from the candidate formula. Use `decision-signal` when the question asks
 whether a signal supports ranking, timing, allocation, or Portfolio decisions
@@ -189,6 +206,12 @@ Read [[docs/design/caller-owned-factor-outcomes]] for the exact complete-window
 log-return formula, supported populations, and historical implicit-return
 boundary. Do not infer the outcome from candidate code or invert a risk score
 into a return claim.
+
+When an OpenAlice coworker names OpenAlice `barId`s or supplies
+`alice market bars` exports, package them with `$acquire-openalice-bars`
+instead of re-downloading; it keeps each exact barId and refuses missing
+adjustment, timezone or calendar facts. See
+[[docs/design/openalice-bars-acquisition]].
 
 When the assignment requires market data, use the Workspace's
 `$acquire-market-ohlcv` Skill after the research question fixes the venue,
@@ -340,6 +363,22 @@ and internal Reports or Dossiers. Preserve proper nouns, identifiers, source
 quotes, and evidence in their original form when needed. The delegating or
 user-facing Agent owns conversation locale and may translate the resulting
 evidence for the user; callers are never required to speak English.
+
+## Handing the result back
+
+End every assignment with a plain-text handoff for the delegating Agent:
+answer in plain language; name the Project and absolute Project root and
+every applicable immutable Run, Experiment, Report or Dossier id; keep
+validation, visible-test and external-holdout evidence distinct; state the
+verdict exactly as Core published it (Inconclusive stays Inconclusive),
+assumptions, unsupported claims and that trading authority is none. Then
+write the machine-readable projection with `aq handoff <path> --project ID
+(--run ID | --report ID | --dossier ID) --valid-from DATE --valid-until DATE
+--review-date DATE` using the caller's validity window and review date (ask
+for them; never invent them). Name the written `handoff.json` path in the
+text, and make the last line exactly
+`Primary deliverable directory: <absolute path>`, the handoff directory that
+`aq handoff` prints. See [[docs/design/research-handoff]].
 
 ## Research work and Workbench work
 
@@ -522,6 +561,15 @@ Read the relevant linked document before changing a subsystem:
 - Project-wide research families, multiple-testing correction, and
   selection-adjusted Factor/Portfolio evidence:
   [[docs/design/selection-adjusted-research-evidence]]
+- Desk-level question fingerprints, the trial-family ledger, caller
+  declarations and desk-wide trial counts:
+  [[docs/design/desk-trial-families]]
+- Per-desk research budget, `--confirm-trial`, stable refusal codes, and
+  host custody of the external holdout: [[docs/design/core-trial-gate]]
+- Versioned `handoff.json`, primary deliverable directory, caller-owned
+  validity and verdict/OrderIntent rules: [[docs/design/research-handoff]]
+- OpenAlice BarService exports packaged with exact barIds:
+  [[docs/design/openalice-bars-acquisition]]
 - Purged forward horizons, factor significance/decay/quantiles, fixed style
   overlap, request-bound novel/known-style claims, claim-specific
   qualification, and asset/fold/causal-regime stability:

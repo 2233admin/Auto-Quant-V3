@@ -1427,6 +1427,37 @@ span, not inferred listing dates. Long gaps do not prove suspensions, and
 coverage/adjustment declarations are unauthenticated. See
 [[docs/design/studio-data-intake]] for the Studio counterpart.
 
+## Desk trial families, trial gate and handoff
+
+`aq run execute`, `aq session start`, `aq experiment evaluate` and
+`aq research run` accept `--confirm-trial`. For a Study with editable source
+they refuse (exit 1, error envelope) with a stable `error.code` and the full
+gate state in `context.trialGate`:
+
+- `trial-gate.confirmation-required`: rerun with `--confirm-trial`;
+- `trial-gate.budget-exhausted`: the desk policy budget for this trial family
+  is spent (`autoquant-research-policy.json`, default 20 per 30 days);
+- `trial-gate.family-declaration-required`: declare the possible related
+  family first;
+- `trial-gate.policy-invalid` / `trial-gate.ledger-invalid`: fix the desk
+  file.
+
+```bash
+aq family list <workspace> --json
+aq family show <path> [--project ID] --json
+aq family declare <path> [--project ID] --study ID (--same-family FAMILY_ID | --new-hypothesis) --json
+aq handoff <path> [--project ID] (--run ID | --report ID | --dossier ID)   --valid-from YYYY-MM-DD --valid-until YYYY-MM-DD --review-date YYYY-MM-DD   [--assumption TEXT]... [--unsupported-claim TEXT]...   [--external-holdout-digest SHA256 --external-holdout-status STATUS] --json
+```
+
+`aq project create|intake|from-factor` output gains `data.trialFamilies`
+(and a `family.declare` next action when a possible related family exists);
+`aq orient --json` gains `deskResearch`. `aq handoff` writes
+`<project>/handoffs/<subject-id>/handoff.json`, prints
+`Primary deliverable directory: <absolute path>`, and refuses missing
+validity with `handoff.validity-required`. `aq schema research-handoff`
+returns its JSON schema. See [[docs/design/desk-trial-families]],
+[[docs/design/core-trial-gate]] and [[docs/design/research-handoff]].
+
 ## Success envelope
 
 ```json

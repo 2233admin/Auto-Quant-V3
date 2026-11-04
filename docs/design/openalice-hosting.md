@@ -32,6 +32,20 @@ restate it:
   gets V3's local action layer, whose Host/Origin checks expect the loopback
   origin, so actions are not expected to work behind an opaque proxy origin.
 
+## Research integrity when hosted
+
+- Trials are counted per question across every Project of the desk
+  ([[docs/design/desk-trial-families]]); a re-delegated question inherits
+  the earlier count.
+- The trial budget, family declaration and per-trial acknowledgement are Core
+  gates on `aq` ([[docs/design/core-trial-gate]]), so OpenAlice's native
+  Agent is bound by them; the Studio Assistant is optional and may be hidden.
+- The external holdout is held by OpenAlice and never placed in the desk; AQ
+  records only its digest and audit result.
+- OpenAlice bars enter through `$acquire-openalice-bars`
+  ([[docs/design/openalice-bars-acquisition]]); the result returns as
+  `handoff.json` ([[docs/design/research-handoff]]).
+
 ## Superseded
 
 V3 commit `6599166` had its own `autoquant/studio_host.py`. It was removed
