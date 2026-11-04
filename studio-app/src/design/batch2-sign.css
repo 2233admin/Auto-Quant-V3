@@ -2,9 +2,9 @@
    so the Settings convention switch (default red up, green down) applies. See DESIGN.md, "Batch 2". */
 
 /* ---- Sign colour on chart text: SVG text takes `fill`, not `color` ---- */
-svg text[data-sign='positive'] { fill: var(--sign-positive); }
-svg text[data-sign='negative'] { fill: var(--sign-negative); }
-svg text[data-sign='neutral'] { fill: var(--sign-neutral); }
+svg text[data-sign='positive'], .plot .val[data-sign='positive'] { fill: var(--sign-positive); }
+svg text[data-sign='negative'], .plot .val[data-sign='negative'] { fill: var(--sign-negative); }
+svg text[data-sign='neutral'], .plot .val[data-sign='neutral'] { fill: var(--sign-neutral); }
 .plot .end-label { font: var(--type-label-mono); font-weight: 600; }
 .cross-tag rect { shape-rendering: crispEdges; }
 .signed-curve path { vector-effect: non-scaling-stroke; }
