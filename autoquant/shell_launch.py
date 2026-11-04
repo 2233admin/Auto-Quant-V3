@@ -55,18 +55,24 @@ def launch_shell_command(
 def kill_process_tree(process: subprocess.Popen[Any]) -> None:
     """Force-stop the child and every descendant; tolerate an already-gone tree."""
     if os.name == "nt":
-        try:
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(process.pid)],
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-                timeout=15,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-            )
-        except (OSError, subprocess.SubprocessError):
-            pass
+        # taskkill /T walks the tree from the live root; on a loaded machine it can be slow.
+        # Retry once before falling back, because process.kill() alone orphans the descendants.
+        for timeout in (30, 60):
+            try:
+                subprocess.run(
+                    ["taskkill", "/T", "/F", "/PID", str(process.pid)],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                    timeout=timeout,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+                break
+            except subprocess.TimeoutExpired:
+                continue
+            except (OSError, subprocess.SubprocessError):
+                break
         if process.poll() is None:
             try:
                 process.kill()

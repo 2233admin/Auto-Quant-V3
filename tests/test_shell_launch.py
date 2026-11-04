@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import os
 import subprocess
 import sys
@@ -22,10 +23,11 @@ time.sleep(60)
 def _alive(pid: int) -> bool:
     if os.name == "nt":
         out = subprocess.run(
-            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+            ["tasklist", "/FI", f"PID eq {pid}", "/NH", "/FO", "CSV"],
             capture_output=True, text=True, check=False,
         ).stdout
-        return str(pid) in out
+        # Exact PID column match (a substring test also matched memory figures).
+        return any(len(row) > 1 and row[1] == str(pid) for row in csv.reader(out.splitlines()))
     try:
         os.kill(pid, 0)
     except OSError:
