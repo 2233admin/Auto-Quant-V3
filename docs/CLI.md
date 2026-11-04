@@ -1430,11 +1430,14 @@ coverage/adjustment declarations are unauthenticated. See
 ## Desk trial families, trial gate and handoff
 
 `aq run execute`, `aq session start`, `aq experiment evaluate` and
-`aq research run` accept `--confirm-trial`. For a Study with editable source
+`aq research run` accept `--confirm-trial`, required only when the trial's family
+already has counted trials from another Project. For a Study with editable source
 they refuse (exit 1, error envelope) with a stable `error.code` and the full
 gate state in `context.trialGate`:
 
-- `trial-gate.confirmation-required`: rerun with `--confirm-trial`;
+- `trial-gate.confirmation-required`: the family already has N trials from
+  other Projects (named in the message); rerun with `--confirm-trial` only
+  after deciding the repetition is worth it;
 - `trial-gate.budget-exhausted`: the desk policy budget for this trial family
   is spent (`autoquant-research-policy.json`, default 20 per 30 days);
 - `trial-gate.family-declaration-required`: declare the possible related

@@ -26,13 +26,18 @@ not gated). Before the command runs, Core evaluates, in order:
 | `trial-gate.ledger-invalid` | a trial-family ledger file is malformed |
 | `trial-gate.family-declaration-required` | the Study's question has an undeclared possible related family |
 | `trial-gate.budget-exhausted` | counted trials in the family's window plus the planned trials exceed the budget |
-| `trial-gate.confirmation-required` | `--confirm-trial` was not passed |
+| `trial-gate.confirmation-required` | the family already has counted trials from another Project and `--confirm-trial` was not passed |
 
 Refusals are ordinary CLI error envelopes (exit 1) whose `error.code` is the
 stable code above, with one issue at path `trialGate` and the full gate state
 (family id, budget, used, remaining, window start, next trial number,
-related families) in `context.trialGate`. `--confirm-trial` acknowledges
-spending the trial; it never overrides a budget or declaration refusal.
+related families, `otherProjects`, `confirmationRequired`) in
+`context.trialGate`. The confirmation refusal says why: "family tf-... already
+has N trials from Projects A, B". `--confirm-trial` acknowledges repeating a
+question that other Projects already spent trials on (cross-Project repetition,
+the fishing risk); it never overrides a budget or declaration refusal. A
+Project's own consecutive trials in a family only it has touched need no flag,
+but the budget and declaration gate apply to every counted trial.
 `aq research run` plans `--max-turns` trials, so the remaining budget must
 cover the whole Campaign.
 
@@ -65,8 +70,9 @@ flag. The window counts each desk trial once, at its first completion.
 
 Studio's `session.start` and `experiment.evaluate` previews call the Core gate
 before any confirmation and refuse with the same code. The human Studio
-confirmation (and the Assistant's per-action confirmation) is what adds
-`--confirm-trial` to the exact argv, and Core enforces again when the command
+confirmation (and the Assistant's per-action confirmation) adds
+`--confirm-trial` to the exact argv only when the preview reports a
+cross-Project family, and Core enforces again when the command
 runs. The Assistant keeps its owner-chosen per-conversation trial cap as an
 additional, narrower limit; the desk budget is authoritative.
 
@@ -85,6 +91,6 @@ standalone desk; it is a later-period challenge, not a host-held sample.
 
 ## Invariants
 
-1. No Agent can spend a counted trial without an explicit acknowledgement.
+1. No Agent can repeat a question across Projects without an explicit acknowledgement.
 2. No flag raises the budget; only the tracked desk policy does.
 3. Studio, the Assistant and the CLI share one gate implementation.

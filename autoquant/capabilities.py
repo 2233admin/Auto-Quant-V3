@@ -132,8 +132,9 @@ CONFIRM_TRIAL_ARGUMENT = argument(
     "option",
     "boolean",
     False,
-    "Acknowledge that this command spends counted research trials. Core refuses "
-    "with trial-gate.confirmation-required without it, and with "
+    "Acknowledge repeating a question that other Projects already spent counted "
+    "trials on. Core refuses with trial-gate.confirmation-required without it "
+    "only when the trial family already has trials from another Project, and with "
     "trial-gate.budget-exhausted or trial-gate.family-declaration-required "
     "regardless of it, for any Study with an editable research surface.",
     default=False,
@@ -1130,7 +1131,7 @@ CLI_COMMANDS = [
                 "option",
                 "boolean",
                 False,
-                "Acknowledge spending up to --max-turns counted trials; the desk budget must have that many remaining.",
+                "Acknowledge cross-Project repetition (needed only when the family has trials from other Projects); the desk budget must have --max-turns trials remaining.",
                 default=False,
             ),
             JSON_ARGUMENT,

@@ -1,4 +1,4 @@
-"""Core per-desk research budget and per-trial acknowledgement gate.
+"""Core per-desk research budget and cross-Project repetition gate.
 
 Any Agent that spends a counted trial through ``aq`` (OpenAlice's native Agent,
 a coding Agent, Studio, or the Studio Assistant) passes through this gate. It
@@ -76,9 +76,13 @@ def gate_state(project: ProjectContext, study_id: str, *, planned: int = 1,
         reason = "trial-gate.family-declaration-required"
     elif used + planned > limit:
         reason = "trial-gate.budget-exhausted"
+    other_projects = family["otherProjects"] if family else []
     return {
         "familyId": family["id"] if family else None,
         "deskTrialCount": family["deskTrialCount"] if family else None,
+        "otherProjectTrials": family["otherProjectTrials"] if family else 0,
+        "otherProjects": other_projects,
+        "confirmationRequired": reason is None and bool(other_projects),
         "possibleRelatedFamilies": family["possibleRelatedFamilies"] if family else [],
         "budget": {"maxCountedTrialsPerFamily": limit, "windowDays": policy["windowDays"],
                    "policySource": policy["source"], "usedInWindow": used,
@@ -110,11 +114,14 @@ def enforce(project: ProjectContext, study_id: str, *, confirmed: bool, planned:
                       f"Trial family {family} already spent {budget['usedInWindow']} of "
                       f"{budget['maxCountedTrialsPerFamily']} counted trials in the last {budget['windowDays']} days "
                       f"(planned {planned}); the desk policy ({budget['policySource']}) refuses more", state)
-    if not confirmed:
+    if state["confirmationRequired"] and not confirmed:
+        projects = ", ".join(state["otherProjects"])
         raise _refuse("trial-gate.confirmation-required",
-                      f"This command spends counted trial {state['nextTrial']} of family {family} "
-                      f"(budget {state['budget']['maxCountedTrialsPerFamily']} per {state['budget']['windowDays']} days). "
-                      "Every trial is counted against selection-adjusted evidence; rerun with --confirm-trial to acknowledge.",
+                      f"Family {family} already has {state['otherProjectTrials']} trials from Projects {projects}; "
+                      f"this command would spend counted trial {state['nextTrial']} of "
+                      f"{state['budget']['maxCountedTrialsPerFamily']} per {state['budget']['windowDays']} days "
+                      "against the same question from another Project. Repeating a question across Projects is the "
+                      "selection-bias risk; rerun with --confirm-trial only after deciding it is worth another try.",
                       state)
     return state
 

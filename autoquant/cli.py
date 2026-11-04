@@ -795,7 +795,7 @@ def build_parser() -> RaisingArgumentParser:
     run_execute.add_argument(
         "--confirm-trial",
         action="store_true",
-        help="acknowledge that this command spends counted research trials (Core trial gate)",
+        help="acknowledge repeating a question other Projects already spent trials on (Core trial gate)",
     )
     run_execute.set_defaults(command_id="run.execute")
     _json_argument(run_execute)
@@ -950,7 +950,7 @@ def build_parser() -> RaisingArgumentParser:
     session_start.add_argument(
         "--confirm-trial",
         action="store_true",
-        help="acknowledge that this command spends counted research trials (Core trial gate)",
+        help="acknowledge repeating a question other Projects already spent trials on (Core trial gate)",
     )
     session_start.set_defaults(command_id="session.start")
     _json_argument(session_start)
@@ -1050,7 +1050,7 @@ def build_parser() -> RaisingArgumentParser:
     experiment_evaluate.add_argument(
         "--confirm-trial",
         action="store_true",
-        help="acknowledge that this command spends counted research trials (Core trial gate)",
+        help="acknowledge repeating a question other Projects already spent trials on (Core trial gate)",
     )
     experiment_evaluate.set_defaults(command_id="experiment.evaluate")
     _json_argument(experiment_evaluate)
@@ -1098,7 +1098,7 @@ def build_parser() -> RaisingArgumentParser:
     research_run.add_argument(
         "--confirm-trial",
         action="store_true",
-        help="acknowledge that this command spends counted research trials (Core trial gate)",
+        help="acknowledge repeating a question other Projects already spent trials on (Core trial gate)",
     )
     research_run.set_defaults(command_id="research.run")
     _json_argument(research_run)

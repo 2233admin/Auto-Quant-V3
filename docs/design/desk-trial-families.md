@@ -21,7 +21,7 @@ route.
 ## Question fingerprint
 
 `autoquant/trial_families.py` derives one fingerprint per Project Study
-(method `question-and-caller-scope-v1`). Exactly these fields define "the
+(method `question-and-caller-scope-v2`). Exactly these fields define "the
 same hypothesis":
 
 | Field | Source | Why it is part of the identity |
@@ -31,10 +31,10 @@ same hypothesis":
 | `scope.objective` | Study objective metric and direction | the selection statistic being maximized |
 | `scope.target` | request `factorPolicy.claim`, `factorPolicy.outcome`, `direction` | target/outcome of the claim |
 | `scope.universe` | sorted request asset symbols; sorted `predictionAssets` | universe identity |
-| `scope.horizon` | `primaryForwardBars` from `strategies/research-horizon.json` (or the request) | horizon |
+| `scope.horizon` | `primaryForwardBars` from `strategies/research-horizon.json` (or the request), plus `barInterval`: the base interval recorded by the Project's dataset snapshot (`intake.json` `datasetSnapshotPath`: `intervalSurface.baseInterval`, `baseInterval`, or `frequency`) | horizon in bars and the bar period, so five daily bars and five hourly bars are different questions |
 | `scope.splitProtocol` | selection split implied by the objective (`validation`) and the fixed Judge entrypoint that owns the split | split protocol |
 
-Missing caller facts stay `null`; nothing is defaulted. The data vintage,
+Missing caller facts stay `null`; nothing is defaulted (a `null` `barInterval` is shown but left out of the hashes, so families whose interval is unknown keep their `v1` ids). The data vintage,
 provider, Project id/name, Judge bytes and candidate code are deliberately
 **not** part of the identity: re-asking over a fresh download or in a renamed
 Project is the fishing pattern being counted. A Study-owned request
@@ -145,8 +145,15 @@ include everything.
 
 ## Known limits
 
-- The horizon field is the bar count; two Projects with the same bar count
-  over different base intervals share a family (conservative).
+- Families fingerprinted by `v1` (no bar interval) are migrated by the next
+  registering `aq` command: when the live fingerprint-joined members now
+  resolve to one different id, the ledger file is renamed to it with
+  `migratedFrom` and every move is appended to `trial-families/migrations.json`
+  (`from`, `to`, `trialCount`). Members, declarations and trials are carried
+  over (files that collapse onto one id are merged, deduplicated), and id
+  references in declarations are rewritten, so no counted trial is lost. A
+  family with no live fingerprint-joined member (every owning Project deleted)
+  keeps its old id.
 - A caller can still declare `new-hypothesis` dishonestly; the declaration
   is recorded with its time and fingerprint so a reviewer can audit it.
 - Trial key is an upper bound: an identical source re-run in a second

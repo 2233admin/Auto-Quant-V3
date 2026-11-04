@@ -29,7 +29,8 @@ from .workspace import AutoQuantValidationError, ProjectContext, ValidationIssue
 
 LEDGER_DIRECTORY = "trial-families"
 FAMILY_KIND = "autoquant-trial-family"
-FINGERPRINT_METHOD = "question-and-caller-scope-v1"
+FINGERPRINT_METHOD = "question-and-caller-scope-v2"
+LEGACY_FINGERPRINT_METHODS = ("question-and-caller-scope-v1",)
 SCHEMA_VERSION = 1
 DECLARATIONS = ("same-family", "new-hypothesis")
 FAMILY_ID = re.compile(r"^tf-[0-9a-f]{16}$")
@@ -112,6 +113,24 @@ def _dependency(project: ProjectContext, study: dict[str, Any], suffix: str, fal
     return _read_cached_json(project.root_dir / fallback)
 
 
+def bar_interval(project: ProjectContext) -> str | None:
+    """Base bar interval recorded by the Project's bound dataset snapshot, else ``None``."""
+
+    intake = _read_cached_json(project.root_dir / "intake.json")
+    relative = intake.get("datasetSnapshotPath") if isinstance(intake, dict) else None
+    if not isinstance(relative, str) or relative.startswith(("/", "\\")) or ".." in Path(relative).parts:
+        return None
+    snapshot = _read_cached_json(project.root_dir / relative)
+    if not isinstance(snapshot, dict):
+        return None
+    surface = snapshot.get("intervalSurface")
+    for value in (surface.get("baseInterval") if isinstance(surface, dict) else None,
+                  snapshot.get("baseInterval"), snapshot.get("frequency")):
+        if isinstance(value, str) and value:
+            return value
+    return None
+
+
 def study_fingerprint(project: ProjectContext, study_id: str) -> dict[str, Any] | None:
     """Deterministic question fingerprint for one Study of one Project.
 
@@ -123,7 +142,11 @@ def study_fingerprint(project: ProjectContext, study_id: str) -> dict[str, Any] 
     - ``scope.objective``: fixed selection metric and direction;
     - ``scope.target``: caller-owned Factor claim/outcome and trade direction;
     - ``scope.universe``: sorted request assets and sorted prediction assets;
-    - ``scope.horizon``: the bound primary forward-bar horizon;
+    - ``scope.horizon``: the bound primary forward-bar horizon and the bar
+      period (base interval) of the bound dataset, so five daily bars and
+      five hourly bars are different questions. A missing interval stays
+      ``None`` (nothing is defaulted) and is left out of the hashes, which
+      keeps the ids of families whose interval is unknown;
     - ``scope.splitProtocol``: selection split implied by the objective and
       the fixed Judge entrypoint that owns the split.
 
@@ -158,7 +181,8 @@ def study_fingerprint(project: ProjectContext, study_id: str) -> dict[str, Any] 
             "direction": request.get("direction") if request else None,
         },
         "universe": {"assets": assets, "predictionAssets": _sorted_strings(factor_policy.get("predictionAssets"))},
-        "horizon": {"primaryForwardBars": primary if isinstance(primary, int) and not isinstance(primary, bool) else None},
+        "horizon": {"primaryForwardBars": primary if isinstance(primary, int) and not isinstance(primary, bool) else None,
+                    "barInterval": bar_interval(project)},
         "splitProtocol": {
             "selectionSplit": metric.split("_", 1)[0] if isinstance(metric, str) and "_" in metric else None,
             "judgeEntrypoint": (study.get("judge") or {}).get("entrypoint"),
@@ -166,8 +190,11 @@ def study_fingerprint(project: ProjectContext, study_id: str) -> dict[str, Any] 
     }
     fingerprint = {"method": FINGERPRINT_METHOD, "question": question, "scope": scope,
                    "questionSource": "request" if request else "project-description"}
-    fingerprint["scopeHash"] = _canonical_hash(scope)
-    fingerprint["hash"] = _canonical_hash({"question": question, "scope": scope})
+    hashed = json.loads(json.dumps(scope))
+    if hashed["horizon"]["barInterval"] is None:
+        del hashed["horizon"]["barInterval"]
+    fingerprint["scopeHash"] = _canonical_hash(hashed)
+    fingerprint["hash"] = _canonical_hash({"question": question, "scope": hashed})
     fingerprint["familyId"] = "tf-" + fingerprint["hash"][:16]
     return fingerprint
 
@@ -224,7 +251,7 @@ def _workspace_projects(root: Path) -> list[ProjectContext]:
 
 def _validate_family(raw: Any, path: Path) -> dict[str, Any]:
     keys = {"schemaVersion", "kind", "id", "fingerprint", "createdAt", "members", "declarations", "trials"}
-    if not isinstance(raw, dict) or set(raw) != keys or raw["kind"] != FAMILY_KIND or raw["schemaVersion"] != SCHEMA_VERSION:
+    if not isinstance(raw, dict) or not keys <= set(raw) <= keys | {"migratedFrom"} or raw["kind"] != FAMILY_KIND or raw["schemaVersion"] != SCHEMA_VERSION:
         raise _issue(path, "trial-family.schema", "Trial-family ledger file has an unsupported shape")
     if not isinstance(raw["id"], str) or not FAMILY_ID.fullmatch(raw["id"]) or path.stem != raw["id"]:
         raise _issue(path, "trial-family.id", "Trial-family file name must equal its id")
@@ -387,6 +414,7 @@ def family_state(project: ProjectContext, study_id: str, *, cutoff: str | None =
         "memberProjects": sorted({pid for pid, _ in members}),
         "deskTrialCount": len(first_seen),
         "otherProjectTrials": len(other),
+        "otherProjects": sorted({k[0] for k in other}),
         "otherProjectTrialsHash": _canonical_hash([list(k) for k in other]),
         "registered": family_id in ledger,
         "cutoff": cutoff if cutoff is not None else "current",

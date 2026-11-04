@@ -1166,7 +1166,7 @@ class ActionService:
         }
         return Evaluation([], trial, self._fingerprint(project))
 
-    def _argv(self, project_id: str, params: dict[str, str]) -> list[str]:
+    def _argv(self, project_id: str, params: dict[str, str], confirm_trial: bool = False) -> list[str]:
         argv = [
             sys.executable,
             "-m",
@@ -1182,11 +1182,12 @@ class ActionService:
             params["session"],
             "--hypothesis",
             params["hypothesis"],
-            # Studio's per-trial confirmation is the human acknowledgement the
-            # Core trial gate requires; Core still enforces budget/declaration.
-            "--confirm-trial",
-            "--json",
         ]
+        if confirm_trial:
+            # Studio's per-trial confirmation is the human acknowledgement the
+            # Core trial gate requires only for cross-Project repetition.
+            argv.append("--confirm-trial")
+        argv.append("--json")
         return argv
 
     def _base_argv(self, group: str, verb: str, project_id: str) -> list[str]:
@@ -1403,9 +1404,9 @@ class ActionService:
         if action_id == EVALUATE_ID:
             params = validate_evaluate_params(body.get("params"))
             evaluation = self._evaluate(project, params["session"])
-            _studio_trial_gate(project, load_session(project, params["session"]).manifest["studyId"])
+            confirm_trial = _studio_trial_gate(project, load_session(project, params["session"]).manifest["studyId"])
             return Prepared(
-                project, action_id, params, self._argv(pid, params),
+                project, action_id, params, self._argv(pid, params, confirm_trial),
                 evaluation.fingerprint, evaluation.trial,
             )
         if action_id == CHECK_ID:
@@ -1422,8 +1423,10 @@ class ActionService:
                 "params/study", "study.missing", f"Unknown Study: {params['study']}"
             )
         self._start_block(project, params["study"])
-        _studio_trial_gate(project, params["study"])
-        argv = self._base_argv("session", "start", pid) + ["--study", params["study"], "--confirm-trial"]
+        confirm_trial = _studio_trial_gate(project, params["study"])
+        argv = self._base_argv("session", "start", pid) + ["--study", params["study"]]
+        if confirm_trial:
+            argv.append("--confirm-trial")
         if "request" in params:
             request = confine_workspace_path(self.root, params["request"], "params/request")
             if not request.is_file():
@@ -1695,8 +1698,12 @@ def failure(error: ActionError) -> dict[str, Any]:
     }
 
 
-def _studio_trial_gate(project: ProjectContext, study_id: str) -> None:
-    """Apply the same Core trial gate the CLI enforces, before any confirmation."""
+def _studio_trial_gate(project: ProjectContext, study_id: str) -> bool:
+    """Apply the same Core trial gate the CLI enforces, before any confirmation.
+
+    Returns whether the launched argv must carry ``--confirm-trial`` (the
+    Study's family already has trials from another Project).
+    """
 
     from .cli_contract import CliCommandError
     from .trial_gate import gate_state
@@ -1710,3 +1717,4 @@ def _studio_trial_gate(project: ProjectContext, study_id: str) -> None:
                           f"Core trial gate refused {study_id}: {state['refusal']} "
                           f"(family {state['familyId']}, {state['budget']['usedInWindow']}/"
                           f"{state['budget']['maxCountedTrialsPerFamily']} in {state['budget']['windowDays']} days)")
+    return bool(state and state["confirmationRequired"])

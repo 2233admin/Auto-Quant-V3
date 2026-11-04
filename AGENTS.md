@@ -166,9 +166,12 @@ brief that another Agent can recover from the filesystem.
 
 Every counted trial passes the Core trial gate. `aq run execute`,
 `aq session start`, `aq experiment evaluate` and `aq research run` on a Study
-with editable source refuse with `trial-gate.confirmation-required` until you
-pass `--confirm-trial`; pass it only after deciding the trial is worth
-spending. `trial-gate.budget-exhausted` (desk policy
+with editable source count against the desk budget. Your own consecutive
+trials in a family only your Project has touched need no flag. When the
+family already has trials from another Project they refuse with
+`trial-gate.confirmation-required` ("family tf-... already has N trials from
+Projects A, B") until you pass `--confirm-trial`; pass it only after deciding
+the repetition is worth spending. `trial-gate.budget-exhausted` (desk policy
 `autoquant-research-policy.json`, default 20 per family per 30 days) and
 `trial-gate.family-declaration-required` are not overridable by a flag. The
 desk counts trials per question across Projects: before creating a Project for
@@ -564,7 +567,7 @@ Read the relevant linked document before changing a subsystem:
 - Desk-level question fingerprints, the trial-family ledger, caller
   declarations and desk-wide trial counts:
   [[docs/design/desk-trial-families]]
-- Per-desk research budget, `--confirm-trial`, stable refusal codes, and
+- Per-desk research budget, cross-Project `--confirm-trial`, stable refusal codes, and
   host custody of the external holdout: [[docs/design/core-trial-gate]]
 - Versioned `handoff.json`, primary deliverable directory, caller-owned
   validity and verdict/OrderIntent rules: [[docs/design/research-handoff]]

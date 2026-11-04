@@ -19,7 +19,7 @@ from autoquant.cli import main
 from autoquant.handoff import HANDOFF_FILE, RESEARCH_HANDOFF_JSON_SCHEMA
 from autoquant.market_data_identity import decode_openalice_source_uri, encode_openalice_source_uri
 from autoquant.research_verdict import factor_development_verdict
-from autoquant.trial_families import family_state, load_ledger, normalize_question
+from autoquant.trial_families import family_state, load_ledger, normalize_question, study_fingerprint
 from autoquant.trial_family_ledger import register_project
 from autoquant.workspace import load_project
 from tests.test_selection import fake_run
@@ -77,7 +77,7 @@ class DeskResearchTests(unittest.TestCase):
         assert code == 0, result
         cls.dataset = cls.base / "staging" / "openalice" / "dataset-package.json"
         cls.intake("reversal-a", request())
-        code, run = aq("run", "execute", str(cls.base), "--project", "reversal-a", "--study", STUDY, "--confirm-trial")
+        code, run = aq("run", "execute", str(cls.base), "--project", "reversal-a", "--study", STUDY)
         assert code == 0, run
         cls.run_a = run["data"]["run"]["id"] if "run" in run["data"] else run["data"]["id"]
 
@@ -150,7 +150,7 @@ class DeskResearchTests(unittest.TestCase):
         family = created["data"]["trialFamilies"][0]
         self.assertTrue(family["declarationRequired"])
         self.assertIn("family.declare", [item["id"] for item in created["nextActions"]])
-        code, refused = aq("run", "execute", str(workspace), "--project", "reworded", "--study", STUDY, "--confirm-trial")
+        code, refused = aq("run", "execute", str(workspace), "--project", "reworded", "--study", STUDY)
         self.assertEqual(code, 1)
         self.assertEqual(refused["error"]["code"], "trial-gate.family-declaration-required")
         a_id = family_state(load_project(workspace / "projects" / "reversal-a"), STUDY)["id"]
@@ -172,6 +172,51 @@ class DeskResearchTests(unittest.TestCase):
         self.assertEqual(code, 0, declared)
         self.assertEqual(declared["data"]["otherProjectTrials"], 0)
         self.assertFalse(family_state(load_project(workspace / "projects" / "reversal-a"), STUDY)["declarationRequired"])
+
+    def test_bar_interval_separates_families_and_a_missing_interval_stays_null(self) -> None:
+        workspace = self.copy()
+        project = load_project(workspace / "projects" / "reversal-a")
+        daily = study_fingerprint(project, STUDY)
+        self.assertEqual(daily["scope"]["horizon"], {"primaryForwardBars": 5, "barInterval": "1d"})
+        snapshot = workspace / "projects" / "reversal-a" / "data" / "ohlcv" / "snapshot.json"
+        body = json.loads(snapshot.read_text(encoding="utf-8"))
+        body["frequency"] = "1h"
+        snapshot.write_text(json.dumps(body), encoding="utf-8")
+        hourly = study_fingerprint(project, STUDY)
+        self.assertEqual(hourly["scope"]["horizon"]["barInterval"], "1h")
+        self.assertNotEqual(hourly["familyId"], daily["familyId"])
+        self.assertNotEqual(hourly["scopeHash"], daily["scopeHash"])
+        del body["frequency"]
+        snapshot.write_text(json.dumps(body), encoding="utf-8")
+        unknown = study_fingerprint(project, STUDY)
+        self.assertIsNone(unknown["scope"]["horizon"]["barInterval"])
+        self.assertNotIn(unknown["familyId"], (daily["familyId"], hourly["familyId"]))
+
+    def test_legacy_families_migrate_to_the_interval_fingerprint_keeping_every_trial(self) -> None:
+        workspace = self.copy()
+        project = load_project(workspace / "projects" / "reversal-a")
+        current = family_state(project, STUDY)
+        with mock.patch("autoquant.trial_families.bar_interval", return_value=None):
+            legacy = study_fingerprint(project, STUDY)
+        self.assertNotEqual(legacy["familyId"], current["id"])
+        directory = workspace / "trial-families"
+        body = json.loads((directory / f"{current['id']}.json").read_text(encoding="utf-8"))
+        (directory / f"{current['id']}.json").unlink()
+        body["id"] = legacy["familyId"]
+        body["fingerprint"] = {k: legacy[k] for k in ("method", "question", "scope", "scopeHash", "hash")}
+        body["fingerprint"]["method"] = "question-and-caller-scope-v1"
+        (directory / f"{legacy['familyId']}.json").write_text(json.dumps(body), encoding="utf-8")
+        register_project(project)
+        migrated = load_ledger(workspace)
+        self.assertEqual(sorted(migrated), [current["id"]])
+        self.assertEqual(len(migrated[current["id"]]["trials"]), len(body["trials"]))
+        self.assertEqual(migrated[current["id"]]["migratedFrom"], [legacy["familyId"]])
+        mapping = json.loads((directory / "migrations.json").read_text(encoding="utf-8"))["mappings"]
+        self.assertEqual([(m["from"], m["to"], m["trialCount"]) for m in mapping],
+                         [(legacy["familyId"], current["id"], len(body["trials"]))])
+        self.assertEqual(family_state(project, STUDY)["deskTrialCount"], current["deskTrialCount"])
+        self.assertEqual(register_project(project), [])
+        self.assertEqual(len(json.loads((directory / "migrations.json").read_text(encoding="utf-8"))["mappings"]), 1)
 
     def test_registration_is_idempotent_and_reads_never_write(self) -> None:
         workspace = self.copy()
@@ -207,22 +252,38 @@ class DeskResearchTests(unittest.TestCase):
 
     # -- Core trial gate -------------------------------------------------
 
-    def test_gate_requires_confirmation_and_enforces_the_desk_budget(self) -> None:
+    def test_own_repeated_trials_need_no_confirmation_but_cross_project_repetition_does(self) -> None:
         workspace = self.copy()
-        code, refused = aq("run", "execute", str(workspace), "--project", "reversal-a", "--study", STUDY)
+        code, again = aq("run", "execute", str(workspace), "--project", "reversal-a", "--study", STUDY)
+        self.assertEqual(code, 0, again)
+        self.intake("reversal-b", request(), workspace)
+        code, refused = aq("run", "execute", str(workspace), "--project", "reversal-b", "--study", STUDY)
         self.assertEqual(code, 1)
         self.assertEqual(refused["error"]["code"], "trial-gate.confirmation-required")
-        self.assertEqual(refused["context"]["trialGate"]["nextTrial"], 2)
-        self.assertEqual(refused["context"]["trialGate"]["budget"]["maxCountedTrialsPerFamily"], 20)
+        self.assertIn("already has 1 trials from Projects reversal-a", refused["error"]["message"])
+        gate = refused["context"]["trialGate"]
+        self.assertEqual((gate["otherProjects"], gate["nextTrial"], gate["confirmationRequired"]),
+                         (["reversal-a"], 2, True))
+        code, confirmed = aq("run", "execute", str(workspace), "--project", "reversal-b", "--study", STUDY,
+                             "--confirm-trial")
+        self.assertEqual(code, 0, confirmed)
+        # Once another Project joined, the first Project is now the one repeating across Projects.
+        code, refused = aq("run", "execute", str(workspace), "--project", "reversal-a", "--study", STUDY)
+        self.assertEqual(refused["error"]["code"], "trial-gate.confirmation-required")
+        self.assertIn("reversal-b", refused["error"]["message"])
+
+    def test_gate_enforces_the_desk_budget_and_policy_validity(self) -> None:
+        workspace = self.copy()
         policy = workspace / "autoquant-research-policy.json"
         policy.write_text(json.dumps({"schemaVersion": 1, "kind": "autoquant-research-policy",
                                       "trialBudget": {"maxCountedTrialsPerFamily": 1, "windowDays": 30}}), encoding="utf-8")
         runs_before = sorted((workspace / "projects" / "reversal-a" / "runs").iterdir())
-        code, refused = aq("run", "execute", str(workspace), "--project", "reversal-a", "--study", STUDY, "--confirm-trial")
+        code, refused = aq("run", "execute", str(workspace), "--project", "reversal-a", "--study", STUDY)
         self.assertEqual(refused["error"]["code"], "trial-gate.budget-exhausted")
+        self.assertEqual(refused["context"]["trialGate"]["budget"]["maxCountedTrialsPerFamily"], 1)
         self.assertEqual(sorted((workspace / "projects" / "reversal-a" / "runs").iterdir()), runs_before)
         policy.write_text("{}", encoding="utf-8")
-        code, refused = aq("run", "execute", str(workspace), "--project", "reversal-a", "--study", STUDY, "--confirm-trial")
+        code, refused = aq("run", "execute", str(workspace), "--project", "reversal-a", "--study", STUDY)
         self.assertEqual(refused["error"]["code"], "trial-gate.policy-invalid")
 
     def test_orient_and_capabilities_expose_family_budget_and_handoff(self) -> None:
@@ -246,6 +307,13 @@ class DeskResearchTests(unittest.TestCase):
         with self.assertRaises(ActionError) as caught:
             _studio_trial_gate(load_project(workspace / "projects" / "reversal-a"), STUDY)
         self.assertEqual(caught.exception.code, "trial-gate.budget-exhausted")
+
+    def test_studio_confirmation_flag_only_for_cross_project_repetition(self) -> None:
+        from autoquant.studio_actions import _studio_trial_gate
+        workspace = self.copy()
+        self.assertFalse(_studio_trial_gate(load_project(workspace / "projects" / "reversal-a"), STUDY))
+        self.intake("reversal-b", request(), workspace)
+        self.assertTrue(_studio_trial_gate(load_project(workspace / "projects" / "reversal-b"), STUDY))
 
     # -- handoff.json ------------------------------------------------------
 

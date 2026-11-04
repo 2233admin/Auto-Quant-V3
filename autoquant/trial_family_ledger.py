@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from .trial_families import (DECLARATIONS, FAMILY_ID, FAMILY_KIND, LEDGER_DIRECTORY, SCHEMA_VERSION, _declared,
+from .trial_families import (DECLARATIONS, FINGERPRINT_METHOD, LEGACY_FINGERPRINT_METHODS, FAMILY_ID, FAMILY_KIND, LEDGER_DIRECTORY, SCHEMA_VERSION, _declared,
                              _holdout_bound, _issue, _live_index, _live_trials, _resolve, _study_ids,
                              _workspace_projects, family_state, load_ledger, now_utc, study_fingerprint,
                              workspace_root_for)
@@ -35,6 +35,76 @@ def _new_family(fingerprint: dict[str, Any]) -> dict[str, Any]:
         "createdAt": now_utc(), "members": [], "declarations": [], "trials": [],
     }
 
+MIGRATION_FILE = "migrations.json"
+
+
+def migrate_ledger(root: Path) -> list[dict[str, str]]:
+    """Move families fingerprinted by an older method to their current ids.
+
+    The fingerprint now includes the bar interval, so a family whose live
+    fingerprint-joined members all resolve to one different id is renamed to
+    that id. Members, declarations and trials are carried over unchanged (two
+    files that collapse onto one id are merged, deduplicated), id references in
+    other declarations are rewritten, and every move is appended to
+    ``trial-families/migrations.json`` so no counted trial is lost or
+    unattributable. Families with no live fingerprint-joined member keep their
+    id. Returns the new mappings.
+    """
+
+    ledger = load_ledger(root)
+    legacy = [f for f in ledger.values() if f["fingerprint"].get("method") in LEGACY_FINGERPRINT_METHODS]
+    if not legacy:
+        return []
+    live = _live_index(root)
+    mapping: dict[str, str] = {}
+    for family in legacy:
+        targets = {live[(m["projectId"], m["studyId"])]["fingerprint"]["familyId"]
+                   for m in family["members"]
+                   if m.get("joinedBy") == "fingerprint" and (m["projectId"], m["studyId"]) in live}
+        if len(targets) == 1 and next(iter(targets)) != family["id"]:
+            mapping[family["id"]] = next(iter(targets))
+    if not mapping:
+        return []
+    rewritten: dict[str, dict[str, Any]] = {}
+    for family in ledger.values():
+        new_id = mapping.get(family["id"], family["id"])
+        family = json.loads(json.dumps(family))
+        if new_id != family["id"]:
+            source = next(e["fingerprint"] for e in live.values() if e["fingerprint"]["familyId"] == new_id)
+            family["id"] = new_id
+            family["fingerprint"] = {k: source[k] for k in ("method", "question", "scope", "scopeHash", "hash")}
+            family["migratedFrom"] = sorted({*family.get("migratedFrom", []), *[o for o, n in mapping.items() if n == new_id]})
+        for item in family["declarations"]:
+            item["relatedFamilyIds"] = sorted({mapping.get(i, i) for i in item.get("relatedFamilyIds", [])})
+        existing = rewritten.get(new_id)
+        if existing is not None:
+            for key, ident in (("members", lambda m: (m["projectId"], m["studyId"])),
+                               ("declarations", lambda d: (d["projectId"], d["studyId"])),
+                               ("trials", lambda t: (t["projectId"], t["studyId"], t["runId"]))):
+                seen = {ident(i) for i in existing[key]}
+                existing[key] += [i for i in family[key] if ident(i) not in seen]
+            existing["migratedFrom"] = sorted({*existing.get("migratedFrom", []), *family.get("migratedFrom", [])})
+            existing["createdAt"] = min(existing["createdAt"], family["createdAt"])
+            family = existing
+        family["members"].sort(key=lambda m: (m["projectId"], m["studyId"]))
+        family["trials"].sort(key=lambda t: (t["completedAt"], t["projectId"], t["runId"]))
+        rewritten[new_id] = family
+    for family in rewritten.values():
+        _write_family(root, family)
+    for old_id in mapping:
+        if old_id not in rewritten:
+            (root / LEDGER_DIRECTORY / f"{old_id}.json").unlink()
+    path = root / LEDGER_DIRECTORY / MIGRATION_FILE
+    record = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {"schemaVersion": 1, "mappings": []}
+    stamp = now_utc()
+    moves = [{"from": old, "to": new, "fromMethod": ledger[old]["fingerprint"].get("method"),
+              "toMethod": FINGERPRINT_METHOD, "trialCount": len(ledger[old]["trials"]), "migratedAt": stamp}
+             for old, new in sorted(mapping.items())]
+    record["mappings"] += moves
+    path.write_text(json.dumps(record, indent=2, sort_keys=True) + chr(10), encoding="utf-8")
+    return moves
+
+
 def register_project(project: ProjectContext) -> list[dict[str, Any]]:
     """Idempotently register every Study membership and Run of ``project``.
 
@@ -46,6 +116,7 @@ def register_project(project: ProjectContext) -> list[dict[str, Any]]:
     root = workspace_root_for(project)
     if root is None or _holdout_bound(project):
         return []
+    migrate_ledger(root)
     ledger = load_ledger(root)
     live = _live_index(root)
     changed: dict[str, dict[str, Any]] = {}
@@ -94,6 +165,7 @@ def declare_family(project: ProjectContext, study_id: str, declaration: str,
         raise _issue(project.root_dir, "trial-family.unavailable", "The Project Study is not inside an effective Workspace")
     if declaration not in DECLARATIONS:
         raise _issue("declaration", "trial-family.declaration", "Declaration must be same-family or new-hypothesis")
+    migrate_ledger(root)
     ledger = load_ledger(root)
     live = _live_index(root)
     if _declared(ledger, project.manifest.id, study_id) is not None:

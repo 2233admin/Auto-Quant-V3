@@ -114,7 +114,8 @@ live in Core ([[docs/design/core-trial-gate]]) and bind every `aq` caller,
 including OpenAlice's native Agent. Assistant previews go through the same
 Studio action preview, which calls the Core gate before a confirmation is
 offered and refuses with the Core code; an accepted confirmation launches the
-exact argv with `--confirm-trial`, and Core enforces again at execution. The
+exact argv, with `--confirm-trial` only when the family already has trials from
+another Project, and Core enforces again at execution. The
 per-conversation budget above remains an additional owner-chosen cap.
 
 ## Verification and remaining completion gates

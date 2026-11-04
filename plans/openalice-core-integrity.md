@@ -39,7 +39,7 @@ versioned `handoff.json`.
 - [x] A restyled question in a renamed Project joins; another horizon does not.
 - [x] Desk-inherited trials turn a synthetic Supported Factor Inconclusive.
 - [x] Registration is idempotent; reads never write.
-- [x] Budget refusal and `--confirm-trial` path, with stable codes.
+- [x] Budget refusal and cross-Project `--confirm-trial` path, with stable codes.
 - [x] OpenAlice fixture packages into a dataset strict intake and `aq validate` accept.
 - [x] `aq handoff` writes a schema-valid `handoff.json` for an Inconclusive Run;
       missing validity refuses; no OrderIntent invented.
