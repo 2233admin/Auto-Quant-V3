@@ -1,4 +1,4 @@
-import { uiTemplate, uiText, uiValue } from '../../i18n'
+import { coreWord, uiTemplate, uiText, uiValue } from '../../i18n'
 import { useState, type ReactNode } from 'react'
 import type { ProjectSnapshot } from '../../api'
 import { Info } from '../../components/Info'
@@ -16,7 +16,7 @@ import './rl.css'
 import { Empty } from '../../components/States'
 
 type Split = 'validation' | 'test'
-const words = (s: string | undefined | null) => (s ? s.replaceAll('-', ' ').replaceAll('_', ' ') : '—')
+const words = coreWord
 const label = (t: { fold: string; seed: number }) => `${t.fold.replace('fold-', 'F')} · s${t.seed}`
 
 /** The server's own boolean: did RL add value over the best validation baseline? Nothing else decides the word. */
@@ -60,7 +60,7 @@ function TrialTable({ r, split }: { r: RlDiagnostics; split: Split }) {
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">{uiText("Every declared fold and seed, ")}{split}{uiText(". Advantage is RL net Sharpe minus the baseline selected for that fold on validation.")}</caption>
+        <caption className="small muted">{uiText("Every declared fold and seed, ")}{uiText(split)}{uiText(". Advantage is RL net Sharpe minus the baseline selected for that fold on validation.")}</caption>
         <thead>
           <tr>
             <th scope="col">{uiText("Trial")}</th>
@@ -114,7 +114,7 @@ function BaselineMatrix({ r, split }: { r: RlDiagnostics; split: Split }) {
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">{uiText("Net Sharpe of every declared comparator in each fold, ")}{split}{uiText(". The bold marked cell is the baseline the fixed Judge selected on validation. Each fold is shown on its own; no average across folds is computed here.")}</caption>
+        <caption className="small muted">{uiText("Net Sharpe of every declared comparator in each fold, ")}{uiText(split)}{uiText(". The bold marked cell is the baseline the fixed Judge selected on validation. Each fold is shown on its own; no average across folds is computed here.")}</caption>
         <thead>
           <tr>
             <th scope="col">{uiText("Comparator")}</th>
@@ -149,7 +149,7 @@ function ActionDetail({ r, split }: { r: RlDiagnostics; split: Split }) {
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">{uiText("Action use, implementation and execution risk for every trial, ")}{split}.</caption>
+        <caption className="small muted">{uiText("Action use, implementation and execution risk for every trial, ")}{uiText(split)}.</caption>
         <thead>
           <tr>
             <th scope="col">{uiText("Trial")}</th>

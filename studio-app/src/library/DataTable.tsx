@@ -135,7 +135,7 @@ export function DataTable<T>({
         </tbody>
       </table>
       </div>
-      <EndOfList label={uiTemplate("End of list · {0} {1}", [rows.length, rows.length === 1 ? 'row' : 'rows'])} />
+      <EndOfList label={rows.length === 1 ? uiText("End of list · 1 row") : uiTemplate("End of list · {0} rows", [rows.length])} />
     </>
   )
 }

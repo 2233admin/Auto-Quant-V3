@@ -40,6 +40,12 @@ export function uiText(value: string): string {
       item.indices.forEach((index, n) => { values[index] = found[n + 1] })
       return item.copy.replace(/\{(\d+)\}/g, (_, index: string) => values[Number(index)] ?? '')
     }
+    // A composed line ("Analysis complete · Stage count not recorded") translates part by part.
+    if (key.includes(' · ')) {
+      const parts = key.split(' · ')
+      const done = parts.map((part) => (catalog as Record<string, string>)[part] ?? part)
+      if (done.some((part, index) => part !== parts[index])) return done.join(' · ')
+    }
     return value
   }
   const leading = value.match(/^\s*/)?.[0] ?? ''
@@ -51,6 +57,13 @@ export function uiTemplate(key: string, values: unknown[]): string {
   key = decodeUiText(key)
   const copy = language === 'zh' ? (catalog as Record<string, string>)[key] ?? key : key
   return copy.replace(/\{(\d+)\}/g, (_, index: string) => String(values[Number(index)]))
+}
+
+/** A Core vocabulary id ("dollar-neutral") as words: its Chinese label when the catalogue has one, else the id with spaces. */
+export function coreWord(value: string | undefined | null): string {
+  if (!value) return '—'
+  if (language === 'zh') { const translated = (catalog as Record<string, string>)[value]; if (translated) return translated }
+  return value.replaceAll('-', ' ').replaceAll('_', ' ')
 }
 
 export function uiValue<T>(value: T): T {

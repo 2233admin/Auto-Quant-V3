@@ -201,8 +201,8 @@ export function spreadGroups(study: FactorDiagnostics, testShown: boolean): Metr
   if (!validation) return []
   const info = SPREAD_INFO(sum.basis)
   return [
-    { heading: uiText("Long-short · validation"), info, infoLabel: 'Long-short definition', tiles: spreadTiles(validation) },
-    ...(test ? [{ heading: uiText("Long-short · test audit"), info, infoLabel: 'Long-short definition', tiles: spreadTiles(test) }] : []),
+    { heading: uiText("Long-short · validation"), info, infoLabel: uiText('Long-short definition'), tiles: spreadTiles(validation) },
+    ...(test ? [{ heading: uiText("Long-short · test audit"), info, infoLabel: uiText('Long-short definition'), tiles: spreadTiles(test) }] : []),
   ]
 }
 

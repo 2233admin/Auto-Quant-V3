@@ -1,4 +1,4 @@
-import { uiTemplate, uiText } from '../../i18n'
+import { coreWord, uiTemplate, uiText } from '../../i18n'
 import type { ProjectSnapshot } from '../../api'
 import { Info } from '../../components/Info'
 import { MetricTile } from '../../components/MetricTile'
@@ -10,7 +10,7 @@ import { ArtifactList, LaneEmpty, LaneHead, Na, NaBox, ShareBars, StatusBand, We
 import type { BookRiskDiagnostics, Drawdown, Scenario, Sizing } from './laneTypes'
 import '../../components/components.css'
 
-const words = (s: string | undefined) => (s ? s.replaceAll('-', ' ') : '—')
+const words = coreWord
 const n0 = (v: number | null | undefined) => (finite(v) ? String(Math.round(v)) : '—')
 
 /** The server's own sizing enum is the only status this lane publishes; everything else is descriptive. */

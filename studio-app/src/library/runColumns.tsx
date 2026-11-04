@@ -37,7 +37,7 @@ export function runColumns(picked: string[], toggle: (key: string) => void): Col
   return [
     { id: 'pick', label: uiText('Select'), render: r => <input type="checkbox" aria-label={uiTemplate('Select {0} for comparison', [r.id])} checked={picked.includes(runKey(r))} onChange={() => toggle(runKey(r))} /> },
     { id: 'project', label: uiText('Project'), rowHeader: true, sort: r => r.project.name, render: r => <span className="run-project" translate="no" title={r.project.name}>{r.project.name}</span> },
-    { id: 'object', label: uiText('Object kind'), sort: r => r.objectKind, render: r => <span title={r.lane}>{uiText(r.objectKind)}</span> },
+    { id: 'object', label: uiText('Object kind'), sort: r => r.objectKind, render: r => <span title={uiText(r.lane)}>{uiText(r.objectKind)}</span> },
     { id: 'verdict', label: uiText('Verdict'), sort: r => r.verdict, render: r => runFailed(r) ? <span className="run-state" data-state={runStateWord(r)}>{uiText(runStateWord(r))}</span> : <span className="run-verdict">{uiText(r.verdict)}</span> },
     { id: 'metric', label: uiText('Validation metric'), sort: r => r.primaryMetric, render: r => <span className="run-metric" title={r.primaryMetric}>{bi(metricEntry(primaryMetricId(r.primaryMetric)).label)} <MetricInfo id={primaryMetricId(r.primaryMetric)} /></span> },
     { id: 'value', label: uiText('Value'), align: 'r', sort: r => r.primaryValue, render: r => <span className="run-value" data-sign={runFailed(r) ? undefined : isSignedMetric(r.primaryMetric) ? runSign(r) : undefined}>{r.primaryValue == null ? '—' : isSignedMetric(r.primaryMetric) ? signedNumber(r.primaryValue, 4) : r.primaryValue.toFixed(4)}</span> },

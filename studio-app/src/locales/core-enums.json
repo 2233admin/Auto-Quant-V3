@@ -1,0 +1,128 @@
+{
+ "status": [
+  "queued",
+  "running",
+  "succeeded",
+  "failed",
+  "cancelled",
+  "timed-out",
+  "crashed",
+  "pending",
+  "completed",
+  "idle",
+  "active",
+  "inactive",
+  "blocked",
+  "stale",
+  "promoted",
+  "published",
+  "closed",
+  "open",
+  "available",
+  "unavailable",
+  "withheld"
+ ],
+ "verdict": [
+  "Supported",
+  "Inconclusive",
+  "Not tested",
+  "Could not be tested",
+  "In progress",
+  "KEEP",
+  "REVERT",
+  "CRASH"
+ ],
+ "subject": [
+  "factor",
+  "model",
+  "portfolio",
+  "strategy"
+ ],
+ "timeline": [
+  "report",
+  "run",
+  "session",
+  "review",
+  "dossier",
+  "experiment",
+  "campaign",
+  "progress"
+ ],
+ "jobStage": [
+  "data checked",
+  "split frozen",
+  "candidate run",
+  "selection (validation)",
+  "test audit",
+  "candidate preflight",
+  "baseline run",
+  "session created",
+  "research desk created"
+ ],
+ "direction": [
+  "maximize",
+  "minimize"
+ ],
+ "role": [
+  "baseline",
+  "candidate",
+  "validation",
+  "train",
+  "test"
+ ],
+ "mode": [
+  "cross-sectional",
+  "temporal",
+  "none"
+ ],
+ "stage": [
+  "descriptive-audit-complete",
+  "adaptive-book-selection-negative",
+  "adaptive-value-positive",
+  "blend-uplift-absent",
+  "cost-fragile",
+  "decision-signal-positive",
+  "factor-edge-absent",
+  "factor-evidence-required",
+  "factor-not-monetized",
+  "factor-qualification-positive",
+  "implementation-cost-destroys-edge",
+  "known-style-identity-mismatch",
+  "known-style-validation-positive",
+  "optional-rl-in-progress",
+  "portfolio-evidence-required",
+  "post-cost-edge-positive",
+  "raw-predictive-edge-absent",
+  "raw-statistical-evidence-weak",
+  "required-research-complete",
+  "residual-temporal-instability",
+  "risk-adjusted-adaptive-value-absent",
+  "risk-forecast-positive",
+  "seed-fold-unstable",
+  "style-neutral-edge-absent",
+  "style-neutral-statistical-evidence-weak",
+  "signal-intent-negative",
+  "factor-signal"
+ ],
+ "outcome": [
+  "monetized-positive",
+  "signal-intent-negative",
+  "transmission-destroyed-edge",
+  "forward-return",
+  "exited"
+ ],
+ "vocabulary": [
+  "dollar-neutral",
+  "long-only",
+  "long-short",
+  "short-only",
+  "equal-weight-long-research-universe",
+  "robustness-only",
+  "context-only",
+  "diagnostic-only",
+  "observed-only",
+  "read-only",
+  "research-only",
+  "validation-only"
+ ]
+}

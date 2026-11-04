@@ -1,4 +1,4 @@
-import { uiTemplate, uiText } from '../../i18n'
+import { coreWord, uiTemplate, uiText } from '../../i18n'
 import type { ProjectSnapshot } from '../../api'
 import { Info } from '../../components/Info'
 import { HeroLine, HeroTiles, type HeroTile } from '../hero'
@@ -9,7 +9,7 @@ import { ArtifactList, DivergingBars, LaneEmpty, LaneHead, Na, NaBox, StatusBand
 import type { PathStressDiagnostics } from './laneTypes'
 import '../../components/components.css'
 
-const words = (s: string | undefined | null) => (s ? s.replaceAll('-', ' ') : '—')
+const words = coreWord
 const n0 = (v: number | null | undefined) => (finite(v) ? String(Math.round(v)) : '—')
 
 export function BookStressPage({ project }: { project: ProjectSnapshot }) {

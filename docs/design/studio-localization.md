@@ -34,12 +34,23 @@ Stress, Allocation, governed RL, Event Study, shared charts, dialogs and the
 component gallery. Scientific symbols such as IC, HAC, Sharpe and Python may
 remain recognizable technical notation alongside translated labels.
 
+Core vocabulary shown as words (status, stage, verdict, subject kind, mandate and
+benchmark ids) goes through the same catalogue: `coreWord(id)` returns the
+Chinese label or the id with spaces, and a composed line such as "Analysis
+complete · Stage count not recorded" translates part by part around ` · `. The
+known Core enum values live in `studio-app/src/locales/core-enums.json`; the
+inventory gate fails when one has no Chinese entry. Raw field paths quoted as
+evidence (for example `strategyViability.diagnosis.stage = ...`), identifiers,
+metric ids and Study-authored names stay as published.
+
 ## Verification
 
 - `pnpm check:i18n` uses the TypeScript parser to inventory remaining raw
   English JSX copy and display attributes. Code blocks and explicitly
-  untranslated content are excluded. This is a static gate, not a browser
-  acceptance claim for arbitrary runtime data.
+  untranslated content are excluded. It also fails on any `uiText` /
+  `uiValue` / `uiTemplate` literal without a catalogue entry and on any Core
+  enum value in `core-enums.json` without a Chinese label. This is a static
+  gate, not a browser acceptance claim for arbitrary runtime data.
 - `pnpm test:ui` checks the existing evidence gates and presentation, plus
   Chinese/English lookup, interpolation, authored JSX entities, original user
   names and commands, numerical fidelity and canonical verdict states.

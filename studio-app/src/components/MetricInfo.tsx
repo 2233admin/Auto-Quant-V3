@@ -34,7 +34,7 @@ export function MetricExplanation({ id, extra }: { id: MetricId; extra?: ReactNo
 /** The "?" for one metric, through the shared Info popover. `label` is the visible label (already localized). */
 export function MetricInfo({ id, label, extra, align }: { id: MetricId; label?: string; extra?: ReactNode; align?: 'start' | 'end' }) {
   return (
-    <Info label={uiTemplate("{0}: definition", [label ?? bi(metricEntry(id).label)])} align={align}>
+    <Info label={uiTemplate("{0}: definition", [uiText(label ?? bi(metricEntry(id).label))])} align={align}>
       <MetricExplanation id={id} extra={extra} />
     </Info>
   )

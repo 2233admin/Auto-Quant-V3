@@ -48,7 +48,7 @@ export function CompactTile({
       <dt className="ct-label">
         <span className="ct-label-text">{uiValue(label)}</span>
         {micro && <i className="mk ct-micro" aria-hidden="true">{micro}</i>}
-        {metric ? <MetricInfo id={metric} label={label} extra={info} /> : info && <Info label={uiTemplate("{0}: definition", [label])}>{info}</Info>}
+        {metric ? <MetricInfo id={metric} label={label} extra={info} /> : info && <Info label={uiTemplate("{0}: definition", [uiText(label)])}>{info}</Info>}
       </dt>
       <dd className="ct-right">
         {t && (

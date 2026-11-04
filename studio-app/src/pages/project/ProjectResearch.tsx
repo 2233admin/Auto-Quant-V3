@@ -479,7 +479,7 @@ export function QuestionBlock({ project }: { project: ProjectSnapshot }) {
             {claim?.tradingAuthority && (
               <>
                 <dt>{uiText("Trading authority")}</dt>
-                <dd className="mono">{claim.tradingAuthority}</dd>
+                <dd className="mono">{uiValue(claim.tradingAuthority)}</dd>
               </>
             )}
             {horizon?.primaryForwardBars !== undefined && (
@@ -595,7 +595,7 @@ export function NextMoveBlock({ project }: { project: ProjectSnapshot }) {
       )}
       {action?.description ? (
         <>
-          <p>{action.description}</p>
+          <p>{uiValue(action.description)}</p>
           {action.display && (
             <pre className="cmd mono" translate="no">
               {action.display}
@@ -607,7 +607,7 @@ export function NextMoveBlock({ project }: { project: ProjectSnapshot }) {
       )}
       <p className="muted small">
         {brief.focus?.studyName ? uiTemplate("Study {0}", [brief.focus.studyName]) : uiText("Next move")}
-        {brief.authority && <>{uiText(" · trading authority ")}{brief.authority.tradingAuthority}</>}
+        {brief.authority && <>{uiText(" · trading authority ")}{uiValue(brief.authority.tradingAuthority)}</>}
         <Info label={uiText("About this move")}>
           {brief.reasons && brief.reasons.some((r) => r.message !== review?.detail) && (
             <ul className="pj-list">

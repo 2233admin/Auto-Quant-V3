@@ -1,4 +1,4 @@
-import { uiTemplate, uiText } from '../../i18n'
+import { coreWord, uiTemplate, uiText } from '../../i18n'
 import type { ReactNode } from 'react'
 import { MetricTile } from '../../components/MetricTile'
 import { day, finite, fn, NA, sn, sp, up } from '../portfolio/pfmt'
@@ -6,7 +6,7 @@ import { ActionSwatch } from './RlCharts'
 import type { FusionSplit, RlDiagnostics } from './rlTypes'
 
 type Split = 'validation' | 'test'
-const words = (s: string | undefined | null) => (s ? s.replaceAll('-', ' ').replaceAll('_', ' ') : '—')
+const words = coreWord
 const label = (t: { fold: string; seed: number }) => `${t.fold.replace('fold-', 'F')} · s${t.seed}`
 
 function Legacy({ children }: { children: string }) {

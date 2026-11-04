@@ -1,4 +1,4 @@
-import { uiTemplate, uiText, uiValue } from '../../i18n'
+import { coreWord, uiTemplate, uiText, uiValue } from '../../i18n'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { ProjectSnapshot } from '../../api'
 import { Section } from '../../design/layout'
@@ -85,7 +85,7 @@ export function portfolioMetricGroups(pf: PortfolioDiagnostics, split: Split): M
     {
       heading: label,
       micro: `METRICS / ${split === 'validation' ? 'VALID' : 'TEST'}`,
-      label: uiTemplate("Core numbers, {0} split", [split]),
+      label: uiTemplate("Core numbers, {0} split", [uiText(split)]),
       tiles: [
         ...METRICS.filter((m) => m.key !== 'calmar' || finite(v.net?.calmar)).map((m) => {
           const bench = v.benchmark?.[m.key]
@@ -111,11 +111,11 @@ export function portfolioMetricGroups(pf: PortfolioDiagnostics, split: Split): M
 export function portfolioVerdictStats(netSplit: PerfSummary | null | undefined, benchSharpe: number | null | undefined, effective: Split): { focal?: VerdictStat; stats: VerdictStat[] } {
   if (!netSplit) return { stats: [] }
   return {
-    focal: { label: uiText("Net Sharpe"), micro: 'NET SHARPE', metric: 'netSharpe', value: signedNumber(netSplit.sharpe), signed: true, hint: uiTemplate("{0} split, after costs", [effective]) },
+    focal: { label: uiText("Net Sharpe"), micro: 'NET SHARPE', metric: 'netSharpe', value: signedNumber(netSplit.sharpe), signed: true, hint: uiTemplate("{0} split, after costs", [uiText(effective)]) },
     stats: [
-      { label: uiText("Net return"), micro: 'NET RET', metric: 'netTotalReturn', value: signedNumber(netSplit.totalReturn == null ? null : netSplit.totalReturn * 100, 2, '%'), hint: uiTemplate("Total return, {0} split, after costs", [effective]) },
-      { label: uiText("Max drawdown"), micro: 'MAX DD', metric: 'maxDrawdown', value: signedNumber(netSplit.maximumDrawdown == null ? null : netSplit.maximumDrawdown * 100, 2, '%'), hint: uiTemplate("{0} split", [effective]) },
-      { label: uiText("Benchmark Sharpe"), micro: 'BM SR', metric: 'netSharpe', value: signedNumber(benchSharpe), hint: uiTemplate("Benchmark, {0} split", [effective]) },
+      { label: uiText("Net return"), micro: 'NET RET', metric: 'netTotalReturn', value: signedNumber(netSplit.totalReturn == null ? null : netSplit.totalReturn * 100, 2, '%'), hint: uiTemplate("Total return, {0} split, after costs", [uiText(effective)]) },
+      { label: uiText("Max drawdown"), micro: 'MAX DD', metric: 'maxDrawdown', value: signedNumber(netSplit.maximumDrawdown == null ? null : netSplit.maximumDrawdown * 100, 2, '%'), hint: uiTemplate("{0} split", [uiText(effective)]) },
+      { label: uiText("Benchmark Sharpe"), micro: 'BM SR', metric: 'netSharpe', value: signedNumber(benchSharpe), hint: uiTemplate("Benchmark, {0} split", [uiText(effective)]) },
     ],
   }
 }
@@ -127,7 +127,7 @@ export function MetricDetail({ pf, split }: { pf: PortfolioDiagnostics; split: S
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <caption className="small muted">{uiText("Net against benchmark and gross, ")}{split}{uiText(" split")}</caption>
+        <caption className="small muted">{uiText("Net against benchmark and gross, ")}{uiText(split)}{uiText(" split")}</caption>
         <thead>
           <tr>
             <th scope="col">{uiText("Metric")}</th>
@@ -381,7 +381,7 @@ export function PortfolioPage({ project, go, embedded = false, provenance }: { p
         onSelect={selectTab}
         panels={{
           detail: (
-            <Section title={uiText("Verdict and metrics")} id="pf-summary" caption={uiTemplate("Universe {0} assets; {1} mandate; benchmark {2}.", [pf.universe?.length ?? '—', pf.mandate?.family ?? '—', pf.mandate?.benchmark?.kind ?? '—'])}>
+            <Section title={uiText("Verdict and metrics")} id="pf-summary" caption={uiTemplate("Universe {0} assets; {1} mandate; benchmark {2}.", [pf.universe?.length ?? '—', coreWord(pf.mandate?.family), coreWord(pf.mandate?.benchmark?.kind)])}>
               <div className="vstack">
                 <ul className="pf-reasons">
                   {reasons.map((r, i) => (
@@ -391,7 +391,7 @@ export function PortfolioPage({ project, go, embedded = false, provenance }: { p
                   ))}
                 </ul>
                 {d && (
-                  <p className="small muted">{uiText("Stage ")}<span className="mono">{uiValue(d.stage)}</span>{uiText("; next focus ")}<span className="mono">{d.iterationFocus}</span>{uiText(". Read from the server stage only. This lane never shows Pass: even the best stage still needs robustness checks and a fresh external holdout.")}</p>
+                  <p className="small muted">{uiText("Stage ")}<span className="mono">{uiValue(d.stage)}</span>{uiText("; next focus ")}<span className="mono">{uiValue(d.iterationFocus)}</span>{uiText(". Read from the server stage only. This lane never shows Pass: even the best stage still needs robustness checks and a fresh external holdout.")}</p>
                 )}
                 {testVisible && effective === 'test' && (
                   <p className="small muted">{uiText("Test is a visible audit.")}<Info label={uiText("About the test split")}>
@@ -404,17 +404,17 @@ export function PortfolioPage({ project, go, embedded = false, provenance }: { p
                     <Kv
                       rows={[
                         ['Net / gross / benchmark total return', `${sp(sum.netTotalReturn)} / ${sp(sum.grossTotalReturn)} / ${sp(sum.benchmarkTotalReturn)}`],
-                        ['Max drawdown', `${sp(sum.maximumDrawdown)} on ${day(sum.maximumDrawdownAt)}`],
-                        ['Total one-way turnover', `${fn(sum.totalOneWayTurnover, 1)}x; largest single day ${up(sum.maximumOneWayTurnover)}`],
+                        ['Max drawdown', uiTemplate('{0} on {1}', [sp(sum.maximumDrawdown), day(sum.maximumDrawdownAt)])],
+                        ['Total one-way turnover', uiTemplate('{0}x; largest single day {1}', [fn(sum.totalOneWayTurnover, 1), up(sum.maximumOneWayTurnover)])],
                         ['Total cost', up(sum.totalCost, 2)],
-                        ['Rebalance days', finite(sum.rebalanceDays) ? `${sum.rebalanceDays} of ${pf.path?.totalRows ?? '—'}` : '—'],
+                        ['Rebalance days', finite(sum.rebalanceDays) ? uiTemplate('{0} of {1}', [sum.rebalanceDays, pf.path?.totalRows ?? '—']) : '—'],
                       ]}
                     />
                   ) : (
                     <NA why={sum ? 'the whole-path summary mixes in the test split, and no test audit is published for this Run' : 'path.summary is not in the payload'} />
                   )}
                 </Block>
-                <Block title={uiTemplate("Benchmark and gross detail, {0} split", [effective])}>
+                <Block title={uiTemplate("Benchmark and gross detail, {0} split", [uiText(effective)])}>
                   <MetricDetail pf={pf} split={effective} />
                 </Block>
               </div>

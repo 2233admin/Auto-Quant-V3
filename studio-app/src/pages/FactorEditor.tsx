@@ -1,7 +1,7 @@
 import { uiTemplate, uiText, uiValue } from '../i18n'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { type FactorDiagnostics, type ProjectSnapshot } from '../api'
-import { ACTIONS_OFF_COPY, useActions } from '../actions/ActionsContext'
+import { useActions } from '../actions/ActionsContext'
 import { errorCopy } from '../actions/client'
 import { getCandidate, isConflict, runCheck, saveCandidate, type CandidateDoc } from '../actions/candidateApi'
 import { ConfirmActionDialog, validateHypothesis } from '../actions/ConfirmActionDialog'
@@ -363,7 +363,7 @@ export function FactorEditor({ project, study }: { project: ProjectSnapshot; stu
         status={
           <>
             {state.mode === 'off' && (
-              <OneLine text={`Read-only. ${ACTIONS_OFF_COPY} to edit and run from this page.`} action={<CopyButton text={OFF_COMMAND} label={uiText("Copy command")} />} />
+              <OneLine text={uiText('Read-only. Actions are off. Start Studio with --allow-actions to edit and run from this page.')} action={<CopyButton text={OFF_COMMAND} label={uiText("Copy command")} />} />
             )}
             {noSession && <OneLine text={`No active Session on Study ${studyId}. A Session holds the one candidate you edit; starting one opens a trial family.`} />}
             {note && <OneLine kind={note.kind} text={note.text} />}

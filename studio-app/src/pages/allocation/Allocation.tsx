@@ -1,4 +1,4 @@
-import { uiTemplate, uiText, uiValue } from '../../i18n'
+import { coreWord, uiTemplate, uiText, uiValue } from '../../i18n'
 import { useState, type ReactNode } from 'react'
 import type { ProjectSnapshot } from '../../api'
 import { Info } from '../../components/Info'
@@ -25,7 +25,7 @@ function verdictOf(a: AllocationDiagnostics): { verdict: Verdict; word: string }
   return { verdict: 'inconclusive', word: uiText("Unavailable") }
 }
 
-const words = (s: string | undefined) => (s ? s.replaceAll('-', ' ').replaceAll('_', ' ') : '—')
+const words = coreWord
 
 type Metric = { key: keyof AllocPerf; label: string; kind: 'pct' | 'num'; cmp?: 'netSharpeAdvantage' | 'annualReturnAdvantage' | 'annualVolatilityDifference' | 'maximumDrawdownDifference' }
 const METRICS: Metric[] = [
@@ -307,7 +307,7 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
           )}
         </section>
 
-        <HeroTiles items={tiles} label={uiTemplate("Core numbers, {0} split", [effective])} />
+        <HeroTiles items={tiles} label={uiTemplate("Core numbers, {0} split", [uiText(effective)])} />
       </div>
 
       <div className="band">
@@ -326,7 +326,7 @@ export function AllocationPage({ project }: { project: ProjectSnapshot }) {
               reasons={reasons}
             />
             <details className="pf-allmetrics">
-              <summary>{uiText("All ")}{effective}{uiText(" metrics")}</summary>
+              <summary>{uiText("All ")}{uiText(effective)}{uiText(" metrics")}</summary>
               <PerfTiles a={a} split={effective} />
             </details>
             {testVisible && effective === 'test' && (

@@ -34,13 +34,37 @@ function scan(file) {
   }
   walk(sf)
 }
-function dir(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())dir(p);else if(p.endsWith('.tsx'))scan(p)}}
+const catalog = JSON.parse(fs.readFileSync(path.join(root, 'locales/zh-CN.json'), 'utf8'))
+const entities = { amp: '&', apos: "'", quot: '"', lt: '<', gt: '>', nbsp: ' ', ndash: '–', mdash: '—', ldquo: '“', rdquo: '”', lsquo: '‘', rsquo: '’', times: '×', le: '≤', ge: '≥', plusmn: '±' }
+const decode = (v) => v.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (o, c) => c[0] !== '#' ? (entities[c] ?? o) : String.fromCodePoint(c[1].toLowerCase() === 'x' ? parseInt(c.slice(2), 16) : parseInt(c.slice(1), 10)))
+const missingCatalog = new Map()
+/** Every literal handed to uiText / uiValue / uiTemplate must have a Chinese entry, or the Chinese UI shows English. */
+function scanCalls(file) {
+  const sf = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, file.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
+  ;(function walk(n) {
+    if (ts.isCallExpression(n) && ts.isIdentifier(n.expression) && ['uiText', 'uiValue', 'uiTemplate'].includes(n.expression.text) && n.arguments.length) {
+      const a = n.arguments[0]
+      if (ts.isStringLiteral(a) || ts.isNoSubstitutionTemplateLiteral(a)) {
+        const key = decode(a.text).replace(/\s+/g, ' ').trim()
+        if (/[A-Za-z]{2}/.test(key) && !/[㐀-鿿]/.test(key) && !(key in catalog) && !missingCatalog.has(key)) missingCatalog.set(key, path.relative(root, file).split(path.sep).join('/'))
+      }
+    }
+    ts.forEachChild(n, walk)
+  })(sf)
+}
+function dir(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())dir(p);else if(p.endsWith('.tsx')||p.endsWith('.ts')){if(p.endsWith('.tsx'))scan(p);scanCalls(p)}}}
 dir(root)
 const list=[...entries].map(([text,files])=>({text,files:[...files]})).sort((a,b)=>a.text.localeCompare(b.text))
 fs.mkdirSync(path.resolve(__dirname,'../../.tmp'),{recursive:true})
 fs.writeFileSync(path.resolve(__dirname,'../../.tmp/ui-inventory.json'),JSON.stringify(list,null,2))
 console.log(JSON.stringify({strings:list.length,files:new Set(list.flatMap(e=>e.files)).size}))
-if (process.argv.includes('--check') && list.length) {
-  console.error(list.map(entry => entry.files.join(', ') + ': ' + entry.text).join('\n'))
+// Core enum values (status, stage, verdict, ...) must each have a Chinese label.
+const enums = JSON.parse(fs.readFileSync(path.join(root, 'locales/core-enums.json'), 'utf8'))
+const missingEnums = Object.entries(enums).flatMap(([group, values]) => values.filter(v => !(v in catalog)).map(v => group + ': ' + v))
+console.log(JSON.stringify({ coreEnums: Object.values(enums).flat().length, missingEnums: missingEnums.length, missingCatalog: missingCatalog.size }))
+if (process.argv.includes('--check') && (list.length || missingEnums.length || missingCatalog.size)) {
+  if (list.length) console.error('Raw English JSX copy:\n' + list.map(entry => entry.files.join(', ') + ': ' + entry.text).join('\n'))
+  if (missingEnums.length) console.error('Core enum values without a Chinese label:\n' + missingEnums.join('\n'))
+  if (missingCatalog.size) console.error('uiText/uiValue/uiTemplate literals without a Chinese entry:\n' + [...missingCatalog].map(([k, f]) => f + ': ' + k).join('\n'))
   process.exitCode = 1
 }

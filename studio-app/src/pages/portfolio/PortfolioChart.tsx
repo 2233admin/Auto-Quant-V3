@@ -233,7 +233,7 @@ export function PortfolioChart({
               className="pf-toggle"
               aria-pressed={l.avail && on[l.key]}
               disabled={!l.avail}
-              title={l.avail ? FULL[l.key] : uiTemplate("not available: {0}", [l.why])}
+              title={l.avail ? uiText(FULL[l.key]) : uiTemplate("not available: {0}", [l.why])}
               onClick={() => toggle(l.key)}
             >
               <Swatch kind={l.key} />

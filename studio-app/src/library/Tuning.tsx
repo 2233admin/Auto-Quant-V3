@@ -1,4 +1,4 @@
-import { translate, uiTemplate, uiText, uiValue, useLanguage } from '../i18n'
+import { coreWord, translate, uiTemplate, uiText, uiValue, useLanguage } from '../i18n'
 import { useMemo, useState } from 'react'
 import type { ProjectSnapshot, ProjectSummary, SessionSnapshot, TrialRow, WorkspaceSummary } from '../api'
 import { Info } from '../components/Info'
@@ -85,7 +85,7 @@ function Index({ workspace, go }: { workspace: WorkspaceSummary | null; go: (hre
       ),
     },
     { id: 'study', label: t('Study', '研究'), sort: (t) => t.studyId, render: (t) => <span className="mono small" translate="no">{t.studyId}</span> },
-    { id: 'status', label: t('Status', '状态'), sort: (t) => t.status, render: (t) => t.status || '—' },
+    { id: 'status', label: t('Status', '状态'), sort: (t) => t.status, render: (t) => t.status ? uiText(t.status) : '—' },
     { id: 'objective', label: t('Objective', '目标'), sort: (t) => t.metric, render: (row) => (row.metric ? <span className="mono small" translate="no">{row.metric}</span> : <span className="faint small">{t('not published', '未发布')}</span>) },
     { id: 'trials', label: t('Trials', '试验'), align: 'r', sort: (t) => t.trials.length, render: (t) => t.trials.length },
     { id: 'done', label: t('Done', '已完成'), align: 'r', sort: (t) => count(t, 'done'), render: (t) => count(t, 'done') },
@@ -139,7 +139,7 @@ function StatusMatrix({ trials, projectId }: { trials: Trial[]; projectId: strin
     <ul className="lib-matrix" aria-label={uiText("Status of each trial, in sequence order")}>
       {trials.map((t) => {
         const p = PHASE[phaseOf(t)]
-        const label = `${t.role === 'baseline' ? 'Baseline' : `Trial ${t.sequence}`}: ${p.word}, verdict ${t.verdict}${t.isCurrentLeader ? ', current leader' : ''}`
+        const label = `${t.role === 'baseline' ? uiText('Baseline') : uiTemplate('Trial {0}', [t.sequence])}: ${uiText(p.word)}, ${uiText('verdict')} ${uiValue(t.verdict)}${t.isCurrentLeader ? uiText(', current leader') : ''}`
         return (
           <li key={t.runId}>
             <a className={`lib-cell is-${phaseOf(t)}${t.isCurrentLeader ? ' is-leader' : ''}`} href={routeHref({ view: 'run', id: projectId, run: t.runId })} title={`${label}. ${t.hypothesis}`} aria-label={label}>
@@ -173,7 +173,7 @@ function Ranking({ trials, direction, projectId, go }: { trials: Trial[]; direct
       ),
     },
     { id: 'hyp', label: tr('Hypothesis', '假设'), render: (t) => <span className="lib-hyp">{t.hypothesis}</span> },
-    { id: 'status', label: tr('Status', '状态'), sort: (t) => t.status, render: (t) => t.status },
+    { id: 'status', label: tr('Status', '状态'), sort: (t) => t.status, render: (t) => uiText(t.status) },
     { id: 'verdict', label: tr('Verdict', '判决'), sort: (t) => t.verdict, render: (t) => <span className="mono small">{uiValue(t.verdict)}</span> },
     { id: 'value', label: tr('Objective value', '目标值'), align: 'r', sort: (t) => t.primaryValue, render: (t) => num(t.primaryValue, 4) },
     { id: 'delta', label: tr('vs baseline', '相对基线'), align: 'r', sort: (t) => t.objectiveImprovementVsBaseline, render: (t) => num(t.objectiveImprovementVsBaseline, 4) },
@@ -210,7 +210,7 @@ function Neighborhood({ project }: { project: ProjectSnapshot }) {
     <>
       <p className="small">
         {plural(nb.policy?.configurationCount ?? configs.length, 'predeclared configuration')}{uiText(" around the selected base, validation split, role")}{' '}
-        <span className="mono">{nb.policy?.role ?? '—'}</span>{uiText(". The other configurations are context only and never enter selection.")}{agg && <> {pct(agg.positiveNetSharpeRate, 0)}{uiText(" have a positive net Sharpe; ")}{pct(agg.signAgreementWithBaseRate, 0)}{uiText(" share the base sign.")}</>}
+        <span className="mono">{coreWord(nb.policy?.role)}</span>{uiText(". The other configurations are context only and never enter selection.")}{agg && <> {pct(agg.positiveNetSharpeRate, 0)}{uiText(" have a positive net Sharpe; ")}{pct(agg.signAgreementWithBaseRate, 0)}{uiText(" share the base sign.")}</>}
       </p>
       <DataTable rows={configs} cols={cols} rowKey={(c) => c.id} initial={{ id: 'sharpe', dir: -1 }} caption={uiText("Parameter neighborhood, validation split")} />
       <p className="small lib-after">
@@ -228,7 +228,7 @@ function SessionView({ project, session, go }: { project: ProjectSnapshot; sessi
   const fam = session.selectionIntegrity?.researchFamily
   return (
     <>
-      <p className="muted small">{uiText("Session ")}<span className="mono" translate="no">{s.id}</span> · {s.status || uiText("status not published")}{uiText(" · Study ")}<span className="mono" translate="no">{s.studyId}</span>
+      <p className="muted small">{uiText("Session ")}<span className="mono" translate="no">{s.id}</span> · {s.status ? uiText(s.status) : uiText("status not published")}{uiText(" · Study ")}<span className="mono" translate="no">{s.studyId}</span>
         {m?.objective && <>{uiText(" · objective: ")}{m.objective.direction ?? '—'} <span className="mono" translate="no">{m.objective.metric ?? '—'}</span>{typeof m.objective.minimumImprovement === 'number' && <>{uiText(", minimum improvement ")}{m.objective.minimumImprovement}</>}</>}
       </p>
       {trials.length === 0 ? (

@@ -1,4 +1,4 @@
-import { uiText } from '../../i18n'
+import { uiText, uiValue } from '../../i18n'
 import type { ReactNode } from 'react'
 
 export const finite = (v: number | null | undefined): v is number => typeof v === 'number' && Number.isFinite(v)
@@ -51,8 +51,8 @@ export function Kv({ rows }: { rows: [string, ReactNode][] }) {
     <dl className="kv">
       {rows.map(([k, v]) => (
         <div className="kv-row" key={k}>
-          <dt>{k}</dt>
-          <dd>{v}</dd>
+          <dt>{uiText(k)}</dt>
+          <dd>{typeof v === 'string' ? uiValue(v) : v}</dd>
         </div>
       ))}
     </dl>

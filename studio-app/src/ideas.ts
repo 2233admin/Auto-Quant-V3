@@ -14,7 +14,7 @@ export function attentionItems(workspace: WorkspaceSummary | null): AttentionIte
     .map((project) => ({
       kind: 'project' as const,
       project,
-      reason: project.diagnostics > 0 ? `The Project does not verify (${project.diagnostics} ${project.diagnostics === 1 ? 'diagnostic' : 'diagnostics'}).` : 'The Project does not verify.',
+      reason: project.diagnostics > 0 ? project.diagnostics === 1 ? 'The Project does not verify (1 diagnostic).' : `The Project does not verify (${project.diagnostics} diagnostics).` : 'The Project does not verify.',
     }))
   for (const d of workspace.diagnostics) items.push({ kind: 'workspace', reason: d.message ?? d.code ?? 'Workspace diagnostic', path: d.path })
   return items

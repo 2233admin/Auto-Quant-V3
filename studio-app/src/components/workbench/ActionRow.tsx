@@ -60,11 +60,11 @@ export function ActionRow({
       aria-label={b.ariaLabel}
       aria-disabled={b.disabled || undefined}
       aria-describedby={b.disabled ? reasonId : undefined}
-      title={b.disabled ? `${b.ariaLabel ? `${b.ariaLabel}: ` : ''}${b.reasonTitle ?? b.disabledReason}` : b.title ?? b.ariaLabel}
+      title={b.disabled ? `${b.ariaLabel ? `${b.ariaLabel}: ` : ''}${uiValue(b.reasonTitle ?? b.disabledReason)}` : b.title ?? b.ariaLabel}
       onClick={b.disabled ? undefined : b.onClick}
     >
       {uiValue(b.label)}
-      {b.disabled && b !== shown && !b.ariaLabel && <span className="sr-only"> ({b.disabledReason})</span>}
+      {b.disabled && b !== shown && !b.ariaLabel && <span className="sr-only"> ({uiValue(b.disabledReason)})</span>}
     </button>
     )
   return (

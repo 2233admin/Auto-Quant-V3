@@ -26,7 +26,7 @@ function KV({ rows }: { rows: [string, React.ReactNode, boolean?][] }) {
     <dl className="set-kv">
       {rows.map(([k, v, mono]) => (
         <div key={k} style={{ display: 'contents' }}>
-          <dt>{k}</dt>
+          <dt>{uiText(k)}</dt>
           <dd className={mono ? 'mono' : undefined} translate={mono ? 'no' : undefined}>{v}</dd>
         </div>
       ))}

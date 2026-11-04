@@ -110,7 +110,7 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
   const leader = (dm?.trials ?? []).find((t) => t.isCurrentLeader)
   const tiles: HeroTile[] = [
     { label: uiText("Candidate trials"), value: String(candidates.length), note: uiTemplate("{0} kept", [candidates.filter((t) => t.verdict === 'KEEP').length]) },
-    { label: uiTemplate("Leader {0}", [dm?.objective?.metric ?? 'metric']), value: leader ? num(leader.primaryValue, 4) : '—', note: leader ? (leader.role === 'baseline' ? 'baseline leads' : `trial ${leader.sequence}`) : undefined },
+    { label: uiTemplate("Leader {0}", [dm?.objective?.metric ?? uiText('metric')]), value: leader ? num(leader.primaryValue, 4) : '—', note: leader ? (leader.role === 'baseline' ? uiText('baseline leads') : uiTemplate('trial {0}', [leader.sequence])) : undefined },
     { label: uiText("Mean rank IC"), value: validation ? num(validation.meanRankIc, 4) : '—', note: uiText("validation split") },
     { label: uiText("HAC normal p"), value: validation ? num(validation.hacNormalPValue, 3) : '—', note: validation ? `ICIR ${num(validation.rankIcir, 3)}` : undefined },
     {
@@ -141,8 +141,8 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
                       {study.name}
                       <span className="faint small mono" translate="no">{study.id}</span>
                     </th>
-                    <td>{study.subjectKind}</td>
-                    <td className="mono">{study.primaryMetric} ({study.direction})</td>
+                    <td>{uiText(study.subjectKind)}</td>
+                    <td className="mono">{study.primaryMetric} ({uiText(study.direction)})</td>
                     <td>
                       {run ? (
                         <span className="state">
@@ -288,9 +288,9 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
                 {project.timeline.slice(0, 12).map((row) => (
                   <li key={`${row.kind}/${row.id}`}>
                     <span className="mono faint small">{when(row.at)}</span>
-                    <span className="kind">{row.kind}</span>
+                    <span className="kind">{uiText(row.kind)}</span>
                     <span className="trunc" translate="no">{row.title}</span>
-                    <span className="mono small">{row.value === null ? row.status : `${row.status} · ${num(row.value, 3)}`}</span>
+                    <span className="mono small">{row.value === null ? uiText(row.status) : `${uiText(row.status)} · ${num(row.value, 3)}`}</span>
                   </li>
                 ))}
               </ol>

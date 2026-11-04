@@ -63,8 +63,8 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
   const word = pending ? 'In progress' : !hasAttempt ? 'Not tested' : status
   const stages = job?.stages ?? []
   const done = stages.filter(s => s.state === 'done').length
-  const stageText = job?.stageMode === 'whole-action' ? 'Command-level progress' : stages.length ? `${done}/${stages.length} stages complete` : 'Stage count not recorded'
-  const duration = run?.durationMs != null ? `${(run.durationMs / 1000).toFixed(1)}s` : job?.startedAt && job.endedAt ? `${((Date.parse(job.endedAt) - Date.parse(job.startedAt)) / 1000).toFixed(1)}s` : 'Duration not recorded'
+  const stageText = job?.stageMode === 'whole-action' ? uiText('Command-level progress') : stages.length ? uiTemplate('{0}/{1} stages complete', [done, stages.length]) : uiText('Stage count not recorded')
+  const duration = run?.durationMs != null ? `${(run.durationMs / 1000).toFixed(1)}s` : job?.startedAt && job.endedAt ? `${((Date.parse(job.endedAt) - Date.parse(job.startedAt)) / 1000).toFixed(1)}s` : uiText('Duration not recorded')
   const exportJson = () => {
     // Export exactly the evidence already allowed on this page, never hidden test payloads.
     const payload = { run, question: binding, verdict: word, developmentEvidenceOnly: true, validation: study?.summary.validation ?? null }
@@ -82,8 +82,8 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
     <div className="idea-answer">
       <div className="idea-run-selector" data-measure="selector">
         <select aria-label={uiText("Analysis Run")} value={run?.id ?? ''} onChange={e => onSelectRun?.(e.target.value)}>
-          {!runs.length && <option value="">{uiValue(word)}</option>}
-          {runs.map((r, i) => <option key={r.id} value={r.id}>{r.startedAt?.replace('T', ' ').slice(0, 19) ?? r.id} · {r.id === run?.id ? word : r.status === 'succeeded' ? uiText("Completed") : uiText("Could not be tested")}{uiText(" · Trial ")}{runs.length - i}</option>)}
+          {!runs.length && <option value="">{uiText(word)}</option>}
+          {runs.map((r, i) => <option key={r.id} value={r.id}>{r.startedAt?.replace('T', ' ').slice(0, 19) ?? r.id} · {r.id === run?.id ? uiText(word) : r.status === 'succeeded' ? uiText("Completed") : uiText("Could not be tested")}{uiText(" · Trial ")}{runs.length - i}</option>)}
         </select>
         {!answered && runFacts}
         <div className="idea-action-chips" data-measure="chips"><ActionRow secondary={[
@@ -93,7 +93,7 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
         ...(onDeclareTrial ? [{ label: uiText("Declare another trial"), onClick: onDeclareTrial }] : []),
       ]} /></div>
       </div>
-      <div className="idea-status" data-measure="status"><StatusLine state={pending ? 'running' : !hasAttempt ? 'idle' : failedJob || failedRun ? 'failed' : 'done'} text={pending ? busy || 'Analysis in progress' : !hasAttempt ? 'Not tested · author a candidate to begin' : `${failedJob || failedRun ? 'Analysis failed' : 'Analysis complete'} · ${stageText}`} percent={pending ? null : hasAttempt && !failedJob && !failedRun ? 100 : undefined} elapsed={hasAttempt ? duration : undefined} /></div>
+      <div className="idea-status" data-measure="status"><StatusLine state={pending ? 'running' : !hasAttempt ? 'idle' : failedJob || failedRun ? 'failed' : 'done'} text={pending ? busy || uiText('Analysis in progress') : !hasAttempt ? uiText('Not tested · author a candidate to begin') : `${failedJob || failedRun ? uiText('Analysis failed') : uiText('Analysis complete')} · ${stageText}`} percent={pending ? null : hasAttempt && !failedJob && !failedRun ? 100 : undefined} elapsed={hasAttempt ? duration : undefined} /></div>
       {!answered && build}
       {pending ? <div className="idea-empty"><h2>{uiText("Analysis in progress")}</h2><p>{busy || uiText("The fixed Judge is running.")}</p><p className="small muted">{uiText("Preflight → baseline or candidate Run → validation evidence. Trial records are retained even if execution fails.")}</p><p className="small">{uiText("The original question and verdict wording are fixed for this attempt.")}</p></div>
       : !hasAttempt ? <div className="idea-empty"><h2>{uiText("Not tested")}</h2><p>{uiText("Define the factor on the left, then run one bounded analysis.")}</p><p className="small muted">{uiText("You will confirm the exact command and trial count before execution. Inconclusive is a valid stopping point.")}</p></div>
@@ -103,7 +103,7 @@ export function IdeaVerdict({ project, idea, study, run, job, busy, onDeclareTri
         <details className="idea-reading" data-measure="reading"><summary>{uiText("How to read this answer")}</summary>
           <ol className="reading-order">{readingOrder({ range: validation && !failedJob && !failedRun ? range : null, horizon: study?.protocol.primaryHorizon ?? '—', executions: count, sources: family?.uniqueSourceTrials ?? count, adjustment: adjustment?.passes === true ? 'passes' : adjustment?.passes === false ? 'fails' : 'none' }).map((step, i) => <li key={i}>{step}</li>)}</ol>
         </details>
-        {showEvidence && <><div className="result-pair"><div className="result-figure"><FactorHero key={study.run.id} study={study} minHeight={200} /></div><section className="idea-core-metrics" data-measure="metrics" aria-label={uiText("Core metrics")}><h2 className="set-title">{uiText("Core metrics")}</h2><MetricGrid groups={ideaMetricGroups(study, project)} /><p className="small muted idea-conclusion">{sentence}</p></section></div><FactorComparisons study={study} runs={runs} projectId={project.id} /></>}
+        {showEvidence && <><div className="result-pair"><div className="result-figure"><FactorHero key={study.run.id} study={study} minHeight={200} /></div><section className="idea-core-metrics" data-measure="metrics" aria-label={uiText("Core metrics")}><h2 className="set-title">{uiText("Core metrics")}</h2><MetricGrid groups={ideaMetricGroups(study, project)} /><p className="small muted idea-conclusion">{uiText(sentence)}</p></section></div><FactorComparisons study={study} runs={runs} projectId={project.id} /></>}
         {study && status === 'Could not be tested' && !failedJob && !failedRun && <p className="small">{study.factorQualification.diagnosis?.explanation ?? uiText("Core publishes no applicable qualification protocol.")}</p>}
         {(failedJob || failedRun) && <p className="small idea-failure">{failedRun ? run.summary : failure}</p>}
         <dl className="set-kv">

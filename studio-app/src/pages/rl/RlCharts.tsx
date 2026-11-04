@@ -51,7 +51,7 @@ export function TrialChart({ trials, baselines, folds, split }: { trials: Trial[
   const adv = (t: Trial) => (split === 'test' ? t.testAdvantage : t.validationAdvantage)
   const selected = baselines.filter((b) => b.selectedOnValidation)
   const vals = [...trials.map(sharpe), ...selected.map((b) => b[split]?.netSharpe)].filter(finite)
-  if (!vals.length) return <p className="pf-na">{uiText("not available: no trial publishes a ")}{split}{uiText(" net Sharpe")}</p>
+  if (!vals.length) return <p className="pf-na">{uiText("not available: no trial publishes a ")}{uiText(split)}{uiText(" net Sharpe")}</p>
   const ticks = niceTicks(Math.min(0, ...vals), Math.max(0, ...vals), 5)
   const lo = Math.min(ticks[0], ...vals)
   const hi = Math.max(ticks[ticks.length - 1], ...vals)
@@ -62,9 +62,9 @@ export function TrialChart({ trials, baselines, folds, split }: { trials: Trial[
     <figure ref={figRef} className="chart rl-chart">
       <figcaption>
         <h3 id={`${id}-t`} className="sr-only">{uiText("Net Sharpe of every fold and seed against the selected baseline")}</h3>
-        <p className="sr-only" id={`${id}-d`}>{uiText("Each mark is one RL trial (")}{split}{uiText("); the dashed bar is the baseline the fixed Judge chose for that fold on validation. A filled circle means RL is at or above that baseline, an open square means it trails.")}</p>
-        <p className="muted small">{uiText("Every declared fold and seed (")}{split}{uiText("); a filled circle means RL is at or above the baseline, an open square means it trails.")}<Info label={uiText("About this chart")}>
-            <p>{uiText("Each mark is one RL trial (")}{split}{uiText("); the dashed bar is the baseline the fixed Judge chose for that fold on validation.")}</p>
+        <p className="sr-only" id={`${id}-d`}>{uiText("Each mark is one RL trial (")}{uiText(split)}{uiText("); the dashed bar is the baseline the fixed Judge chose for that fold on validation. A filled circle means RL is at or above that baseline, an open square means it trails.")}</p>
+        <p className="muted small">{uiText("Every declared fold and seed (")}{uiText(split)}{uiText("); a filled circle means RL is at or above the baseline, an open square means it trails.")}<Info label={uiText("About this chart")}>
+            <p>{uiText("Each mark is one RL trial (")}{uiText(split)}{uiText("); the dashed bar is the baseline the fixed Judge chose for that fold on validation.")}</p>
           </Info>
         </p>
       </figcaption>

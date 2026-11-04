@@ -112,11 +112,11 @@ function testedFacts(fe: RunDiagnostics): Fact[] {
   return [
     { label: uiText("Study"), value: fe.run.studyId, mono: true },
     { label: uiText("Run started"), value: `${when(fe.run.startedAt)} UTC` },
-    { label: uiText("Dataset"), value: `${fe.dataset.id} · ${day(fe.dataset.timeRange?.start)} to ${day(fe.dataset.timeRange?.end)}`, mono: true },
+    { label: uiText("Dataset"), value: uiTemplate('{0} · {1} to {2}', [fe.dataset.id, day(fe.dataset.timeRange?.start), day(fe.dataset.timeRange?.end)]), mono: true },
     { label: uiText("Scored asset"), value: (fe.predictionUniverse.predictionAssets ?? []).join(', ') || '—', mono: true },
-    { label: uiText("Evaluation mode"), value: fe.predictionUniverse.evaluationMode ?? '—', mono: true },
-    { label: uiText("Horizon"), value: `${protocol.primaryHorizon}-bar primary${context.length ? ` · context ${context.join(', ')}-bar` : ''}` },
-    ...gatedSplits(fe, SPLITS).map((s) => ({ label: uiTemplate("{0} window", [SPLIT_LABEL[s]]), value: `${day(windows[s].start)} to ${day(windows[s].end)}` })),
+    { label: uiText("Evaluation mode"), value: uiValue(fe.predictionUniverse.evaluationMode ?? '—'), mono: true },
+    { label: uiText("Horizon"), value: context.length ? uiTemplate('{0}-bar primary · context {1}-bar', [protocol.primaryHorizon, context.join(', ')]) : uiTemplate('{0}-bar primary', [protocol.primaryHorizon]) },
+    ...gatedSplits(fe, SPLITS).map((s) => ({ label: uiTemplate("{0} window", [SPLIT_LABEL[s]]), value: uiTemplate('{0} to {1}', [day(windows[s].start), day(windows[s].end)]) })),
   ]
 }
 
@@ -177,8 +177,8 @@ function Body({ fe, project }: { fe: RunDiagnostics; project: ProjectSnapshot })
                       </tr>
                     </thead>
                     <tbody>
-                      <SplitRow name={`Validation (${day(windows.validation.start)} to ${day(windows.validation.end)})`} role="selection split" s={v} />
-                      {showTest && <SplitRow name={`Test (${day(windows.test.start)} to ${day(windows.test.end)})`} role="visible audit, not used for selection" s={fe.summary.testAudit} />}
+                      <SplitRow name={uiTemplate('Validation ({0} to {1})', [day(windows.validation.start), day(windows.validation.end)])} role="selection split" s={v} />
+                      {showTest && <SplitRow name={uiTemplate('Test ({0} to {1})', [day(windows.test.start), day(windows.test.end)])} role="visible audit, not used for selection" s={fe.summary.testAudit} />}
                     </tbody>
                   </table>
                 </div>

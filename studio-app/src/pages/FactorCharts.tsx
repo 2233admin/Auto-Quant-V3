@@ -294,7 +294,7 @@ export function IcByHorizonPlot({ study, width: W, height: H, labelledBy, label 
                     </text>
                   )}
                   <text x={cx} y={H - m.b + 18} textAnchor="middle" className="ax">
-                    {split === 'validation' ? uiText("val") : split}
+                    {split === 'validation' ? uiText("val") : uiText(split)}
                   </text>
                   {slot >= 70 && (
                     <text x={cx} y={H - m.b + 32} textAnchor="middle" className="ax faint">
@@ -350,7 +350,7 @@ export function IcByHorizonCard({
       table={table ? <IcByHorizonTable study={study} /> : undefined}
       minHeight={minHeight}
     >
-      {({ width, height }) => <IcByHorizonPlot study={study} width={width} height={height} label={IC_BY_HORIZON_SHORT} />}
+      {({ width, height }) => <IcByHorizonPlot study={study} width={width} height={height} label={uiText(IC_BY_HORIZON_SHORT)} />}
     </FigureCard>
   )
 }
@@ -361,7 +361,7 @@ export function IcByHorizon({ study, hero }: { study: FactorDiagnostics; hero?: 
     <Chart
       title={uiText("Rank IC by horizon and split")}
       plotRef={plotRef}
-      short={IC_BY_HORIZON_SHORT}
+      short={uiText(IC_BY_HORIZON_SHORT)}
       desc={IC_BY_HORIZON_DESC}
       legend={<IcByHorizonLegend study={study} />}
       note={<IcByHorizonNote study={study} />}
@@ -627,7 +627,7 @@ export function Quantiles({ study }: { study: FactorDiagnostics }) {
                         {ret(v)}
                       </text>
                       <text x={cx} y={H - m.b + 16} textAnchor="middle" className="ax">
-                        {name}
+                        {uiText(name === 'low' ? 'Low group' : name === 'middle' ? 'Middle group' : 'High group')}
                       </text>
                     </g>
                   )

@@ -63,7 +63,7 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
       <div className="cols cols--tables">
         <div className="tablewrap pf-narrow">
           <table className="tbl">
-            <caption className="small muted">{uiText("Gross vs net vs benchmark, ")}{split}{uiText(" split (")}{v.net?.observations ?? '—'}{uiText(" daily observations)")}</caption>
+            <caption className="small muted">{uiText("Gross vs net vs benchmark, ")}{uiText(split)}{uiText(" split (")}{v.net?.observations ?? '—'}{uiText(" daily observations)")}</caption>
             <thead>
               <tr>
                 <th scope="col">{uiText("Metric")}</th>
@@ -87,7 +87,7 @@ export function ViabilityBlock({ pf, split }: { pf: PortfolioDiagnostics; split:
 
         <div className="tablewrap pf-narrow">
           <table className="tbl">
-            <caption className="small muted">{uiText("Cost stress and one extra bar of delay (net, ")}{split}{uiText(" split)")}</caption>
+            <caption className="small muted">{uiText("Cost stress and one extra bar of delay (net, ")}{uiText(split)}{uiText(" split)")}</caption>
             <thead>
               <tr>
                 <th scope="col">{uiText("Scenario")}</th>
@@ -253,7 +253,7 @@ export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; spl
 
       <div className="vstack">
         <figure className="pf-matrix-fig">
-          <figcaption className="small muted">{uiText("Net Sharpe by signal profile and no-trade band, ")}{split}{uiText(" split. Shade scales with size; sign is always written.")}</figcaption>
+          <figcaption className="small muted">{uiText("Net Sharpe by signal profile and no-trade band, ")}{uiText(split)}{uiText(" split. Shade scales with size; sign is always written.")}</figcaption>
           <table className="pf-matrix">
             <thead>
               <tr>
@@ -292,7 +292,7 @@ export function NeighborhoodBlock({ pf, split }: { pf: PortfolioDiagnostics; spl
 
         <div className="tablewrap tablewrap--tall">
           <table className="tbl">
-            <caption className="small muted">{uiText("All ")}{configs.length}{uiText(" configurations, ")}{split}{uiText(" split. Click a header to sort.")}</caption>
+            <caption className="small muted">{uiText("All ")}{configs.length}{uiText(" configurations, ")}{uiText(split)}{uiText(" split. Click a header to sort.")}</caption>
             <thead>
               <tr>
                 {th('id', 'Configuration', false)}
@@ -387,7 +387,7 @@ export function BookBlock({ pf, split, hiddenWhy }: { pf: PortfolioDiagnostics; 
       {attr?.length ? (
         <div className="tablewrap">
           <table className="tbl">
-            <caption className="small muted">{uiText("Attribution by asset, ")}{split}{uiText(" split")}</caption>
+            <caption className="small muted">{uiText("Attribution by asset, ")}{uiText(split)}{uiText(" split")}</caption>
             <thead>
               <tr>
                 <th scope="col">{uiText("Asset")}</th>

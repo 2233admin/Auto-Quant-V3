@@ -29,7 +29,7 @@ export function HeadlineMetrics({ splits, horizon, defs }: { splits: HeadlineSpl
         return (
           <div className="hm-split" key={name}>
             <h3 className="hm-title">{uiText(name)} · {uiValue(role)} · {horizon}{uiText("-bar horizon")}</h3>
-            <CompactTileGrid label={uiTemplate("{0} headline figures", [name])}>
+            <CompactTileGrid label={uiTemplate("{0} headline figures", [uiText(name)])}>
               <CompactTile label={uiText("Mean rank IC")} value={num(s.meanRankIc, 4)} info={measure} metric="meanRankIc" />
               <CompactTile label={uiText("Mean Pearson IC")} value={num(s.meanPearsonIc, 4)} metric="meanPearsonIc" />
               <CompactTile label={uiText("Rank IC std")} value={num(s.rankIcStandardDeviation, 3)} note={uiText("per-bar")} metric="rankIcStd" />

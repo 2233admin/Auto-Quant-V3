@@ -88,8 +88,8 @@ export function protocolFactRows(c: Comparison): FactRow[] {
   }
   const field = (name: string, format: (value: unknown, run: HistoryRun) => string) => (run: HistoryRun) => ({ raw: p(run)[name], value: plain(p(run)[name], format(p(run)[name], run)) })
   const hashOf = (name: string) => (run: HistoryRun) => ({ raw: study(run)[name], value: hashValue(study(run)[name]) })
-  add('objectKind', 'Object kind', 'objectKind', field('objectKind', v => v == null ? NONE : String(v)))
-  add('lane', 'Lane', 'lane', field('lane', v => v == null ? NONE : String(v)))
+  add('objectKind', 'Object kind', 'objectKind', field('objectKind', v => v == null ? NONE : uiText(String(v))))
+  add('lane', 'Lane', 'lane', field('lane', v => v == null ? NONE : uiText(String(v))))
   add('study.id', 'Study id', 'study', run => ({ raw: study(run).id, value: plain(study(run).id) }))
   add('study.hash', 'Study hash', 'study', hashOf('hash'))
   add('study.judgeHash', 'Judge hash', 'study', hashOf('judgeHash'))
