@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
+import shlex
+import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -8,6 +12,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -15,7 +20,11 @@ from autoquant.research import run_campaign
 from autoquant.runs import harness_identity
 from autoquant.sessions import evaluate_experiment, start_session
 from autoquant.studies import create_study, hash_json
-from autoquant.studio import build_studio_snapshot, create_studio_server
+from autoquant.studio import (
+    build_studio_snapshot,
+    create_studio_server,
+    resolve_studio_launch,
+)
 from autoquant.version import current_version
 from autoquant.workspace import (
     AutoQuantValidationError,
@@ -23,6 +32,10 @@ from autoquant.workspace import (
     initialize_workspace,
 )
 from tests.study_helpers import make_project, python_command, study_definition
+
+# uv puts console scripts in .venv/Scripts/*.exe on Windows, .venv/bin/* elsewhere.
+VENV_SCRIPTS = "Scripts" if os.name == "nt" else "bin"
+AQ_EXECUTABLE = "aq.exe" if os.name == "nt" else "aq"
 
 
 SLOW_RESEARCHER = """\
@@ -58,6 +71,91 @@ class StudioObservationTests(unittest.TestCase):
         path = Path(directory) / "studio-researcher.py"
         path.write_text(source, encoding="utf-8")
         return python_command(path)
+
+    def _managed_environment(self, port: int) -> dict[str, str]:
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "HARNESS_CAPABILITY": "studio",
+                "HARNESS_HOST": "127.0.0.1",
+                "HARNESS_PORTS": json.dumps({"http": port}),
+                "HARNESS_NO_OPEN": "1",
+            }
+        )
+        return environment
+
+    def _manifest_command(self) -> list[str]:
+        root = Path(__file__).resolve().parents[1]
+        manifest = json.loads((root / "harness.json").read_text(encoding="utf-8"))
+        return manifest["capabilities"]["studio"]["command"]
+
+    def _standalone_environment(self) -> dict[str, str]:
+        environment = os.environ.copy()
+        for name in (
+            "HARNESS_CAPABILITY",
+            "HARNESS_HOST",
+            "HARNESS_PORTS",
+            "HARNESS_NO_OPEN",
+        ):
+            environment.pop(name, None)
+        return environment
+
+    def _ordinary_parent_environment(self) -> dict[str, str]:
+        environment = self._standalone_environment()
+        excluded = {
+            Path(sys.executable).parent.resolve(),
+            (Path(__file__).resolve().parents[1] / ".venv" / VENV_SCRIPTS).resolve(),
+        }
+        environment["PATH"] = os.pathsep.join(
+            entry
+            for entry in environment.get("PATH", "").split(os.pathsep)
+            if entry and Path(entry).resolve() not in excluded
+        )
+        environment.pop("VIRTUAL_ENV", None)
+        environment.pop("UV_PROJECT_ENVIRONMENT", None)
+        self.assertIsNotNone(shutil.which("uv", path=environment["PATH"]))
+        return environment
+
+    def _copy_source_workspace(self, directory: str) -> Path:
+        source = Path(__file__).resolve().parents[1]
+        target = Path(directory) / "source-workspace"
+        shutil.copytree(
+            source,
+            target,
+            ignore=shutil.ignore_patterns(
+                ".git",
+                ".venv",
+                "node_modules",
+                ".pytest_cache",
+                ".ruff_cache",
+                "__pycache__",
+                "*.pyc",
+                "autoquant-workspace.local.json",
+                "dist*",
+                "run.log",
+            ),
+        )
+        return target
+
+    def _prepare_source_workspace(
+        self,
+        directory: str,
+    ) -> tuple[Path, dict[str, str]]:
+        workspace = self._copy_source_workspace(directory)
+        environment = self._ordinary_parent_environment()
+        prepared = subprocess.run(
+            ["uv", "sync", "--frozen"],
+            cwd=workspace,
+            env=environment,
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=120,
+        )
+        self.assertEqual(prepared.returncode, 0, prepared.stderr)
+        self.assertTrue((workspace / ".venv" / VENV_SCRIPTS / AQ_EXECUTABLE).is_file())
+        self.assertNotIn(str(workspace / ".venv" / VENV_SCRIPTS), environment["PATH"])
+        return workspace, environment
 
     def test_workspace_and_project_snapshots_share_verified_contract(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -321,8 +419,16 @@ class StudioObservationTests(unittest.TestCase):
                     self.assertTrue(health["ok"])
                     self.assertEqual(health["mode"], "read-only")
                     self.assertEqual(response.headers["X-Frame-Options"], "DENY")
+                    self.assertEqual(
+                        response.headers["Cross-Origin-Resource-Policy"],
+                        "same-origin",
+                    )
                     self.assertIn(
                         "default-src 'none'",
+                        response.headers["Content-Security-Policy"],
+                    )
+                    self.assertIn(
+                        "frame-ancestors 'none'",
                         response.headers["Content-Security-Policy"],
                     )
                     self.assertIsNone(response.headers["Access-Control-Allow-Origin"])
@@ -797,6 +903,492 @@ class StudioObservationTests(unittest.TestCase):
             with self.assertRaisesRegex(AutoQuantValidationError, "Unknown field"):
                 build_studio_snapshot(workspace.root_dir)
 
+    def test_managed_launch_strictly_resolves_injected_authority(self) -> None:
+        environment = self._managed_environment(49321)
+        launch = resolve_studio_launch(
+            host=None,
+            port=None,
+            no_open=False,
+            environ=environment,
+        )
+
+        self.assertTrue(launch.managed)
+        self.assertEqual(launch.host, "127.0.0.1")
+        self.assertEqual(launch.port, 49321)
+        self.assertFalse(launch.open_browser)
+        self.assertEqual(
+            resolve_studio_launch(
+                host="127.0.0.1",
+                port=49321,
+                no_open=True,
+                environ=environment,
+            ),
+            launch,
+        )
+
+        with self.assertRaisesRegex(AutoQuantValidationError, "conflicts"):
+            resolve_studio_launch(
+                host="localhost",
+                port=None,
+                no_open=True,
+                environ=environment,
+            )
+        with self.assertRaisesRegex(AutoQuantValidationError, "conflicts"):
+            resolve_studio_launch(
+                host=None,
+                port=49322,
+                no_open=True,
+                environ=environment,
+            )
+
+        for host in ("localhost", "LOCALHOST", "127.0.0.2", "127.255.255.254"):
+            with self.subTest(host=host):
+                accepted = self._managed_environment(49321)
+                accepted["HARNESS_HOST"] = host
+                self.assertEqual(
+                    resolve_studio_launch(
+                        host=None,
+                        port=None,
+                        no_open=False,
+                        environ=accepted,
+                    ).host,
+                    host,
+                )
+
+    def test_managed_launch_fails_closed_for_invalid_port_authority(self) -> None:
+        invalid_ports = (
+            None,
+            "not-json",
+            "[]",
+            "{}",
+            '{"http":49321,"controlPlane":49322}',
+            '{"http":49321,"http":49322}',
+            '{"http":true}',
+            '{"http":49321.0}',
+            '{"http":"49321"}',
+            '{"http":0}',
+            '{"http":65536}',
+        )
+        for raw in invalid_ports:
+            with self.subTest(raw=raw):
+                environment = {
+                    "HARNESS_CAPABILITY": "studio",
+                    "HARNESS_HOST": "127.0.0.1",
+                    "HARNESS_NO_OPEN": "1",
+                }
+                if raw is not None:
+                    environment["HARNESS_PORTS"] = raw
+                with self.assertRaises(AutoQuantValidationError):
+                    resolve_studio_launch(
+                        host=None,
+                        port=None,
+                        no_open=False,
+                        environ=environment,
+                    )
+
+        with self.assertRaisesRegex(AutoQuantValidationError, "host"):
+            resolve_studio_launch(
+                host=None,
+                port=None,
+                no_open=False,
+                environ={
+                    "HARNESS_CAPABILITY": "studio",
+                    "HARNESS_PORTS": '{"http":49321}',
+                },
+            )
+
+        for host in (
+            "",
+            " ",
+            " 127.0.0.1",
+            "127.0.0.1 ",
+            "0.0.0.0",
+            "10.0.0.1",
+            "192.0.2.1",
+            "example.com",
+            "localhost.example",
+            "::1",
+            "[::1]",
+            "127.1",
+            "127.000.000.001",
+        ):
+            with self.subTest(host=host), self.assertRaisesRegex(
+                AutoQuantValidationError,
+                "host",
+            ):
+                resolve_studio_launch(
+                    host=None,
+                    port=None,
+                    no_open=False,
+                    environ={
+                        "HARNESS_CAPABILITY": "studio",
+                        "HARNESS_HOST": host,
+                        "HARNESS_PORTS": '{"http":49321}',
+                    },
+                )
+
+    def test_non_managed_environment_preserves_standalone_launch(self) -> None:
+        noisy_environment = {
+            "HARNESS_CAPABILITY": "another-capability",
+            "HARNESS_HOST": "192.0.2.1",
+            "HARNESS_PORTS": "not-json",
+            "HARNESS_NO_OPEN": "1",
+            "OPENALICE_CAPABILITY": "studio",
+            "OPENALICE_CAPABILITY_HOST": "192.0.2.1",
+            "OPENALICE_CAPABILITY_PORTS": "not-json",
+            "OPENALICE_CAPABILITY_NO_OPEN": "1",
+        }
+        default = resolve_studio_launch(
+            host=None,
+            port=None,
+            no_open=False,
+            environ=noisy_environment,
+        )
+        explicit = resolve_studio_launch(
+            host="0.0.0.0",
+            port=0,
+            no_open=True,
+            environ=noisy_environment,
+        )
+
+        self.assertFalse(default.managed)
+        self.assertEqual(default.host, "127.0.0.1")
+        self.assertEqual(default.port, 8765)
+        self.assertTrue(default.open_browser)
+        self.assertEqual(explicit.host, "0.0.0.0")
+        self.assertEqual(explicit.port, 0)
+        self.assertFalse(explicit.open_browser)
+
+    def test_managed_cli_forces_no_browser_and_exact_bind(self) -> None:
+        from autoquant.cli import main
+
+        environment = self._managed_environment(49321)
+        with mock.patch.dict(os.environ, environment, clear=True), mock.patch(
+            "autoquant.cli.serve_studio"
+        ) as serve:
+            exit_code = main(["studio", "serve", "."])
+
+        self.assertEqual(exit_code, 0)
+        serve.assert_called_once_with(
+            ".",
+            project_id=None,
+            host="127.0.0.1",
+            port=49321,
+            open_browser=False,
+            allow_actions=False,
+            managed=True,
+        )
+
+    def test_managed_cli_uses_real_fixed_port_and_health_readiness(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, _ = self._setup(directory)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+                probe.bind(("127.0.0.1", 0))
+                port = probe.getsockname()[1]
+            process = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    "autoquant",
+                    "studio",
+                    "serve",
+                    str(workspace.root_dir),
+                    "--no-open",
+                ],
+                cwd=Path(__file__).resolve().parents[1],
+                env=self._managed_environment(port),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            try:
+                announcement = process.stdout.readline().strip()
+                self.assertEqual(
+                    announcement,
+                    f"AutoQuant Studio: http://127.0.0.1:{port}",
+                    process.stderr.read() if process.poll() is not None else "",
+                )
+                with urlopen(
+                    f"http://127.0.0.1:{port}/api/v1/health",
+                    timeout=3,
+                ) as response:
+                    self.assertEqual(response.status, 200)
+                    health = json.loads(response.read())
+                self.assertTrue(health["ok"])
+                self.assertEqual(health["service"], "autoquant-studio")
+                self.assertEqual(health["mode"], "read-only")
+            finally:
+                process.terminate()
+                process.wait(timeout=5)
+                process.stdout.close()
+                process.stderr.close()
+
+    def test_manifest_command_is_origin_neutral_embeddable_and_releases_on_sigterm(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, parent_environment = self._prepare_source_workspace(directory)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+                probe.bind(("127.0.0.1", 0))
+                port = probe.getsockname()[1]
+            default_was_free = False
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as default_probe:
+                default_was_free = default_probe.connect_ex(
+                    ("127.0.0.1", 8765)
+                ) != 0
+            environment = self._managed_environment(port)
+            environment["PATH"] = parent_environment["PATH"]
+            environment.pop("VIRTUAL_ENV", None)
+            environment.pop("UV_PROJECT_ENVIRONMENT", None)
+            process = subprocess.Popen(
+                self._manifest_command(),
+                cwd=workspace,
+                env=environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            try:
+                announcement = process.stdout.readline().strip()
+                self.assertEqual(
+                    announcement,
+                    f"AutoQuant Studio: http://127.0.0.1:{port}",
+                    process.stderr.read() if process.poll() is not None else "",
+                )
+                base = f"http://127.0.0.1:{port}"
+                headers = {
+                    "Host": "oa-surface-autoquant.localhost",
+                    "Cookie": "openalice-session=must-not-be-required",
+                    "Authorization": "Bearer must-not-be-required",
+                    "X-CSRF-Token": "must-not-be-required",
+                }
+                for path, expected in (
+                    # V3 serves the built studio-app at "/" and the
+                    # original page at "/legacy".
+                    ("/", b'<div id="root">'),
+                    ("/legacy", b"Quant research desk"),
+                    ("/assets/studio.css", b"--bg"),
+                    ("/assets/studio.js", b'/api/v1/snapshot'),
+                ):
+                    with urlopen(Request(f"{base}{path}", headers=headers), timeout=3) as response:
+                        body = response.read()
+                        self.assertEqual(response.status, 200)
+                        self.assertIn(expected, body)
+                        csp = response.headers["Content-Security-Policy"]
+                        self.assertIn(
+                            "frame-ancestors app: http://127.0.0.1:* "
+                            "http://localhost:* http://*.localhost:*",
+                            csp,
+                        )
+                        self.assertNotIn("frame-ancestors *", csp)
+                        self.assertIsNone(response.headers["X-Frame-Options"])
+                        self.assertIsNone(
+                            response.headers["Cross-Origin-Resource-Policy"]
+                        )
+                        self.assertIsNone(response.headers["Location"])
+                with urlopen(
+                    Request(f"{base}/api/v1/health", headers=headers), timeout=3
+                ) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(
+                        json.loads(response.read())["service"],
+                        "autoquant-studio",
+                    )
+                with urlopen(
+                    Request(f"{base}/api/v1/snapshot", headers=headers), timeout=3
+                ) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(
+                        json.loads(response.read())["kind"],
+                        "autoquant-studio-snapshot",
+                    )
+                if default_was_free:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as check:
+                        self.assertNotEqual(check.connect_ex(("127.0.0.1", 8765)), 0)
+            finally:
+                if os.name == "nt":
+                    # Windows has no SIGTERM and TerminateProcess on the `uv run`
+                    # launcher orphans its aq.exe/python children, which keep the
+                    # prepared .venv locked. Stop the whole tree by PID instead.
+                    subprocess.run(
+                        ["taskkill", "/T", "/F", "/PID", str(process.pid)],
+                        capture_output=True,
+                        check=False,
+                    )
+                else:
+                    process.terminate()
+                process.wait(timeout=5)
+                process.stdout.close()
+                process.stderr.close()
+
+            self.assertNotEqual(process.returncode, None)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener_check:
+                self.assertNotEqual(
+                    listener_check.connect_ex(("127.0.0.1", port)), 0
+                )
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as released:
+                released.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                released.bind(("127.0.0.1", port))
+
+    def test_manifest_command_fails_clearly_without_prepared_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = self._copy_source_workspace(directory)
+            parent_environment = self._ordinary_parent_environment()
+            environment = self._managed_environment(49321)
+            environment["PATH"] = parent_environment["PATH"]
+            environment.pop("VIRTUAL_ENV", None)
+            environment.pop("UV_PROJECT_ENVIRONMENT", None)
+            lock_before = (workspace / "uv.lock").read_bytes()
+
+            result = subprocess.run(
+                self._manifest_command(),
+                cwd=workspace,
+                env=environment,
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=15,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, "")
+            self.assertIn("Failed to spawn", result.stderr)
+            self.assertIn("aq", result.stderr)
+            self.assertEqual((workspace / "uv.lock").read_bytes(), lock_before)
+            self.assertFalse((workspace / ".venv" / VENV_SCRIPTS / AQ_EXECUTABLE).exists())
+
+    def test_managed_no_open_environment_suppresses_real_browser_opener(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = initialize_workspace(Path(directory) / "desk")
+            marker = Path(directory) / "browser-opened"
+            opener = Path(directory) / "browser-opener"
+            opener.write_text(
+                "#!/bin/sh\nprintf opened > \"$AUTOQUANT_BROWSER_MARKER\"\n",
+                encoding="utf-8",
+            )
+            opener.chmod(0o755)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+                probe.bind(("127.0.0.1", 0))
+                port = probe.getsockname()[1]
+            command = [
+                sys.executable,
+                "-m",
+                "autoquant",
+                "studio",
+                "serve",
+                str(workspace.root_dir),
+            ]
+            environment = self._managed_environment(port)
+            environment.update(
+                {
+                    "AUTOQUANT_BROWSER_MARKER": str(marker),
+                    "BROWSER": str(opener),
+                }
+            )
+            process = subprocess.Popen(
+                command,
+                cwd=workspace.root_dir,
+                env=environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            try:
+                process.stdout.readline()
+                with urlopen(
+                    f"http://127.0.0.1:{port}/api/v1/health", timeout=3
+                ) as response:
+                    self.assertEqual(response.status, 200)
+                time.sleep(0.2)
+                self.assertFalse(marker.exists())
+            finally:
+                process.terminate()
+                process.wait(timeout=5)
+                process.stdout.close()
+                process.stderr.close()
+
+    def test_frontend_has_only_current_origin_http_transport(self) -> None:
+        assets = Path(__file__).resolve().parents[1] / "autoquant" / "studio_assets"
+        html = (assets / "index.html").read_text(encoding="utf-8")
+        javascript = (assets / "studio.js").read_text(encoding="utf-8")
+        self.assertIn('href="/assets/studio.css"', html)
+        self.assertIn('src="/assets/studio.js"', html)
+        self.assertIn('fetch("/api/v1/snapshot"', javascript)
+        for fixed_origin in (
+            "http://127.0.0.1",
+            "http://localhost",
+            "ws://",
+            "wss://",
+        ):
+            self.assertNotIn(fixed_origin, html)
+            self.assertNotIn(fixed_origin, javascript)
+        self.assertNotIn("EventSource(", javascript)
+        self.assertNotIn("WebSocket(", javascript)
+
+    def test_managed_cli_fails_when_injected_port_is_occupied(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace, _, _ = self._setup(directory)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as occupied:
+                occupied.bind(("127.0.0.1", 0))
+                occupied.listen()
+                port = occupied.getsockname()[1]
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "autoquant",
+                        "studio",
+                        "serve",
+                        str(workspace.root_dir),
+                        "--no-open",
+                    ],
+                    cwd=Path(__file__).resolve().parents[1],
+                    env=self._managed_environment(port),
+                    capture_output=True,
+                    check=False,
+                    text=True,
+                    timeout=5,
+                )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, "")
+        # POSIX reports EADDRINUSE; Windows reports WSAEADDRINUSE (10048) or,
+        # with the server's SO_REUSEADDR on an exclusively held port, WSAEACCES (10013).
+        self.assertRegex(
+            result.stderr, r"Address already in use|WinError 100(13|48)"
+        )
+
+    def test_managed_cli_subprocess_rejects_conflicting_explicit_port(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = initialize_workspace(Path(directory) / "desk")
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+                probe.bind(("127.0.0.1", 0))
+                port = probe.getsockname()[1]
+            environment = self._managed_environment(port)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "autoquant",
+                    "studio",
+                    "serve",
+                    str(workspace.root_dir),
+                    "--no-open",
+                    "--port",
+                    str(port + 1),
+                ],
+                cwd=Path(__file__).resolve().parents[1],
+                env=environment,
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=5,
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("conflicts with injected port", result.stderr)
+
     def test_cli_serve_announces_a_live_local_read_only_url(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace, _, _ = self._setup(directory)
@@ -812,6 +1404,7 @@ class StudioObservationTests(unittest.TestCase):
                     "0",
                     "--no-open",
                 ],
+                env=self._standalone_environment(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -825,6 +1418,15 @@ class StudioObservationTests(unittest.TestCase):
                 url = announcement.removeprefix("AutoQuant Studio: ")
                 with urlopen(f"{url}/api/v1/health", timeout=3) as response:
                     self.assertEqual(json.loads(response.read())["mode"], "read-only")
+                    self.assertEqual(response.headers["X-Frame-Options"], "DENY")
+                    self.assertEqual(
+                        response.headers["Cross-Origin-Resource-Policy"],
+                        "same-origin",
+                    )
+                    self.assertIn(
+                        "frame-ancestors 'none'",
+                        response.headers["Content-Security-Policy"],
+                    )
             finally:
                 process.terminate()
                 process.wait(timeout=5)

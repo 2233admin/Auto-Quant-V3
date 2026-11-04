@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import os
 import re
 import shlex
 import threading
 import webbrowser
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 from urllib.parse import parse_qs, urlsplit
 
 from .allocation_explorer import (
@@ -88,6 +90,31 @@ from .workspace import (
 
 
 STUDIO_KIND = "autoquant-studio-snapshot"
+HARNESS_CAPABILITY = "HARNESS_CAPABILITY"
+HARNESS_HOST = "HARNESS_HOST"
+HARNESS_PORTS = "HARNESS_PORTS"
+HARNESS_NO_OPEN = "HARNESS_NO_OPEN"
+STUDIO_MANAGED_PORT_NAMES = frozenset({"http"})
+STANDALONE_STUDIO_HOST = "127.0.0.1"
+STANDALONE_STUDIO_PORT = 8765
+
+
+@dataclass(frozen=True)
+class StudioLaunch:
+    """Resolved bind and browser authority for one Studio process."""
+
+    host: str
+    port: int
+    open_browser: bool
+    managed: bool
+
+
+# Optional snapshot marker present only under managed launch, so the frontend
+# can adapt (for example hide the in-process Assistant) without guessing from
+# the request origin. Vendor-neutral: it names the generic Harness contract.
+MANAGED_SNAPSHOT_HOST = {"kind": "harness", "capability": "studio"}
+
+
 STUDIO_ASSETS = {
     "/legacy": ("index.html", "text/html; charset=utf-8"),
     "/legacy/": ("index.html", "text/html; charset=utf-8"),
@@ -115,7 +142,7 @@ STUDIO_APP_MISSING = (
     "in <code>studio-app/</code>, or open the "
     '<a href="/legacy">legacy Studio</a>.</p></body></html>\n'
 )
-SECURITY_HEADERS = {
+STANDALONE_SECURITY_HEADERS = {
     "Content-Security-Policy": (
         "default-src 'none'; script-src 'self'; style-src 'self'; "
         "img-src 'self' data:; connect-src 'self'; font-src 'self'; "
@@ -129,10 +156,182 @@ SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
 }
+MANAGED_SECURITY_HEADERS = {
+    "Content-Security-Policy": (
+        "default-src 'none'; script-src 'self'; style-src 'self'; "
+        "img-src 'self' data:; connect-src 'self'; font-src 'self'; "
+        "base-uri 'none'; form-action 'none'; frame-ancestors app: "
+        "http://127.0.0.1:* http://localhost:* http://*.localhost:*"
+    ),
+    "Permissions-Policy": (
+        "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    ),
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff",
+}
+
+
+def studio_security_headers(*, managed: bool) -> Mapping[str, str]:
+    """Return the explicit launch-mode response policy."""
+
+    return MANAGED_SECURITY_HEADERS if managed else STANDALONE_SECURITY_HEADERS
 
 
 def _issue(path: Path | str, code: str, message: str) -> ValidationIssue:
     return ValidationIssue(str(path), code, message)
+
+
+def _managed_ports(raw: str | None) -> dict[str, Any]:
+    if raw is None:
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    HARNESS_PORTS,
+                    "studio.managed-ports",
+                    "Managed Studio requires an injected JSON ports object",
+                )
+            ]
+        )
+
+    def reject_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate port name: {key}")
+            result[key] = value
+        return result
+
+    try:
+        parsed = json.loads(raw, object_pairs_hook=reject_duplicates)
+    except (json.JSONDecodeError, ValueError) as error:
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    HARNESS_PORTS,
+                    "studio.managed-ports",
+                    "Managed Studio ports must be one unambiguous JSON object",
+                )
+            ]
+        ) from error
+    if not isinstance(parsed, dict):
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    HARNESS_PORTS,
+                    "studio.managed-ports",
+                    "Managed Studio ports must be a JSON object",
+                )
+            ]
+        )
+    return parsed
+
+
+def _managed_host(raw: str | None) -> str:
+    if raw is None or not raw or raw.strip() != raw:
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    HARNESS_HOST,
+                    "studio.managed-host",
+                    "Managed Studio requires one non-empty injected host",
+                )
+            ]
+        )
+    if raw.casefold() == "localhost":
+        return raw
+    try:
+        address = ipaddress.ip_address(raw)
+    except ValueError:
+        address = None
+    if isinstance(address, ipaddress.IPv4Address) and address.is_loopback:
+        return raw
+    raise AutoQuantValidationError(
+        [
+            _issue(
+                HARNESS_HOST,
+                "studio.managed-host",
+                "Managed Studio host must be localhost or a canonical IPv4 "
+                "loopback address",
+            )
+        ]
+    )
+
+
+def resolve_studio_launch(
+    *,
+    host: str | None,
+    port: int | None,
+    no_open: bool,
+    environ: Mapping[str, str] | None = None,
+) -> StudioLaunch:
+    """Resolve standalone defaults or strict generic Harness authority."""
+
+    environment = os.environ if environ is None else environ
+    if environment.get(HARNESS_CAPABILITY) != "studio":
+        return StudioLaunch(
+            host=STANDALONE_STUDIO_HOST if host is None else host,
+            port=STANDALONE_STUDIO_PORT if port is None else port,
+            open_browser=not no_open,
+            managed=False,
+        )
+
+    injected_host = _managed_host(environment.get(HARNESS_HOST))
+    ports = _managed_ports(environment.get(HARNESS_PORTS))
+    if set(ports) != STUDIO_MANAGED_PORT_NAMES:
+        declared = ", ".join(sorted(STUDIO_MANAGED_PORT_NAMES))
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    HARNESS_PORTS,
+                    "studio.managed-port-names",
+                    "Managed Studio ports must match the manifest exactly: "
+                    f"{declared}",
+                )
+            ]
+        )
+    injected_port = ports["http"]
+    if (
+        not isinstance(injected_port, int)
+        or isinstance(injected_port, bool)
+        or not 1 <= injected_port <= 65535
+    ):
+        raise AutoQuantValidationError(
+            [
+                _issue(
+                    f"{HARNESS_PORTS}.http",
+                    "studio.managed-http-port",
+                    "Managed Studio http port must be an integer from 1 to 65535",
+                )
+            ]
+        )
+    issues: list[ValidationIssue] = []
+    if host is not None and host != injected_host:
+        issues.append(
+            _issue(
+                "--host",
+                "studio.managed-host-conflict",
+                f"Explicit Studio host {host!r} conflicts with injected host {injected_host!r}",
+            )
+        )
+    if port is not None and port != injected_port:
+        issues.append(
+            _issue(
+                "--port",
+                "studio.managed-port-conflict",
+                f"Explicit Studio port {port} conflicts with injected port {injected_port}",
+            )
+        )
+    if issues:
+        raise AutoQuantValidationError(issues)
+    return StudioLaunch(
+        host=injected_host,
+        port=injected_port,
+        open_browser=(
+            not no_open
+            and environment.get(HARNESS_NO_OPEN) != "1"
+        ),
+        managed=True,
+    )
 
 
 def _diagnostics(
@@ -2110,9 +2309,11 @@ def _handler(
     directory: Path,
     project_id: str | None,
     actions: ActionService | None = None,
-    host: dict[str, Any] | None = None,
+    *,
+    managed: bool = False,
 ) -> type[BaseHTTPRequestHandler]:
     cache = SnapshotCache(directory)
+    host = dict(MANAGED_SNAPSHOT_HOST) if managed else None
 
     class StudioHandler(BaseHTTPRequestHandler):
         server_version = "AutoQuantStudio/0.1"
@@ -2132,7 +2333,7 @@ def _handler(
             self.send_header("Cache-Control", cache_control)
             if etag is not None:
                 self.send_header("ETag", etag)
-            for key, value in SECURITY_HEADERS.items():
+            for key, value in studio_security_headers(managed=managed).items():
                 self.send_header(key, value)
             self.end_headers()
 
@@ -2650,7 +2851,7 @@ def create_studio_server(
     port: int = 8765,
     allow_actions: bool = False,
     action_options: dict[str, Any] | None = None,
-    host_block: dict[str, Any] | None = None,
+    managed: bool = False,
 ) -> AutoQuantStudioServer:
     if not isinstance(port, int) or isinstance(port, bool) or not 0 <= port <= 65535:
         raise AutoQuantValidationError(
@@ -2688,7 +2889,7 @@ def create_studio_server(
         )
     server = AutoQuantStudioServer(
         (host, port),
-        _handler(root, project_id, actions, host_block),
+        _handler(root, project_id, actions, managed=managed),
     )
     server.actions = actions
     if actions is not None:
@@ -2708,7 +2909,7 @@ def serve_studio(
     port: int = 8765,
     open_browser: bool = True,
     allow_actions: bool = False,
-    host_block: dict[str, Any] | None = None,
+    managed: bool = False,
 ) -> None:
     server = create_studio_server(
         directory,
@@ -2716,7 +2917,7 @@ def serve_studio(
         host=host,
         port=port,
         allow_actions=allow_actions,
-        host_block=host_block,
+        managed=managed,
     )
     display_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
     url = f"http://{display_host}:{server.server_port}"

@@ -133,17 +133,11 @@ Project with `--project ID`.
 
 ## Hosted by a supervisor (OpenAlice)
 
-`harness.json` at the repository root declares a Manifest v1 `studio`
-capability. A supervisor launches `aq studio serve . --no-open` and injects
-`HARNESS_CAPABILITY=studio`, `HARNESS_HOST`, `HARNESS_PORTS` (for example
-`{"http":49321}`) and `HARNESS_NO_OPEN=1`. With `HARNESS_CAPABILITY=studio`
-Studio is hosted: it binds `HARNESS_HOST:HARNESS_PORTS.http`, never opens a
-browser, and exits non-zero with a clear message when the port is missing or
-invalid. It never falls back to 8765. `--host`/`--port` that disagree with the
-injected values are a usage error. Readiness is `GET /api/v1/health`.
-The snapshot then carries `host: {"kind": "openalice", "capability": "studio"}`
-so the UI can hide the in-process Assistant. Design:
-[[docs/design/openalice-hosting]].
+See [Harness-managed launch](#harness-managed-launch) above for the contract.
+V3 adds one optional field: under managed launch the snapshot carries
+`host: {"kind": "harness", "capability": "studio"}` so the frontend can adapt
+(for example hide the in-process Assistant). Standalone snapshots have no
+`host` field. Notes: [[docs/design/openalice-hosting]].
 
 ## Local actions (opt in)
 
@@ -218,6 +212,55 @@ probes Git or package metadata independently. See
 The default bind is intentionally loopback-only. V1 has no authentication.
 Binding `--host` to a non-loopback address is an explicit operator decision.
 
+## Harness-managed launch
+
+The repository-root `harness.json` lets a compatible Harness discover Studio
+without an AutoQuant-specific SDK. OpenAlice or another compatible supervisor
+executes the same public command from the Workspace root and injects one named
+loopback port. A reproducible managed launch is:
+
+```bash
+HARNESS_CAPABILITY=studio \
+HARNESS_HOST=127.0.0.1 \
+HARNESS_PORTS='{"http":49321}' \
+HARNESS_NO_OPEN=1 \
+uv run --frozen --no-sync aq studio serve . --no-open
+```
+
+After the URL announcement, readiness is:
+
+```bash
+curl --fail http://127.0.0.1:49321/api/v1/health
+```
+
+Managed mode binds exactly the injected host and `http` port. Missing,
+malformed, non-integer, boolean, zero, or out-of-range port authority fails
+before listening. Missing or extra port names fail because `HARNESS_PORTS` must
+match the manifest exactly. The host must be `localhost` or a canonical IPv4
+loopback literal in `127.0.0.0/8`; wildcard, interface/public, arbitrary-name,
+IPv6, whitespace, and malformed authorities fail before server construction.
+An occupied port also fails; AutoQuant never selects a replacement. Explicit
+`--host` or `--port` values must equal their injected values. Outside exact
+`HARNESS_CAPABILITY=studio` mode, these
+environment variables do not affect standalone behavior. Older
+vendor-specific environment names are not managed-launch aliases.
+
+The checked-in command assumes the source Workspace was independently prepared
+with `uv sync --frozen`. It uses `uv run --frozen --no-sync` so capability
+startup selects the repository-owned environment but cannot modify the lock or
+synchronize dependencies. Missing preparation is a startup error; the
+supervisor does not activate `.venv`, alter `PATH`, or repair the installation.
+
+Standalone responses retain `frame-ancestors 'none'`,
+`X-Frame-Options: DENY`, and same-origin resource policy. Managed responses
+omit the latter two headers and allow framing only from `app:`, loopback HTTP,
+`localhost`, and localhost subdomains; they never use a wildcard ancestor.
+Mode is explicit process state, not a guess from the request `Host`.
+
+The page, packaged assets, health/snapshot APIs, and polling all use the
+current origin. Studio neither reads host authentication state nor redirects
+to its injected bind address. There is currently no SSE or WebSocket route;
+the supervisor needs only ordinary HTTP proxying for this Studio version.
 ## Navigation and home
 
 The sidebar is organised by task. At the top is **Ideas** (the home page, with a

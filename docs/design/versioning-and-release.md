@@ -23,6 +23,8 @@ One release version must agree across:
 
 - `pyproject.toml` package metadata;
 - `uv.lock` lock metadata;
+- repository-root `harness.json` product version (its independent
+  `manifestVersion` belongs to the host capability protocol);
 - `autoquant/version.py` runtime reporting of installed package metadata (it
   has no separately edited version literal);
 - `hatch_build.py` embedded commit/dirty provenance for built distributions;
@@ -69,6 +71,11 @@ Host selection is independent. OpenAlice or another host pins the AutoQuant tag
 it has deliberately selected; publishing a newer repository tag does not move
 that pin, rewrite a desk, or migrate Project state. Record the current host pin
 in `docs/STATUS.md`, not as a package-side upgrade action.
+
+A source-Workspace host prepares the selected tag with AutoQuant's documented
+`uv sync --frozen` command. Capability startup must execute the checked-in
+manifest literally under an ordinary parent `PATH`; the supervisor does not
+activate `.venv`, install dependencies, or rewrite the manifest command.
 
 ## Release evidence
 

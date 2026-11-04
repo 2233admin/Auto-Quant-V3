@@ -190,8 +190,12 @@ from .research_program import (
     RESEARCH_DESK_TEMPLATE,
     load_research_program,
 )
-from .studio import STUDIO_SNAPSHOT_JSON_SCHEMA, build_studio_snapshot, serve_studio
-from .studio_host import resolve_host_contract
+from .studio import (
+    STUDIO_SNAPSHOT_JSON_SCHEMA,
+    build_studio_snapshot,
+    resolve_studio_launch,
+    serve_studio,
+)
 from .templates import (
     PROJECT_TEMPLATE_IDS,
     TEMPLATE_STUDY_IDS,
@@ -1432,8 +1436,8 @@ def build_parser() -> RaisingArgumentParser:
     )
     studio_serve.add_argument("path")
     studio_serve.add_argument("--project")
-    studio_serve.add_argument("--host", default=None)
-    studio_serve.add_argument("--port", type=int, default=None)
+    studio_serve.add_argument("--host")
+    studio_serve.add_argument("--port", type=int)
     studio_serve.add_argument("--no-open", action="store_true")
     studio_serve.add_argument("--allow-actions", action="store_true")
     studio_serve.set_defaults(command_id="studio.serve")
@@ -5636,25 +5640,19 @@ def _studio_snapshot(args: argparse.Namespace) -> CommandResult:
 
 
 def _studio_serve(args: argparse.Namespace) -> CommandResult:
-    hosted = resolve_host_contract()
-    if hosted is not None:
-        for flag, explicit, injected in (
-            ("--host", args.host, hosted.host),
-            ("--port", args.port, hosted.port),
-        ):
-            if explicit is not None and explicit != injected:
-                raise CliUsageError(
-                    f"{flag} {explicit} conflicts with the supervisor-injected "
-                    f"{injected}; hosted Studio binds HARNESS_HOST/HARNESS_PORTS only"
-                )
+    launch = resolve_studio_launch(
+        host=args.host,
+        port=args.port,
+        no_open=args.no_open,
+    )
     serve_studio(
         args.path,
         project_id=args.project,
-        host=hosted.host if hosted else args.host or "127.0.0.1",
-        port=hosted.port if hosted else 8765 if args.port is None else args.port,
-        open_browser=not args.no_open and hosted is None,
+        host=launch.host,
+        port=launch.port,
+        open_browser=launch.open_browser,
         allow_actions=args.allow_actions,
-        host_block=hosted.snapshot_block() if hosted else None,
+        managed=launch.managed,
     )
     return CommandResult(
         "studio.serve",

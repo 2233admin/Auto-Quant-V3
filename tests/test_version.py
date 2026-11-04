@@ -14,6 +14,7 @@ from pathlib import Path
 
 from hatch_build import resolve_build_identity
 from autoquant.runs import harness_identity
+from autoquant.studio import STUDIO_MANAGED_PORT_NAMES
 from autoquant.version import current_build_identity, current_version
 
 
@@ -21,7 +22,7 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 
 class VersionContractTests(unittest.TestCase):
-    def test_openalice_readme_package_cli_and_runs_agree(self) -> None:
+    def test_manifest_readme_package_cli_and_runs_agree(self) -> None:
         package_version = tomllib.loads(
             (PROJECT_DIR / "pyproject.toml").read_text(encoding="utf-8")
         )["project"]["version"]
@@ -36,6 +37,38 @@ class VersionContractTests(unittest.TestCase):
         self.assertEqual(match.group(1), package_version)
         self.assertEqual(current_version(), package_version)
         self.assertEqual(harness_identity()["version"], package_version)
+        harness_manifest = json.loads(
+            (PROJECT_DIR / "harness.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            harness_manifest,
+            {
+                "manifestVersion": 1,
+                "version": package_version,
+                "capabilities": {
+                    "studio": {
+                        "command": [
+                            "uv",
+                            "run",
+                            "--frozen",
+                            "--no-sync",
+                            "aq",
+                            "studio",
+                            "serve",
+                            ".",
+                            "--no-open",
+                        ],
+                        "ports": ["http"],
+                        "entryPort": "http",
+                        "readinessPath": "/api/v1/health",
+                    }
+                },
+            },
+        )
+        self.assertEqual(
+            set(harness_manifest["capabilities"]["studio"]["ports"]),
+            STUDIO_MANAGED_PORT_NAMES,
+        )
 
         cli = subprocess.run(
             [sys.executable, "-m", "autoquant", "--version"],

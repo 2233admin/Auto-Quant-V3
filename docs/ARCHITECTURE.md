@@ -22,6 +22,7 @@ The shipped repository now materializes that model directly:
 
 ```text
 Auto-Quant-V2/                     # Workspace root and Git history
+├── harness.json                   # optional host capability discovery
 ├── autoquant-workspace.json       # checked-in discovery/default
 ├── autoquant/                     # Harness runtime, schemas, CLI, Studio
 ├── projects/
@@ -45,6 +46,12 @@ orchestration, communication, scheduling, provenance, and shared tools around
 the desk. It does not create a separate AutoQuant mode or own quantitative
 truth. The canonical product model is
 [[docs/design/agent-native-quant-workbench]].
+
+The source Workspace owns its runtime preparation through `uv sync --frozen`.
+`harness.json` enters that prepared environment with frozen, no-sync `uv run`
+and accepts only explicit loopback process authority from a supervisor. Hosting
+does not require virtual-environment activation, `PATH` mutation, launch-time
+dependency installation, or changes to standalone CLI behavior.
 
 ## Current implementation state
 
@@ -131,6 +138,9 @@ The V2 foundation now implements:
   explicit mutable Campaign progress, defensive HTTP boundary, bounded
   verified Portfolio decision exploration, and responsive research-first
   presentation.
+- one repository-root Harness manifest and strict optional Studio launch
+  adapter that consumes a host-assigned named loopback port without changing
+  standalone defaults, HTTP ownership, or quantitative Core behavior;
 - one verified Portfolio sizing-anatomy read model that explains conviction,
   inverse volatility, same-side budget, caps/water-filling, covariance
   governance, historical execution, and component risk without becoming an
@@ -378,6 +388,10 @@ universe, clock, interval, or history. See
 - materializing or discovering the Workspace desk;
 - starting, resuming, and attributing native coding-Agent Sessions;
 - cross-Workspace task assignment, scheduling, communication, and delivery;
+- capability port allocation, foreground process supervision, readiness, and
+  opaque Web Surface routing;
+- public browser origin and product chrome without forwarding host Cookie,
+  Authorization, or CSRF authority into AutoQuant;
 - host-authenticated identity, credentials, Inbox, and shared tool injection.
 
 OpenAlice is the first-party host example. AutoQuant cannot require or
@@ -434,6 +448,9 @@ cannot own Workspace, Project, or evidence semantics.
   The Studio must not become a second evaluator.
 - Standalone and hosted Workspaces use the same Core, schemas, CLI, Project
   formats, evaluation semantics, and evidence.
+- Exact generic managed authority may change only Studio bind, browser-open,
+  and restricted embedding policy; without it, standalone launch and response
+  security remain unchanged.
 - Project truth remains recoverable from files and immutable artifacts without
   requiring private Agent conversation history.
 - Reports and Dossiers are durable deliverables, not mandatory integration

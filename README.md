@@ -1,5 +1,5 @@
 ---
-version: 0.9.31
+version: 0.9.34
 ---
 
 # AutoQuant V2
@@ -26,7 +26,7 @@ One Workspace may hold many self-contained Projects. A Project is one evolving
 body of research; a Study locks one evaluation question; a Research Session is
 a bounded editable investigation; a Run is an immutable measurement.
 
-## Current release: `0.9.31`
+## Current release: `0.9.34`
 
 [Current status](docs/STATUS.md) states what this checkout can honestly do.
 [Release history](docs/CHANGELOG.md) indexes bounded outcomes, and
@@ -58,7 +58,7 @@ AutoQuant requires Python 3.11 and [uv](https://docs.astral.sh/uv/).
 ```bash
 git clone git@github.com:TraderAlice/Auto-Quant-V2.git
 cd Auto-Quant-V2
-uv sync
+uv sync --frozen
 
 uv run aq --version
 uv run aq project list .

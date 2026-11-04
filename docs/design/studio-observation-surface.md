@@ -16,11 +16,12 @@ Related: [[docs/ARCHITECTURE]], [[docs/CLI]], [[docs/PROJECT_FORMAT]],
 
 ## Scope
 
-This document owns the local Studio snapshot, read-only HTTP boundary,
-presentation responsibilities, and the distinction between immutable evidence
-and mutable execution progress. The opt-in local action boundary
-(`--allow-actions`) is owned by [[docs/design/studio-local-actions]]; without
-that flag every read-only statement here is literally true.
+This document owns the Studio snapshot, read-only HTTP boundary, standalone or
+host-assigned launch authority, presentation responsibilities, and the
+distinction between immutable evidence and mutable execution progress. The
+opt-in local action boundary (`--allow-actions`) is owned by
+[[docs/design/studio-local-actions]]; without that flag every read-only
+statement here is literally true.
 
 It does not own research decisions, evaluation, source mutation, promotion,
 remote hosting, authentication, or cloud persistence.
@@ -120,9 +121,66 @@ shows its last update rather than claiming liveness.
 - the versioned snapshot response.
 
 There is no arbitrary path, artifact download, mutation, command, or shell
-endpoint. Responses set a restrictive Content Security Policy, disable
-sniffing and framing, and avoid cross-origin access. Binding to a non-loopback
-address is an explicit operator choice and V1 has no authentication.
+endpoint. Standalone responses set a restrictive Content Security Policy,
+disable sniffing and framing, set `X-Frame-Options: DENY`, and retain
+same-origin resource policy. Binding to a non-loopback address is an explicit
+operator choice and V1 has no authentication.
+
+## Harness capability launch
+
+The repository-root `harness.json` is the host discovery surface. Its manifest
+protocol version is distinct from the AutoQuant product version. The one
+declared `studio` capability executes `uv run --frozen --no-sync aq studio
+serve . --no-open` from the Workspace root, requests a named `http` port, and
+uses `/api/v1/health` for readiness. The source Workspace is independently
+prepared with `uv sync --frozen`; capability launch selects that owned
+environment without activating `.venv`, changing `PATH`, modifying the lock,
+or synchronizing dependencies. Missing preparation is an explicit startup
+failure. The health route returns HTTP 200 only after the server is listening
+and identifies `service: autoquant-studio`.
+
+`HARNESS_CAPABILITY=studio` alone activates managed launch resolution. In that
+mode, `HARNESS_HOST` is required and `HARNESS_PORTS` must be an unambiguous
+JSON object whose names match the manifest exactly: one integer `http` value
+in `1..65535`, with no missing or extra name. The injected host must be exact
+`localhost` (case-insensitive) or a canonical IPv4 loopback literal in
+`127.0.0.0/8`. Wildcard, interface/public, arbitrary hostname, IPv6,
+whitespace, and malformed authority fail before server construction.
+AutoQuant binds exactly the accepted host and port. It never probes or
+increments another port. An explicitly supplied `--host` or `--port` may
+repeat injected authority but cannot conflict with it. Port bind failure
+remains a process startup failure. `HARNESS_NO_OPEN=1` forces browser
+suppression.
+
+The resolved `managed` state is passed explicitly from launch resolution
+through CLI, server construction, and response-header generation. Managed
+responses omit `X-Frame-Options` and same-origin
+`Cross-Origin-Resource-Policy`; their CSP admits only `app:`, loopback HTTP,
+`localhost`, and localhost-subdomain ancestors. It never uses unrestricted
+`frame-ancestors *`. Standalone responses keep the original strict policy.
+The server never infers mode from `Host`, origin, or bind address.
+
+When the capability value is absent or anything other than `studio`, every
+Harness capability variable is irrelevant to Studio. The standalone command
+retains `127.0.0.1:8765`, explicit `--host`/`--port`, port `0` OS allocation,
+and ordinary browser behavior. Former vendor-specific environment names also
+have no launch authority. This narrow adapter changes no snapshot, research,
+or evidence semantics and requires no OpenAlice or supervisor SDK.
+
+## Web origin and proxy boundary
+
+Studio serves its document at `/`. Its packaged HTML uses same-origin root
+paths for CSS, JavaScript, snapshot JSON, and the optional direct JSON link;
+JavaScript polls `/api/v1/snapshot`. It contains no fixed localhost origin,
+internal-port redirect, cookie, Authorization, CSRF, SSE, or WebSocket
+dependency. A compatible supervisor may therefore route the entry listener
+behind an opaque public origin such as an `oa-surface-*.localhost` host without
+teaching AutoQuant that origin.
+
+Studio currently has no SSE or WebSocket route. If either becomes a real
+product requirement, it must remain same-origin, derive `ws` versus `wss` from
+the current page where applicable, and receive its own streaming-capable proxy
+acceptance test. V1 does not add an unused transport or public-origin field.
 
 With `--allow-actions` the fixed routes `/api/v1/actions` and
 `/api/v1/jobs/...` also exist; there is still no arbitrary path, download, or
@@ -271,6 +329,12 @@ the overall delivery state back to a single-lane Report.
     combine one lane's explorer with another lane's Report.
 12. Studio projects executed-book risk only from Core-reconciled immutable
     rows and never treats a risk override as trading permission.
+13. Managed launch consumes the exact manifest-matched host-assigned ports or
+    fails; standalone launch is unaffected unless the generic Studio
+    capability marker is exact.
+14. Only explicit managed state relaxes framing, and only to the fixed Harness
+    ancestor allowlist; standalone anti-frame protection never depends on a
+    request header or guessed origin.
 
 ## Known gaps
 

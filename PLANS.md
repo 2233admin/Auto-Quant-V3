@@ -45,6 +45,7 @@ invariants live in `docs/design/`.
 | [[plans/order-native-decision-support-surfaces]] | Add caller-portfolio-context intake and the durable DecisionPlan/Report/Dossier delivery contract, with `tradingAuthority: none`. | 2026-08-19 |
 | [[plans/order-native-execution-risk-metrics]] | Add trade/protection and extended portfolio-risk metrics, plus RL evidence extensions, from fill-based evidence. | 2026-08-19 |
 | [[plans/order-native-studio-cli-parity-regression]] | Bring Studio/CLI/Report/Dossier to parity, prove standalone and host-delegated scenarios end to end, and close the series. | 2026-08-19 |
+| [[plans/tiered-test-feedback]] | Provide sub-minute first feedback while retaining explicit integration and complete scientific release gates. | 2026-08-21 |
 
 ## Paused plans
 
@@ -54,6 +55,9 @@ None.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/prepared-source-workspace-harness-command]] | Made the checked-in Studio command executable from an independently prepared source Workspace under an ordinary supervisor PATH and enforced supported managed IPv4 loopback authority. | 2026-08-22 |
+| [[plans/generic-harness-web-surface]] | Made Studio a vendor-neutral, strictly supervised, origin-neutral, managed-only embeddable Harness Web Surface without weakening standalone security. | 2026-08-22 |
+| [[plans/openalice-harness-studio-capability]] | Let OpenAlice discover and launch the existing Studio on one host-assigned fixed loopback port without changing standalone operation. | 2026-08-21 |
 | [[plans/order-native-decision-plan-schema]] | Define the breaking DecisionPlan/OrderIntent/evidence schema as a standalone tested module before any kernel or lane integration. | 2026-08-21 |
 | [[plans/factor-evidence-report-handoff]] | Made temporal Factor protocol applicability, material train/validation tension, and safe evidence-bound Report drafting explicit to fresh Agents. | 2026-08-02 |
 | [[plans/caller-owned-factor-population]] | Separated caller-owned Factor evaluation population from Portfolio position authority across standalone Factor, Portfolio, and governed-RL research. | 2026-08-02 |

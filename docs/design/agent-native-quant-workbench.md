@@ -42,6 +42,21 @@ evaluation semantics, Studio, and evidence remain the same. A host may add
 identity, scheduling, communication, credentials, and shared tools around the
 Workspace, but AutoQuant Core does not branch on an OpenAlice mode.
 
+The repository may expose narrow host discovery and process-launch metadata.
+For example, `harness.json` declares the existing Studio command, while exact
+vendor-neutral `HARNESS_*` authority lets that command consume a
+supervisor-assigned bind port and apply its restricted managed embedding
+policy. The host still owns public origin and routing. This is launch authority
+around the same Studio server, not a hosted research Core, private API, or
+second product edition.
+
+Environment ownership remains with AutoQuant. A source Workspace is prepared
+through its documented `uv sync --frozen` setup, and the manifest enters that
+prepared environment through frozen, no-sync `uv run`. A host supplies only
+bounded process authority such as loopback host, named port, and browser
+suppression; it does not activate AutoQuant's virtual environment or install
+its dependencies at launch.
+
 The product model is no longer supported only by reference fixtures.
 AutoQuant `0.8.8` has completed materially different real-request field trials
 covering Factor, Portfolio, governed RL, multi-interval Crypto, mixed-class
@@ -245,6 +260,8 @@ portfolio decisions, or filesystem authority.
 - creating or discovering Workspace desks;
 - starting and resuming native Agent Sessions;
 - cross-Workspace task assignment and communication;
+- capability discovery, loopback port allocation, and process supervision;
+- opaque public routing and host product chrome for managed Web Surfaces;
 - host-authenticated provenance, scheduling, Inbox, and shared tool injection.
 
 OpenAlice is the first-party example. AutoQuant does not require those services
@@ -296,6 +313,8 @@ hidden AutoQuant compatibility service.
 9. Simulated orders or target weights never grant live-trading authority.
 10. OpenAlice-specific provenance and communication remain optional host
     context, not AutoQuant Core identity.
+11. Generic managed launch and embedding authority never weaken standalone
+    Studio behavior or make an injected loopback address browser-visible.
 
 ## Non-goals
 

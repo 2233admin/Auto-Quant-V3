@@ -1,10 +1,10 @@
 # AutoQuant V2 current status
 
-Status: `v0.9.31` is the current AutoQuant release and `v0.8.31`
+Status: `v0.9.34` is the current AutoQuant release and `v0.8.31`
 remains the Harness currently consumed by OpenAlice until the host deliberately
 selects a newer tag.
 
-Updated: 2026-08-02.
+Updated: 2026-08-22.
 
 Related: [[README]], [[docs/CHANGELOG]], [[docs/ARCHITECTURE]],
 [[docs/design/agent-native-quant-workbench]],
@@ -17,52 +17,49 @@ historical proof remains in completed plans and immutable Git tags.
 
 ## Current milestone
 
-The `0.9.31` release makes the transition from verified Factor evidence to an
-Agent-authored immutable Report explicit. Factor diagnostics now project one
-strict `quantileEvidence` contract. Cross-sectional Runs declare fixed
-tertiles available; single-asset temporal and two-asset relative-value Runs
-declare `protocol-unavailable`, the immutable method and reason, and zero
-artifact rows. CLI states that boundary and Studio disables the inapplicable
-Quantiles tab instead of presenting null groups as missing or failed science.
+The `0.9.34` release fixes the prepared source-Workspace launch boundary found
+by real `0.9.33` host acceptance. A clone prepared independently with
+`uv sync --frozen` can run every standalone `uv run aq ...` route, while the
+literal manifest command uses `uv run --frozen --no-sync` to select that same
+repository-owned environment under an ordinary supervisor `PATH`. Capability
+launch cannot update the lock or synchronize dependencies, and missing
+preparation fails explicitly instead of asking the host to repair AutoQuant.
 
-The shared Agent Work Brief now exposes a nullable, visibility-only primary
-train/validation mean rank-IC contrast when the absolute gap reaches the fixed
-`0.20` threshold. It identifies the exact Run, horizon, values, and gap across
-JSON, terminal, and Studio while retaining validation as the sole selection
-split. The field is not a gate, verdict, qualification rule, or route for test
-evidence into selection.
+Exact `HARNESS_CAPABILITY=studio` mode now accepts only `localhost` or canonical
+IPv4 loopback literals in `127/8`, plus an unambiguous `HARNESS_PORTS` object
+whose names match the manifest exactly: one integer `http` value in
+`1..65535`. Wildcard, interface/public, arbitrary hostname, IPv6, whitespace,
+malformed, incomplete, extra, conflicting, or occupied authority fails before
+listening. Studio never scans, increments, or falls back.
+`HARNESS_NO_OPEN=1` suppresses the browser.
 
-New `aq report draft` verifies one exact Session or direct-Run anchor and
-creates a confined, non-overwriting, schema-valid Project-local analysis
-scaffold with the leader Run and every declared artifact reference prefilled.
-It writes no conclusion. `authoringState: draft` and a reserved finding make
-the scaffold deliberately unpublishable until the Agent replaces the prose
-and sets it to final. Historical analyses without the optional authoring field
-remain readable.
+Managed state is explicit from launch resolution through HTTP response policy.
+Only managed responses omit `X-Frame-Options` and same-origin resource policy;
+their CSP admits `app:`, loopback HTTP, `localhost`, and localhost subdomains
+as frame ancestors but never a universal wildcard. Standalone Studio retains
+its `127.0.0.1:8765`, explicit flags, browser behavior, port-zero support,
+`frame-ancestors 'none'`, `X-Frame-Options: DENY`, and same-origin resource
+policy. Vendor-specific environment names have no launch authority.
 
-Fresh no-memory/no-web/no-subagent Grok `4.5` used only the clean installed
-candidate wheel and public surfaces to repeat a single-target NVDA forward-
-risk assignment. Without command coaching it discovered the draft route,
-interpreted temporal quantiles as protocol-unavailable, used the Work Brief's
-train IC `-0.1072916034` versus validation IC `0.1744431644` contrast, and
-published an honest weak-result Report. It completed with one Run, zero
-Experiments, one Report, no Portfolio/RL work, no Portfolio Mandate, and no
-new framework need. Exact proof is retained in
-[[plans/factor-evidence-report-handoff]].
+The page, packaged assets, health/snapshot APIs, and polling remain
+current-origin HTTP. Studio does not consume host Cookie, Authorization, or
+CSRF state and does not redirect to its injected bind address. It currently
+has no SSE or WebSocket transport. Focused source tests cover the complete
+manifest, launch, security-header, opaque Host, browser, occupied-port,
+conflict, readiness, and SIGTERM contract. Exact release proof accumulates in
+[[plans/prepared-source-workspace-harness-command]].
 
 The root sample preserves all seventeen prior Runs byte-for-byte and adds two
 clean-commit candidate Runs proving current Factor and Portfolio projections
 under the separated authorities. It now contains nineteen immutable Runs and
 no governed-RL baseline. OpenAlice remains independently pinned to `v0.8.31`.
 
-The final source regression passes all 454 tests in 1,215.222 seconds. Lock
-consistency, Python compilation, Studio JavaScript syntax, diff hygiene, and
-all 1,552 current documentation links also pass. A clean candidate wheel
-reports exact embedded build provenance, all 59 commands, all nine Project
-routes, all 16 bundled Skills, Studio assets, and the changed
-Report/Factor/Work-Brief schemas. Its no-override clone replay and newly
-executed Factor Run agree with the installed seven-field Harness identity.
-Exact proof is retained in [[plans/factor-evidence-report-handoff]].
+The complete source regression passes all 465 tests in 1,165.336 seconds.
+Lock consistency, Python compilation, Studio JavaScript syntax, diff hygiene,
+and all 1,572 current documentation links also pass. Clean build/install,
+package closure, no-override clone, literal-manifest managed health/security,
+standalone isolation, and immutable tag evidence are recorded in
+[[plans/prepared-source-workspace-harness-command]].
 
 ## What works today
 
@@ -175,4 +172,5 @@ AutoQuant evidence without moving live-trading authority into the quant desk.
 Continue driving `0.9.x` from bounded real assignments and Project-local
 `framework-needs.md`. Prefer correctness and Agent operability over speculative
 surface or pre-1.0 compatibility; [[PLANS]] owns the next active item when one
-is selected.
+is selected. The proposed [[plans/tiered-test-feedback]] separates fast
+development feedback from unchanged complete scientific release protection.
