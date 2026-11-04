@@ -1182,6 +1182,9 @@ class ActionService:
             params["session"],
             "--hypothesis",
             params["hypothesis"],
+            # Studio's per-trial confirmation is the human acknowledgement the
+            # Core trial gate requires; Core still enforces budget/declaration.
+            "--confirm-trial",
             "--json",
         ]
         return argv
@@ -1400,6 +1403,7 @@ class ActionService:
         if action_id == EVALUATE_ID:
             params = validate_evaluate_params(body.get("params"))
             evaluation = self._evaluate(project, params["session"])
+            _studio_trial_gate(project, load_session(project, params["session"]).manifest["studyId"])
             return Prepared(
                 project, action_id, params, self._argv(pid, params),
                 evaluation.fingerprint, evaluation.trial,
@@ -1418,7 +1422,8 @@ class ActionService:
                 "params/study", "study.missing", f"Unknown Study: {params['study']}"
             )
         self._start_block(project, params["study"])
-        argv = self._base_argv("session", "start", pid) + ["--study", params["study"]]
+        _studio_trial_gate(project, params["study"])
+        argv = self._base_argv("session", "start", pid) + ["--study", params["study"], "--confirm-trial"]
         if "request" in params:
             request = confine_workspace_path(self.root, params["request"], "params/request")
             if not request.is_file():
@@ -1688,3 +1693,20 @@ def failure(error: ActionError) -> dict[str, Any]:
             "issues": [issue.to_dict() for issue in error.issues],
         },
     }
+
+
+def _studio_trial_gate(project: ProjectContext, study_id: str) -> None:
+    """Apply the same Core trial gate the CLI enforces, before any confirmation."""
+
+    from .cli_contract import CliCommandError
+    from .trial_gate import gate_state
+
+    try:
+        state = gate_state(project, study_id)
+    except CliCommandError as error:
+        raise ActionError(409, error.code, str(error)) from error
+    if state is not None and state["refusal"] is not None:
+        raise ActionError(409, state["refusal"],
+                          f"Core trial gate refused {study_id}: {state['refusal']} "
+                          f"(family {state['familyId']}, {state['budget']['usedInWindow']}/"
+                          f"{state['budget']['maxCountedTrialsPerFamily']} in {state['budget']['windowDays']} days)")

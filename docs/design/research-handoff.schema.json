@@ -1,0 +1,431 @@
+{
+  "$id": "https://autoquant.local/schemas/research-handoff.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assumptions": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "decisions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "orderIntents": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "runId": {
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "run-evidence",
+              "not-in-evidence"
+            ]
+          },
+          "targetWeights": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "runId",
+          "targetWeights",
+          "orderIntents",
+          "source"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "desk": {
+      "additionalProperties": false,
+      "properties": {
+        "rootDir": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "rootDir"
+      ],
+      "type": "object"
+    },
+    "evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "dossier": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "experiments": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "reports": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "runs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "runs",
+        "experiments",
+        "reports",
+        "dossier"
+      ],
+      "type": "object"
+    },
+    "generatedAt": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "instruments": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "barId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "symbol": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "barId"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "kind": {
+      "const": "autoquant-research-handoff"
+    },
+    "primaryDeliverableDirectory": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "project": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "rootDir": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "rootDir"
+      ],
+      "type": "object"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "splits": {
+      "additionalProperties": false,
+      "properties": {
+        "externalHoldout": {
+          "additionalProperties": false,
+          "properties": {
+            "auditStatus": {
+              "enum": [
+                "not-supplied",
+                "pending",
+                "passed",
+                "failed",
+                "inconclusive"
+              ]
+            },
+            "custody": {
+              "enum": [
+                "host",
+                "not-supplied"
+              ]
+            },
+            "digest": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "heldInDesk": {
+              "const": false
+            }
+          },
+          "required": [
+            "custody",
+            "heldInDesk",
+            "digest",
+            "auditStatus"
+          ],
+          "type": "object"
+        },
+        "lanes": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "runId": {
+                "type": "string"
+              },
+              "studyId": {
+                "type": "string"
+              },
+              "validation": {
+                "type": "object"
+              },
+              "visibleTest": {
+                "properties": {
+                  "metricsIncluded": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "role",
+                  "auditVisible",
+                  "metricsIncluded"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "studyId",
+              "runId",
+              "validation",
+              "visibleTest"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "lanes",
+        "externalHoldout"
+      ],
+      "type": "object"
+    },
+    "subject": {
+      "additionalProperties": false,
+      "properties": {
+        "evidenceDirectory": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "run",
+            "report",
+            "dossier"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "evidenceDirectory"
+      ],
+      "type": "object"
+    },
+    "tradingAuthority": {
+      "const": "none"
+    },
+    "trialFamilies": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "declarationRequired": {
+            "type": "boolean"
+          },
+          "deskTrialCount": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "familyId": {
+            "pattern": "^tf-[0-9a-f]{16}$",
+            "type": "string"
+          },
+          "otherProjectTrials": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "studyId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "studyId",
+          "familyId",
+          "deskTrialCount",
+          "otherProjectTrials",
+          "declarationRequired"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "unsupportedClaims": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "validity": {
+      "additionalProperties": false,
+      "properties": {
+        "reviewDate": {
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string"
+        },
+        "source": {
+          "const": "caller"
+        },
+        "validFrom": {
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string"
+        },
+        "validUntil": {
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "validFrom",
+        "validUntil",
+        "reviewDate",
+        "source"
+      ],
+      "type": "object"
+    },
+    "verdicts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "effectiveTrials": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "objective": {
+            "type": "object"
+          },
+          "policy": {
+            "enum": [
+              "factor-idea-development-v1",
+              null
+            ]
+          },
+          "qualificationStage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasons": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "researchFamilyId": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "runStatus": {
+            "type": "string"
+          },
+          "selectionAdjustment": {
+            "type": "object"
+          },
+          "studyId": {
+            "type": "string"
+          },
+          "word": {
+            "enum": [
+              "Supported",
+              "Inconclusive",
+              "Could not be tested",
+              "Not tested",
+              null
+            ]
+          }
+        },
+        "required": [
+          "studyId",
+          "runId",
+          "runStatus",
+          "objective",
+          "selectionAdjustment",
+          "researchFamilyId",
+          "effectiveTrials",
+          "word",
+          "policy",
+          "qualificationStage",
+          "reasons"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "kind",
+    "generatedAt",
+    "desk",
+    "project",
+    "primaryDeliverableDirectory",
+    "subject",
+    "verdicts",
+    "evidence",
+    "splits",
+    "trialFamilies",
+    "instruments",
+    "decisions",
+    "validity",
+    "assumptions",
+    "unsupportedClaims",
+    "tradingAuthority"
+  ],
+  "title": "AutoQuant research handoff",
+  "type": "object"
+}

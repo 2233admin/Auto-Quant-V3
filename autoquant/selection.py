@@ -12,6 +12,7 @@ from typing import Any
 from .factor_lineage import inheritance_projection
 from .runs import RunContext, list_runs, load_run
 from .studies import hash_json
+from .trial_families import desk_inheritance
 from .workspace import ProjectContext
 
 
@@ -179,14 +180,37 @@ def build_research_family(
             unique_sources + inheritance["inheritedSourceTrials"]
         )
         projection["inheritance"] = inheritance
+    if isinstance(project, ProjectContext):
+        # The desk ledger adds trials other Projects spent on the same
+        # question; the lineage source is excluded because it is already
+        # counted above. See docs/design/desk-trial-families.md.
+        lineage_source = (
+            frozenset({inheritance["sourceProjectId"]})
+            if inheritance is not None
+            else frozenset()
+        )
+        desk = desk_inheritance(
+            project,
+            anchor.result["study"]["id"],
+            cutoff=cutoff,
+            exclude_projects=lineage_source,
+        )
+        if desk is not None:
+            projection["deskInheritedTrials"] = desk["otherProjectTrials"]
+            projection["effectiveSourceTrials"] = (
+                projection.get("effectiveSourceTrials", unique_sources)
+                + desk["otherProjectTrials"]
+            )
+            projection["deskFamily"] = desk
     return ResearchFamily(projection, tuple(successful_values))
 
 
 def family_trial_count(projection: dict[str, Any]) -> int:
     """Trials that selection adjustment must account for.
 
-    Own unique sources plus any inherited source-Project trials; identical to
-    ``uniqueSourceTrials`` for every Project without Factor lineage.
+    Own unique sources plus any inherited source-Project trials and trials
+    other desk Projects spent on the same question; identical to
+    ``uniqueSourceTrials`` for a Project with neither.
     """
 
     return int(

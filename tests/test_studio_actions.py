@@ -481,7 +481,7 @@ class StudioActionsTests(unittest.TestCase):
                 [
                     sys.executable, "-m", "autoquant", "experiment", "evaluate",
                     str(workspace.root_dir.resolve()), "--project", "factor-project",
-                    "--session", session.manifest["id"], "--hypothesis", HYPOTHESIS, "--json",
+                    "--session", session.manifest["id"], "--hypothesis", HYPOTHESIS, "--confirm-trial", "--json",
                 ],
             )
             self.assertTrue(preview["commandHash"].startswith("sha256:"))
@@ -878,7 +878,7 @@ class StudioActionsTests(unittest.TestCase):
                 [
                     sys.executable, "-m", "autoquant", "session", "start",
                     str(workspace.root_dir.resolve()), "--project", "factor-project",
-                    "--study", "factor-quality", "--json",
+                    "--study", "factor-quality", "--confirm-trial", "--json",
                 ],
             )
             self.assertTrue(data["requiresSecondConfirm"])

@@ -250,6 +250,9 @@ from .workspace import (
     set_default_project,
 )
 from .version import current_version
+from .trial_gate import TRIAL_COMMANDS, gated
+from .handoff import RESEARCH_HANDOFF_JSON_SCHEMA
+from .desk_commands import CREATION_COMMANDS, DESK_COMMANDS, add_desk_parsers, run_desk_command, with_family_summary
 
 
 class CliUsageError(ValueError):
@@ -330,6 +333,7 @@ def build_parser() -> RaisingArgumentParser:
 
     from .data_commands import add_data_parser
     add_data_parser(subcommands, _json_argument)
+    add_desk_parsers(subcommands, _json_argument)
 
 
     candidate = subcommands.add_parser("candidate", help="inspect or save confined candidate source")
@@ -423,6 +427,7 @@ def build_parser() -> RaisingArgumentParser:
             "dossier-result",
             "dossier-status",
             "studio-snapshot",
+            "research-handoff",
         ],
     )
     schema.set_defaults(command_id="schema")
@@ -787,6 +792,11 @@ def build_parser() -> RaisingArgumentParser:
     run_execute.add_argument("path")
     run_execute.add_argument("--project")
     run_execute.add_argument("--study", required=True)
+    run_execute.add_argument(
+        "--confirm-trial",
+        action="store_true",
+        help="acknowledge that this command spends counted research trials (Core trial gate)",
+    )
     run_execute.set_defaults(command_id="run.execute")
     _json_argument(run_execute)
 
@@ -937,6 +947,11 @@ def build_parser() -> RaisingArgumentParser:
         "--request",
         help="strict delegated research-request JSON to bind into the Session",
     )
+    session_start.add_argument(
+        "--confirm-trial",
+        action="store_true",
+        help="acknowledge that this command spends counted research trials (Core trial gate)",
+    )
     session_start.set_defaults(command_id="session.start")
     _json_argument(session_start)
 
@@ -1032,6 +1047,11 @@ def build_parser() -> RaisingArgumentParser:
     experiment_evaluate.add_argument("--project")
     experiment_evaluate.add_argument("--session", required=True)
     experiment_evaluate.add_argument("--hypothesis", required=True)
+    experiment_evaluate.add_argument(
+        "--confirm-trial",
+        action="store_true",
+        help="acknowledge that this command spends counted research trials (Core trial gate)",
+    )
     experiment_evaluate.set_defaults(command_id="experiment.evaluate")
     _json_argument(experiment_evaluate)
 
@@ -1075,6 +1095,11 @@ def build_parser() -> RaisingArgumentParser:
     research_run.add_argument("--max-turns", type=int, default=5)
     research_run.add_argument("--max-wall-seconds", type=int, default=900)
     research_run.add_argument("--turn-timeout-seconds", type=int, default=300)
+    research_run.add_argument(
+        "--confirm-trial",
+        action="store_true",
+        help="acknowledge that this command spends counted research trials (Core trial gate)",
+    )
     research_run.set_defaults(command_id="research.run")
     _json_argument(research_run)
 
@@ -2206,6 +2231,10 @@ def _project_selection_human(args: argparse.Namespace) -> str:
             + "\nProject-local state changes require an explicit --project ID.\n"
         )
     return line
+
+
+def _session_study_id(project, session_id: str) -> str:
+    return load_session(project, session_id).manifest["studyId"]
 
 
 def _selected_project(args: argparse.Namespace):
@@ -6116,6 +6145,7 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
             "session",
             "study",
             "studio-snapshot",
+            "research-handoff",
             "workspace",
         ]
         if args.kind is None:
@@ -6170,6 +6200,7 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
             "dossier-result": DOSSIER_RESULT_JSON_SCHEMA,
             "dossier-status": DOSSIER_STATUS_JSON_SCHEMA,
             "studio-snapshot": STUDIO_SNAPSHOT_JSON_SCHEMA,
+            "research-handoff": RESEARCH_HANDOFF_JSON_SCHEMA,
         }
         schema = schemas.get(args.kind) or workspace_schema_for(args.kind)
         return CommandResult(
@@ -6177,6 +6208,22 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
             {"kind": args.kind, "schema": schema},
             json.dumps(schema, indent=2, sort_keys=True) + "\n",
         )
+    if args.command_id in TRIAL_COMMANDS and not getattr(args, "_trial_gate_passed", False):
+        args._trial_gate_passed = True
+        return gated(args, _selected_project, dispatch, _session_study_id)
+    if args.command_id in {"report.publish", "dossier.publish"}:
+        # Freeze a complete desk family: register every Project's trials first.
+        from .trial_family_ledger import register_owning_workspace
+        register_owning_workspace(_selected_project(args))
+    if args.command_id in DESK_COMMANDS:
+        return run_desk_command(args, _selected_project, CommandResult)
+    if args.command_id in CREATION_COMMANDS:
+        handler = {
+            "project.create": _project_create,
+            "project.intake": _project_intake,
+            "project.from-factor": _project_from_factor,
+        }[args.command_id]
+        return with_family_summary(args, handler(args))
     if args.command_id == "workspace.init":
         return _workspace_init(args)
     if args.command_id == "project.create":
@@ -6299,6 +6346,7 @@ def _command_id(argv: Sequence[str]) -> str:
         return "help"
     if argv[0] in {
         "data",
+        "family",
         "workspace",
         "candidate",
         "project",

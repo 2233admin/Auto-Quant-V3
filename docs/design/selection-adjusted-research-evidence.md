@@ -74,6 +74,15 @@ and both Factor Bonferroni and Portfolio DSR use the effective count as `N`.
 Projects without lineage keep the exact historical projection. See
 [[docs/design/factor-to-portfolio-conversion]].
 
+### Desk-inherited trials
+
+Trials other Projects spent on the same question (same desk trial family) are
+added the same way: `deskInheritedTrials`, a `deskFamily` block, and a higher
+`effectiveSourceTrials`. The #18 lineage source Project is excluded there
+because it is already inherited. With a cutoff only ledger trials registered
+and completed by the cutoff count, so published Reports stay verifiable. See
+[[docs/design/desk-trial-families]].
+
 ## As-of semantics
 
 Live Session and comparison projections use every current matching Project

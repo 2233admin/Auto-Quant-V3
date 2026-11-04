@@ -107,6 +107,16 @@ Production denies candidate execution before confirmation while isolation is
 unavailable. Tests inject a private execution boundary to verify state
 transitions; no public environment flag bypasses this gate.
 
+### Core trial gate
+
+The desk-level budget, family declaration and per-trial acknowledgement now
+live in Core ([[docs/design/core-trial-gate]]) and bind every `aq` caller,
+including OpenAlice's native Agent. Assistant previews go through the same
+Studio action preview, which calls the Core gate before a confirmation is
+offered and refuses with the Core code; an accepted confirmation launches the
+exact argv with `--confirm-trial`, and Core enforces again at execution. The
+per-conversation budget above remains an additional owner-chosen cap.
+
 ## Verification and remaining completion gates
 
 Bounded fake-provider tests cover persistence, HTTP authentication, source

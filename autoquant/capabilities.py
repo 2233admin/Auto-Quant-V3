@@ -127,6 +127,19 @@ DOSSIER_ARGUMENT = argument(
 )
 
 
+CONFIRM_TRIAL_ARGUMENT = argument(
+    "confirm-trial",
+    "option",
+    "boolean",
+    False,
+    "Acknowledge that this command spends counted research trials. Core refuses "
+    "with trial-gate.confirmation-required without it, and with "
+    "trial-gate.budget-exhausted or trial-gate.family-declaration-required "
+    "regardless of it, for any Study with an editable research surface.",
+    default=False,
+)
+
+
 def descriptor(
     command_id: str,
     usage: str,
@@ -276,6 +289,7 @@ CLI_COMMANDS = [
                     "dossier-result",
                     "dossier-status",
                     "studio-snapshot",
+                    "research-handoff",
                 ],
             ),
             JSON_ARGUMENT,
@@ -778,10 +792,10 @@ CLI_COMMANDS = [
     ),
     descriptor(
         "run.execute",
-        "aq run execute <path> --study ID [--project ID] [--json]",
-        "Execute one bounded Python Judge and publish an immutable RunResult.",
+        "aq run execute <path> --study ID [--project ID] [--confirm-trial] [--json]",
+        "Execute one bounded Python Judge and publish an immutable RunResult; an editable Study spends a counted trial behind the Core trial gate.",
         "creates-artifact",
-        [PATH_ARGUMENT, PROJECT_ARGUMENT, STUDY_ARGUMENT, JSON_ARGUMENT],
+        [PATH_ARGUMENT, PROJECT_ARGUMENT, STUDY_ARGUMENT, CONFIRM_TRIAL_ARGUMENT, JSON_ARGUMENT],
     ),
     descriptor(
         "run.list",
@@ -938,7 +952,7 @@ CLI_COMMANDS = [
     ),
     descriptor(
         "session.start",
-        "aq session start <path> --study ID [--request FILE] [--project ID] [--json]",
+        "aq session start <path> --study ID [--request FILE] [--project ID] [--confirm-trial] [--json]",
         "Preflight a fresh first candidate when declared, establish or reuse its successful baseline, create a resumable worktree, and optionally bind one delegated Research Request.",
         "creates-artifact",
         [
@@ -952,6 +966,7 @@ CLI_COMMANDS = [
                 False,
                 "Strict research-request JSON supplied by OpenAlice or a local caller.",
             ),
+            CONFIRM_TRIAL_ARGUMENT,
             JSON_ARGUMENT,
         ],
     ),
@@ -1032,7 +1047,7 @@ CLI_COMMANDS = [
     ),
     descriptor(
         "experiment.evaluate",
-        "aq experiment evaluate <path> --session ID --hypothesis TEXT [--project ID] [--json]",
+        "aq experiment evaluate <path> --session ID --hypothesis TEXT [--project ID] [--confirm-trial] [--json]",
         "Evaluate the current worktree candidate and publish KEEP, REVERT, or CRASH evidence.",
         "creates-artifact",
         [
@@ -1046,6 +1061,7 @@ CLI_COMMANDS = [
                 True,
                 "Falsifiable description of the candidate change.",
             ),
+            CONFIRM_TRIAL_ARGUMENT,
             JSON_ARGUMENT,
         ],
     ),
@@ -1071,7 +1087,7 @@ CLI_COMMANDS = [
     ),
     descriptor(
         "research.run",
-        "aq research run <path> --session ID --agent-command SHELL [budgets] [--project ID] [--json]",
+        "aq research run <path> --session ID --agent-command SHELL [budgets] [--project ID] [--confirm-trial] [--json]",
         "Run a user-authorized external shell Researcher against one governed Session and publish immutable Campaign evidence.",
         "creates-artifact",
         [
@@ -1108,6 +1124,14 @@ CLI_COMMANDS = [
                 False,
                 "Maximum duration of one Researcher command.",
                 default=300,
+            ),
+            argument(
+                "confirm-trial",
+                "option",
+                "boolean",
+                False,
+                "Acknowledge spending up to --max-turns counted trials; the desk budget must have that many remaining.",
+                default=False,
             ),
             JSON_ARGUMENT,
         ],
@@ -1532,6 +1556,49 @@ CLI_COMMANDS = [
             ),
         ],
         supports_json=False,
+    ),
+    descriptor(
+        "family.list",
+        "aq family list <workspace> [--json]",
+        "List every desk-level trial family with its question, desk-wide trial count and member Project Studies.",
+        "read-only",
+        [argument("workspace", "positional", "string", True, "Workspace directory."), JSON_ARGUMENT],
+    ),
+    descriptor(
+        "family.show",
+        "aq family show <path> [--project ID] [--json]",
+        "Show each editable Study's trial family, desk-wide count, possible related families and trial-gate budget state.",
+        "read-only",
+        [PATH_ARGUMENT, PROJECT_ARGUMENT, JSON_ARGUMENT],
+    ),
+    descriptor(
+        "family.declare",
+        "aq family declare <path> --study ID (--same-family FAMILY_ID | --new-hypothesis) [--project ID] [--json]",
+        "Record the caller-owned answer for a possible related trial family; append-only and never defaulted.",
+        "mutates-workspace",
+        [PATH_ARGUMENT, PROJECT_ARGUMENT, STUDY_ARGUMENT,
+         argument("same-family", "option", "string", False, "Exact existing family id this Study repeats."),
+         argument("new-hypothesis", "option", "boolean", False, "Declare a genuinely new hypothesis.", default=False),
+         JSON_ARGUMENT],
+    ),
+    descriptor(
+        "handoff",
+        "aq handoff <path> (--run ID | --report ID | --dossier ID) --valid-from DATE --valid-until DATE --review-date DATE [--assumption TEXT] [--unsupported-claim TEXT] [--external-holdout-digest SHA256 --external-holdout-status STATUS] [--project ID] [--json]",
+        "Write the versioned handoff.json (Judge-backed verdicts, evidence ids, split distinction, desk trial family, barIds, caller-owned validity, tradingAuthority none) into the primary deliverable directory.",
+        "mutates-project",
+        [PATH_ARGUMENT, PROJECT_ARGUMENT,
+         argument("run", "option", "string", False, "Immutable Run id."),
+         argument("report", "option", "string", False, "Session or Run Report id."),
+         argument("dossier", "option", "string", False, "Dossier id."),
+         argument("valid-from", "option", "string", False, "Caller-owned first valid date; required, never defaulted."),
+         argument("valid-until", "option", "string", False, "Caller-owned last valid date; required, never defaulted."),
+         argument("review-date", "option", "string", False, "Caller-owned review date; required, never defaulted."),
+         argument("assumption", "option", "string", False, "Repeatable assumption."),
+         argument("unsupported-claim", "option", "string", False, "Repeatable unsupported claim."),
+         argument("external-holdout-digest", "option", "string", False, "SHA-256 of the host-held external holdout."),
+         argument("external-holdout-status", "option", "string", False, "Host audit status.",
+                  choices=["pending", "passed", "failed", "inconclusive"]),
+         JSON_ARGUMENT],
     ),
 ]
 

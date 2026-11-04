@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .runs import load_run
 from .run_history import audit_visible
+from .research_verdict import factor_development_verdict
 from .selection import build_research_family, build_selection_adjustment
 from .studio_actions import _is_link, confine_workspace_path
 from .workspace import AutoQuantValidationError
@@ -77,13 +78,10 @@ def library_projection(project, snapshot, workspace_root):
                 exact = False
         qualification = explorer.get("factorQualification") or {}
         claim = qualification.get("claim") or {}
-        verdict = "Not tested"
-        if latest:
-            verdict = "Could not be tested"
-            if (exact and latest["status"] == "succeeded" and qualification.get("available") and qualification.get("diagnosis")
-                    and claim.get("claim") == "decision-signal" and claim.get("outcome") == "forward-return"):
-                verdict = "Supported" if ((qualification.get("diagnosis") or {}).get("stage") == "decision-signal-positive"
-                                          and (evidence.get("selectionAdjustment") or {}).get("passes") is True) else "Inconclusive"
+        # One Core rule for Studio and handoff.json (autoquant/research_verdict.py).
+        verdict = factor_development_verdict(
+            tested=bool(latest), exact=bool(exact), run_status=latest["status"] if latest else None,
+            qualification=qualification, adjustment=(evidence or {}).get("selectionAdjustment"))["word"]
         # Failed preflights have no Run. Preserve their operational failure state.
         audit = Path(workspace_root) / ".autoquant" / "studio-actions.jsonl"
         if not latest and audit.is_file() and not _is_link(audit) and not _is_link(audit.parent):

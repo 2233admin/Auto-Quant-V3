@@ -669,6 +669,7 @@ class AgentCliTests(unittest.TestCase):
             executed = run_cli(
                 "run",
                 "execute",
+                "--confirm-trial",
                 str(project),
                 "--study",
                 "ohlcv-factor-quality",
@@ -780,6 +781,7 @@ class AgentCliTests(unittest.TestCase):
             baseline = run_cli(
                 "run",
                 "execute",
+                "--confirm-trial",
                 str(project),
                 "--study",
                 "ohlcv-factor-quality",
@@ -789,6 +791,7 @@ class AgentCliTests(unittest.TestCase):
             started = run_cli(
                 "session",
                 "start",
+                "--confirm-trial",
                 str(project),
                 "--study",
                 "ohlcv-factor-quality",
@@ -843,6 +846,7 @@ class AgentCliTests(unittest.TestCase):
             direct_mutation = run_cli(
                 "run",
                 "execute",
+                "--confirm-trial",
                 str(worktree),
                 "--study",
                 "ohlcv-factor-quality",
@@ -883,6 +887,7 @@ class AgentCliTests(unittest.TestCase):
             executed = run_cli(
                 "run",
                 "execute",
+                "--confirm-trial",
                 str(project),
                 "--study",
                 "ohlcv-portfolio-quality",
@@ -1032,6 +1037,7 @@ class AgentCliTests(unittest.TestCase):
             executed = run_cli(
                 "run",
                 "execute",
+                "--confirm-trial",
                 str(project),
                 "--study",
                 "ohlcv-risk-parity-allocation",
@@ -1259,6 +1265,10 @@ class AgentCliTests(unittest.TestCase):
                 "holdout.show",
                 "studio.snapshot",
                 "studio.serve",
+                "family.list",
+                "family.show",
+                "family.declare",
+                "handoff",
             ],
         )
         self.assertEqual(
@@ -1533,6 +1543,7 @@ class AgentCliTests(unittest.TestCase):
                 "dossier-result",
                 "dossier-status",
                 "studio-snapshot",
+                "research-handoff",
             ],
         )
         agenda_schema = run_cli("schema", "research-agenda", "--json")
@@ -1989,6 +2000,7 @@ class AgentCliTests(unittest.TestCase):
             started = run_cli(
                 "session",
                 "start",
+                "--confirm-trial",
                 str(workspace),
                 "--project",
                 "brief-first",
@@ -2149,6 +2161,7 @@ class AgentCliTests(unittest.TestCase):
                     single_workspace_run = run_cli(
                         "run",
                         "execute",
+                        "--confirm-trial",
                         str(workspace),
                         "--study",
                         "missing-study",
@@ -2166,6 +2179,7 @@ class AgentCliTests(unittest.TestCase):
                     direct_project_run = run_cli(
                         "run",
                         "execute",
+                        "--confirm-trial",
                         created_json["data"]["projectDir"],
                         "--study",
                         "missing-study",
@@ -2242,6 +2256,7 @@ class AgentCliTests(unittest.TestCase):
             blocked_run = run_cli(
                 "run",
                 "execute",
+                "--confirm-trial",
                 str(workspace),
                 "--study",
                 "missing-study",
@@ -2292,6 +2307,7 @@ class AgentCliTests(unittest.TestCase):
             explicit_run = run_cli(
                 "run",
                 "execute",
+                "--confirm-trial",
                 str(workspace),
                 "--project",
                 "factor-lab",
@@ -2337,7 +2353,7 @@ class AgentCliTests(unittest.TestCase):
                 ],
             )
 
-            execute_help = run_cli("run", "execute", "--help")
+            execute_help = run_cli("run", "execute", "--confirm-trial", "--help")
             self.assertEqual(execute_help.returncode, 0, execute_help.stderr)
             execute_help_text = " ".join(execute_help.stdout.split())
             self.assertIn(
@@ -2523,6 +2539,7 @@ class AgentCliTests(unittest.TestCase):
             executed = run_cli(
                 "run",
                 "execute",
+                "--confirm-trial",
                 str(workspace),
                 "--study",
                 "factor-quality",
@@ -2613,6 +2630,7 @@ class AgentCliTests(unittest.TestCase):
             started = run_cli(
                 "session",
                 "start",
+                "--confirm-trial",
                 str(workspace),
                 "--study",
                 "factor-quality",
@@ -2632,6 +2650,7 @@ class AgentCliTests(unittest.TestCase):
             evaluated = run_cli(
                 "experiment",
                 "evaluate",
+                "--confirm-trial",
                 str(workspace),
                 "--session",
                 session_id,
@@ -2847,6 +2866,7 @@ class AgentCliTests(unittest.TestCase):
             evaluated = run_cli(
                 "experiment",
                 "evaluate",
+                "--confirm-trial",
                 str(project.root_dir),
                 "--session",
                 session.manifest["id"],
@@ -2931,6 +2951,7 @@ print(json.dumps({
             executed = run_cli(
                 "research",
                 "run",
+                "--confirm-trial",
                 str(project.root_dir),
                 "--session",
                 session.manifest["id"],
@@ -3041,6 +3062,7 @@ print(json.dumps({
             started = run_cli(
                 "session",
                 "start",
+                "--confirm-trial",
                 str(project.root_dir),
                 "--study",
                 "factor-quality",

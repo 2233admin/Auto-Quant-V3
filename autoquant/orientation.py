@@ -44,6 +44,7 @@ from .sessions import (
     session_snapshot,
 )
 from .studies import StudySummary, hash_json, list_studies, load_study
+from .trial_gate import desk_research_projection
 from .workspace import SCHEMA_VERSION, ProjectContext
 
 
@@ -2676,6 +2677,7 @@ def build_agent_work_brief(project: ProjectContext) -> dict[str, Any]:
         "factorSplitContrast": factor_split_contrast,
         "researchAgenda": research_agenda,
         "externalHoldout": holdout,
+        "deskResearch": desk_research_projection(project),
         **projected,
     }
 
@@ -2737,6 +2739,7 @@ AGENT_WORK_BRIEF_JSON_SCHEMA: dict[str, Any] = {
         "authority",
         "researchAgenda",
         "externalHoldout",
+        "deskResearch",
         "primaryAction",
         "supportingActions",
         "review",
@@ -2744,6 +2747,16 @@ AGENT_WORK_BRIEF_JSON_SCHEMA: dict[str, Any] = {
     "properties": {
         "schemaVersion": {"const": SCHEMA_VERSION},
         "kind": {"const": AGENT_WORK_BRIEF_KIND},
+        "deskResearch": {
+            "type": "object",
+            "required": ["status", "reason", "trialFamilies", "trialGate", "handoff"],
+            "properties": {
+                "status": {"enum": ["available", "invalid"]},
+                "trialFamilies": {"type": "array"},
+                "trialGate": {"type": "object"},
+                "handoff": {"type": "object"},
+            },
+        },
         "method": {"const": AGENT_WORK_BRIEF_METHOD},
         "project": {
             "type": "object",
