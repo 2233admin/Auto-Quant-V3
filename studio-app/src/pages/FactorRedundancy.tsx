@@ -1,5 +1,6 @@
 import { translate, useLanguage } from '../i18n'
 import type { FactorRedundancy } from '../api'
+import { SectionBar } from '../design/marks'
 import { MetricExplanation, MetricInfo } from '../components/MetricInfo'
 
 const number = (v: number | null) => v === null ? '—' : v.toFixed(2).replace('-', '−')
@@ -28,7 +29,7 @@ export function RedundancyTable({ redundancy }: { redundancy?: FactorRedundancy 
   const language = useLanguage()
   const tr = (en: string, zh: string) => translate(language, en, zh)
   return <section className="redundancy-evidence" aria-label={tr('Comparable factors', '可比因子')}>
-    <h2 className="set-title">{tr('Comparable factors · validation only', '可比因子 · 仅验证集')}</h2>
+    <SectionBar as="h2" icon="factors" micro="OVERLAP">{tr('Comparable factors · validation only', '可比因子 · 仅验证集')}</SectionBar>
     {redundancy?.status === 'available' ? <div className="table-scroll"><table className="data-table">
       <thead><tr><th>{tr('Factor', '因子')}</th><th>{tr('Overlap correlation', '重叠相关性')} <MetricInfo id="overlapCorrelation" /></th><th>{tr('Residual rank IC', '剩余秩 IC')} <MetricInfo id="residualRankIc" /></th><th>{tr('Observations / residual', '观测数 / 残差')}</th></tr></thead>
       <tbody>{redundancy.peers.map(p => <tr key={`${p.projectId}/${p.studyId}/${p.sourceHash}`}>

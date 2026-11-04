@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { translate, useLanguage } from '../i18n'
+import { SectionBar } from '../design/marks'
 import type { FactorDiagnostics, FactorSplit } from '../api'
 import { MetricExplanation, MetricInfo, type MetricId } from '../components/MetricInfo'
 import { FigureCard } from '../components/workbench/FigureCard'
@@ -17,10 +18,10 @@ export function FactorTearSheet({ study }: { study: FactorDiagnostics }) {
   const sheet = study.tearSheet
   const title = tr('Full factor tear sheet', '完整因子报告')
   if (!sheet || sheet.status === 'not-published') return <section className="tear-sheet" aria-label={title}>
-    <h3>{title}</h3><p className="muted">{tr("Not published by this Run's Judge.", '本次运行的 Judge 未发布此证据。')}</p>
+    <SectionBar as="h2" icon="analysis" micro="TEAR SHEET">{title}</SectionBar><p className="muted">{tr("Not published by this Run's Judge.", '本次运行的 Judge 未发布此证据。')}</p>
   </section>
   if (sheet.status !== 'available') return <section className="tear-sheet" aria-label={title}>
-    <h3>{title}</h3><p>{tr('Cross-sectional groups and rank persistence are unavailable for temporal evaluation.', '时间序列评估不提供横截面分组与秩持续性证据。')}</p>
+    <SectionBar as="h2" icon="analysis" micro="TEAR SHEET">{title}</SectionBar><p>{tr('Cross-sectional groups and rank persistence are unavailable for temporal evaluation.', '时间序列评估不提供横截面分组与秩持续性证据。')}</p>
   </section>
   const allowed = gatedSplits(study, ['train', 'validation', 'test'] as const)
   const split = allowed.includes(chosen) ? chosen : 'validation'
@@ -41,7 +42,7 @@ export function FactorTearSheet({ study }: { study: FactorDiagnostics }) {
   const risk = sheet.outcome !== 'forward-return'
   const warning = data.shortSample || data.icDecay.some(p => p.shortSample) || data.autocorrelation.some(p => p.shortSample) || data.meanTurnover.some(p => p.shortSample)
   return <section className="tear-sheet" aria-label={title}>
-    <h3>{title} <MetricInfo id="tearQuantiles" /></h3>
+    <SectionBar as="h2" icon="analysis" micro="TEAR SHEET">{title} <MetricInfo id="tearQuantiles" /></SectionBar>
     <label>{tr('Evidence split', '证据划分')} <select aria-label={tr('Tear sheet split', '完整报告的数据划分')} value={split} onChange={e => setChosen(e.target.value as FactorSplit)}>
       {allowed.map(s => <option key={s} value={s}>{splitName(s)}</option>)}
     </select></label>

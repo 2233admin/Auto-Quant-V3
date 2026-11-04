@@ -2,7 +2,7 @@ import { translate, uiTemplate, uiText, uiValue, useLanguage } from '../i18n'
 import { BuildStrategyAction } from '../actions/BuildStrategyAction'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RankSummary, type RunRow } from '../api'
-import { Glyph } from '../design/icons'
+import { Glyph, Icon } from '../design/icons'
 import { signedNumber } from '../design/signConvention'
 import { num, plural, when } from '../format'
 import { Section } from '../design/layout'
@@ -387,10 +387,10 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
                 <>
                   <RedundancyTable redundancy={study.redundancy} />
                   <FactorTearSheet study={study} />
-                  <Section title={tr('Information coefficient over time', '信息系数随时间变化')} id="sec-ic" caption={testVisible ? tr('Per-timestamp rank IC; validation drives selection, test is a visible audit.', '逐时间点的秩 IC；验证集用于选择，测试集作为可见审计。') : tr('Per-timestamp rank IC; validation drives selection.', '逐时间点的秩 IC；验证集用于选择。')}>
+                  <Section title={tr('Information coefficient over time', '信息系数随时间变化')} id="sec-ic" icon={<Icon name="analysis" />} micro="IC / TIME" caption={testVisible ? tr('Per-timestamp rank IC; validation drives selection, test is a visible audit.', '逐时间点的秩 IC；验证集用于选择，测试集作为可见审计。') : tr('Per-timestamp rank IC; validation drives selection.', '逐时间点的秩 IC；验证集用于选择。')}>
                     <IcOverTime study={study} />
                   </Section>
-                  <Section title={tr('Selection and noise', '选择与噪声')} id="sec-noise">
+                  <Section title={tr('Selection and noise', '选择与噪声')} id="sec-noise" icon={<Icon name="tuning" />} micro="NOISE FRONTIER">
                     {frontier.ok ? <NoiseFrontierChart frontier={frontier.value} runIc={runIc} /> : <Empty title={uiText("Noise frontier")} reason={frontier.reason} />}
                     {frontier.ok && (
                       <p className="muted small">
@@ -404,52 +404,52 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
                       </p>
                     )}
                   </Section>
-                  <Section title={tr('Quantile returns', '分组收益')} id="sec-quantiles">
+                  <Section title={tr('Quantile returns', '分组收益')} id="sec-quantiles" icon={<Icon name="strategies" />} micro="QUANTILES">
                     <Quantiles study={study} />
                   </Section>
-                  <Section title={tr('All headline figures', '全部核心指标')} id="sec-headline" caption={tr('Every published rank-IC figure for each shown split.', '各展示数据划分中已发布的全部秩 IC 指标。')}>
+                  <Section title={tr('All headline figures', '全部核心指标')} id="sec-headline" icon={<Icon name="factors" />} micro="HEADLINE" caption={tr('Every published rank-IC figure for each shown split.', '各展示数据划分中已发布的全部秩 IC 指标。')}>
                     <HeadlineMetrics splits={headlineSplits} horizon={study.protocol.primaryHorizon} defs={study.protocol.semantics} />
                   </Section>
-                  <Section title={tr('What these numbers do and do not show', '数字能说明什么、不能说明什么')} id="sec-limits" fold caption={tr("Scope and limits of this Run's evidence.", '本次运行证据的范围和限制。')}>
+                  <Section title={tr('What these numbers do and do not show', '数字能说明什么、不能说明什么')} id="sec-limits" icon={<Icon name="warn" />} micro="LIMITS" fold caption={tr("Scope and limits of this Run's evidence.", '本次运行证据的范围和限制。')}>
                     <Limits study={study} frontier={frontier} />
                   </Section>
                 </>
               ),
               checks: (
                 <>
-                  <Section title={tr('Why this verdict', '判决原因')} id="sec-reasons" caption={tr('Every reason behind the verdict; the ? opens the field it reads.', '列出判决的各项原因；点击问号查看对应字段。')}>
+                  <Section title={tr('Why this verdict', '判决原因')} id="sec-reasons" icon={<Icon name="attention" />} micro="REASONS" caption={tr('Every reason behind the verdict; the ? opens the field it reads.', '列出判决的各项原因；点击问号查看对应字段。')}>
                     <VerdictReasons study={study} adjustment={adjustment} />
                   </Section>
-                  <Section title={tr('Check ledger', '检查记录')} id="sec-ledger">
+                  <Section title={tr('Check ledger', '检查记录')} id="sec-ledger" icon={<Icon name="check" />} micro="LEDGER">
                     <Ledger checks={checks} />
                   </Section>
-                  <Section title={tr('Qualification diagnosis', '资格诊断')} id="sec-qualification">
+                  <Section title={tr('Qualification diagnosis', '资格诊断')} id="sec-qualification" icon={<Icon name="doc" />} micro="QUALIFICATION">
                     <QualificationBlock study={study} />
                   </Section>
                 </>
               ),
               stability: (
                 <>
-                  <Section title={tr('Chronological folds', '时间分折')} id="sec-folds">
+                  <Section title={tr('Chronological folds', '时间分折')} id="sec-folds" icon={<Icon name="versions" />} micro="FOLDS">
                     <FoldTable study={study} />
                   </Section>
-                  <Section title={tr('Horizon profile', '预测周期概览')} id="sec-horizons">
+                  <Section title={tr('Horizon profile', '预测周期概览')} id="sec-horizons" icon={<Icon name="runs" />} micro="HORIZONS">
                     <HorizonTable study={study} />
                   </Section>
-                  <Section title={tr('Stability: regime, asset, style', '稳定性：市场状态、资产与风格')} id="sec-stability" caption={tr('Per-split tables: market regime, asset and overlap with known styles.', '按数据划分展示市场状态、资产及与已知风格的重叠。')}>
+                  <Section title={tr('Stability: regime, asset, style', '稳定性：市场状态、资产与风格')} id="sec-stability" icon={<Icon name="params" />} micro="STABILITY" caption={tr('Per-split tables: market regime, asset and overlap with known styles.', '按数据划分展示市场状态、资产及与已知风格的重叠。')}>
                     <StabilityTables study={study} />
                   </Section>
                 </>
               ),
               provenance: (
                 <>
-                  <Section title={tr('Protocol', '研究协议')} id="sec-protocol" caption={tr('Splits, horizons and the selection rules this Run was fixed under.', '本次运行固定的数据划分、预测周期和选择规则。')}>
+                  <Section title={tr('Protocol', '研究协议')} id="sec-protocol" icon={<Icon name="lock" />} micro="PROTOCOL" caption={tr('Splits, horizons and the selection rules this Run was fixed under.', '本次运行固定的数据划分、预测周期和选择规则。')}>
                     <ProtocolBox study={study} />
                   </Section>
-                  <Section title={tr('Provenance', '来源信息')} id="sec-provenance" caption={tr('Hashes, dataset and harness that produced this Run.', '产生本次运行的哈希、数据集和运行环境。')}>
+                  <Section title={tr('Provenance', '来源信息')} id="sec-provenance" icon={<Icon name="folder" />} micro="PROVENANCE" caption={tr('Hashes, dataset and harness that produced this Run.', '产生本次运行的哈希、数据集和运行环境。')}>
                     <ProvenanceBox study={study} row={runRow} />
                   </Section>
-                  <Section title={tr('Run errors', '运行错误')} id="sec-errors" caption={tr('Status and any errors the Run recorded.', '本次运行的状态和记录的错误。')}>
+                  <Section title={tr('Run errors', '运行错误')} id="sec-errors" icon={<Icon name="warn" />} micro="ERRORS" caption={tr('Status and any errors the Run recorded.', '本次运行的状态和记录的错误。')}>
                     <RunErrors row={runRow} />
                   </Section>
                   <NotPublished />

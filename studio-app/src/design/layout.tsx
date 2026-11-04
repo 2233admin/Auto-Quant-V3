@@ -18,6 +18,8 @@ export function Section({
   fold,
   defaultOpen,
   className,
+  icon,
+  micro,
   children,
 }: {
   title: string
@@ -26,13 +28,18 @@ export function Section({
   fold?: boolean
   defaultOpen?: boolean
   className?: string
+  /** Direction H header bar: icon, title and an uppercase micro-label. Plain heading when omitted. */
+  icon?: ReactNode
+  micro?: string
   children: ReactNode
 }) {
-  const cls = `sec${fold ? ' sec--fold' : ''}${className ? ` ${className}` : ''}`
+  const cls = `sec${fold ? ' sec--fold' : ''}${icon ? ' sec--bar' : ''}${className ? ` ${className}` : ''}`
+  // Same markup as SectionBar (design/marks); inlined so this layout module keeps no dependency on marks.
+  const heading = icon ? <h2 className="sec-bar" id={id}>{icon}<span className="sec-bar-title">{title}</span>{micro && <span className="mk sec-bar-micro" aria-hidden="true">{micro}</span>}</h2> : <h2 id={id}>{title}</h2>
   if (!fold) {
     return (
       <section className={cls} aria-labelledby={id}>
-        <h2 id={id}>{title}</h2>
+        {heading}
         {caption && <p className="sec-cap">{uiValue(caption)}</p>}
         {children}
       </section>
@@ -42,7 +49,7 @@ export function Section({
     <section className={cls} aria-labelledby={id}>
       <AnimatedDetails open={defaultOpen}>
         <summary>
-          <h2 id={id}>{title}</h2>
+          {heading}
           {caption && <span className="sec-cap">{uiValue(caption)}</span>}
         </summary>
         <div className="sec-body">{children}</div>
