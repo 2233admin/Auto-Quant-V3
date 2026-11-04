@@ -601,6 +601,14 @@ def build_parser() -> RaisingArgumentParser:
     orient.set_defaults(command_id="orient")
     _json_argument(orient)
 
+    shinka = subcommands.add_parser(
+        "shinka",
+        add_help=False,
+        help="hypothesis-driven research layer ported from ShinkaEvolve (optional extra: shinka)",
+    )
+    shinka.add_argument("shinka_argv", nargs=argparse.REMAINDER)
+    shinka.set_defaults(command_id="shinka")
+
     for command in ("validate", "inspect"):
         command_parser = subcommands.add_parser(
             command,
@@ -6364,8 +6372,31 @@ def _command_id(argv: Sequence[str]) -> str:
     return argv[0]
 
 
+def _shinka_main(arguments: Sequence[str]) -> int:
+    """Forward `aq shinka ...` to the ported Shinka research CLI (optional extra)."""
+    try:
+        from .shinka_research.cli import main as shinka_main
+    except ModuleNotFoundError as error:
+        print(
+            f"aq: shinka needs the optional extra ({error}); "
+            "install it with `uv sync --extra shinka`",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        shinka_main(list(arguments))
+    except SystemExit as stop:
+        if stop.code is None or isinstance(stop.code, int):
+            return stop.code or 0
+        print(stop.code, file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = list(argv if argv is not None else sys.argv[1:])
+    if arguments and arguments[0] == "shinka":
+        return _shinka_main(arguments[1:])
     wants_json = "--json" in arguments
     command = _command_id(arguments)
     try:

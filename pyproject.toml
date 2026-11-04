@@ -12,12 +12,18 @@ dependencies = [
 
 [project.optional-dependencies]
 columnar = ["pyarrow>=16"]
+# Ported Shinka research layer (`aq shinka ...`); runs/UI additionally need shinka-engine.
+shinka = ["pydantic>=2", "pyyaml", "scipy", "psutil"]
+# The ShinkaEvolve evolution engine itself (not vendored).
+shinka-engine = ["shinka-evolve"]
 
 [dependency-groups]
 dev = [
     "hatchling>=1.31.0",
     "jsonschema>=4.23",
 ]
+# Test runner for tests/shinka_research (the rest of the suite uses unittest).
+shinka-test = ["pytest>=8"]
 
 [project.scripts]
 aq = "autoquant.cli:main"
@@ -37,3 +43,8 @@ path = "hatch_build.py"
 
 [tool.uv]
 package = true
+
+# The research layer targets the 2233admin fork of ShinkaEvolve (it adds
+# shinka.database.cost); upstream SakanaAI/shinka-evolve on PyPI does not have it.
+[tool.uv.sources]
+shinka-evolve = { git = "https://github.com/2233admin/ShinkaEvolve", rev = "a43eb89b01432d19c95f35c3f24a4576e8ed3a53" }
