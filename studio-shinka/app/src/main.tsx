@@ -1,0 +1,18 @@
+import { createRoot } from 'react-dom/client'
+import '@fontsource-variable/inter'
+import '@fontsource/ibm-plex-mono/400.css'
+import '@fontsource/ibm-plex-mono/500.css'
+import '@fontsource/ibm-plex-mono/600.css'
+import './design/base.css'
+import './design/tokens.css'
+import './app.css'
+import './shell/shell.css'
+import './overview/overview.css'
+import './report/report.css'
+import './library/library.css'
+import './runs/runs.css'
+import './compare/compare.css'
+import './run/run.css'
+import App from './App'
+
+createRoot(document.getElementById('root')!).render(<App />)
