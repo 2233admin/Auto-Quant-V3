@@ -195,10 +195,27 @@ CLI_COMMANDS = [
     ),
     descriptor(
         "capabilities",
-        "aq capabilities [--json]",
-        "Describe every public command, argument, effect, and exit behavior.",
+        "aq capabilities [COMMAND_ID | --summary] [--json]",
+        "Describe every public command, argument, effect, and exit behavior; --summary lists ids, purposes and required arguments, COMMAND_ID returns one full descriptor.",
         "read-only",
-        [JSON_ARGUMENT],
+        [
+            argument(
+                "target",
+                "positional",
+                "string",
+                False,
+                "Command id (for example run.execute) whose full descriptor to return.",
+            ),
+            argument(
+                "summary",
+                "option",
+                "boolean",
+                False,
+                "Return only command ids, one-line purposes, effects and required arguments.",
+                default=False,
+            ),
+            JSON_ARGUMENT,
+        ],
     ),
     descriptor(
         "schema",
@@ -1517,3 +1534,29 @@ CLI_COMMANDS = [
         supports_json=False,
     ),
 ]
+
+
+def capability_for(command_id: str) -> dict[str, Any] | None:
+    return next((item for item in CLI_COMMANDS if item["id"] == command_id), None)
+
+
+def _purpose(description: str) -> str:
+    """First sentence of a description, bounded to one short line."""
+    sentence = description.split(". ")[0].rstrip(".")
+    return sentence if len(sentence) <= 72 else sentence[:69].rstrip() + "..."
+
+
+def capabilities_summary() -> list[dict[str, Any]]:
+    """One compact row per command; full schemas stay behind `capabilities ID`."""
+    rows: list[dict[str, Any]] = []
+    for item in CLI_COMMANDS:
+        row: dict[str, Any] = {
+            "id": item["id"],
+            "purpose": _purpose(item["description"]),
+            "effect": item["effect"],
+        }
+        required = [a["name"] for a in item["arguments"] if a["required"]]
+        if required:
+            row["required"] = " ".join(required)
+        rows.append(row)
+    return rows

@@ -31,7 +31,11 @@ from .book_path_stress_explorer import (
     BOOK_PATH_STRESS_DIAGNOSTICS_JSON_SCHEMA,
     load_book_path_stress_diagnostics,
 )
-from .capabilities import CLI_COMMANDS
+from .capabilities import (
+    CLI_COMMANDS,
+    capabilities_summary,
+    capability_for,
+)
 from .candidate_contracts import (
     FACTOR_CANDIDATE_CONTRACT_JSON_SCHEMA,
     build_candidate_contract,
@@ -347,6 +351,16 @@ def build_parser() -> RaisingArgumentParser:
     capabilities = subcommands.add_parser(
         "capabilities",
         help="describe every public command for Agents",
+    )
+    capabilities.add_argument(
+        "target",
+        nargs="?",
+        help="command id whose full descriptor to return (for example run.execute)",
+    )
+    capabilities.add_argument(
+        "--summary",
+        action="store_true",
+        help="list command ids, one-line purposes and required arguments only",
     )
     capabilities.set_defaults(command_id="capabilities")
     _json_argument(capabilities)
@@ -5994,6 +6008,49 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
         )
     if args.command_id == "capabilities":
         harness = harness_identity()
+        if args.target is not None and args.summary:
+            raise CliUsageError(
+                "capabilities takes either a command id or --summary, not both"
+            )
+        if args.target is not None:
+            descriptor = capability_for(args.target)
+            if descriptor is None:
+                raise CliUsageError(
+                    f"unknown command id {args.target!r}; "
+                    "run `aq capabilities --summary` to list ids"
+                )
+            return CommandResult(
+                "capabilities",
+                {
+                    "name": "aq",
+                    "harness": harness,
+                    "command": descriptor,
+                },
+                f"{descriptor['usage']}\n  {descriptor['description']}\n"
+                f"  effect: {descriptor['effect']}\n",
+            )
+        if args.summary:
+            summary = capabilities_summary()
+            return CommandResult(
+                "capabilities",
+                {
+                    "name": "aq",
+                    "description": "AutoQuant quantitative research workbench CLI",
+                    "harness": harness,
+                    "summary": True,
+                    "commands": summary,
+                },
+                "\n".join(
+                    f"{item['id']}  [{item['effect']}]  {item['purpose']}"
+                    + (
+                        f"  requires: {item['required']}"
+                        if item.get("required")
+                        else ""
+                    )
+                    for item in summary
+                )
+                + "\n",
+            )
         human = "\n\n".join(
             f"{command['usage']}\n  {command['description']}\n"
             f"  effect: {command['effect']}"

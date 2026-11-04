@@ -1154,6 +1154,37 @@ class AgentCliTests(unittest.TestCase):
             )
             self.assertEqual(status["nextActions"][0]["id"], "session.start")
 
+    def test_capabilities_summary_and_single_command_views(self) -> None:
+        full = json_output(run_cli("capabilities", "--json"))["data"]
+        summary_run = run_cli("capabilities", "--summary", "--json")
+        self.assertEqual(summary_run.returncode, 0, summary_run.stderr)
+        self.assertLess(len(summary_run.stdout.encode()), 15_000)
+        summary = json_output(summary_run)["data"]
+        self.assertTrue(summary["summary"])
+        self.assertEqual(
+            [row["id"] for row in summary["commands"]],
+            [command["id"] for command in full["commands"]],
+        )
+        by_id = {row["id"]: row for row in summary["commands"]}
+        self.assertEqual(by_id["run.execute"]["effect"], "creates-artifact")
+        self.assertIn("path", by_id["run.execute"]["required"].split())
+        self.assertNotIn("required", by_id["capabilities"])
+        for row in summary["commands"]:
+            self.assertNotIn("arguments", row)
+            self.assertLessEqual(len(row["purpose"]), 75)
+
+        one = run_cli("capabilities", "run.execute", "--json")
+        self.assertEqual(one.returncode, 0, one.stderr)
+        self.assertEqual(
+            json_output(one)["data"]["command"],
+            next(c for c in full["commands"] if c["id"] == "run.execute"),
+        )
+
+        unknown = run_cli("capabilities", "no.such", "--json")
+        self.assertEqual(unknown.returncode, 2)
+        both = run_cli("capabilities", "run.execute", "--summary", "--json")
+        self.assertEqual(both.returncode, 2)
+
     def test_capabilities_describe_every_public_command(self) -> None:
         result = run_cli("capabilities", "--json")
         self.assertEqual(result.returncode, 0, result.stderr)

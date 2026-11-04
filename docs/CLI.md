@@ -15,6 +15,8 @@ aq version
 aq version --json
 aq capabilities
 aq capabilities --json
+aq capabilities --summary --json
+aq capabilities <command-id> --json
 aq schema
 aq schema project --json
 aq schema agent-work-brief --json
@@ -61,6 +63,12 @@ command descriptor includes:
 - output sections, currently empty for the foundation commands.
 
 Agents should discover the contract rather than scrape `--help`.
+
+The full output is large. For orientation use `aq capabilities --summary
+--json` (about 14 KB: command id, one-line purpose, effect, required argument
+names) and then `aq capabilities <command-id> --json` for one command's full
+descriptor. Both are projections of the same table; the default output is
+unchanged.
 
 ## Workspace and Project commands
 
