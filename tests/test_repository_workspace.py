@@ -63,7 +63,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
         manifest = verify_materialized_workspace_skills(REPOSITORY_ROOT)
 
         self.assertEqual(manifest["harnessVersion"], current_version())
-        self.assertEqual(len(manifest["skills"]), 16)
+        self.assertEqual(len(manifest["skills"]), 17)
 
     def test_repository_ignores_workspace_staging(self) -> None:
         ignore_rules = (

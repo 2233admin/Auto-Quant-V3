@@ -550,6 +550,7 @@ class WorkspaceSkillTests(unittest.TestCase):
     def test_canonical_bundle_materializes_and_detects_drift(self) -> None:
         expected_ids = {
             "acquire-market-ohlcv",
+            "acquire-openalice-bars",
             "fetch-binance-ohlcv",
             "fetch-daum-ohlcv",
             "fetch-eastmoney-ohlcv",
@@ -1224,7 +1225,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 workspace.root_dir
             )
             self.assertTrue((workspace.root_dir / WORKSPACE_SKILLS_MANIFEST).is_file())
-            self.assertEqual(len(verified["skills"]), 16)
+            self.assertEqual(len(verified["skills"]), 17)
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "adopted"

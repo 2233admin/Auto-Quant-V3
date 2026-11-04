@@ -1,0 +1,4 @@
+interface:
+  display_name: "Acquire OpenAlice Bars"
+  short_description: "Package OpenAlice BarService daily bars with exact barIds and caller-owned facts."
+  default_prompt: "Use $acquire-openalice-bars to package these OpenAlice barIds into an auditable AutoQuant staging package without defaulting adjustment, timezone or calendar."

@@ -82,3 +82,64 @@ def snapshot_market_identity(snapshot):
         return None
     excluded = REQUEST_ONLY_SNAPSHOT_FIELDS | CONSTRUCTION_ONLY_SNAPSHOT_FIELDS
     return hash_json({k: v for k, v in snapshot.items() if k not in excluded})
+
+
+# OpenAlice BarService identity. The ``acquire-openalice-bars`` Skill records
+# every asset's exact ``barId`` (``{sourceId}|{nativeSymbol}``), the bar size,
+# timezone and adjustment claim in the package provider ``sourceUri``. Intake
+# copies the provider claim into the content-locked snapshot, so the mapping is
+# part of the market identity hashed above and can be read back here.
+OPENALICE_SOURCE_URI_PREFIX = "openalice-bars:v1?"
+
+
+def encode_openalice_source_uri(bar_ids, *, interval, timezone, adjustment):
+    """Deterministic provider ``sourceUri`` for a symbol -> barId mapping."""
+    from urllib.parse import urlencode
+    pairs = [("interval", interval), ("timezone", timezone), ("adjustment", adjustment)]
+    pairs += [(f"bar.{symbol}", bar_ids[symbol]) for symbol in sorted(bar_ids)]
+    return OPENALICE_SOURCE_URI_PREFIX + urlencode(pairs)
+
+
+def decode_openalice_source_uri(source_uri):
+    """``{"barIds": {...}, "interval", "timezone", "adjustment"}`` or ``None``."""
+    from urllib.parse import parse_qsl
+    if not isinstance(source_uri, str) or not source_uri.startswith(OPENALICE_SOURCE_URI_PREFIX):
+        return None
+    fields, bar_ids = {}, {}
+    for key, value in parse_qsl(source_uri[len(OPENALICE_SOURCE_URI_PREFIX):], keep_blank_values=True):
+        if key.startswith("bar."):
+            bar_ids[key[4:]] = value
+        else:
+            fields[key] = value
+    return {"barIds": bar_ids, **fields}
+
+
+def run_instruments(project, run):
+    """Instruments of a Run's verified snapshot, each with an OpenAlice barId when known.
+
+    Returns ``None`` when no content-locked snapshot can be verified; never
+    guesses a barId from a symbol.
+    """
+    dataset = run.result.get("dataset") or {}
+    hashes = dataset.get("sourceHashes")
+    if not isinstance(hashes, dict):
+        universe = dataset.get("universe")
+        return [{"symbol": s, "barId": None} for s in universe] if isinstance(universe, list) else None
+    try:
+        data_root = confined_path(project.root_dir, project.manifest.directories["data"], "project/directories/data")
+        for relative in sorted(k for k in hashes if PurePosixPath(k).name == SNAPSHOT_NAME):
+            path = confined_path(data_root, relative, "dataset/snapshot")
+            if path.is_symlink() or not path.is_file() or hash_file(path) != hashes[relative]:
+                return None
+            snapshot = json.loads(path.read_text(encoding="utf-8"))
+            providers = [snapshot.get("provider")] + [s.get("provider") for s in snapshot.get("sources") or [] if isinstance(s, dict)]
+            bar_ids = {}
+            for provider in providers:
+                decoded = decode_openalice_source_uri((provider or {}).get("sourceUri"))
+                if decoded:
+                    bar_ids.update(decoded["barIds"])
+            return [{"symbol": asset["symbol"], "barId": bar_ids.get(asset["symbol"])}
+                    for asset in snapshot.get("assets", []) if isinstance(asset, dict)]
+    except (OSError, ValueError, KeyError, TypeError, AutoQuantValidationError):
+        return None
+    return None

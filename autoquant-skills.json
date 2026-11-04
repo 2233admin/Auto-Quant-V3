@@ -1,5 +1,5 @@
 {
-  "bundleSha256": "c69568a13b4b442fe7a50131264d0268e99e4afd06bccb37ad3832e5f0977f24",
+  "bundleSha256": "2bb8cc022837ae07b377c6692f374db322f6e9366d1827437aff8ca76e486b82",
   "discoveryRoots": [
     ".agents/skills",
     ".claude/skills"
@@ -56,6 +56,27 @@
         }
       ],
       "id": "acquire-market-ohlcv"
+    },
+    {
+      "files": [
+        {
+          "path": "SKILL.md",
+          "sha256": "95262a3c8d1ca69b55c9b7b2f1e092ab6e73d23261abf06195053fec46c76ea4"
+        },
+        {
+          "path": "agents/openai.yaml",
+          "sha256": "dda547b704d0bebef89bf84f5aff28fb48435db4d04f4a8102a9681e7152af82"
+        },
+        {
+          "path": "references/openalice-bars-format.md",
+          "sha256": "c9dd189469cdc4b36f70718d2c0686c87e166f324f114ba53da983aaf0ed0a7b"
+        },
+        {
+          "path": "scripts/package_openalice_bars.py",
+          "sha256": "97f83c90500250e42de20de71b9b23d58e81f3836b25de0950141e7d3efb4e9f"
+        }
+      ],
+      "id": "acquire-openalice-bars"
     },
     {
       "files": [

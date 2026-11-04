@@ -271,3 +271,11 @@ trading authority. AutoQuant may later produce factor or target-weight
 evidence from the locked dataset. OpenAlice or another execution-facing
 system remains responsible for live state, suitability, execution planning,
 and user authorization.
+
+## OpenAlice-hosted route
+
+When the delegating OpenAlice coworker supplies BarService data, the
+`acquire-openalice-bars` Skill packages the `alice market bars` exports with
+their exact barIds instead of re-downloading. It is one provider route with
+caller-owned adjustment/timezone/calendar facts; see
+[[docs/design/openalice-bars-acquisition]].

@@ -1,0 +1,34 @@
+[
+  {
+    "symbol": "AAPL",
+    "barId": "yfinance|AAPL",
+    "venue": "US-COMPOSITE",
+    "currency": "USD",
+    "assetClass": "equity",
+    "barsFile": "AAPL.json"
+  },
+  {
+    "symbol": "MSFT",
+    "barId": "yfinance|MSFT",
+    "venue": "US-COMPOSITE",
+    "currency": "USD",
+    "assetClass": "equity",
+    "barsFile": "MSFT.json"
+  },
+  {
+    "symbol": "NVDA",
+    "barId": "yfinance|NVDA",
+    "venue": "US-COMPOSITE",
+    "currency": "USD",
+    "assetClass": "equity",
+    "barsFile": "NVDA.json"
+  },
+  {
+    "symbol": "SPY",
+    "barId": "yfinance|SPY",
+    "venue": "US-COMPOSITE",
+    "currency": "USD",
+    "assetClass": "equity",
+    "barsFile": "SPY.json"
+  }
+]
