@@ -8,7 +8,7 @@ import { FactorLibrary } from './library/FactorLibrary'
 import { DataIntake } from './pages/intake/DataIntake'
 import { AttentionPage } from './pages/Attention'
 import { SettingsPage } from './pages/Settings'
-import { AssistantPage, AssistantDrawer, type AssistantContext } from './pages/Assistant'
+import { AssistantPage, AssistantDrawer } from './pages/Assistant'
 import { EventStudyPage } from './pages/EventStudy'
 import { FactorPage } from './pages/Factor'
 import { IdeaWorkbench } from './pages/IdeaWorkbench'
@@ -24,6 +24,7 @@ import { routeHref, routeProjectId } from './route'
 import { isLibraryRoute, LIBRARY_TITLE, LibraryPage } from './library/Library'
 import { Palette } from './shell/Palette'
 import { Rail, TabBar } from './shell/Rail'
+import { assistantContextFor, HostedAssistantNote, isHosted } from './shell/Hosted'
 import { TopBar, type Crumb } from './shell/TopBar'
 import { useRouter } from './useRouter'
 import { useShellData } from './useShellData'
@@ -41,9 +42,9 @@ export default function App() {
   const compact = width > 0 && width < 1024
   const projectId = routeProjectId(route)
   const project = useProject(projectId ?? '', projectId ? data.updated : null)
-  const assistantContext: AssistantContext | null = route.view === 'factor'
-    ? { project: route.id, page: 'factor', ...(route.study ? { study: route.study } : {}), ...(route.run ? { run: route.run } : {}) }
-    : route.view === 'portfolio' || route.view === 'strategy' ? { project: route.id, page: 'portfolio' } : null
+  const hosted = isHosted(data.workspace)
+  // Until the workspace summary arrives the host is unknown: offer no Assistant entry rather than flash one.
+  const assistantContext = assistantContextFor(route, hosted || !data.workspace)
 
   useEffect(() => setAskAssistant(false), [route.view, projectId])
 
@@ -123,6 +124,10 @@ export default function App() {
     page = <WorkbenchGallery />
   } else if (route.view === 'data-intake') {
     page = <DataIntake workspace={data.workspace} />
+  } else if (route.view === 'assistant' && !data.workspace) {
+    page = <div className="pg"><Loading label={uiText("Loading…")} minHeight={240} /></div>
+  } else if (route.view === 'assistant' && hosted) {
+    page = <HostedAssistantNote />
   } else if (route.view === 'assistant') {
     page = <AssistantPage workspace={data.workspace} go={go} />
   } else if (isLibraryRoute(route)) {

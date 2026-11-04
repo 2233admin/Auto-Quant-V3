@@ -7,6 +7,7 @@ import { Icon, Mark, type IconName } from '../design/icons'
 import { attentionItems, useRecentProjects } from '../ideas'
 import { routeHref, routeProjectId, type Route } from '../route'
 import type { ShellData } from '../useShellData'
+import { isHosted } from './Hosted'
 /** Task-named libraries, below Ideas (home). */
 const LIBRARY_NAV = [
   { view: 'assistant', get label() { return uiText("Assistant") }, icon: 'assistant' },
@@ -40,6 +41,7 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
   const factors = projects.filter(p => p.library?.factor)
   const recentProjects = [...recent.map(id => factors.find(p => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p), ...[...factors].sort((a,b) => (b.latestRunAt ?? '').localeCompare(a.latestRunAt ?? ''))].filter((p,i,a) => a.findIndex(q => q.id === p.id) === i).slice(0,3)
   const attention = attentionItems(data.workspace).length
+  const hosted = isHosted(data.workspace)
   return (
     <aside ref={rail} data-measure="sidebar" className={narrow ? 'rail is-narrow mo-hl' : 'rail mo-hl'}>
       <a className="brand" href={routeHref({ view: 'projects' })} aria-label={narrow ? uiText("AutoQuant Studio") : undefined}>
@@ -50,12 +52,12 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
         </span>
       </a>
       <nav aria-label={uiText("Sections")}>
-        <a className={route.view === 'assistant' ? 'nav is-on' : 'nav'} href={routeHref({ view: 'assistant' })} aria-current={route.view === 'assistant' ? 'page' : undefined}>
+        {!hosted && <a className={route.view === 'assistant' ? 'nav is-on' : 'nav'} href={routeHref({ view: 'assistant' })} aria-current={route.view === 'assistant' ? 'page' : undefined}>
           <Icon name="assistant" />
           <span className="nav-label">{t('Assistant', '助手')}</span>
           <span className="nav-short">{t('Assistant', '助手')}</span>
           <span className="nav-idx mk" aria-hidden="true">01</span>
-        </a>
+        </a>}
         <button type="button" className="rail-new" onClick={() => setNewIdea(true)} aria-label={t('New factor', '新建因子')}><Icon name="plus" /><span>{t('New factor', '新建因子')}</span></button>
         {recentProjects.length > 0 && <div className="railhead" aria-hidden="true">{uiText("Recent")}</div>}
         {(
@@ -80,7 +82,7 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
             <Icon name={item.icon} />
             <span className="nav-label">{t(item.label, ({ factors: '因子', strategies: '策略', runs: '运行记录', tuning: '调优' } as Record<string, string>)[item.view] ?? item.label)}</span>
             <span className="nav-short">{t(item.label, ({ factors: '因子', strategies: '策略', runs: '运行', tuning: '调优' } as Record<string, string>)[item.view] ?? item.label)}</span>
-            <span className="nav-idx mk" aria-hidden="true">{String(index + 2).padStart(2, '0')}</span>
+            <span className="nav-idx mk" aria-hidden="true">{String(index + (hosted ? 1 : 2)).padStart(2, '0')}</span>
           </a>
         ))}
       </nav>
@@ -119,6 +121,7 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
 /** Phone navigation: the same sections as a bottom tab bar. */
 export function TabBar({ route, data }: { route: Route; data: ShellData }) {
   const language = useLanguage()
+  const hosted = isHosted(data.workspace)
   const labels: Record<string, string> = { Assistant: '助手', Factors: '因子', Strategies: '策略', Runs: '运行', Tuning: '调优', Attention: '待处理', Settings: '设置' }
   const attention = attentionItems(data.workspace).length
   const tab = (view: 'projects' | 'attention' | 'settings' | (typeof LIBRARY_NAV)[number]['view'], label: string, icon: IconName, badge?: ReactNode) => (
@@ -131,7 +134,7 @@ export function TabBar({ route, data }: { route: Route; data: ShellData }) {
   )
   return (
     <nav className="tabbar" aria-label={uiText("Sections")}>
-      {LIBRARY_NAV.map((item) => tab(item.view, item.label, item.icon))}
+      {LIBRARY_NAV.filter((item) => !(hosted && item.view === 'assistant')).map((item) => tab(item.view, item.label, item.icon))}
       {tab('attention', 'Attention', 'attention', attention > 0 ? <span className="pending mono">{attention}</span> : null)}
       {tab('settings', 'Settings', 'settings')}
       <button type="button" className="tab" onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} aria-label="Switch language / 切换语言">{language === 'en' ? '中文' : uiText("EN")}</button>

@@ -2052,7 +2052,7 @@ def build_workspace_summary(
 
 
 def workspace_summary_from_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
-    return {
+    summary = {
         "schemaVersion": SCHEMA_VERSION,
         "kind": "autoquant-studio-workspace-summary",
         "generatedAt": snapshot["generatedAt"],
@@ -2062,6 +2062,9 @@ def workspace_summary_from_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
         "diagnostics": snapshot["diagnostics"],
         "projects": [_project_summary(item) for item in snapshot["projects"]],
     }
+    if "host" in snapshot:
+        summary["host"] = snapshot["host"]
+    return summary
 
 
 def build_project_snapshot(

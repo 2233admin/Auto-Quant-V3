@@ -24,8 +24,10 @@ restate it:
 - The snapshot gains an optional `host` object, present only under managed
   launch: `{"kind": "harness", "capability": "studio"}`. Standalone snapshots
   are unchanged. It is derived from the same explicit `managed` process state
-  as the response headers, never from the request. The frontend may read it to
-  hide the in-process Assistant.
+  as the response headers, never from the request. The workspace summary
+  (`/api/v1/workspace`) passes it through, and the studio-app reads it to hide
+  the in-process Assistant: rail and tab entry, the "Ask Assistant" button and
+  the Assistant route, which shows a short read-only note instead.
 - `--allow-actions` is not part of the manifest command. A host that adds it
   gets V3's local action layer, whose Host/Origin checks expect the loopback
   origin, so actions are not expected to work behind an opaque proxy origin.

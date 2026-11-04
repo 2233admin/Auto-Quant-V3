@@ -137,7 +137,11 @@ See [Harness-managed launch](#harness-managed-launch) above for the contract.
 V3 adds one optional field: under managed launch the snapshot carries
 `host: {"kind": "harness", "capability": "studio"}` so the frontend can adapt
 (for example hide the in-process Assistant). Standalone snapshots have no
-`host` field. Notes: [[docs/design/openalice-hosting]].
+`host` field. `GET /api/v1/workspace` carries the same `host` object. When it is
+present the studio-app hides the Assistant rail and tab entry, the "Ask
+Assistant" button and the Assistant route (a direct visit shows one read-only
+note that research runs in the host's Agent session). Standalone Studio is
+unchanged. Notes: [[docs/design/openalice-hosting]].
 
 ## Local actions (opt in)
 

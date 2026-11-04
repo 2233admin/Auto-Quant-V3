@@ -1027,6 +1027,21 @@ class StudioObservationTests(unittest.TestCase):
                     },
                 )
 
+    def test_workspace_summary_carries_host_marker_only_when_managed(self) -> None:
+        from autoquant.studio import MANAGED_SNAPSHOT_HOST, workspace_summary_from_snapshot
+
+        base = {
+            "generatedAt": "2026-01-01T00:00:00+00:00",
+            "harness": {},
+            "source": {},
+            "valid": True,
+            "diagnostics": [],
+            "projects": [],
+        }
+        self.assertNotIn("host", workspace_summary_from_snapshot(base))
+        managed = workspace_summary_from_snapshot({**base, "host": dict(MANAGED_SNAPSHOT_HOST)})
+        self.assertEqual(managed["host"], MANAGED_SNAPSHOT_HOST)
+
     def test_non_managed_environment_preserves_standalone_launch(self) -> None:
         noisy_environment = {
             "HARNESS_CAPABILITY": "another-capability",

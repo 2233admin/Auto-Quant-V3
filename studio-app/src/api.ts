@@ -90,6 +90,8 @@ export type WorkspaceSummary = {
   projects: ProjectSummary[]
   /** Present only when Studio was started with --allow-actions; absent means read-only. */
   actions?: ActionsBootstrap
+  /** Present only under a managed (Harness) launch: a host owns the research conversation. */
+  host?: { kind: string; capability: string }
 }
 
 export type StudyRow = {
