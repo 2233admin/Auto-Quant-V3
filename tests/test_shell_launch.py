@@ -24,8 +24,10 @@ def _alive(pid: int) -> bool:
     if os.name == "nt":
         out = subprocess.run(
             ["tasklist", "/FI", f"PID eq {pid}", "/NH", "/FO", "CSV"],
-            capture_output=True, text=True, check=False,
-        ).stdout
+            # tasklist writes the console code page (GBK on a Chinese system), not UTF-8;
+            # only the ASCII PID column is read, so undecodable bytes are replaced.
+            capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
+        ).stdout or ""
         # Exact PID column match (a substring test also matched memory figures).
         return any(len(row) > 1 and row[1] == str(pid) for row in csv.reader(out.splitlines()))
     try:
