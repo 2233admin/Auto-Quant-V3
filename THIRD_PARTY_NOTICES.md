@@ -69,3 +69,17 @@ All faces are licensed under the SIL Open Font License 1.1. Licence texts for th
   [0xType/0xProto](https://github.com/0xType/0xProto) release 2.502; `0xProto-Regular.woff2` and `0xProto-Bold.woff2`
   vendored unmodified.
 - **Noto Sans SC** (body), Copyright (c) Google / Adobe, via the `@fontsource-variable/noto-sans-sc` npm package.
+
+## ShinkaEvolve research layer
+
+`autoquant/shinka_research/`, `tests/shinka_research/`, `examples/shinka_quant_research/`, `studio-shinka/` and
+`docs/shinka-research/` are a direct port of the `shinka/research/` layer, its tests, example and docs from the
+[2233admin/ShinkaEvolve](https://github.com/2233admin/ShinkaEvolve) fork (commit `a43eb89`, branch `main`) of
+[SakanaAI/ShinkaEvolve](https://github.com/SakanaAI/ShinkaEvolve). Only imports (`shinka.research` to
+`autoquant.shinka_research`), lazy engine access and test paths were changed; see `docs/shinka-research/PORT.md`.
+`autoquant/shinka_research/webui/dist/` is the prebuilt web UI from the same commit.
+
+Licence: Apache License 2.0, Copyright Sakana AI and contributors; the licence text is shipped as
+`autoquant/shinka_research/LICENSE-ShinkaEvolve-Apache-2.0`. The ShinkaEvolve evolution engine itself (`shinka`) is
+not vendored; it is an optional dependency (extra `shinka-engine`). The web UI bundles its own third-party notices in
+`autoquant/shinka_research/webui/dist/analysis/THIRD_PARTY_NOTICES.txt`.
