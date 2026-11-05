@@ -2,7 +2,7 @@ import { uiTemplate, uiText } from '../i18n'
 import { Glyph } from '../design/icons'
 import { VerdictBand, type Reason } from '../components/VerdictBand'
 import type { Direction, LedgerRow, ResearchHypothesis } from './researchApi'
-import { bandOf, fixed, money, rowLabel, rowStateOf, rowThreshold, rowValue, statusOf } from './words'
+import { bandOf, fixed, money, rowLabel, rowStateOf, rowThreshold, rowValue, statusOf, vocab } from './words'
 
 export function StateWord({ glyph, word, signal }: { glyph: Parameters<typeof Glyph>[0]['kind']; word: string; signal: boolean }) {
   return <span className="state"><Glyph kind={glyph} signal={signal} /><span className={signal ? 'sig' : undefined}>{word}</span></span>
@@ -23,7 +23,7 @@ export function Claim({ h }: { h: ResearchHypothesis }) {
       <p className="rs-claim" translate="no">{h.title}</p>
       {sections.length > 0 && (
         <dl className="rs-kv">
-          {sections.map((s) => [<dt key={`${s.head}-t`} translate="no">{s.head}</dt>, <dd key={`${s.head}-d`} translate="no">{s.text}</dd>])}
+          {sections.map((s) => [<dt key={`${s.head}-t`}>{vocab(s.head)}</dt>, <dd key={`${s.head}-d`} translate="no">{s.text}</dd>])}
         </dl>
       )}
       <details>
@@ -158,7 +158,7 @@ export function Events({ d, selected }: { d: Direction; selected: string }) {
       {d.events.map((e, i) => (
         <li key={`${e.time}-${i}`} data-mine={e.hypothesis === selected || undefined}>
           <span className="mono faint small">{e.time.slice(0, 16).replace('T', ' ')}</span>
-          <span className="kind" translate="no">{e.event}</span>
+          <span className="kind">{vocab(e.event)}</span>
           <span className="trunc" translate="no">{e.withheld ? <span className="muted">{uiText("Withheld until this hypothesis has a verdict.")}</span> : e.note}</span>
           <span className="mono small" translate="no">{[e.hypothesis, e.experiment].filter(Boolean).join('/')}</span>
         </li>

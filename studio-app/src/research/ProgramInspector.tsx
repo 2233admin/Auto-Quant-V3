@@ -1,6 +1,6 @@
 import { uiTemplate, uiText } from '../i18n'
 import type { EvoProgram, ProgramResponse } from './evolutionApi'
-import { fixed, money } from './words'
+import { fixed, money, vocab } from './words'
 
 /** A unified diff with added and removed lines marked by their own prefix and class, never colour alone. */
 function Diff({ text }: { text: string }) {
@@ -37,10 +37,10 @@ function Facts({ r }: { r: Required<ProgramResponse>['program'] }) {
     <dl className="rs-kv">
       <dt>{uiText("In-sample score")}</dt><dd className="mono">{r.score === null ? uiText("failed") : fixed(r.score)}</dd>
       <dt>{uiText("Generation")}</dt><dd className="mono">{r.generation}{r.island !== null ? ` · ${uiTemplate("island {0}", [r.island])}` : ''}</dd>
-      <dt>{uiText("Patch")}</dt><dd translate="no">{[r.patchType, r.patchName].filter(Boolean).join(' · ') || '—'}</dd>
+      <dt>{uiText("Patch")}</dt><dd>{vocab(r.patchType)}{r.patchName ? <> · <span className="mono" translate="no">{r.patchName}</span></> : null}</dd>
       <dt>{uiText("Model")}</dt><dd className="mono" translate="no">{r.model ?? '—'}</dd>
       <dt>{uiText("Cost")}</dt><dd className="mono">{money(r.cost)}</dd>
-      <dt>{uiText("Stage seconds")}</dt><dd className="mono">{Object.entries(r.timings).map(([k, v]) => `${k} ${v.toFixed(1)}`).join(' · ') || '—'}</dd>
+      <dt>{uiText("Stage seconds")}</dt><dd className="mono">{Object.entries(r.timings).map(([k, v]) => `${vocab(k)} ${v.toFixed(1)}`).join(' · ') || '—'}</dd>
       <dt>{uiText("Public metrics")}</dt><dd className="mono small" translate="no">{Object.entries(r.publicMetrics).map(([k, v]) => `${k} ${typeof v === 'number' ? v.toFixed(4) : String(v)}`).join(' · ') || '—'}</dd>
       <dt>{uiText("Private metrics")}</dt><dd>{r.privateMetrics === 'hidden' ? uiText("Recorded, never shown: held-out evidence stays with the skeptic.") : uiText("None recorded")}</dd>
     </dl>

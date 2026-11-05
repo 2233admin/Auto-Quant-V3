@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { DataTable, type Col } from '../library/DataTable'
 import { useResearchJson } from './researchApi'
 import { metaUrl, promptUrl, type EvoProgram, type MetaResponse, type PromptResponse, type PromptVersion, type RunKey, type Stage } from './evolutionApi'
-import { fixed, money } from './words'
+import { fixed, money, vocab } from './words'
 
 function depths(prompts: PromptVersion[]): Map<string, number> {
   const byId = new Map(prompts.map((p) => [p.id, p]))
@@ -72,7 +72,7 @@ export function Throughput({ stages, perHour, wallHours }: { stages: Stage[]; pe
         <div className="tablewrap">
           <table className="tbl">
             <thead><tr><th scope="col">{uiText("Stage")}</th><th scope="col" className="r">{uiText("Median seconds")}</th><th scope="col" className="r">{uiText("95th percentile")}</th><th scope="col" className="r">{uiText("Longest")}</th><th scope="col" className="r">{uiText("Programs")}</th></tr></thead>
-            <tbody>{stages.map((s) => <tr key={s.stage}><th scope="row" translate="no">{s.stage}</th><td className="r mono">{s.p50.toFixed(1)}</td><td className="r mono">{s.p95.toFixed(1)}</td><td className="r mono">{s.max.toFixed(1)}</td><td className="r mono">{s.n}</td></tr>)}</tbody>
+            <tbody>{stages.map((s) => <tr key={s.stage}><th scope="row">{vocab(s.stage)}</th><td className="r mono">{s.p50.toFixed(1)}</td><td className="r mono">{s.p95.toFixed(1)}</td><td className="r mono">{s.max.toFixed(1)}</td><td className="r mono">{s.n}</td></tr>)}</tbody>
           </table>
         </div>
       )}
@@ -89,7 +89,7 @@ export function ProgramsTable({ rows, href, go, selected }: { rows: EvoProgram[]
     { id: 'name', label: uiText("Program"), rowHeader: true, sort: (p) => p.patchName ?? p.id, render: (p) => <a href={href(p)} className="mono" translate="no">{p.patchName ?? p.id.slice(0, 8)}</a> },
     { id: 'gen', label: uiText("Generation"), align: 'r', sort: (p) => p.generation, render: (p) => p.generation },
     { id: 'score', label: uiText("In-sample score"), align: 'r', sort: (p) => p.score, render: (p) => (p.score === null ? uiText("failed") : fixed(p.score)) },
-    { id: 'patch', label: uiText("Patch"), sort: (p) => p.patchType, render: (p) => <span className="mono small" translate="no">{p.patchType ?? '—'}</span> },
+    { id: 'patch', label: uiText("Patch"), sort: (p) => p.patchType, render: (p) => <span className="small">{vocab(p.patchType)}</span> },
     { id: 'model', label: uiText("Model"), render: (p) => <span className="mono small" translate="no">{p.model ?? '—'}</span> },
     { id: 'kids', label: uiText("Offspring"), align: 'r', sort: (p) => p.children, render: (p) => p.children },
     { id: 'cost', label: uiText("Cost"), align: 'r', sort: (p) => p.cost, render: (p) => money(p.cost) },

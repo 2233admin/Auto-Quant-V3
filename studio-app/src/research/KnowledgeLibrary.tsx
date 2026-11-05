@@ -4,9 +4,9 @@ import { Icon, PageMark, SectionBar } from '../design/marks'
 import { Notice } from '../Notice'
 import { Loading } from '../components/States'
 import { LIBRARY_URL, useResearchJson, type KnowledgeLibrary as Library, type ResearchLibrary } from './researchApi'
+import { Markdown } from './Markdown'
 
-function Pages({ lib }: { lib: Library }) {
-  const [open, setOpen] = useState(lib.pages[0]?.name ?? '')
+function Pages({ lib, open, onOpen }: { lib: Library; open: string; onOpen: (page: string) => void }) {
   const page = lib.pages.find((p) => p.name === open)
   const findings = new Set(lib.findings)
   return (
@@ -15,7 +15,7 @@ function Pages({ lib }: { lib: Library }) {
         <ul className="plain">
           {lib.pages.map((p) => (
             <li key={p.name}>
-              <button type="button" className={p.name === open ? 'rs-page-btn is-on' : 'rs-page-btn'} aria-pressed={p.name === open} onClick={() => setOpen(p.name)}>
+              <button type="button" className={p.name === open ? 'rs-page-btn is-on' : 'rs-page-btn'} aria-pressed={p.name === open} onClick={() => onOpen(p.name)}>
                 <span className="mono small" translate="no">{p.name}</span>
                 {findings.has(p.name) && <span className="mk small">{uiText("finding")}</span>}
               </button>
@@ -24,28 +24,34 @@ function Pages({ lib }: { lib: Library }) {
         </ul>
       </nav>
       <article className="rs-article">
-        {page ? <pre className="rs-pre" translate="no">{page.text}</pre> : <p className="muted">{uiText("No wiki page yet.")}</p>}
+        {page ? <Markdown text={page.text} onWiki={onOpen} /> : open ? <p className="muted">{uiTemplate("No wiki page named {0}.", [open])}</p> : <p className="muted">{uiText("No wiki page yet.")}</p>}
       </article>
     </div>
   )
 }
 
 function Body({ lib }: { lib: Library }) {
+  const [open, setOpen] = useState(lib.pages[0]?.name ?? '')
+  // A [[wiki]] link anywhere on the page opens that page in the wiki pane.
+  const show = (page: string) => {
+    setOpen(page)
+    document.getElementById('kl-wiki')?.scrollIntoView({ block: 'start' })
+  }
   return (
     <div className="vstack">
-      {lib.demo && <Notice kind="info" label={uiText("Demo")} title={uiText("Synthetic demo data: no research was run and no number here is a real result.")}><div className="notice-sub" translate="no">{lib.demo}</div></Notice>}
+      {lib.demo && <Notice kind="info" label={uiText("Demo")} title={uiText("Synthetic demo data: no research was run and no number here is a real result.")} />}
       <p className="small muted">
         {uiTemplate("{0} wiki pages, {1} findings, {2} raw sources not compiled yet; {3} sources added by the agent, {4} by people.", [lib.pages.length, lib.findings.length, lib.pending.length, lib.sources.agent, lib.sources.human])}
       </p>
-      <section aria-labelledby="kl-wiki"><SectionBar as="h2" id="kl-wiki" icon="doc" micro="WIKI">{uiText("Wiki")}</SectionBar><Pages lib={lib} /></section>
+      <section aria-labelledby="kl-wiki"><SectionBar as="h2" id="kl-wiki" icon="doc" micro="WIKI">{uiText("Wiki")}</SectionBar><Pages lib={lib} open={open} onOpen={show} /></section>
       <div className="cols">
-        <section aria-labelledby="kl-index"><SectionBar as="h2" id="kl-index" icon="folder" micro="INDEX.MD">{uiText("Index")}</SectionBar><pre className="rs-pre" translate="no">{lib.index}</pre></section>
+        <section aria-labelledby="kl-index"><SectionBar as="h2" id="kl-index" icon="folder" micro="INDEX.MD">{uiText("Index")}</SectionBar><Markdown text={lib.index} onWiki={show} /></section>
         <section aria-labelledby="kl-raw">
           <SectionBar as="h2" id="kl-raw" icon="download" micro="RAW">{uiText("Raw sources not compiled")}</SectionBar>
           {lib.pending.length ? <ul className="plain mono small" translate="no">{lib.pending.map((r) => <li key={r}>{r}</li>)}</ul> : <p className="muted small">{uiText("Every raw source is compiled.")}</p>}
         </section>
       </div>
-      <section aria-labelledby="kl-log"><SectionBar as="h2" id="kl-log" icon="versions" micro="LOG.MD">{uiText("Library log")}</SectionBar><pre className="rs-pre" translate="no">{lib.log}</pre></section>
+      <section aria-labelledby="kl-log"><SectionBar as="h2" id="kl-log" icon="versions" micro="LOG.MD">{uiText("Library log")}</SectionBar><Markdown text={lib.log} onWiki={show} /></section>
     </div>
   )
 }

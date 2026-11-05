@@ -26,3 +26,17 @@
 .rs-lineage .rs-node.is-copy rect { stroke-dasharray: 1 1; }
 .rs-scrub { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); }
 .rs-scrub input { flex: 1; max-width: 32rem; accent-color: var(--text); }
+/* Narrow screens: the title bar grows and wraps instead of clipping the title and its description. */
+@media (max-width: 767px) {
+  .rs-library .library-title.sec-bar { height: auto; min-height: 56px; flex-wrap: wrap; padding: var(--space-3) var(--space-4); row-gap: var(--space-1); }
+  .rs-library .library-title p { flex-basis: 100%; white-space: normal; overflow: visible; }
+  .rs-library .library-title .mkw { display: none; }
+  .rs-page .pg-head h1 { overflow-wrap: anywhere; }
+}
+.md { font: var(--type-body); line-height: 1.6; overflow-wrap: anywhere; }
+.md h3, .md h4, .md h5 { font: var(--type-section); margin: var(--space-3) 0 var(--space-2); }
+.md p, .md ul, .md ol, .md blockquote { margin: 0 0 var(--space-2); }
+.md ul, .md ol { padding-left: var(--space-5); }
+.md blockquote { border-left: 2px solid var(--line-strong); padding-left: var(--space-3); color: var(--muted); }
+.md code { font: var(--type-small-mono); }
+.md .md-wiki { font: var(--type-small-mono); }

@@ -90,7 +90,7 @@ export function EvolutionPage({ run, p, name, tick, go }: { run: RunKey; p?: str
   return (
     <div className="pg rs-page">
       {head}
-      {r.demo && <Notice kind="info" label={uiText("Demo")} title={uiText("Synthetic demo data: no research was run and no number here is a real result.")}><div className="notice-sub" translate="no">{r.demo}</div></Notice>}
+      {r.demo && <Notice kind="info" label={uiText("Demo")} title={uiText("Synthetic demo data: no research was run and no number here is a real result.")} />}
       {r.state === 'ready' ? (
         <>
           <SectionNav items={NAV.map(([key, label]) => ({ id: key, label: uiText(label) }))} />

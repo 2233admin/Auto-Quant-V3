@@ -37,3 +37,12 @@ test('throughput lays out the server stage durations', () => {
   assert.match(html, /104\.3 programs per hour/)
   assert.match(html, /158\.1/)
 })
+
+test('an aborted or bodiless response never replaces the shown state (no black screen on fast route changes)', async () => {
+  const { settle } = await import('../src/research/researchApi')
+  const ready = { url: '/a', load: { state: 'ready' as const, data: { demo: null } } }
+  assert.equal(settle(ready, '/b', true, { data: null }), ready)
+  assert.deepEqual(settle({ url: null, load: { state: 'loading' } }, '/b', false, { data: null }).load.state, 'error')
+  assert.equal(settle(ready, '/a', false, { error: 'HTTP 500' }).load, ready.load)
+  assert.deepEqual(settle(ready, '/b', false, { data: { demo: 'x' } }), { url: '/b', load: { state: 'ready', data: { demo: 'x' } } })
+})

@@ -105,21 +105,35 @@ export type ResearchLibrary = { kind: 'autoquant-studio-research-library'; state
 
 export type Loaded<T> = { state: 'loading' } | { state: 'error'; message: string } | { state: 'ready'; data: T }
 
-/** One read-only payload, refetched when `tick` (the shell's refresh time) changes; the server answers 304 when unchanged. */
+type Keyed<T> = { url: string | null; load: Loaded<T> }
+
+/**
+ * Apply one finished request to the state of `url`: an aborted request (the route moved on) and a body that never
+ * arrived (getJson reads an interrupted body as null) never replace what is shown; a refresh failure keeps the data.
+ */
+export function settle<T>(prev: Keyed<T>, url: string, aborted: boolean, outcome: { data: T | null } | { error: string }): Keyed<T> {
+  if (aborted) return prev
+  const kept = prev.url === url && prev.load.state === 'ready' ? prev.load : null
+  if ('data' in outcome && outcome.data !== null && outcome.data !== undefined) return { url, load: { state: 'ready', data: outcome.data } }
+  const message = 'error' in outcome ? outcome.error : 'The response arrived without a body.'
+  return { url, load: kept ?? { state: 'error', message } }
+}
+
+/**
+ * One read-only payload, refetched when `tick` (the shell's refresh time) changes; the server answers 304 when
+ * unchanged. State is keyed by URL, so a route change shows loading instead of another page's data.
+ */
 export function useResearchJson<T>(url: string | null, tick: Date | null): Loaded<T> {
-  const [load, setLoad] = useState<Loaded<T>>({ state: 'loading' })
+  const [state, setState] = useState<Keyed<T>>({ url: null, load: { state: 'loading' } })
   useEffect(() => {
     if (!url) return
     const controller = new AbortController()
-    getJson<T>(url, controller.signal)
-      .then((data) => setLoad({ state: 'ready', data }))
-      .catch((reason: unknown) => {
-        if (controller.signal.aborted) return
-        setLoad((prev) => (prev.state === 'ready' ? prev : { state: 'error', message: reason instanceof Error ? reason.message : String(reason) }))
-      })
+    getJson<T | null>(url, controller.signal)
+      .then((data) => setState((prev) => settle(prev, url, controller.signal.aborted, { data })))
+      .catch((reason: unknown) => setState((prev) => settle(prev, url, controller.signal.aborted, { error: reason instanceof Error ? reason.message : String(reason) })))
     return () => controller.abort()
   }, [url, tick])
-  return load
+  return state.url === url ? state.load : { state: 'loading' }
 }
 
 export const researchUrl = (id: string) => `/api/v1/project/research?id=${encodeURIComponent(id)}`

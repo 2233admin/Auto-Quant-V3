@@ -10,7 +10,7 @@ import { researchUrl, useResearchJson, type Direction, type ProjectResearch, typ
 import { Claim, Criteria, Events, Experiments, Ledger, Lockbox, Status, Verdict } from './ResearchParts'
 import { TrialFrontier } from './TrialFrontier'
 import { SeriesChart } from './SeriesChart'
-import { fixed, lockboxWord, money } from './words'
+import { fixed, lockboxWord, money, vocab } from './words'
 import './research.css'
 
 const NAV = [
@@ -25,7 +25,7 @@ const ADD_HYPOTHESIS = 'aq shinka hypothesis add <project> --title TEXT --file B
 
 export function DemoNotice({ demo }: { demo: string | null }) {
   if (!demo) return null
-  return <Notice kind="info" label={uiText("Demo")} title={uiText("Synthetic demo data: no research was run and no number here is a real result.")}><div className="notice-sub" translate="no">{demo}</div></Notice>
+  return <Notice kind="info" label={uiText("Demo")} title={uiText("Synthetic demo data: no research was run and no number here is a real result.")} />
 }
 
 function tiles(d: Direction) {
@@ -93,7 +93,7 @@ function Body({ id, d, h, go }: { id: string; d: Direction; h: ResearchHypothesi
           <SeriesChart title={uiText("Running best by generation")} short={uiText("One step line per experiment; the dash pattern tells them apart.")} desc={uiText("The running best in-sample score of each experiment of this direction, by generation. More generations also mean more trials: read it beside the noise frontier.")} xLabel={uiText("generation")} format={(v) => v.toFixed(3)} series={d.experimentCurves.map((c, i) => ({ label: `${c.hypothesis}/${c.experiment}`, kind: 'step' as const, dashes: ['', '5 3', '2 3', '8 3 2 3', '1 2'][i % 5], points: c.steps }))} />
         </Section>
       )}
-      <Section title={uiText("Results ledger")} id="rs-events" icon={<Icon name="versions" />} micro="RESULTS.TSV" fold caption={uiTemplate("{0} recent events; agent rounds {1}.", [d.events.length, d.rounds.state])}>
+      <Section title={uiText("Results ledger")} id="rs-events" icon={<Icon name="versions" />} micro="RESULTS.TSV" fold caption={uiTemplate("{0} recent events; agent rounds {1}.", [d.events.length, vocab(d.rounds.state)])}>
         <Events d={d} selected={h.id} />
       </Section>
     </>

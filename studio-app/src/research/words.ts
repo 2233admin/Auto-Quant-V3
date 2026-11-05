@@ -83,5 +83,18 @@ export function rowValue(row: Row): string {
   return v.toFixed(row.id === 'dsr' || row.id === 'pbo' ? 3 : 2)
 }
 
+/**
+ * Shinka vocabulary that reaches the page as data but is fixed by the research layer: hypothesis body headings,
+ * agent-round states, results-ledger event kinds, pipeline stages and patch kinds. Unknown values pass through.
+ */
+const VOCABULARY: Record<string, string> = {
+  Claim: 'Claim', Mechanism: 'Mechanism', Falsification: 'Falsification',
+  idle: 'Idle', running: 'Running', waiting: 'Waiting on the owner', open: 'Round open', blocked: 'Blocked', unknown: 'Unknown state',
+  scaffold: 'Scaffold', run: 'Run', 'run-failed': 'Run failed', skeptic: 'Skeptic', verdict: 'Verdict', confirm: 'Lockbox opened', probe: 'Probe', event: 'Event',
+  sampling: 'Sampling', evaluation: 'Evaluation', postprocess: 'Post-processing', pipeline: 'Whole pipeline',
+  diff: 'Diff patch', full: 'Full rewrite', cross: 'Crossover', init: 'Seed',
+}
+export const vocab = (value: string | null | undefined) => (value ? (VOCABULARY[value] ? uiText(VOCABULARY[value]) : value) : '—')
+
 export const money = (v: number | null | undefined) => (typeof v === 'number' && Number.isFinite(v) ? `$${v.toFixed(2)}` : '—')
 export const fixed = (v: number | null | undefined, d = 3) => (typeof v === 'number' && Number.isFinite(v) ? v.toFixed(d) : '—')
