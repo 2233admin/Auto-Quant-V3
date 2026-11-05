@@ -1974,8 +1974,10 @@ def build_studio_snapshot(
     with run_read_memo():
         observations = [_project_snapshot(project, root if workspace else None) for project in projects]
         from .studio_library import library_projection
+        from .studio_research import research_summary
         for project, observation in zip(projects, observations):
             observation["library"] = library_projection(project, observation, root)
+            observation["research"] = research_summary(project.root_dir)
     harness = harness_identity()
     snapshot = {
         "schemaVersion": SCHEMA_VERSION,
@@ -2011,6 +2013,7 @@ def _project_summary(project: dict[str, Any]) -> dict[str, Any]:
         "name": project["name"],
         "description": project.get("description"),
         "library": project.get("library"),
+        "research": project.get("research"),
         "valid": project["valid"],
         "diagnostics": len(project.get("diagnostics") or []),
         "counts": project.get("counts") or {},
@@ -2250,11 +2253,14 @@ def _fingerprint_paths(directory: Path, scope_id: str | None) -> list[Path]:
         return [root]
     workspace = load_workspace(root.resolve())
     base = workspace.projects_dir
-    return [
+    paths = [
         root / WORKSPACE_MANIFEST,
         workspace.configuration_path,
         base / scope_id if scope_id else base,
     ]
+    # The Workspace-level research library (studio_research.py) is part of
+    # the Workspace's observed state.
+    return paths if scope_id else [*paths, root / "library"]
 
 
 class _CachedPayload:
@@ -2627,6 +2633,9 @@ def _handler(
                 if serve_history(self, path, directory, project_id,
                                  lambda: cache.get("snapshot", None, lambda: build_studio_snapshot(directory, project_id=project_id, host=host)).payload,
                                  head_only):
+                    return
+                from .studio_research import serve_research
+                if serve_research(self, path, directory, project_id, head_only):
                     return
                 if path == "/api/v1/health":
                     body = json.dumps(

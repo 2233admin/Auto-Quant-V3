@@ -17,6 +17,8 @@ IGNORED_PARTS = {
     "__pycache__",
     "data",
     "node_modules",
+    # Synthetic Shinka Workspace library: its wiki links resolve inside that library.
+    "shinka-demo",
 }
 LINK_PATTERN = re.compile(
     r"\[\["
