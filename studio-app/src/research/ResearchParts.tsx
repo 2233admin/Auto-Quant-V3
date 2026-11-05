@@ -126,12 +126,12 @@ export function Lockbox({ h, d }: { h: ResearchHypothesis; d: Direction }) {
   )
 }
 
-export function Experiments({ h }: { h: ResearchHypothesis }) {
+export function Experiments({ h, runHref }: { h: ResearchHypothesis; runHref: (eid: string) => string }) {
   if (h.experiments.length === 0) return <p className="muted small">{uiText("No experiment yet.")}</p>
   return (
     <div className="tablewrap">
       <table className="tbl">
-        <thead><tr><th scope="col">{uiText("Experiment")}</th><th scope="col" className="r">{uiText("Evaluated")}</th><th scope="col" className="r">{uiText("Probes")}</th><th scope="col" className="r">{uiText("Best in-sample")}</th><th scope="col" className="r">{uiText("Spend")}</th><th scope="col">{uiText("Trials span (UTC)")}</th></tr></thead>
+        <thead><tr><th scope="col">{uiText("Experiment")}</th><th scope="col" className="r">{uiText("Evaluated")}</th><th scope="col" className="r">{uiText("Probes")}</th><th scope="col" className="r">{uiText("Best in-sample")}</th><th scope="col" className="r">{uiText("Spend")}</th><th scope="col">{uiText("Trials span (UTC)")}</th><th scope="col">{uiText("Evolution run")}</th></tr></thead>
         <tbody>
           {h.experiments.map((e) => (
             <tr key={e.id}>
@@ -141,6 +141,7 @@ export function Experiments({ h }: { h: ResearchHypothesis }) {
               <td className="r mono">{fixed(e.best_is_score)}</td>
               <td className="r mono">{e.spend_known ? money(e.spend_usd) : `≥ ${money(e.spend_usd)}`}</td>
               <td className="mono small">{e.first_trial ? `${e.first_trial.slice(0, 16).replace('T', ' ')} → ${(e.last_trial ?? '').slice(0, 16).replace('T', ' ')}` : '—'}</td>
+              <td>{e.n_evaluated > 0 ? <a href={runHref(e.id)}>{uiText("Open the evolution run")}</a> : <span className="faint">{uiText("No programs yet")}</span>}</td>
             </tr>
           ))}
         </tbody>

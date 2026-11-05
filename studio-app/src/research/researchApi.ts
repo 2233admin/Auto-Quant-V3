@@ -78,6 +78,8 @@ export type Direction = {
   events: ResearchEvent[]
   rounds: { state: string; pending: { kind: string; do: string }[] } & Record<string, unknown>
   frontier: Frontier
+  /** Running best in-sample score by generation for each experiment (server-computed). */
+  experimentCurves: { hypothesis: string; experiment: string; steps: [number, number][] }[]
 }
 
 export type ProjectResearch = {

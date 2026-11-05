@@ -23,6 +23,7 @@ import { RunPage } from './pages/run/RunPage'
 import { routeHref, routeProjectId } from './route'
 import { isLibraryRoute, LIBRARY_TITLE, LibraryPage } from './library/Library'
 import { ResearchPage } from './research/ResearchPage'
+import { EvolutionPage } from './research/EvolutionPage'
 import { Palette } from './shell/Palette'
 import { Rail, TabBar } from './shell/Rail'
 import { assistantContextFor, HostedAssistantNote, isHosted } from './shell/Hosted'
@@ -106,7 +107,7 @@ export default function App() {
               { label: uiText("Factor evidence") },
             ]
           : route.view === 'research' && route.id
-            ? [{ label: LIBRARY_TITLE.research, href: routeHref({ view: 'research' }) }, { label: data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id, data: true }]
+            ? [{ label: LIBRARY_TITLE.research, href: routeHref({ view: 'research' }) }, { label: data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id, data: true, ...(route.e ? { href: routeHref({ view: 'research', id: route.id, h: route.h }) } : {}) }, ...(route.e ? [{ label: `${route.h}/${route.e}`, data: true }] : [])]
           : isLibraryRoute(route)
             ? route.view === 'tuning' && route.id
               ? [{ label: LIBRARY_TITLE.tuning, href: routeHref({ view: 'tuning' }) }, { label: (data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id), data: true }]
@@ -133,6 +134,8 @@ export default function App() {
     page = <HostedAssistantNote />
   } else if (route.view === 'assistant') {
     page = <AssistantPage workspace={data.workspace} go={go} />
+  } else if (route.view === 'research' && route.id && route.h && route.e) {
+    page = <EvolutionPage key={`${route.id}/${route.h}/${route.e}`} run={{ id: route.id, h: route.h, e: route.e }} p={route.p} name={data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id} tick={data.updated} go={go} />
   } else if (route.view === 'research' && route.id) {
     page = <ResearchPage key={route.id} id={route.id} h={route.h} name={data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id} tick={data.updated} go={go} />
   } else if (isLibraryRoute(route)) {

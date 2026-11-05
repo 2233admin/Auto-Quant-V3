@@ -9,6 +9,7 @@ import { routeHref } from '../route'
 import { researchUrl, useResearchJson, type Direction, type ProjectResearch, type ResearchHypothesis } from './researchApi'
 import { Claim, Criteria, Events, Experiments, Ledger, Lockbox, Status, Verdict } from './ResearchParts'
 import { TrialFrontier } from './TrialFrontier'
+import { SeriesChart } from './SeriesChart'
 import { fixed, lockboxWord, money } from './words'
 import './research.css'
 
@@ -85,8 +86,13 @@ function Body({ id, d, h, go }: { id: string; d: Direction; h: ResearchHypothesi
         <Ledger rows={h.ledger} />
       </Section>
       <Section title={uiText("Experiments")} id="rs-exp" icon={<Icon name="runs" />} micro="EXPERIMENTS">
-        <Experiments h={h} />
+        <Experiments h={h} runHref={(eid) => routeHref({ view: 'research', id, h: h.id, e: eid })} />
       </Section>
+      {d.experimentCurves.length > 1 && (
+        <Section title={uiText("Compare experiments")} id="rs-compare" icon={<Icon name="versions" />} micro="COMPARE" caption={uiText("In-sample scores compare only within this direction's fixed evaluator and data.")}>
+          <SeriesChart title={uiText("Running best by generation")} short={uiText("One step line per experiment; the dash pattern tells them apart.")} desc={uiText("The running best in-sample score of each experiment of this direction, by generation. More generations also mean more trials: read it beside the noise frontier.")} xLabel={uiText("generation")} format={(v) => v.toFixed(3)} series={d.experimentCurves.map((c, i) => ({ label: `${c.hypothesis}/${c.experiment}`, kind: 'step' as const, dashes: ['', '5 3', '2 3', '8 3 2 3', '1 2'][i % 5], points: c.steps }))} />
+        </Section>
+      )}
       <Section title={uiText("Results ledger")} id="rs-events" icon={<Icon name="versions" />} micro="RESULTS.TSV" fold caption={uiTemplate("{0} recent events; agent rounds {1}.", [d.events.length, d.rounds.state])}>
         <Events d={d} selected={h.id} />
       </Section>

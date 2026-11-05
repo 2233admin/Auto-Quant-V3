@@ -15,3 +15,14 @@
 .rs-page-btn.is-on { border-color: var(--text); background: var(--raised); }
 .rs-library .library-title { margin-bottom: var(--space-4); }
 @media (max-width: 900px) { .rs-wiki { grid-template-columns: minmax(0, 1fr); } }
+.rs-diff span { display: block; }
+.rs-diff .is-add { color: var(--text); background: var(--raised); }
+.rs-diff .is-del { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
+.rs-diff .is-hunk { color: var(--faint); }
+.rs-lineage { max-width: none; }
+.rs-lineage .rs-node rect { fill: none; stroke: var(--stroke); stroke-width: 1; cursor: pointer; }
+.rs-lineage .rs-node.is-best rect { fill: var(--text); stroke: var(--text); }
+.rs-lineage .rs-node.is-on rect { stroke: var(--signal-graphic); stroke-width: 2; }
+.rs-lineage .rs-node.is-copy rect { stroke-dasharray: 1 1; }
+.rs-scrub { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); }
+.rs-scrub input { flex: 1; max-width: 32rem; accent-color: var(--text); }
