@@ -23,8 +23,8 @@
       "rule": "loc>800"
     },
     {
-      "functions": 2,
-      "loc": 1446,
+      "functions": 5,
+      "loc": 1609,
       "path": "capabilities.py",
       "rule": "loc>800"
     },
@@ -35,8 +35,8 @@
       "rule": "loc>800"
     },
     {
-      "functions": 88,
-      "loc": 5944,
+      "functions": 91,
+      "loc": 6189,
       "path": "cli.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -60,7 +60,7 @@
     },
     {
       "functions": 51,
-      "loc": 5119,
+      "loc": 5123,
       "path": "factor_explorer.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -72,7 +72,7 @@
     },
     {
       "functions": 48,
-      "loc": 5135,
+      "loc": 5138,
       "path": "intake.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -90,7 +90,7 @@
     },
     {
       "functions": 18,
-      "loc": 3087,
+      "loc": 3100,
       "path": "orientation.py",
       "rule": "loc>800"
     },
@@ -114,7 +114,7 @@
     },
     {
       "functions": 34,
-      "loc": 2562,
+      "loc": 2575,
       "path": "project_templates/ohlcv_factor_lab/judge.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -150,7 +150,7 @@
     },
     {
       "functions": 26,
-      "loc": 1435,
+      "loc": 1427,
       "path": "research.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -198,19 +198,19 @@
     },
     {
       "functions": 38,
-      "loc": 1756,
+      "loc": 1766,
       "path": "studies.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
     {
-      "functions": 56,
-      "loc": 2846,
+      "functions": 62,
+      "loc": 3061,
       "path": "studio.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
     {
-      "functions": 78,
-      "loc": 1525,
+      "functions": 80,
+      "loc": 1575,
       "path": "studio_actions.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -234,7 +234,7 @@
     },
     {
       "functions": 33,
-      "loc": 1899,
+      "loc": 1902,
       "path": "templates.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -252,21 +252,21 @@
     }
   ],
   "metrics": {
-    "branch_density_per_fn": 656,
-    "complex_fn_count": 3,
-    "coupling_score": 116.51,
-    "cross_module_edges": 1270,
+    "branch_density_per_fn": 650,
+    "complex_fn_count": 2,
+    "coupling_score": 113.59,
+    "cross_module_edges": 1647,
     "cycle_count": 0,
-    "files": 109,
-    "functions": 1926,
+    "files": 145,
+    "functions": 2345,
     "god_file_count": 41,
-    "import_modeled_files": 109,
-    "max_complexity": 656,
+    "import_modeled_files": 145,
+    "max_complexity": 650,
     "quality_signal": 0,
-    "total_import_edges": 1270
+    "total_import_edges": 1647
   },
-  "savedAt": 1793663456,
+  "savedAt": 1793857775,
   "schema": "code-intel-sentrux-baseline.v5",
   "scope": ".",
-  "sourceCommit": "37da0a5276f788521973ffa5040d319db62c108f"
+  "sourceCommit": "2f22d7d5d6d5d90d096b26c920c65a5193b50469"
 }
