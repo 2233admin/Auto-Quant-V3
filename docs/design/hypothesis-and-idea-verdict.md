@@ -126,6 +126,14 @@ copy:
 | verdict `supported` | `supported` on **development evidence** | never "confirmed" until the holdout persists |
 | trial count N | unique `subject.sourceHash` in a research family | existing; Hypothesis count M is added on top |
 
+Interim state (owner decision 2026-11-05): before H1 lands, the ported Shinka
+notebook itself is attached to a Project as `<project>/research/` in Shinka's own
+file format, its library is Workspace-level, and Studio draws both read-only with
+the ledger states and visibility rules of this document
+([[docs/shinka-research/PORT]], [[docs/STUDIO]]). Those pages describe Shinka
+evidence (its validation segment and lockbox), not the Core Hypothesis and sealed
+tail specified here.
+
 Consequence worth saying plainly: AutoQuant has no hidden validation tier like
 Shinka's. A `supported` verdict therefore always means "supported by selection
 (validation) evidence, with visible test audit and trial-adjusted statistics,

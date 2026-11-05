@@ -93,6 +93,43 @@ audit and visible-diagnostic role; test metric pairs require both Runs to pass t
 gate. Comparison is read-only development evidence, without selection, promotion
 or trading authority. See [[docs/design/run-comparability]].
 
+## Research directions and the knowledge library
+
+A Project may carry a Shinka research direction in `<project>/research/` and the
+Workspace may carry a knowledge library in `library/`
+([[docs/shinka-research/PORT]]). Studio draws both read-only; every write
+(`hypothesis`, `scaffold`, `run`, `skeptic`, `verdict`, `confirm`) stays on the
+`aq shinka` command line, and the one-shot lockbox opening is never a button.
+
+- `?view=research` lists the Projects with a direction: hypothesis count,
+  hypothesis states, the latest recorded verdict and the lockbox state. The same
+  projection (`research` in each workspace-summary Project) is read from
+  `notebook.json` alone and needs no optional extra.
+- `?view=research&id=P[&h=H]` is the direction page: core numbers, the hypothesis
+  table, every evaluated program against the noise frontier (record frontier,
+  failed programs below the axis, dashed expected best of N pure-noise trials at
+  every prefix), the selected hypothesis's claim and what was frozen before its
+  trials (evaluator and data hashes, plan rule), the verdict band, the lockbox,
+  the check ledger, experiments and the `results.tsv` ledger.
+- `?view=knowledge` shows the Workspace library: wiki pages (findings marked),
+  `index.md`, raw sources not yet compiled and `log.md`.
+- The Project page gains a Research direction section linking to its page.
+
+Routes: `GET /api/v1/project/research?id=P` and `GET /api/v1/research-library`.
+Both share the Project route's fingerprint cache, ETag and `304`; the Workspace
+fingerprint covers `library/`. The server applies every visibility rule:
+validation-segment figures and skeptic/verdict notes only once a hypothesis has
+a verdict, no lockbox start date or figure until `confirm` recorded one, no local
+program paths. The check ledger is built on the server with the states `pass`,
+`fail`, `withheld`, `not-computed`, `n.a.` and `info` (reference rows); a
+missing PBO is `not-computed`, never a pass. Studio has no Refuted word
+([[docs/design/idea-verdict-card]]): a hypothesis whose frozen refutation rule
+fired is shown as `rejected`, the rule's outcome, while the notebook keeps
+Shinka's label. Without the `shinka` extra, or without the engine that reads
+trial databases, the routes answer `state: unavailable` with the reason.
+A direction or library carrying `DEMO_DATA.md` is synthetic demo data and every
+page says so; `python -m tests.shinka_demo <dir>` builds such a Workspace.
+
 ## Staged data intake wizard
 
 Use **Import data** in the Factors library or the link in **New factor** to

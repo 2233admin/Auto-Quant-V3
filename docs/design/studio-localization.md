@@ -30,8 +30,8 @@ sides of every entry (see [[docs/STUDIO]]).
 Localization covers the shell, Assistant and contextual drawer, Factor and
 Strategy libraries, Run history and comparison, Tuning, Settings, Attention,
 Project research, Factor editing and evidence, Portfolio, Book Risk, Path
-Stress, Allocation, governed RL, Event Study, shared charts, dialogs and the
-component gallery. Scientific symbols such as IC, HAC, Sharpe and Python may
+Stress, Allocation, governed RL, Event Study, research directions and the
+knowledge library, shared charts, dialogs and the component gallery. Scientific symbols such as IC, HAC, Sharpe and Python may
 remain recognizable technical notation alongside translated labels.
 
 Core vocabulary shown as words (status, stage, verdict, subject kind, mandate and

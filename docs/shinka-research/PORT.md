@@ -104,5 +104,20 @@ were deleted with them.
 
 ## Studio
 
-Studio draws a Project's research direction and the Workspace library from read-only routes that reuse the
-snapshot builders; see [[docs/STUDIO]].
+Studio draws a Project's research direction and the Workspace library natively, in its own design, from read-only
+routes that reuse the snapshot builders (`autoquant/studio_research.py`):
+
+| Route | Payload |
+|---|---|
+| `GET /api/v1/project/research?id=P` | `ui.snapshot` of `<P>/research/` plus a server-built check ledger per hypothesis, the noise-frontier summary and frozen evaluator/data hashes and plan; no lockbox date while sealed, no local paths |
+| `GET /api/v1/research-library` | `ui.library_snapshot` of `<workspace>/library/` plus findings and source counts |
+| `GET /api/v1/workspace` (existing) | each Project gains `research`: hypothesis count, states, latest verdict, lockbox (from `notebook.json` alone; schema `researchSummary` in `aq schema studio-snapshot`) |
+
+Pages: `?view=research` (directions list), `?view=research&id=P` (direction page), `?view=knowledge` (library) and a
+Research direction section on the Project page; see [[docs/STUDIO]]. Not carried over: the per-experiment evolution
+tree (upstream run viewer) and the fork's cross-direction Compare page. V3's Compare compares two immutable Runs under
+one evaluation authority; a Shinka experiment is not a V3 Run, so there is nothing for it to compare yet.
+
+The fixture `tests/fixtures/shinka-demo/` is the fork's seed-generated demo converted by its `convert.py` (four
+Projects and a library, all synthetic, marked by `DEMO_DATA.md`); `python -m tests.shinka_demo <dir>` builds a V3
+Workspace from it.

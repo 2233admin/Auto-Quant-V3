@@ -66,7 +66,7 @@ family and the selection-adjusted result; it never shows an unadjusted best.
 ## Navigation
 
 Sidebar, top to bottom: a prominent **New factor** button, the most recent factors, then **Factors**, **Strategies**,
-**Runs**, **Tuning**, and at the bottom **Attention** and **Settings**. The Ideas home page is replaced by the Factors
+**Runs**, **Tuning**, **Research** and **Knowledge** (added 2026-11-05 with the Shinka port), and at the bottom **Attention** and **Settings**. The Ideas home page is replaced by the Factors
 library; `?view=projects` keeps working as an alias.
 
 | Route | Page |
@@ -78,6 +78,9 @@ library; `?view=projects` keeps working as an alias.
 | `?view=runs` | Run history across objects and lanes |
 | `?view=run&id=…` | Run page, lane-aware |
 | `?view=tuning` | Tuning tasks |
+| `?view=research` | Research directions: Projects carrying a Shinka notebook, with hypothesis count, states, latest verdict and lockbox |
+| `?view=research&id=…` | Research direction page: hypotheses, trials against the noise frontier, claim, check ledger, verdict and lockbox ([[docs/STUDIO]]) |
+| `?view=knowledge` | Workspace knowledge library (raw sources, wiki, log) |
 
 ## Where each existing function goes
 
