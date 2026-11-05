@@ -91,8 +91,7 @@ deleted and redrawn in Studio's current design, not copied. This replaces the
 
 ## Deferred
 
-- Per-experiment evolution tree (the upstream run viewer) is not redrawn.
-- Shinka's cross-direction Compare does not map onto V3 Compare (immutable Runs under one authority).
+- (Done 2026-11-05, owner follow-up) The evolution run pages and the within-direction experiment comparison are redrawn; failed-proposal nodes, embedding views, plot images, the meta PDF and the worker occupancy timeline are not.
 - Studio is read-only for research; select/drop, verdict and confirm stay on the CLI.
 - Shinka modules other than `ui.py`/`state.py` still use locale-default text encoding.
 
@@ -100,6 +99,7 @@ deleted and redrawn in Studio's current design, not copied. This replaces the
 
 - 2026-11-05 — Plan created; backend binding and UI removal done.
 - 2026-11-05 — Read model, fixture, Studio pages, docs and verification done; awaiting owner review.
+- 2026-11-05 — Owner follow-up: evolution run pages (progress, lineage, inspector, prompts, meta, throughput) and experiment comparison added.
 
 ## Completion
 

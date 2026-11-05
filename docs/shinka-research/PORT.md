@@ -114,10 +114,19 @@ routes that reuse the snapshot builders (`autoquant/studio_research.py`):
 | `GET /api/v1/workspace` (existing) | each Project gains `research`: hypothesis count, states, latest verdict, lockbox (from `notebook.json` alone; schema `researchSummary` in `aq schema studio-snapshot`) |
 
 Pages: `?view=research` (directions list), `?view=research&id=P` (direction page), `?view=knowledge` (library) and a
-Research direction section on the Project page; see [[docs/STUDIO]]. Not carried over: the per-experiment evolution
-tree (upstream run viewer) and the fork's cross-direction Compare page. V3's Compare compares two immutable Runs under
-one evaluation authority; a Shinka experiment is not a V3 Run, so there is nothing for it to compare yet.
+Research direction section on the Project page; see [[docs/STUDIO]].
+
+The fork's run analysis (`run/`, `runs/`, `compare/` pages over the engine's analysis server) is redrawn too
+(`autoquant/studio_evolution.py`, `studio-app/src/research/Evolution*`): `GET /api/v1/project/research/run`,
+`.../program`, `.../prompt` and `.../meta` with `?id=P&h=H&e=E` replace `get_programs_summary`,
+`get_database_stats`, `get_program_details`, `get_system_prompts`, `get_meta_files` and `get_meta_content`. They read
+through the engine's read-only `ProgramDatabase`/`SystemPromptDatabase` (quoted `mode=ro` URIs) and `rundb.run_cost`,
+never send private metrics (the fork's server blanked them too), and compute every series on the server. The
+experiment comparison within a direction is a section of the direction page. Not carried over: the engine's synthetic
+nodes for failed proposals that never became programs (`attempt_log`), embedding/solution-space views, plot images,
+the meta-note PDF export and the per-worker occupancy timeline (stage durations and completions per hour are shown).
 
 The fixture `tests/fixtures/shinka-demo/` is the fork's seed-generated demo converted by its `convert.py` (four
-Projects and a library, all synthetic, marked by `DEMO_DATA.md`); `python -m tests.shinka_demo <dir>` builds a V3
+Projects and a library, all synthetic, marked by `DEMO_DATA.md`; 6.6 MB: embeddings dropped, metadata cut to what the
+pages read, program source and diffs kept for `momentum-regimes/h001/e01` and `overnight-gap/h001/e01` only); `python -m tests.shinka_demo <dir>` builds a V3
 Workspace from it.

@@ -114,8 +114,21 @@ Workspace may carry a knowledge library in `library/`
 - `?view=knowledge` shows the Workspace library: wiki pages (findings marked),
   `index.md`, raw sources not yet compiled and `log.md`.
 - The Project page gains a Research direction section linking to its page.
+- `?view=research&id=P&h=H&e=E[&p=PROGRAM]` is one experiment's evolution run:
+  run numbers, progress by generation (running best, generation best and mean,
+  success rate, spend, programs), the program lineage with a generation
+  scrubber and the best ancestry drawn heavy, a program inspector (facts, why it
+  failed, evaluator feedback, diff from its parent, source, model reasoning and
+  log tails, offspring), the evolved system-prompt versions, meta-analysis notes,
+  stage durations and the programs table. The direction page links each
+  experiment to it and compares its experiments' running best by generation.
 
-Routes: `GET /api/v1/project/research?id=P` and `GET /api/v1/research-library`.
+Routes: `GET /api/v1/project/research?id=P`, `GET /api/v1/research-library`, and
+for one experiment `GET /api/v1/project/research/run|program|prompt|meta?id=P&h=H&e=E`
+(with `program=`, `prompt=` or `n=`; `autoquant/studio_evolution.py`). The
+evolution routes read the experiment's databases through the engine's read-only
+`ProgramDatabase`/`SystemPromptDatabase`, never send private (held-out) metrics,
+only whether some were recorded, and stay inside the Project's `research/`.
 Both share the Project route's fingerprint cache, ETag and `304`; the Workspace
 fingerprint covers `library/`. The server applies every visibility rule:
 validation-segment figures and skeptic/verdict notes only once a hypothesis has
