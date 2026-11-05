@@ -2637,6 +2637,9 @@ def _handler(
                 from .studio_research import serve_research
                 if serve_research(self, path, directory, project_id, head_only):
                     return
+                from .studio_evolution import serve_evolution
+                if serve_evolution(self, path, directory, project_id, head_only):
+                    return
                 if path == "/api/v1/health":
                     body = json.dumps(
                         {

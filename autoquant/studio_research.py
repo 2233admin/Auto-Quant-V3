@@ -286,6 +286,9 @@ def project_research(research: Path) -> dict[str, Any]:
             e.update(plans.get((h["id"], e["id"]), {}))
         h["ledger"] = ledger(h, lockbox, frontier)
     snapshot["frontier"] = frontier
+    from .studio_evolution import experiment_curves
+
+    snapshot["experimentCurves"] = experiment_curves(snapshot["trial_points"])
     return snapshot
 
 
