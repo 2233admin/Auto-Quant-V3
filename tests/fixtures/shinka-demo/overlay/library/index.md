@@ -10,5 +10,5 @@ wiki 页面目录，由研究 Agent 维护。每页一行：
 - [[paper-demo-regime-momentum]]（论文）：虚构的论文笔记，只用于展示论文页的版式。
 - [[paper-demo-overnight-drift]]（论文）：关于隔夜跳空的虚构论文笔记，为演示而编。
 - [[finding-d1-h001-vol-scaled-momentum]]（结论）：d1/h001 在合成数据上成立；封存段仍未开封。
-- [[finding-d1-h002-short-lookback]]（结论）：d1/h002 在合成数据上被推翻：换手吃掉了优势。
+- [[finding-d1-h002-short-lookback]]（结论）：d1/h002 在合成数据上已拒绝：换手吃掉了优势。
 - [[finding-d2-h001-overnight-gap]]（结论）：d2/h001 在合成封存段上得到确认。
