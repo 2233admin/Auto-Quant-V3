@@ -102,11 +102,11 @@ def file_lock(path: Path, timeout: float = 120.0) -> Iterator[None]:
 
 
 def atomic_write_text(path: Path, text: str, attempts: int = 100) -> None:
-    """Replace ``path`` with ``text`` in one step, with the encoding and newline
+    """Replace ``path`` with ``text`` in one step, UTF-8 with the newline
     handling of ``Path.write_text``."""
     path = Path(path)
     tmp = path.with_name(f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
-    with open(tmp, "w") as f:
+    with open(tmp, "w", encoding="utf-8") as f:
         f.write(text)
         f.flush()
         os.fsync(f.fileno())
@@ -126,14 +126,14 @@ def atomic_write_text(path: Path, text: str, attempts: int = 100) -> None:
 
 
 def read_text(path: Path, attempts: int = 100) -> str:
-    """``Path.read_text`` that waits out a concurrent replacement, which Windows
-    may briefly refuse to open."""
+    """``Path.read_text`` (UTF-8) that waits out a concurrent replacement,
+    which Windows may briefly refuse to open."""
     for _ in range(attempts - 1):
         try:
-            return Path(path).read_text()
+            return Path(path).read_text(encoding="utf-8")
         except PermissionError:
             time.sleep(0.02)
-    return Path(path).read_text()
+    return Path(path).read_text(encoding="utf-8")
 
 
 # A run registers here for its duration: confirm refuses to freeze the

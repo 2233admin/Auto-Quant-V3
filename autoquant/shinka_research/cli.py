@@ -1,4 +1,9 @@
-"""`shinka_research` command line interface."""
+"""`aq shinka` command line interface.
+
+Every command takes the direction it works on as ``dir``: a Project id or
+directory (its notebook is ``<project>/research/``), a Workspace with
+``--project``, or a bare direction directory (see ``project.py``).
+"""
 
 from __future__ import annotations
 
@@ -7,22 +12,17 @@ import contextlib
 import io
 import json
 import os
-import re
 import subprocess
 import tempfile
 import sys
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, List, Optional
 
 import yaml
 
 from autoquant.shinka_research import domains, grants, library, rules
 from autoquant.shinka_research.notebook import (
-    RESULTS_LOG,
-    DataSplit,
-    Experiment,
-    LockboxOpening,
     Notebook,
     Status,
     Verdict,
@@ -34,12 +34,8 @@ from autoquant.shinka_research.rundb import count_evaluated, run_cost
 from autoquant.shinka_research.skeptic import (
     Thresholds,
     challenge,
-    check_source,
-    confirm,
-    confirm_target,
     decide,
     render_report,
-    trial_count,
 )
 from autoquant.shinka_research.scaffold import (
     SHINKA_CONFIG_FILENAME,
@@ -48,7 +44,7 @@ from autoquant.shinka_research.scaffold import (
     scaffold_experiment,
     verify_experiment,
 )
-from autoquant.shinka_research.rounds import direction_spend, held, news, overview
+from autoquant.shinka_research.rounds import direction_spend, held
 from autoquant.shinka_research.runs import (
     RUN_LOG,
     detached,
@@ -57,7 +53,6 @@ from autoquant.shinka_research.runs import (
     watch,
 )
 from autoquant.shinka_research.state import (
-    atomic_write_text,
     attach_worker,
     file_lock,
     hand_over,
@@ -65,20 +60,43 @@ from autoquant.shinka_research.state import (
     lock_path,
     record_exit,
     register_work,
-    read_text,
+)
+
+from autoquant.shinka_research import project
+from autoquant.shinka_research.cli_common import (
+    _add_dir,
+    _add_threshold_args,
+    _given_thresholds,
+    _not_confirming,
+    _pick_experiment,
+    _refused,
+    _rule_name,
+    _the_owners,
+    _thresholds,
+)
+from autoquant.shinka_research.cli_confirm import cmd_confirm
+from autoquant.shinka_research.cli_read import (
+    _consumer,
+    cmd_brief,
+    cmd_library_add,
+    cmd_library_compiled,
+    cmd_library_log,
+    cmd_library_pending,
+    cmd_status,
+    cmd_watch,
 )
 
 
 def cmd_init(args: argparse.Namespace) -> None:
     root = Path(args.dir)
-    root.mkdir(parents=True, exist_ok=True)
+    project.attach(args.target)
     with file_lock(lock_path(root)):
         if Notebook.path(root).exists():
             sys.exit(f"{root} already has a notebook")
         Notebook(
             direction=args.direction, domain=args.domain, budget_usd=args.budget_usd
         ).save(root)
-    library.ensure(library.library_root(root))
+    library.ensure(args.target.library)
     program = root / "program.md"
     if not program.exists():
         program.write_text(domains.program(args.domain, args.direction))
@@ -96,16 +114,6 @@ def cmd_hypothesis_add(args: argparse.Namespace) -> None:
 def cmd_hypothesis_status(args: argparse.Namespace) -> None:
     with Notebook.edit(Path(args.dir)) as nb:
         nb.set_status(args.hid, Status(args.status))
-
-
-def _not_confirming(nb: Notebook) -> None:
-    """Experiment changes wait while a lockbox confirmation is unfinished: when
-    it finishes, it records over the hypotheses it froze."""
-    if nb.data is not None and nb.data.unfinished:
-        sys.exit(
-            "a lockbox confirmation is unfinished; `confirm --yes` finishes it, and "
-            "experiments wait until then"
-        )
 
 
 def cmd_scaffold(args: argparse.Namespace) -> None:
@@ -138,23 +146,6 @@ def cmd_scaffold(args: argparse.Namespace) -> None:
         exp, task_dir = scaffold_experiment(root, nb, args.hid, Path(args.initial), cfg)
     append_log(root, args.hid, exp.id, "scaffold", f"seed {Path(args.initial).name}")
     print(task_dir)
-
-
-@contextlib.contextmanager
-def _refused() -> Iterator[None]:
-    """A refusal from the owner's approvals ends the command with its reason."""
-    try:
-        yield
-    except grants.Refused as refused:
-        sys.exit(str(refused))
-
-
-def _the_owners(what: str) -> None:
-    if grants.in_agent_env():
-        sys.exit(
-            f"{what} is the owner's to give: from a terminal without "
-            f"{grants.AGENT_ENV}, or from the workbench"
-        )
 
 
 def cmd_grant(args: argparse.Namespace) -> None:
@@ -368,7 +359,13 @@ def cmd_run(args: argparse.Namespace, extra: List[str]) -> None:
     if args.detach or agent:
         try:
             supervisor = subprocess.Popen(
-                [sys.executable, "-m", "autoquant.shinka_research.runs", str(root), work],
+                [
+                    sys.executable,
+                    "-m",
+                    "autoquant.shinka_research.runs",
+                    str(root),
+                    work,
+                ],
                 **detached(),
             )
         except BaseException:
@@ -401,15 +398,6 @@ def cmd_run(args: argparse.Namespace, extra: List[str]) -> None:
         finish_run(root, work, code)
     if code:
         sys.exit(code)
-
-
-def _pick_experiment(nb: Notebook, hid: str, eid: Optional[str]):
-    hyp = nb.get(hid)
-    if not hyp.experiments:
-        sys.exit(f"{hid} has no experiment; run `scaffold` first")
-    if eid is None:
-        return hyp, hyp.experiments[-1]
-    return hyp, next(e for e in hyp.experiments if e.id == eid)
 
 
 def cmd_probe(args: argparse.Namespace) -> None:
@@ -511,230 +499,6 @@ def cmd_skeptic(args: argparse.Namespace) -> None:
     print(out.read_text())
 
 
-def _rule_name(exp: Experiment) -> str:
-    """The rule an experiment is judged by; experiments without a plan are
-    unfrozen (legacy) and take thresholds from the command line."""
-    if exp.plan is None:
-        return "unfrozen"
-    return f"{exp.plan.rule.kind} v{exp.plan.rule.version}"
-
-
-def _given_thresholds(args: argparse.Namespace) -> List[str]:
-    return [
-        flag
-        for flag in _THRESHOLD_FLAGS
-        if getattr(args, flag[2:].replace("-", "_")) is not None
-    ]
-
-
-def _thresholds(args: argparse.Namespace) -> Thresholds:
-    given = {
-        field: getattr(args, flag[2:].replace("-", "_"))
-        for flag, field in _THRESHOLD_FLAGS.items()
-    }
-    return Thresholds(**{k: v for k, v in given.items() if v is not None})
-
-
-# Held for a confirm's whole run: a target found mid-scoring then belongs to a
-# confirm that died, never to one still running.
-CONFIRM_LOCK = ".confirm.lock"
-
-
-def cmd_confirm(args: argparse.Namespace) -> None:
-    root = Path(args.dir)
-    entered = False
-    try:
-        with file_lock(root / CONFIRM_LOCK, timeout=0):
-            entered = True
-            _confirm(root, args)
-    except TimeoutError:
-        if entered:
-            raise
-        sys.exit("another confirm is running for this direction; wait for it to end")
-
-
-def _confirmed(nb: Notebook, hid: str, report: Dict[str, Any]) -> None:
-    assert nb.data is not None and nb.data.opening is not None
-    hyp = nb.get(hid)
-    hyp.confirmation = report
-    hyp.status = Status.confirmed if report["passed"] else Status.unconfirmed
-    nb.data.opening.target(hid).state = "done"
-
-
-def _confirm(root: Path, args: argparse.Namespace) -> None:
-    approval = args.approval
-    if grants.in_agent_env() and approval is None:
-        sys.exit(
-            "an agent confirm needs the owner's lockbox approval: `confirm "
-            "--approval <id>` (`shinka_research approve` records one); --yes is "
-            "not enough here"
-        )
-    # The owner's approval stands for --yes.
-    proceed = args.yes or approval is not None
-    nb = Notebook.load(root)
-    split = nb.data
-    if split is None:
-        sys.exit("this direction has no data yet")
-    if split.opened and not split.unfinished:
-        if split.opening is not None and not (root / CONFIRMATION).exists():
-            if approval is not None:
-                with _refused():
-                    grants.check_opened_by(root, approval, split.opening.started)
-            # The results are in the notebook but that confirm died before
-            # writing them out; only the events it did not log are added.
-            logged = _confirm_events(root, split.opening.started)
-            hids = [t.hypothesis for t in split.opening.targets]
-            _publish(root, nb, [hid for hid in hids if hid not in logged])
-            return
-        sys.exit("the lockbox was already opened; start a new direction with new data")
-    if split.unfinished:
-        assert split.opening is not None
-        left = [t.hypothesis for t in split.opening.targets if t.state != "done"]
-        if not proceed:
-            sys.exit(
-                f"The lockbox opening of {split.opening.started} did not finish. "
-                f"This finishes it for {', '.join(left)} with the programs and rules "
-                "it froze. Re-run with --yes to proceed."
-            )
-        if approval is not None:
-            with _refused():
-                grants.check_opened_by(root, approval, split.opening.started)
-        check_source(split.opening.source_sha256, Path(args.data))
-        th = Thresholds(**split.opening.thresholds)
-    else:
-        # The lockbox opens once, so every supported hypothesis is confirmed together.
-        hids = [h.id for h in nb.hypotheses if h.status is Status.supported]
-        if not hids:
-            sys.exit("no supported hypotheses to confirm; the lockbox stays closed")
-        if not proceed:
-            sys.exit(
-                f"This opens the lockbox (from {split.lockbox_start}) once for the "
-                f"whole direction and scores {', '.join(hids)}. Re-run with --yes "
-                "to proceed."
-            )
-        th = _thresholds(args)
-        # Every check that leaves the lockbox untouched, so a mistake here, such
-        # as the wrong --data, keeps it sealed.
-        targets = [confirm_target(root, nb, hid) for hid in hids]
-        check_source(split.source_hash, Path(args.data))
-        with Notebook.edit(root) as nb:
-            assert nb.data is not None
-            # Every trial counts toward the DSR, so the count is frozen only
-            # once no run or probe is still adding to it.
-            busy = [f"{w['hypothesis']}/{w['experiment']}" for w in live_work(root)]
-            if busy:
-                sys.exit(
-                    f"trials are still being added ({', '.join(busy)}); the lockbox "
-                    "stays sealed, confirm once that work has ended"
-                )
-            supported = [h.id for h in nb.hypotheses if h.status is Status.supported]
-            if (
-                nb.data.opened
-                or [confirm_target(root, nb, h) for h in supported] != targets
-            ):
-                sys.exit(
-                    "the direction changed while confirm checked it; the lockbox "
-                    "stays sealed, run confirm again"
-                )
-            opening = LockboxOpening(
-                source_sha256=nb.data.source_hash,
-                thresholds=th.model_dump(),
-                targets=targets,
-            )
-            if approval is not None:
-                # Spent in the same lock, before the opening is saved.
-                with _refused():
-                    grants.use_approval(root, approval, opening.started)
-            nb.data.opened = True
-            nb.data.opening = opening
-    split = nb.data
-    assert split is not None and split.opening is not None
-    # A target already scoring belongs to a confirm that died after its program
-    # saw the lockbox, whether or not it got a result: running it again would be
-    # a second look.
-    recorded: Dict[str, Dict[str, Any]] = {
-        t.hypothesis: {
-            "experiment": t.experiment,
-            "program_id": t.program_id,
-            "lockbox_start": split.lockbox_start,
-            "passed": False,
-            "failure": "interrupted",
-        }
-        for t in split.opening.targets
-        if t.state == "scoring"
-    }
-    with tempfile.TemporaryDirectory() as tmp:
-        for t in [t for t in split.opening.targets if t.state == "pending"]:
-
-            def started(hid: str = t.hypothesis) -> None:
-                with Notebook.edit(root) as fresh:
-                    assert fresh.data is not None and fresh.data.opening is not None
-                    fresh.data.opening.target(hid).state = "scoring"
-
-            recorded[t.hypothesis] = confirm(
-                root,
-                split,
-                t,
-                th,
-                Path(args.data),
-                split.opening.source_sha256,
-                Path(tmp),
-                started,
-            )
-    # Every result reaches the notebook at once: candidate programs can read it,
-    # so a program scored later must not find an earlier one's lockbox figures.
-    with Notebook.edit(root) as nb:
-        assert nb.data is not None and nb.data.opening is not None
-        for hid, report in recorded.items():
-            _confirmed(nb, hid, report)
-        nb.data.opening.finish()
-    _publish(root, nb, list(recorded))
-
-
-CONFIRMATION = "CONFIRMATION.md"
-
-
-def _confirm_events(root: Path, since: str) -> set:
-    """Hypotheses with a confirm event in the run log from ``since`` on."""
-    path = root / RESULTS_LOG
-    rows = path.read_text().splitlines()[1:] if path.exists() else []
-    fields = [(row.split("\t") + [""] * 4)[:4] for row in rows]
-    return {
-        hid for time, hid, _eid, event in fields if event == "confirm" and time >= since
-    }
-
-
-def _publish(root: Path, nb: Notebook, log: List[str]) -> None:
-    """The confirmation's run-log events, then CONFIRMATION.md, both read from
-    the notebook. The Markdown comes last and in one step, so while it is
-    missing some events may be too, and the next confirm adds them."""
-    assert nb.data is not None and nb.data.opening is not None
-    for hid in log:
-        rep = nb.get(hid).confirmation or {}
-        status = nb.get(hid).status.value
-        note = (
-            f"{status}: {rep['failure']} on the lockbox"
-            if "failure" in rep
-            else f"{status}: lockbox Sharpe {rep['lockbox_sharpe']:.2f}, "
-            f"DSR {rep['dsr']:.3f}"
-        )
-        append_log(root, hid, rep["experiment"], "confirm", note)
-    lines = [f"# Lockbox confirmation\n\nLockbox from {nb.data.lockbox_start}.\n"]
-    for t in nb.data.opening.targets:
-        hyp = nb.get(t.hypothesis)
-        rows = "\n".join(
-            f"| {k} | {v:.4g} |" if isinstance(v, float) else f"| {k} | {v} |"
-            for k, v in (hyp.confirmation or {}).items()
-        )
-        lines.append(
-            f"## {hyp.id}: {hyp.title} — {hyp.status.value}\n\n"
-            f"| check | value |\n|---|---|\n{rows}\n"
-        )
-    atomic_write_text(root / CONFIRMATION, "\n".join(lines))
-    for t in nb.data.opening.targets:
-        print(f"{t.hypothesis}: {nb.get(t.hypothesis).status.value}")
-
-
 def cmd_verdict(args: argparse.Namespace) -> None:
     root = Path(args.dir)
     with Notebook.edit(root) as nb:
@@ -761,243 +525,6 @@ def cmd_verdict(args: argparse.Namespace) -> None:
     print(f"{hyp.id}: {label.value} — {reason}")
 
 
-def _library(path: str) -> Path:
-    """Accept a direction (its workspace library) or a workspace directory."""
-    p = Path(path)
-    lib = library.library_root(p) if Notebook.path(p).exists() else p / "library"
-    return library.ensure(lib)
-
-
-def cmd_library_add(args: argparse.Namespace) -> None:
-    lib = _library(args.dir)
-    by = "agent" if grants.in_agent_env() else "human"
-    for source in args.sources:
-        print(library.add(lib, source, by).relative_to(lib).as_posix())
-
-
-def cmd_library_pending(args: argparse.Namespace) -> None:
-    for rel in library.pending(_library(args.dir)):
-        print(rel)
-
-
-def cmd_library_compiled(args: argparse.Namespace) -> None:
-    lib = _library(args.dir)
-    rels = library.pending(lib) if args.all else args.files
-    library.mark_compiled(lib, rels)
-    print(f"{len(rels)} marked compiled")
-
-
-def cmd_library_log(args: argparse.Namespace) -> None:
-    library.log(_library(args.dir), args.kind, args.text)
-
-
-def _evidence(h) -> str:
-    ev = h.verdict.evidence if h.verdict else {}
-    keys = (("is_sharpe", "IS"), ("oos_sharpe", "val"), ("dsr", "DSR"), ("pbo", "PBO"))
-    parts = [
-        f"{label} {ev[k]:.2f}" for k, label in keys if isinstance(ev.get(k), float)
-    ]
-    return ", ".join(parts)
-
-
-def _lockbox(split: DataSplit) -> str:
-    if split.unfinished:
-        return "OPENED, confirmation unfinished (confirm --yes finishes it)"
-    return "OPENED" if split.opened else "sealed"
-
-
-def _sources_line(lib: Path) -> str:
-    """Where the library's knowledge comes from: only shown, never enforced."""
-    src = library.sources(lib)
-    added = f"{src.agent} added by the agent, {src.human} by people"
-    if src.unrecorded:
-        added += f", {src.unrecorded} with no recorded origin"
-    last = f"last added {src.last_added}" if src.last_added else "none added yet"
-    pages = len(library.wiki_pages(lib))
-    findings = len(library.finding_pages(lib))
-    return f"- Sources: {added}; {last}; {findings} of {pages} wiki pages are findings"
-
-
-def cmd_brief(args: argparse.Namespace) -> None:
-    """Digest for the researcher agent before proposing the next round. With
-    ``--since``, it also lists the news that consumer has not read and marks it
-    read, after printing it."""
-    root = Path(args.dir)
-    nb = Notebook.load(root)
-    fresh, cursor = news(root, _seen(root, args.since)) if args.since else ([], None)
-    lib = library.library_root(root)
-    spent, known = direction_spend(root, nb, live_work(root))
-    budget = f" of ${nb.budget_usd:.2f}" if nb.budget_usd is not None else ""
-    out = [f"# Brief: {nb.direction}", ""]
-    trials = trial_count(root, nb)
-    out.append(f"- Trials so far: {trials} (raise the bar for 'supported')")
-    out.append(f"- LLM spend: {'' if known else '>='}${spent:.2f}{budget}")
-    if nb.data:
-        out.append(f"- Lockbox: {_lockbox(nb.data)} (from {nb.data.lockbox_start})")
-    pend = library.pending(lib) if lib.exists() else []
-    out.append(
-        f"- Library: {len(library.wiki_pages(lib))} wiki pages, "
-        f"{len(pend)} raw sources not compiled yet ({lib})"
-    )
-    out.append(_sources_line(lib))
-    if args.since:
-        out += ["", f"## News since the last brief ({args.since})", ""]
-        out += [f"- {_news_line(row)}" for row in fresh] or ["(none)"]
-    out += ["", "## Hypotheses", ""]
-    if not nb.hypotheses:
-        out.append("(none yet)")
-    for h in nb.hypotheses:
-        line = f"- {h.id} [{h.status.value}] {h.title}"
-        if h.verdict:
-            line += f" — {h.verdict.reason}"
-            ev = _evidence(h)
-            if ev:
-                line += f" ({ev})"
-        out.append(line)
-    # The same reading of the rounds the workbench shows.
-    view = overview(root)
-    out += ["", f"## Agent rounds ({view['state']})", ""]
-    for r in view["grants"]:
-        out.append(
-            f"- {r['id']}: {' '.join(r['hypotheses'])}, {r['used']} of "
-            f"{r['attempts']} attempts taken, each stops at ${r['max_cost']:g}"
-        )
-    for item in view["pending"]:
-        about = ", ".join(
-            f"{key} {' '.join(value) if isinstance(value, list) else value}"
-            for key, value in item.items()
-            if key not in ("kind", "do") and value is not None
-        )
-        out.append(
-            f"- pending {item['kind']}{f' ({about})' if about else ''}: {item['do']}"
-        )
-    if not view["grants"] and not view["pending"]:
-        out.append("(no round granted yet)")
-    log_path = root / RESULTS_LOG
-    if log_path.exists():
-        recent = log_path.read_text().splitlines()[1:][-args.recent :]
-        out += ["", f"## Last {len(recent)} events ({RESULTS_LOG})", ""]
-        out += [f"    {line}" for line in recent]
-    print("\n".join(out))
-    if args.since:
-        # Only once printed: a brief that never reached its reader leaves the
-        # news unread, so the next watch reports it again.
-        seen = _seen_path(root, args.since)
-        seen.parent.mkdir(exist_ok=True)
-        atomic_write_text(seen, json.dumps(cursor))
-
-
-# Each news consumer's cursor into the run log (`brief --since NAME`).
-WATCH_DIR = ".watch"
-
-
-def _consumer(name: str) -> str:
-    """A news consumer's name, which names its cursor file."""
-    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,31}", name):
-        raise argparse.ArgumentTypeError(
-            f"{name!r}: use lowercase letters, digits and dashes, e.g. terminal"
-        )
-    return name
-
-
-def _seen_path(root: Path, name: str) -> Path:
-    return Path(root) / WATCH_DIR / f"{name}.json"
-
-
-def _seen(root: Path, name: str) -> Optional[Dict[str, Any]]:
-    """A consumer's cursor: none when it has not read any yet, or when its
-    file is not a cursor (repeats news rather than hiding it; the next brief
-    rewrites it). Any other read error propagates: reported as news it would
-    wake the agent on every tick, while as a failure it reaches the job's
-    failure handling."""
-    try:
-        cursor = json.loads(read_text(_seen_path(root, name)))
-    except (FileNotFoundError, ValueError):
-        return None
-    return cursor if isinstance(cursor, dict) else None
-
-
-def _news_line(row: str) -> str:
-    time, hid, eid, event, note = (row.split("\t") + [""] * 5)[:5]
-    return f"{time} {event}" + (f" {hid}/{eid}" if hid else "") + f": {note}"
-
-
-def _evaluated(root: Path, hid: str, eid: str) -> int:
-    return count_evaluated(experiment_dir(root, hid, eid) / "results")
-
-
-def cmd_status(args: argparse.Namespace) -> None:
-    root = Path(args.dir)
-    nb = Notebook.load(root)
-    print(f"Direction: {nb.direction}")
-    print(f"Total trials: {trial_count(root, nb)}")
-    if nb.data:
-        print(
-            f"Lockbox: {_lockbox(nb.data)} (from {nb.data.lockbox_start}, "
-            f"{nb.data.n_total - nb.data.n_dev} of {nb.data.n_total} bars)"
-        )
-    for h in nb.hypotheses:
-        counts = [
-            f"{e.id}({_evaluated(root, h.id, e.id)}, {_rule_name(e)})"
-            for e in h.experiments
-        ]
-        exps = ", ".join(counts) or "-"
-        line = f"{h.id}  {h.status.value:<12} {h.title}  [{exps}]"
-        if h.verdict:
-            line += f"\n      verdict: {h.verdict.reason}"
-        print(line)
-
-
-def cmd_watch(args: argparse.Namespace) -> None:
-    """Prints one line per run whose end it recorded, and nothing otherwise.
-    With ``--since``, it prints instead the news that consumer has not read
-    with ``brief --since`` and exits 3 when there is any; it never marks news
-    read, so a wake that never reached the agent is reported again."""
-    path = Path(args.dir).resolve()
-    if Notebook.path(path).exists():
-        roots, named = [path], False
-    else:
-        roots = [d for d in sorted(path.iterdir()) if Notebook.path(d).exists()]
-        named = True
-    unread = False
-    for root in roots:
-        recorded = watch(root)
-        lines = (
-            [_news_line(row) for row in news(root, _seen(root, args.since))[0]]
-            if args.since
-            else recorded
-        )
-        for line in lines:
-            print(f"{root.name}: {line}" if named else line)
-        unread = unread or bool(lines and args.since)
-    if unread:
-        sys.exit(3)
-
-
-def cmd_ui(args: argparse.Namespace) -> None:
-    from autoquant.shinka_research import ui
-
-    ui.serve(Path(args.workspace), args.port, not args.no_browser, args.runs_root)
-
-
-# Flag -> Thresholds field. The flags default to None so a command can tell
-# thresholds given on the command line, which a frozen plan refuses, from the
-# defaults (``Thresholds``'s own).
-_THRESHOLD_FLAGS = {
-    "--dsr": "dsr_supported",
-    "--min-positive-fraction": "min_positive_fraction",
-    "--subperiods": "n_subperiods",
-    "--max-pbo": "max_pbo",
-}
-
-
-def _add_threshold_args(s: argparse.ArgumentParser) -> None:
-    s.add_argument("--dsr", type=float, help="default 0.95")
-    s.add_argument("--min-positive-fraction", type=float, help="default 2/3")
-    s.add_argument("--subperiods", type=int, help="default 3")
-    s.add_argument("--max-pbo", type=float, help="default 0.5")
-
-
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="aq shinka",
@@ -1005,8 +532,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = p.add_subparsers(dest="command", required=True)
 
-    s = sub.add_parser("init", help="Start a research direction")
-    s.add_argument("dir")
+    s = sub.add_parser("init", help="Attach a research direction to a Project")
+    _add_dir(s)
+    s.add_argument(
+        "--create-project",
+        action="store_true",
+        help="With a Workspace and --project ID: create the blank Project "
+        "first (as `aq project create --template blank`) when it does not exist",
+    )
     s.add_argument("--direction", required=True)
     s.add_argument(
         "--budget-usd", type=float, help="Stop runs once LLM spend hits this"
@@ -1023,18 +556,18 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("hypothesis", help="Manage hypotheses")
     hsub = s.add_subparsers(dest="action", required=True)
     a = hsub.add_parser("add", help="Add a hypothesis (body from --file or stdin)")
-    a.add_argument("dir")
+    _add_dir(a)
     a.add_argument("--title", required=True)
     a.add_argument("--file")
     a.set_defaults(func=cmd_hypothesis_add)
     a = hsub.add_parser("status", help="Select or drop a hypothesis")
-    a.add_argument("dir")
+    _add_dir(a)
     a.add_argument("hid")
     a.add_argument("status", choices=["proposed", "selected", "dropped"])
     a.set_defaults(func=cmd_hypothesis_status)
 
     s = sub.add_parser("scaffold", help="Create a Shinka task for a hypothesis")
-    s.add_argument("dir")
+    _add_dir(s)
     s.add_argument("hid")
     s.add_argument("--initial", required=True, help="Seed program (initial.py)")
     s.add_argument(
@@ -1058,7 +591,7 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser(
         "run", help="Evolve an experiment (extra args after -- go to shinka_run)"
     )
-    s.add_argument("dir")
+    _add_dir(s)
     s.add_argument("hid")
     s.add_argument("--eid")
     s.add_argument("--num-generations", type=int, default=20)
@@ -1078,14 +611,14 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser(
         "probe", help="Score a program with the frozen evaluator (public only)"
     )
-    s.add_argument("dir")
+    _add_dir(s)
     s.add_argument("hid")
     s.add_argument("program")
     s.add_argument("--eid")
     s.set_defaults(func=cmd_probe)
 
     s = sub.add_parser("skeptic", help="Challenge an experiment on the holdout")
-    s.add_argument("dir")
+    _add_dir(s)
     s.add_argument("hid")
     s.add_argument("--eid")
     _add_threshold_args(s)
@@ -1095,7 +628,7 @@ def build_parser() -> argparse.ArgumentParser:
         "confirm",
         help="Open the lockbox once and confirm supported hypotheses",
     )
-    s.add_argument("dir")
+    _add_dir(s)
     s.add_argument(
         "--data", required=True, help="The source CSV the direction was split from"
     )
@@ -1109,7 +642,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_confirm)
 
     s = sub.add_parser("verdict", help="Record the verdict (rule-based by default)")
-    s.add_argument("dir")
+    _add_dir(s)
     s.add_argument("hid")
     s.add_argument("--eid")
     s.add_argument("--label", choices=["supported", "refuted", "inconclusive"])
@@ -1119,25 +652,25 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("library", help="Workspace research library (raw -> wiki)")
     lsub = s.add_subparsers(dest="action", required=True)
     a = lsub.add_parser("add", help="Add files or URLs to library/raw")
-    a.add_argument("dir", help="A direction or a workspace directory")
+    _add_dir(a, "library")
     a.add_argument("sources", nargs="+")
     a.set_defaults(func=cmd_library_add)
     a = lsub.add_parser("pending", help="List raw sources not compiled yet")
-    a.add_argument("dir")
+    _add_dir(a, "library")
     a.set_defaults(func=cmd_library_pending)
     a = lsub.add_parser("compiled", help="Mark raw sources as compiled into the wiki")
-    a.add_argument("dir")
+    _add_dir(a, "library")
     a.add_argument("files", nargs="*")
     a.add_argument("--all", action="store_true", help="Every pending source")
     a.set_defaults(func=cmd_library_compiled)
     a = lsub.add_parser("log", help="Append to library/log.md (lint, qa, finding)")
-    a.add_argument("dir")
+    _add_dir(a, "library")
     a.add_argument("kind")
     a.add_argument("text")
     a.set_defaults(func=cmd_library_log)
 
     s = sub.add_parser("brief", help="Digest of the direction for the next round")
-    s.add_argument("dir")
+    _add_dir(s)
     s.add_argument("--recent", type=int, default=15)
     s.add_argument(
         "--since",
@@ -1148,7 +681,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_brief)
 
     s = sub.add_parser("status", help="Show the notebook")
-    s.add_argument("dir")
+    _add_dir(s)
     s.set_defaults(func=cmd_status)
 
     s = sub.add_parser(
@@ -1156,7 +689,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Grant the agent one round: attempts, a per-run cap and the settings "
         "it may choose (the owner's, never from the agent environment)",
     )
-    s.add_argument("dir")
+    _add_dir(s)
     s.add_argument("hids", nargs="+", metavar="hid")
     s.add_argument("--attempts", type=int, required=True)
     s.add_argument(
@@ -1177,7 +710,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Approve opening the lockbox once (the owner's, never from the agent "
         "environment)",
     )
-    s.add_argument("dir")
+    _add_dir(s)
     s.add_argument("--note", default="")
     s.set_defaults(func=cmd_approve)
 
@@ -1186,7 +719,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Record the end of runs whose processes are all gone "
         "(a direction, or every direction of a workspace)",
     )
-    s.add_argument("dir")
+    _add_dir(s, "watch")
     s.add_argument(
         "--since",
         type=_consumer,
@@ -1196,20 +729,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     s.set_defaults(func=cmd_watch)
 
-    s = sub.add_parser("ui", help="Read-only research UI in the browser")
-    s.add_argument(
-        "workspace", help="Workspace directory containing research directions"
-    )
-    s.add_argument("--port", type=int, default=8765)
-    s.add_argument(
-        "--runs-root",
-        type=Path,
-        default=None,
-        help="Explicit additional ordinary-run search root; omitted means workspace only",
-    )
-    s.add_argument("--no-browser", action="store_true")
-    s.set_defaults(func=cmd_ui)
     return p
+
+
+def _resolve(args: argparse.Namespace) -> None:
+    """Turn ``dir`` into the paths the command works on (``project.py``)."""
+    kind = getattr(args, "resolve", "direction")
+    if kind == "library":
+        args.library = project.library_for(args.dir, args.project)
+    elif kind == "watch":
+        args.roots, args.named = project.watch_roots(args.dir, args.project)
+    else:
+        args.target = project.resolve(
+            args.dir,
+            args.project,
+            create=getattr(args, "create_project", False),
+            description=getattr(args, "direction", "") or "",
+        )
+        args.dir = str(args.target.root)
 
 
 def main(argv: Optional[List[str]] = None) -> None:
@@ -1219,6 +756,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         i = argv.index("--")
         argv, extra = argv[:i], argv[i + 1 :]
     args = build_parser().parse_args(argv)
+    _resolve(args)
     if getattr(args, "takes_extra", False):
         args.func(args, extra)
     else:

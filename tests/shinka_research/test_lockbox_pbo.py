@@ -11,7 +11,7 @@ import pandas as pd
 import psutil
 import pytest
 
-from autoquant.shinka_research import cli, grants, skeptic
+from autoquant.shinka_research import cli, cli_confirm, grants, skeptic
 from autoquant.shinka_research.grants import AGENT_ENV, LEDGER
 from autoquant.shinka_research.notebook import Notebook, Status, Verdict
 from autoquant.shinka_research.skeptic import pbo
@@ -247,7 +247,7 @@ def test_a_second_confirm_is_refused_without_opening_anything(
     held, release = threading.Event(), threading.Event()
 
     def another_confirm() -> None:
-        with file_lock(root / cli.CONFIRM_LOCK):
+        with file_lock(root / cli_confirm.CONFIRM_LOCK):
             held.set()
             release.wait(timeout=60)
 
@@ -296,7 +296,7 @@ def test_a_confirm_that_died_after_recording_writes_its_files_on_the_next_run(
     def dies(*_args):
         raise _Crash
 
-    monkeypatch.setattr(cli, "append_log", dies)
+    monkeypatch.setattr(cli_confirm, "append_log", dies)
     with pytest.raises(_Crash):
         _confirm(root, bars_csv)
     monkeypatch.undo()
