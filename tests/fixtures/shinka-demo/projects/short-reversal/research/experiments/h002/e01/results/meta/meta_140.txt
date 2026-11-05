@@ -1,0 +1,250 @@
+# INDIVIDUAL PROGRAM SUMMARIES
+
+The following are summaries of individual programs evaluated since the last meta update:
+
+> DEMO · 演示数据，非真实研究: written by the demo generator, not by a language model.
+
+**Program Name: rewrite_trend_confirm (d6714e13, gen 16, island 0)**
+- **Implementation**: Rewrite around mean_revert_highvol, trend_confirm, volume_gate; uses trend_confirm, volume_gate, mean_revert_highvol.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: tune_smooth (de02dff8, gen 16, island 0)**
+- **Implementation**: Retune smooth; uses volume_gate, smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: add_trend_confirm (d5bf1005, gen 17, island 0)**
+- **Implementation**: Add trend_confirm; uses trend_confirm, mean_revert_highvol.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: evaluation timed out after 300 s
+
+**Program Name: fix_look_ahead_detected (8efaf523, gen 17, island 2)**
+- **Implementation**: Repair the parent's evaluation failure (look-ahead detected: positions on the first 1187 bars changed when later bars were removed); uses mean_revert_highvol.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: positions outside [-1, 1] (max 1.84)
+
+**Program Name: tune_fast (c182369f, gen 17, island 2)**
+- **Implementation**: Retune fast, smooth; uses smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: evaluation timed out after 300 s
+
+**Program Name: tune_fast (abef255d, gen 17, island 1)**
+- **Implementation**: Retune fast, vol_target; uses the baseline signal only.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: rewrite_drawdown_brake (dec5a64d, gen 17, island 2)**
+- **Implementation**: Rewrite around drawdown_brake, mean_revert_highvol, smooth_entry; uses drawdown_brake, smooth_entry, mean_revert_highvol.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: rewrite_smooth_entry (aee0e8b1, gen 17, island 1)**
+- **Implementation**: Rewrite around mean_revert_highvol, smooth_entry; uses smooth_entry, mean_revert_highvol.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: positions outside [-1, 1] (max 1.84)
+
+**Program Name: rewrite_regime_filter (f694a10b, gen 18, island 1)**
+- **Implementation**: Rewrite around mean_revert_highvol, regime_filter, volume_gate; uses regime_filter, volume_gate, mean_revert_highvol.
+- **Performance**: Combined score 0.8058 (is_sharpe_std 0.1596, is_annual_return 0.0492, is_max_drawdown -0.2211).
+- **Feedback**: In-sample fold Sharpe: 0.74, 0.83, 0.86 (mean 0.81). Annual return 4.9%, max drawdown -22.1%, mean turnover 0.147 per bar, costs 5.0 bps.
+
+**Program Name: tune_vol_target (13e858f7, gen 18, island 2)**
+- **Implementation**: Retune vol_target, fast; uses smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: rewrite_regime_filter (a492bfe9, gen 18, island 2)**
+- **Implementation**: Rewrite around regime_filter, trend_confirm; uses regime_filter, trend_confirm.
+- **Performance**: Combined score 0.4461 (is_sharpe_std 0.2849, is_annual_return 0.0259, is_max_drawdown -0.2546).
+- **Feedback**: In-sample fold Sharpe: 0.38, 0.47, 0.50 (mean 0.45). Annual return 2.6%, max drawdown -25.5%, mean turnover 0.172 per bar, costs 5.0 bps.
+
+**Program Name: fix_keyerror_volume_column (6cf14965, gen 18, island 0)**
+- **Implementation**: Repair the parent's evaluation failure (KeyError: 'volume' (column not present in the frozen data)); uses smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: tune_regime_damp (fe6b544b, gen 18, island 1)**
+- **Implementation**: Retune regime_damp, vol_window; uses smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: KeyError: 'volume' (column not present in the frozen data)
+
+**Program Name: crossover_regime_damp (bafd15e1, gen 19, island 1)**
+- **Implementation**: Crossover with island 2 program; uses smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: evaluation timed out after 300 s
+
+**Program Name: fix_positions_outside_max (e4dbb563, gen 18, island 0)**
+- **Implementation**: Repair the parent's evaluation failure (positions outside [-1, 1] (max 1.84)); uses the baseline signal only.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: tune_smooth (1499a10b, gen 19, island 2)**
+- **Implementation**: Retune smooth, fast; uses the baseline signal only.
+- **Performance**: Combined score 0.4393 (is_sharpe_std 0.3183, is_annual_return 0.0296, is_max_drawdown -0.2712).
+- **Feedback**: In-sample fold Sharpe: 0.37, 0.46, 0.49 (mean 0.44). Annual return 3.0%, max drawdown -27.1%, mean turnover 0.128 per bar, costs 5.0 bps.
+
+**Program Name: tune_regime_damp (c8d87bf2, gen 19, island 1)**
+- **Implementation**: Retune regime_damp; uses the baseline signal only.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: evaluation timed out after 300 s
+
+**Program Name: tune_vol_window (ff26f2c6, gen 20, island 2)**
+- **Implementation**: Retune vol_window; uses the baseline signal only.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: look-ahead detected: positions on the first 1187 bars changed when later bars were removed
+
+**Program Name: tune_smooth (d7b2487e, gen 19, island 0)**
+- **Implementation**: Retune smooth; uses volume_gate, smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: tune_brake_level (f9709f54, gen 20, island 2)**
+- **Implementation**: Retune brake_level, slow; uses the baseline signal only.
+- **Performance**: Combined score 0.2171 (is_sharpe_std 0.3267, is_annual_return 0.0212, is_max_drawdown -0.2743).
+- **Feedback**: In-sample fold Sharpe: 0.15, 0.24, 0.27 (mean 0.22). Annual return 2.1%, max drawdown -27.4%, mean turnover 0.113 per bar, costs 5.0 bps.
+
+**Program Name: add_trend_confirm (d0e7636f, gen 20, island 1)**
+- **Implementation**: Add trend_confirm; uses regime_filter, trend_confirm.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: positions outside [-1, 1] (max 1.84)
+
+**Program Name: tune_slow (bbffe9fe, gen 20, island 1)**
+- **Implementation**: Retune slow, smooth; uses smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: KeyError: 'volume' (column not present in the frozen data)
+
+**Program Name: tune_entry_z (eb970867, gen 20, island 2)**
+- **Implementation**: Retune entry_z; uses regime_filter, volume_gate, smooth_entry.
+- **Performance**: Combined score 0.5035 (is_sharpe_std 0.217, is_annual_return 0.0512, is_max_drawdown -0.2552).
+- **Feedback**: In-sample fold Sharpe: 0.43, 0.52, 0.55 (mean 0.50). Annual return 5.1%, max drawdown -25.5%, mean turnover 0.116 per bar, costs 5.0 bps.
+
+**Program Name: tune_smooth (0736ffdc, gen 21, island 1)**
+- **Implementation**: Retune smooth, slow; uses smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: add_regime_filter (252a956e, gen 20, island 1)**
+- **Implementation**: Add regime_filter; uses regime_filter.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: tune_smooth (9f388dae, gen 21, island 2)**
+- **Implementation**: Retune smooth; uses regime_filter, drawdown_brake, mean_revert_highvol.
+- **Performance**: Combined score 0.4851 (is_sharpe_std 0.4459, is_annual_return 0.048, is_max_drawdown -0.239).
+- **Feedback**: In-sample fold Sharpe: 0.42, 0.51, 0.54 (mean 0.49). Annual return 4.8%, max drawdown -23.9%, mean turnover 0.132 per bar, costs 5.0 bps.
+
+**Program Name: rewrite_trend_confirm (b6fdcd7b, gen 21, island 0)**
+- **Implementation**: Rewrite around trend_confirm; uses trend_confirm.
+- **Performance**: Combined score 0.2873 (is_sharpe_std 0.3918, is_annual_return 0.0212, is_max_drawdown -0.2818).
+- **Feedback**: In-sample fold Sharpe: 0.22, 0.31, 0.34 (mean 0.29). Annual return 2.1%, max drawdown -28.2%, mean turnover 0.146 per bar, costs 5.0 bps.
+
+**Program Name: add_drawdown_brake (985951ab, gen 21, island 2)**
+- **Implementation**: Add drawdown_brake; uses regime_filter, drawdown_brake.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: look-ahead detected: positions on the first 1187 bars changed when later bars were removed
+
+**Program Name: add_drawdown_brake (758684e6, gen 21, island 2)**
+- **Implementation**: Add drawdown_brake; uses drawdown_brake, smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: positions outside [-1, 1] (max 1.84)
+
+**Program Name: rewrite_drawdown_brake (47164206, gen 21, island 1)**
+- **Implementation**: Rewrite around drawdown_brake; uses drawdown_brake.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: add_drawdown_brake (4681a104, gen 21, island 1)**
+- **Implementation**: Add drawdown_brake; uses regime_filter, drawdown_brake.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: tune_fast (1499dc70, gen 21, island 0)**
+- **Implementation**: Retune fast; uses volume_gate, smooth_entry.
+- **Performance**: Combined score 0.3651 (is_sharpe_std 0.2488, is_annual_return 0.0525, is_max_drawdown -0.2876).
+- **Feedback**: In-sample fold Sharpe: 0.30, 0.39, 0.42 (mean 0.37). Annual return 5.2%, max drawdown -28.8%, mean turnover 0.134 per bar, costs 5.0 bps.
+
+**Program Name: tune_smooth (0d83cdbc, gen 22, island 1)**
+- **Implementation**: Retune smooth; uses smooth_entry.
+- **Performance**: Combined score 0.3019 (is_sharpe_std 0.2908, is_annual_return 0.0412, is_max_drawdown -0.2541).
+- **Feedback**: In-sample fold Sharpe: 0.23, 0.32, 0.35 (mean 0.30). Annual return 4.1%, max drawdown -25.4%, mean turnover 0.199 per bar, costs 5.0 bps.
+
+**Program Name: rewrite_trend_confirm (9086f9c4, gen 21, island 0)**
+- **Implementation**: Rewrite around smooth_entry, trend_confirm, volume_gate; uses trend_confirm, volume_gate, smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: run_experiment returned NaN positions after the warm-up window
+
+**Program Name: rewrite_mean_revert_highvol (a9fbe09b, gen 22, island 0)**
+- **Implementation**: Rewrite around mean_revert_highvol; uses mean_revert_highvol.
+- **Performance**: Combined score 0.6992 (is_sharpe_std 0.3563, is_annual_return 0.0498, is_max_drawdown -0.2339).
+- **Feedback**: In-sample fold Sharpe: 0.63, 0.72, 0.75 (mean 0.70). Annual return 5.0%, max drawdown -23.4%, mean turnover 0.119 per bar, costs 5.0 bps.
+
+**Program Name: tune_entry_z (a95fcbcc, gen 22, island 0)**
+- **Implementation**: Retune entry_z; uses the baseline signal only.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: positions outside [-1, 1] (max 1.84)
+
+**Program Name: add_drawdown_brake (9236ecb8, gen 22, island 1)**
+- **Implementation**: Add drawdown_brake; uses drawdown_brake, smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: look-ahead detected: positions on the first 1187 bars changed when later bars were removed
+
+**Program Name: tune_vol_target (67e84390, gen 22, island 0)**
+- **Implementation**: Retune vol_target; uses volume_gate, smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: positions outside [-1, 1] (max 1.84)
+
+**Program Name: crossover_smooth (b940ccc3, gen 23, island 0)**
+- **Implementation**: Crossover with island 2 program; uses volume_gate, smooth_entry.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: positions outside [-1, 1] (max 1.84)
+
+**Program Name: rewrite_volume_gate (c86f49ed, gen 23, island 1)**
+- **Implementation**: Rewrite around mean_revert_highvol, smooth_entry, volume_gate; uses volume_gate, smooth_entry, mean_revert_highvol.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: KeyError: 'volume' (column not present in the frozen data)
+
+# GLOBAL INSIGHTS SCRATCHPAD
+
+The following are global insights about optimization approaches and their effectiveness:
+
+> DEMO · 演示数据，非真实研究: written by the demo generator, not by a language model.
+
+## Successful Algorithmic Patterns
+- **rewrite_volume_gate** (39bec317, gen 13) scores 0.8461 with volume_gate, mean_revert_highvol — **current best**
+- **rewrite_regime_filter** (f694a10b, gen 18) scores 0.8058 with regime_filter, volume_gate, mean_revert_highvol
+- **rewrite_mean_revert_highvol** (a9fbe09b, gen 22) scores 0.6992 with mean_revert_highvol
+- `cross` patches improve on their parent most often (9 of 17).
+- `fix` patches repaired 0 of 3 failed parents.
+
+## Ineffective Approaches
+- `diff` patches improve least often (41 of 83).
+- 14 failure(s): run_experiment returned NaN positions after the warm-up window
+- 10 failure(s): positions outside [-1, 1] (max 1.84)
+- 7 failure(s): KeyError: 'volume' (column not present in the frozen data)
+
+## Implementation Insights
+- The top five programs share no single feature.
+- Best program settings: BRAKE_LEVEL=0.1748, ENTRY_Z=0.25, FAST=16, REGIME_DAMP=0.5, SLOW=63, SMOOTH=3, VOL_TARGET=0.1963, VOL_WINDOW=15.
+
+## Performance Analysis
+- 96 of 140 programs are correct (44 failed).
+- Best score moved from 0.8461 to 0.8461 since the last meta update.
+- Island 0: best 0.6992
+- Island 1: best 0.8461
+- Island 2: best 0.5341
+- demo/model-aurora: 57 proposals
+- demo/model-basalt: 45 proposals
+- demo/model-cirrus: 35 proposals
+
+# META RECOMMENDATIONS
+
+The following are actionable recommendations for the next program generations:
+
+> DEMO · 演示数据，非真实研究: written by the demo generator, not by a language model.
+
+1. Start from **rewrite_volume_gate** (39bec317, score 0.8461) and retune one parameter at a time.
+2. Favour `cross` patches; they improve on their parent most often so far.
+3. Try adding `regime_filter` to the best program as a small diff.
+4. Repair the 41 failed programs that no `fix` patch has repaired yet before exploring new ideas.
+5. Keep every change inside the EVOLVE-BLOCK.

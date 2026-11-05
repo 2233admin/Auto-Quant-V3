@@ -1,0 +1,300 @@
+# INDIVIDUAL PROGRAM SUMMARIES
+
+The following are summaries of individual programs evaluated since the last meta update:
+
+> DEMO · 演示数据，非真实研究: written by the demo generator, not by a language model.
+
+**Program Name: tune_vol_window (d9895e6e, gen 12, island 1)**
+- **Implementation**: Retune vol_window; uses the baseline signal only.
+- **Performance**: Combined score 0.2525 (is_sharpe_std 0.2654, is_annual_return 0.0208, is_max_drawdown -0.3025).
+- **Feedback**: In-sample fold Sharpe: 0.18, 0.27, 0.30 (mean 0.25). Annual return 2.1%, max drawdown -30.2%, mean turnover 0.150 per bar, costs 5.0 bps.
+
+**Program Name: tune_entry_z (1f7e5f4a, gen 12, island 2)**
+- **Implementation**: Retune entry_z; uses drawdown_brake.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: KeyError: 'volume' (column not present in the frozen data)
+
+**Program Name: add_volume_gate (f16521c5, gen 13, island 1)**
+- **Implementation**: Add volume_gate; uses volume_gate.
+- **Performance**: Combined score 0.0420 (is_sharpe_std 0.0601, is_annual_return 0.028, is_max_drawdown -0.3051).
+- **Feedback**: In-sample fold Sharpe: -0.03, 0.06, 0.09 (mean 0.04). Annual return 2.8%, max drawdown -30.5%, mean turnover 0.151 per bar, costs 5.0 bps.
+
+**Program Name: add_drawdown_brake (98424f36, gen 12, island 1)**
+- **Implementation**: Add drawdown_brake; uses trend_confirm, drawdown_brake.
+- **Performance**: Combined score 0.4085 (is_sharpe_std 0.2738, is_annual_return 0.0314, is_max_drawdown -0.2485).
+- **Feedback**: In-sample fold Sharpe: 0.34, 0.43, 0.46 (mean 0.41). Annual return 3.1%, max drawdown -24.9%, mean turnover 0.146 per bar, costs 5.0 bps.
+
+**Program Name: drop_drawdown_brake (daca20e4, gen 13, island 1)**
+- **Implementation**: Drop drawdown_brake; uses the baseline signal only.
+- **Performance**: Combined score 0.0917 (is_sharpe_std 0.2336, is_annual_return 0.0142, is_max_drawdown -0.2774).
+- **Feedback**: In-sample fold Sharpe: 0.02, 0.11, 0.14 (mean 0.09). Annual return 1.4%, max drawdown -27.7%, mean turnover 0.151 per bar, costs 5.0 bps.
+
+**Program Name: tune_entry_z (74eee2c0, gen 13, island 2)**
+- **Implementation**: Retune entry_z; uses smooth_entry.
+- **Performance**: Combined score 0.1964 (is_sharpe_std 0.1329, is_annual_return 0.0219, is_max_drawdown -0.2746).
+- **Feedback**: In-sample fold Sharpe: 0.13, 0.22, 0.25 (mean 0.20). Annual return 2.2%, max drawdown -27.5%, mean turnover 0.116 per bar, costs 5.0 bps.
+
+**Program Name: tune_brake_level (e7fe8d3b, gen 13, island 0)**
+- **Implementation**: Retune brake_level, regime_damp; uses drawdown_brake.
+- **Performance**: Combined score 0.4245 (is_sharpe_std 0.2237, is_annual_return 0.0556, is_max_drawdown -0.2562).
+- **Feedback**: In-sample fold Sharpe: 0.35, 0.44, 0.47 (mean 0.42). Annual return 5.6%, max drawdown -25.6%, mean turnover 0.150 per bar, costs 5.0 bps.
+
+**Program Name: tune_regime_damp (89c3447f, gen 13, island 1)**
+- **Implementation**: Retune regime_damp, entry_z; uses drawdown_brake.
+- **Performance**: Combined score 0.4420 (is_sharpe_std 0.2399, is_annual_return 0.044, is_max_drawdown -0.2668).
+- **Feedback**: In-sample fold Sharpe: 0.37, 0.46, 0.49 (mean 0.44). Annual return 4.4%, max drawdown -26.7%, mean turnover 0.146 per bar, costs 5.0 bps.
+
+**Program Name: rewrite_regime_filter (6e1cdf2c, gen 14, island 2)**
+- **Implementation**: Rewrite around drawdown_brake, regime_filter, volume_gate; uses regime_filter, drawdown_brake, volume_gate.
+- **Performance**: Combined score 0.3372 (is_sharpe_std 0.3401, is_annual_return 0.0369, is_max_drawdown -0.257).
+- **Feedback**: In-sample fold Sharpe: 0.27, 0.36, 0.39 (mean 0.34). Annual return 3.7%, max drawdown -25.7%, mean turnover 0.139 per bar, costs 5.0 bps.
+
+**Program Name: tune_fast (fdff5710, gen 14, island 0)**
+- **Implementation**: Retune fast, smooth; uses drawdown_brake.
+- **Performance**: Combined score 0.7978 (is_sharpe_std 0.3038, is_annual_return 0.0636, is_max_drawdown -0.2469).
+- **Feedback**: In-sample fold Sharpe: 0.73, 0.82, 0.85 (mean 0.80). Annual return 6.4%, max drawdown -24.7%, mean turnover 0.122 per bar, costs 5.0 bps.
+
+**Program Name: tune_slow (dd55a6a8, gen 14, island 2)**
+- **Implementation**: Retune slow, regime_damp; uses the baseline signal only.
+- **Performance**: Combined score 0.3146 (is_sharpe_std 0.3019, is_annual_return 0.0252, is_max_drawdown -0.3258).
+- **Feedback**: In-sample fold Sharpe: 0.24, 0.33, 0.36 (mean 0.31). Annual return 2.5%, max drawdown -32.6%, mean turnover 0.136 per bar, costs 5.0 bps.
+
+**Program Name: tune_slow (acd2ac20, gen 14, island 1)**
+- **Implementation**: Retune slow, fast; uses the baseline signal only.
+- **Performance**: Combined score 0.2676 (is_sharpe_std 0.2276, is_annual_return 0.0195, is_max_drawdown -0.2756).
+- **Feedback**: In-sample fold Sharpe: 0.20, 0.29, 0.32 (mean 0.27). Annual return 1.9%, max drawdown -27.6%, mean turnover 0.158 per bar, costs 5.0 bps.
+
+**Program Name: tune_vol_target (bc0b4f45, gen 14, island 0)**
+- **Implementation**: Retune vol_target; uses the baseline signal only.
+- **Performance**: Combined score 0.3564 (is_sharpe_std 0.3965, is_annual_return 0.038, is_max_drawdown -0.2731).
+- **Feedback**: In-sample fold Sharpe: 0.29, 0.38, 0.41 (mean 0.36). Annual return 3.8%, max drawdown -27.3%, mean turnover 0.112 per bar, costs 5.0 bps.
+
+**Program Name: tune_entry_z (9465926c, gen 14, island 2)**
+- **Implementation**: Retune entry_z; uses regime_filter.
+- **Performance**: Combined score 0.6826 (is_sharpe_std 0.2036, is_annual_return 0.0612, is_max_drawdown -0.2393).
+- **Feedback**: In-sample fold Sharpe: 0.61, 0.70, 0.73 (mean 0.68). Annual return 6.1%, max drawdown -23.9%, mean turnover 0.117 per bar, costs 5.0 bps.
+
+**Program Name: tune_regime_damp (fded25e4, gen 15, island 0)**
+- **Implementation**: Retune regime_damp; uses drawdown_brake.
+- **Performance**: Combined score 0.6257 (is_sharpe_std 0.2124, is_annual_return 0.0545, is_max_drawdown -0.2575).
+- **Feedback**: In-sample fold Sharpe: 0.56, 0.65, 0.68 (mean 0.63). Annual return 5.5%, max drawdown -25.8%, mean turnover 0.115 per bar, costs 5.0 bps.
+
+**Program Name: crossover_vol_target (7663667d, gen 15, island 1)**
+- **Implementation**: Crossover with island 2 program; uses regime_filter.
+- **Performance**: Combined score 0.2179 (is_sharpe_std 0.2278, is_annual_return 0.0051, is_max_drawdown -0.2588).
+- **Feedback**: In-sample fold Sharpe: 0.15, 0.24, 0.27 (mean 0.22). Annual return 0.5%, max drawdown -25.9%, mean turnover 0.131 per bar, costs 5.0 bps.
+
+**Program Name: tune_regime_damp (d63faa39, gen 15, island 0)**
+- **Implementation**: Retune regime_damp, smooth; uses drawdown_brake.
+- **Performance**: Combined score 0.7063 (is_sharpe_std 0.3109, is_annual_return 0.0907, is_max_drawdown -0.2287).
+- **Feedback**: In-sample fold Sharpe: 0.64, 0.73, 0.76 (mean 0.71). Annual return 9.1%, max drawdown -22.9%, mean turnover 0.146 per bar, costs 5.0 bps.
+
+**Program Name: tune_entry_z (8c0713f8, gen 15, island 1)**
+- **Implementation**: Retune entry_z; uses regime_filter.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: KeyError: 'volume' (column not present in the frozen data)
+
+**Program Name: crossover_entry_z (2e60b9f7, gen 15, island 0)**
+- **Implementation**: Crossover with island 2 program; uses regime_filter, drawdown_brake.
+- **Performance**: Combined score 0.3257 (is_sharpe_std 0.215, is_annual_return 0.0193, is_max_drawdown -0.2617).
+- **Feedback**: In-sample fold Sharpe: 0.26, 0.35, 0.38 (mean 0.33). Annual return 1.9%, max drawdown -26.2%, mean turnover 0.150 per bar, costs 5.0 bps.
+
+**Program Name: rewrite_trend_confirm (2c6830ad, gen 16, island 0)**
+- **Implementation**: Rewrite around mean_revert_highvol, trend_confirm, volume_gate; uses trend_confirm, volume_gate, mean_revert_highvol.
+- **Performance**: Combined score 0.5936 (is_sharpe_std 0.1943, is_annual_return 0.0521, is_max_drawdown -0.2533).
+- **Feedback**: In-sample fold Sharpe: 0.52, 0.61, 0.64 (mean 0.59). Annual return 5.2%, max drawdown -25.3%, mean turnover 0.134 per bar, costs 5.0 bps.
+
+**Program Name: tune_fast (17db488f, gen 16, island 0)**
+- **Implementation**: Retune fast, vol_window; uses drawdown_brake, smooth_entry.
+- **Performance**: Combined score 0.3327 (is_sharpe_std 0.2556, is_annual_return 0.0162, is_max_drawdown -0.2726).
+- **Feedback**: In-sample fold Sharpe: 0.26, 0.35, 0.38 (mean 0.33). Annual return 1.6%, max drawdown -27.3%, mean turnover 0.127 per bar, costs 5.0 bps.
+
+**Program Name: crossover_slow (554a47e1, gen 16, island 1)**
+- **Implementation**: Crossover with island 2 program; uses regime_filter.
+- **Performance**: Combined score 0.8139 (is_sharpe_std 0.3544, is_annual_return 0.0818, is_max_drawdown -0.2534).
+- **Feedback**: In-sample fold Sharpe: 0.74, 0.83, 0.86 (mean 0.81). Annual return 8.2%, max drawdown -25.3%, mean turnover 0.144 per bar, costs 5.0 bps.
+
+**Program Name: crossover_entry_z (35146dd0, gen 16, island 2)**
+- **Implementation**: Crossover with island 0 program; uses drawdown_brake.
+- **Performance**: Combined score 0.4113 (is_sharpe_std 0.1272, is_annual_return 0.0354, is_max_drawdown -0.2897).
+- **Feedback**: In-sample fold Sharpe: 0.34, 0.43, 0.46 (mean 0.41). Annual return 3.5%, max drawdown -29.0%, mean turnover 0.144 per bar, costs 5.0 bps.
+
+**Program Name: tune_smooth (fd181832, gen 17, island 1)**
+- **Implementation**: Retune smooth, vol_window; uses mean_revert_highvol.
+- **Performance**: Combined score 0.8149 (is_sharpe_std 0.1908, is_annual_return 0.0882, is_max_drawdown -0.2276).
+- **Feedback**: In-sample fold Sharpe: 0.74, 0.83, 0.86 (mean 0.81). Annual return 8.8%, max drawdown -22.8%, mean turnover 0.118 per bar, costs 5.0 bps.
+
+**Program Name: tune_entry_z (14298b2d, gen 17, island 0)**
+- **Implementation**: Retune entry_z, regime_damp; uses drawdown_brake.
+- **Performance**: Combined score 0.5353 (is_sharpe_std 0.2625, is_annual_return 0.0463, is_max_drawdown -0.2438).
+- **Feedback**: In-sample fold Sharpe: 0.47, 0.56, 0.59 (mean 0.54). Annual return 4.6%, max drawdown -24.4%, mean turnover 0.135 per bar, costs 5.0 bps.
+
+**Program Name: tune_smooth (20c430ee, gen 17, island 2)**
+- **Implementation**: Retune smooth, fast; uses drawdown_brake.
+- **Performance**: Combined score 0.5597 (is_sharpe_std 0.3771, is_annual_return 0.0509, is_max_drawdown -0.2309).
+- **Feedback**: In-sample fold Sharpe: 0.49, 0.58, 0.61 (mean 0.56). Annual return 5.1%, max drawdown -23.1%, mean turnover 0.200 per bar, costs 5.0 bps.
+
+**Program Name: rewrite_volume_gate (35a916b4, gen 17, island 0)**
+- **Implementation**: Rewrite around volume_gate; uses volume_gate.
+- **Performance**: Combined score 0.5121 (is_sharpe_std 0.2847, is_annual_return 0.038, is_max_drawdown -0.2741).
+- **Feedback**: In-sample fold Sharpe: 0.44, 0.53, 0.56 (mean 0.51). Annual return 3.8%, max drawdown -27.4%, mean turnover 0.089 per bar, costs 5.0 bps.
+
+**Program Name: tune_entry_z (3149ef0e, gen 17, island 0)**
+- **Implementation**: Retune entry_z, vol_window; uses smooth_entry.
+- **Performance**: Combined score 0.3288 (is_sharpe_std 0.3352, is_annual_return 0.0614, is_max_drawdown -0.3003).
+- **Feedback**: In-sample fold Sharpe: 0.26, 0.35, 0.38 (mean 0.33). Annual return 6.1%, max drawdown -30.0%, mean turnover 0.129 per bar, costs 5.0 bps.
+
+**Program Name: tune_slow (b0bccbd0, gen 18, island 1)**
+- **Implementation**: Retune slow, smooth; uses mean_revert_highvol.
+- **Performance**: Combined score 0.6191 (is_sharpe_std 0.364, is_annual_return 0.0499, is_max_drawdown -0.2643).
+- **Feedback**: In-sample fold Sharpe: 0.55, 0.64, 0.67 (mean 0.62). Annual return 5.0%, max drawdown -26.4%, mean turnover 0.121 per bar, costs 5.0 bps.
+
+**Program Name: tune_fast (d12c2d7d, gen 18, island 0)**
+- **Implementation**: Retune fast; uses drawdown_brake.
+- **Performance**: Combined score 0.5721 (is_sharpe_std 0.1536, is_annual_return 0.0646, is_max_drawdown -0.256).
+- **Feedback**: In-sample fold Sharpe: 0.50, 0.59, 0.62 (mean 0.57). Annual return 6.5%, max drawdown -25.6%, mean turnover 0.133 per bar, costs 5.0 bps.
+
+**Program Name: tune_slow (0885f5fc, gen 18, island 0)**
+- **Implementation**: Retune slow; uses drawdown_brake.
+- **Performance**: Combined score 0.6361 (is_sharpe_std 0.3511, is_annual_return 0.0671, is_max_drawdown -0.2352).
+- **Feedback**: In-sample fold Sharpe: 0.57, 0.66, 0.69 (mean 0.64). Annual return 6.7%, max drawdown -23.5%, mean turnover 0.156 per bar, costs 5.0 bps.
+
+**Program Name: tune_entry_z (2fa79f23, gen 17, island 1)**
+- **Implementation**: Retune entry_z; uses regime_filter.
+- **Performance**: Combined score 0.5772 (is_sharpe_std 0.3693, is_annual_return 0.056, is_max_drawdown -0.2517).
+- **Feedback**: In-sample fold Sharpe: 0.51, 0.60, 0.63 (mean 0.58). Annual return 5.6%, max drawdown -25.2%, mean turnover 0.134 per bar, costs 5.0 bps.
+
+**Program Name: tune_smooth (9bd951ec, gen 18, island 2)**
+- **Implementation**: Retune smooth, vol_window; uses drawdown_brake.
+- **Performance**: Combined score 0.4321 (is_sharpe_std 0.2419, is_annual_return 0.0406, is_max_drawdown -0.2796).
+- **Feedback**: In-sample fold Sharpe: 0.36, 0.45, 0.48 (mean 0.43). Annual return 4.1%, max drawdown -28.0%, mean turnover 0.115 per bar, costs 5.0 bps.
+
+**Program Name: drop_regime_filter (7fe12f91, gen 18, island 1)**
+- **Implementation**: Drop regime_filter; uses the baseline signal only.
+- **Performance**: Combined score 0.5947 (is_sharpe_std 0.2722, is_annual_return 0.0516, is_max_drawdown -0.2521).
+- **Feedback**: In-sample fold Sharpe: 0.52, 0.61, 0.64 (mean 0.59). Annual return 5.2%, max drawdown -25.2%, mean turnover 0.114 per bar, costs 5.0 bps.
+
+**Program Name: add_smooth_entry (6a40cc53, gen 18, island 0)**
+- **Implementation**: Add smooth_entry; uses regime_filter, drawdown_brake, smooth_entry.
+- **Performance**: Combined score 0.4849 (is_sharpe_std 0.2372, is_annual_return 0.0418, is_max_drawdown -0.2443).
+- **Feedback**: In-sample fold Sharpe: 0.41, 0.50, 0.53 (mean 0.48). Annual return 4.2%, max drawdown -24.4%, mean turnover 0.117 per bar, costs 5.0 bps.
+
+**Program Name: tune_vol_window (78eb3ab9, gen 19, island 0)**
+- **Implementation**: Retune vol_window; uses the baseline signal only.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: look-ahead detected: positions on the first 1187 bars changed when later bars were removed
+
+**Program Name: rewrite_drawdown_brake (078f0baf, gen 19, island 1)**
+- **Implementation**: Rewrite around drawdown_brake, volume_gate; uses drawdown_brake, volume_gate.
+- **Performance**: Combined score 0.5210 (is_sharpe_std 0.2334, is_annual_return 0.0476, is_max_drawdown -0.2655).
+- **Feedback**: In-sample fold Sharpe: 0.45, 0.54, 0.57 (mean 0.52). Annual return 4.8%, max drawdown -26.6%, mean turnover 0.138 per bar, costs 5.0 bps.
+
+**Program Name: tune_smooth (dd9ab4cb, gen 19, island 0)**
+- **Implementation**: Retune smooth, entry_z; uses regime_filter, trend_confirm, volume_gate.
+- **Performance**: Combined score 0.4192 (is_sharpe_std 0.1847, is_annual_return 0.0476, is_max_drawdown -0.2969).
+- **Feedback**: In-sample fold Sharpe: 0.35, 0.44, 0.47 (mean 0.42). Annual return 4.8%, max drawdown -29.7%, mean turnover 0.202 per bar, costs 5.0 bps.
+
+**Program Name: add_volume_gate (9634e4e6, gen 19, island 1)**
+- **Implementation**: Add volume_gate; uses trend_confirm, drawdown_brake, volume_gate.
+- **Performance**: Combined score 0.3466 (is_sharpe_std 0.2666, is_annual_return 0.0152, is_max_drawdown -0.3027).
+- **Feedback**: In-sample fold Sharpe: 0.28, 0.37, 0.40 (mean 0.35). Annual return 1.5%, max drawdown -30.3%, mean turnover 0.124 per bar, costs 5.0 bps.
+
+**Program Name: tune_fast (5667126f, gen 19, island 1)**
+- **Implementation**: Retune fast, regime_damp; uses drawdown_brake.
+- **Performance**: Combined score 0.4884 (is_sharpe_std 0.1387, is_annual_return 0.0451, is_max_drawdown -0.2833).
+- **Feedback**: In-sample fold Sharpe: 0.42, 0.51, 0.54 (mean 0.49). Annual return 4.5%, max drawdown -28.3%, mean turnover 0.130 per bar, costs 5.0 bps.
+
+**Program Name: tune_brake_level (82fef6ba, gen 19, island 0)**
+- **Implementation**: Retune brake_level; uses regime_filter, smooth_entry.
+- **Performance**: Combined score 0.3122 (is_sharpe_std 0.2289, is_annual_return 0.0286, is_max_drawdown -0.3258).
+- **Feedback**: In-sample fold Sharpe: 0.24, 0.33, 0.36 (mean 0.31). Annual return 2.9%, max drawdown -32.6%, mean turnover 0.160 per bar, costs 5.0 bps.
+
+**Program Name: tune_brake_level (f58717fc, gen 19, island 2)**
+- **Implementation**: Retune brake_level; uses drawdown_brake.
+- **Performance**: Combined score 0.3808 (is_sharpe_std 0.146, is_annual_return 0.018, is_max_drawdown -0.2491).
+- **Feedback**: In-sample fold Sharpe: 0.31, 0.40, 0.43 (mean 0.38). Annual return 1.8%, max drawdown -24.9%, mean turnover 0.132 per bar, costs 5.0 bps.
+
+**Program Name: rewrite_regime_filter (b1499709, gen 20, island 0)**
+- **Implementation**: Rewrite around regime_filter, smooth_entry, volume_gate; uses regime_filter, volume_gate, smooth_entry.
+- **Performance**: Combined score 0.4268 (is_sharpe_std 0.2815, is_annual_return 0.0348, is_max_drawdown -0.2605).
+- **Feedback**: In-sample fold Sharpe: 0.36, 0.45, 0.48 (mean 0.43). Annual return 3.5%, max drawdown -26.1%, mean turnover 0.157 per bar, costs 5.0 bps.
+
+**Program Name: tune_regime_damp (fd1545d4, gen 20, island 2)**
+- **Implementation**: Retune regime_damp, slow; uses the baseline signal only.
+- **Performance**: Combined score 0.2987 (is_sharpe_std 0.3888, is_annual_return 0.042, is_max_drawdown -0.2588).
+- **Feedback**: In-sample fold Sharpe: 0.23, 0.32, 0.35 (mean 0.30). Annual return 4.2%, max drawdown -25.9%, mean turnover 0.158 per bar, costs 5.0 bps.
+
+**Program Name: rewrite_mean_revert_highvol (88736fb8, gen 20, island 0)**
+- **Implementation**: Rewrite around mean_revert_highvol; uses mean_revert_highvol.
+- **Performance**: Evaluation failed, so the combined score is 0.
+- **Feedback**: Evaluation failed: evaluation timed out after 300 s
+
+**Program Name: tune_entry_z (98e0acaf, gen 20, island 1)**
+- **Implementation**: Retune entry_z, vol_target; uses regime_filter.
+- **Performance**: Combined score 0.6674 (is_sharpe_std 0.1949, is_annual_return 0.0495, is_max_drawdown -0.2462).
+- **Feedback**: In-sample fold Sharpe: 0.60, 0.69, 0.72 (mean 0.67). Annual return 5.0%, max drawdown -24.6%, mean turnover 0.145 per bar, costs 5.0 bps.
+
+**Program Name: add_smooth_entry (f033541a, gen 20, island 0)**
+- **Implementation**: Add smooth_entry; uses drawdown_brake, smooth_entry.
+- **Performance**: Combined score 0.6064 (is_sharpe_std 0.2858, is_annual_return 0.0536, is_max_drawdown -0.2393).
+- **Feedback**: In-sample fold Sharpe: 0.54, 0.63, 0.66 (mean 0.61). Annual return 5.4%, max drawdown -23.9%, mean turnover 0.126 per bar, costs 5.0 bps.
+
+**Program Name: add_drawdown_brake (2b5ac571, gen 21, island 1)**
+- **Implementation**: Add drawdown_brake; uses drawdown_brake.
+- **Performance**: Combined score 0.2169 (is_sharpe_std 0.3026, is_annual_return 0.02, is_max_drawdown -0.2772).
+- **Feedback**: In-sample fold Sharpe: 0.15, 0.24, 0.27 (mean 0.22). Annual return 2.0%, max drawdown -27.7%, mean turnover 0.150 per bar, costs 5.0 bps.
+
+**Program Name: tune_fast (665d9025, gen 21, island 0)**
+- **Implementation**: Retune fast, vol_target; uses drawdown_brake.
+- **Performance**: Combined score 0.6141 (is_sharpe_std 0.2692, is_annual_return 0.0614, is_max_drawdown -0.2794).
+- **Feedback**: In-sample fold Sharpe: 0.54, 0.63, 0.66 (mean 0.61). Annual return 6.1%, max drawdown -27.9%, mean turnover 0.112 per bar, costs 5.0 bps.
+
+**Program Name: tune_brake_level (5e26b603, gen 20, island 2)**
+- **Implementation**: Retune brake_level; uses mean_revert_highvol.
+- **Performance**: Combined score 0.4632 (is_sharpe_std 0.2738, is_annual_return 0.0335, is_max_drawdown -0.2459).
+- **Feedback**: In-sample fold Sharpe: 0.39, 0.48, 0.51 (mean 0.46). Annual return 3.4%, max drawdown -24.6%, mean turnover 0.119 per bar, costs 5.0 bps.
+
+# GLOBAL INSIGHTS SCRATCHPAD
+
+The following are global insights about optimization approaches and their effectiveness:
+
+> DEMO · 演示数据，非真实研究: written by the demo generator, not by a language model.
+
+## Successful Algorithmic Patterns
+- **tune_smooth** (fd181832, gen 17) scores 0.8149 with mean_revert_highvol — **current best**
+- **crossover_slow** (554a47e1, gen 16) scores 0.8139 with regime_filter
+- **tune_fast** (fdff5710, gen 14) scores 0.7978 with drawdown_brake
+- `diff` patches improve on their parent most often (58 of 86).
+- `fix` patches repaired 4 of 4 failed parents.
+
+## Ineffective Approaches
+- `cross` patches improve least often (6 of 13).
+- 6 failure(s): look-ahead detected: positions on the first 1187 bars changed when later bars were removed
+- 4 failure(s): KeyError: 'volume' (column not present in the frozen data)
+- 2 failure(s): evaluation timed out after 300 s
+
+## Implementation Insights
+- The top five programs share no single feature.
+- Best program settings: BRAKE_LEVEL=0.1384, ENTRY_Z=0.25, FAST=12, REGIME_DAMP=0.3559, SLOW=61, SMOOTH=3, VOL_TARGET=0.15, VOL_WINDOW=20.
+
+## Performance Analysis
+- 117 of 130 programs are correct (13 failed).
+- Best score moved from 0.6720 to 0.8149 since the last meta update.
+- Island 0: best 0.7978
+- Island 1: best 0.8149
+- Island 2: best 0.6826
+- demo/model-aurora: 64 proposals
+- demo/model-basalt: 32 proposals
+- demo/model-cirrus: 31 proposals
+
+# META RECOMMENDATIONS
+
+The following are actionable recommendations for the next program generations:
+
+> DEMO · 演示数据，非真实研究: written by the demo generator, not by a language model.
+
+1. Start from **tune_smooth** (fd181832, score 0.8149) and retune one parameter at a time.
+2. Favour `diff` patches; they improve on their parent most often so far.
+3. Try adding `regime_filter` to the best program as a small diff.
+4. Repair the 9 failed programs that no `fix` patch has repaired yet before exploring new ideas.
+5. Keep every change inside the EVOLVE-BLOCK.
