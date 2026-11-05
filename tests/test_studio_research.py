@@ -40,15 +40,24 @@ class ResearchSummaryTests(DemoWorkspace):
         self.assertEqual(momentum["state"], "ready")
         self.assertEqual(momentum["hypotheses"], 4)
         self.assertEqual(
-            momentum["statusCounts"], {"supported": 1, "refuted": 1, "inconclusive": 1, "running": 1}
+            momentum["statusCounts"], {"supported": 1, "rejected": 1, "inconclusive": 1, "running": 1}
         )
         self.assertEqual(momentum["lockbox"], "sealed")
         self.assertIsNotNone(momentum["latestVerdict"])
         self.assertIn("DEMO", momentum["demo"])
         gap = projects["overnight-gap"]["research"]
         self.assertEqual(gap["lockbox"], "opened")
-        self.assertIn(gap["latestVerdict"]["label"], {"confirmed", "refuted"})
+        self.assertIn(gap["latestVerdict"]["label"], {"confirmed", "rejected"})
         self.assertIsNone(projects["volume-shock"]["research"]["latestVerdict"])
+
+    def test_snapshot_with_research_matches_the_studio_schema(self) -> None:
+        try:
+            import jsonschema
+        except ImportError:
+            self.skipTest("jsonschema is a dev dependency")
+        from autoquant.studio import STUDIO_SNAPSHOT_JSON_SCHEMA, build_studio_snapshot
+
+        jsonschema.validate(build_studio_snapshot(self.workspace), STUDIO_SNAPSHOT_JSON_SCHEMA)
 
     def test_a_project_without_research_has_none(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

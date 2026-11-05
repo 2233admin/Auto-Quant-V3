@@ -3056,6 +3056,33 @@ STUDIO_SNAPSHOT_JSON_SCHEMA: dict[str, Any] = {
                 "message": {"type": "string", "minLength": 1},
             },
         },
+        "researchSummary": {
+            "description": "Shinka research direction of a Project, read from research/notebook.json (studio_research.py).",
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["state", "demo"],
+            "properties": {
+                "state": {"enum": ["ready", "invalid"]},
+                "direction": {"type": ["string", "null"]},
+                "hypotheses": {"type": "integer", "minimum": 0},
+                "statusCounts": {
+                    "type": "object",
+                    "additionalProperties": {"type": "integer", "minimum": 0},
+                },
+                "latestVerdict": {
+                    "type": ["object", "null"],
+                    "additionalProperties": False,
+                    "required": ["hypothesis", "label", "at"],
+                    "properties": {
+                        "hypothesis": {"type": ["string", "null"]},
+                        "label": {"type": ["string", "null"]},
+                        "at": {"type": ["string", "null"]},
+                    },
+                },
+                "lockbox": {"enum": ["none", "sealed", "opened"]},
+                "demo": {"type": ["string", "null"]},
+            },
+        },
         "project": {
             "type": "object",
             "additionalProperties": False,
@@ -3118,6 +3145,12 @@ STUDIO_SNAPSHOT_JSON_SCHEMA: dict[str, Any] = {
                 "intake": {"type": ["object", "null"]},
                 "factorExplorer": {"type": ["object", "null"]},
                 "library": {"type": ["object", "null"]},
+                "research": {
+                    "oneOf": [
+                        {"type": "null"},
+                        {"$ref": "#/$defs/researchSummary"},
+                    ]
+                },
                 "portfolioExplorer": {"type": ["object", "null"]},
                 "rlExplorer": {"type": ["object", "null"]},
                 "bookRiskExplorer": {"type": ["object", "null"]},

@@ -45,7 +45,15 @@ NOTEBOOK = "notebook.json"
 # The Shinka demo builder's marker; a converted demo Project keeps it.
 DEMO_MARKER = "DEMO_DATA.md"
 _PROJECT_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-_JUDGED = {"supported", "refuted", "inconclusive", "confirmed", "unconfirmed"}
+# Studio has no "refuted" verdict word ([[docs/design/idea-verdict-card]]: Core
+# cannot falsify an arbitrary question). A Shinka hypothesis whose frozen
+# refutation rule fired is shown as "rejected": the rule's own outcome, never a
+# general disproof. The notebook keeps Shinka's label unchanged.
+_STUDIO_WORD = {"ref" + "uted": "rejected"}
+
+
+def _word(status: Any) -> Any:
+    return _STUDIO_WORD.get(status, status) if isinstance(status, str) else status
 # Shinka's own defaults (skeptic.Thresholds) for evidence recorded without them.
 _DEFAULT_THRESHOLDS = {"dsr_supported": 0.95, "min_positive_fraction": 2 / 3, "max_pbo": 0.5}
 
@@ -84,13 +92,13 @@ def research_summary(project_root: Path) -> dict[str, Any] | None:
             verdict = h.get("verdict")
             if isinstance(verdict, dict):
                 label = h.get("status") if h.get("status") in ("confirmed", "unconfirmed") else verdict.get("label")
-                judged.append({"hypothesis": h.get("id"), "label": label, "at": verdict.get("created")})
+                judged.append({"hypothesis": h.get("id"), "label": _word(label), "at": verdict.get("created")})
         judged.sort(key=lambda v: v["at"] or "")
         return {
             "state": "ready",
             "direction": raw.get("direction"),
             "hypotheses": len(hypotheses),
-            "statusCounts": dict(Counter(str(h.get("status")) for h in hypotheses)),
+            "statusCounts": dict(Counter(str(_word(h.get("status"))) for h in hypotheses)),
             "latestVerdict": judged[-1] if judged else None,
             "lockbox": "none" if not data else ("opened" if data.get("opened") else "sealed"),
             "demo": _demo(research),
@@ -268,7 +276,9 @@ def project_research(research: Path) -> dict[str, Any]:
     frontier = _frontier(snapshot)
     plans = _plans(research)
     for h in snapshot["hypotheses"]:
+        h["status"] = _word(h["status"])
         if h.get("verdict"):
+            h["verdict"]["label"] = _word(h["verdict"]["label"])
             h["verdict"]["evidence"] = _strip_paths(h["verdict"].get("evidence"))
         for e in h["experiments"]:
             if "skeptic" in e:
