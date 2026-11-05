@@ -4,23 +4,22 @@ the owner (research-agent 3.2), built from the files the CLI writes."""
 import json
 import subprocess
 import sys
-import threading
 import urllib.parse
 import urllib.request
 import uuid
 from datetime import datetime, timedelta, timezone
-from functools import partial
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
 
 pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
-from autoquant.shinka_research import cli, grants, rounds, ui
+from autoquant.shinka_research import cli, grants, rounds
 from autoquant.shinka_research.grants import LEDGER
 from autoquant.shinka_research.notebook import LockboxOpening, LockboxTarget, Notebook
 from autoquant.shinka_research.runs import finish_run
 from autoquant.shinka_research.state import hand_over, register_work
+
+import snapshot_reader
 
 # A validation figure a lease keeps for its end; it must never leave the view.
 HELD_OUT = 9.87654
@@ -82,8 +81,10 @@ def _dies(root: Path, work: str) -> None:
     hand_over(root, work, ended.pid)
 
 
-def _get(base: str, path: str) -> dict:
-    return json.loads(urllib.request.urlopen(base + path, timeout=30).read())
+def _get(base: Path, path: str) -> dict:
+    status, text = snapshot_reader.request(base, path)
+    assert status == 200, text
+    return json.loads(text)
 
 
 def _aged(root: Path) -> None:
@@ -132,18 +133,10 @@ def test_the_view_tells_each_run_and_what_waits_on_the_owner(direction: Path) ->
     ]
     assert view["state"] == "running"
 
-    server = ThreadingHTTPServer(
-        ("127.0.0.1", 0), partial(ui._Handler, root=direction.parent)
-    )
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    base = f"http://127.0.0.1:{server.server_address[1]}"
-    try:
-        query = urllib.parse.urlencode({"direction": direction.name})
-        snapshot = _get(base, f"/api/snapshot?{query}")
-        (row,) = _get(base, "/api/workspace")["directions"]
-    finally:
-        server.shutdown()
-        server.server_close()
+    base = direction.parent
+    query = urllib.parse.urlencode({"direction": direction.name})
+    snapshot = _get(base, f"/api/snapshot?{query}")
+    (row,) = _get(base, "/api/workspace")["directions"]
     served = snapshot["rounds"]
     assert served["state"] == "running"
     assert [r["state"] for r in served["grants"][0]["runs"]] == [

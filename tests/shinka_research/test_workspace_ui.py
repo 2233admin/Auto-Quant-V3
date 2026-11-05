@@ -1,22 +1,21 @@
-"""Workspace-page consumer contract, exercised over real loopback HTTP."""
+"""Workspace-page consumer contract of the snapshot builders."""
 
 import errno
 import json
 import sqlite3
 import sys
-import threading
 import urllib.error
 import urllib.parse
 import urllib.request
 from contextlib import contextmanager
-from functools import partial
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
 
 pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
 from autoquant.shinka_research import library, skeptic, ui
+
+import snapshot_reader
 from autoquant.shinka_research.notebook import (
     DataSplit,
     Experiment,
@@ -28,38 +27,25 @@ from autoquant.shinka_research.notebook import (
 
 CREATED = "2026-01-02T03:04:05+00:00"
 HELD_OUT = "fixture-held-out-evidence-should-not-be-in-workspace-summary"
-HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 @contextmanager
 def _server(workspace: Path):
-    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(ui._Handler, root=workspace))
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        yield f"http://127.0.0.1:{server.server_address[1]}"
-    finally:
-        server.shutdown()
-        server.server_close()
-        thread.join(timeout=5)
-        assert not thread.is_alive(), "workspace HTTP server did not stop"
+    yield workspace
 
 
-def _get(base: str, path: str):
-    with HTTP.open(base + path, timeout=5) as response:
-        assert response.status == 200
-        return json.load(response)
+def _get(base: Path, path: str):
+    status, text = snapshot_reader.request(base, path)
+    assert status == 200, text
+    return json.loads(text)
 
 
 def _snapshot_path(direction: str) -> str:
     return "/api/snapshot?" + urllib.parse.urlencode({"direction": direction})
 
 
-def _assert_error(base: str, path: str, status: int) -> None:
-    with pytest.raises(urllib.error.HTTPError) as caught:
-        HTTP.open(base + path, timeout=5)
-    with caught.value as response:
-        assert response.code == status
+def _assert_error(base: Path, path: str, status: int) -> None:
+    assert snapshot_reader.request(base, path)[0] == status
 
 
 def _direction(root: Path, title: str, *bodies: str) -> Notebook:

@@ -1,4 +1,8 @@
-"""Read-only workspace and direction snapshots plus the built research app.
+"""Read-only direction and library snapshots for AutoQuant Studio.
+
+Shinka's standalone web UI was removed in the V3 port; Studio
+(``autoquant/studio_research.py``) serves these snapshots under
+``/api/v1/project/research`` and ``/api/v1/research-library``.
 
 Visibility follows the agent's rules (design.md §7.3): validation-segment
 evidence appears only once a hypothesis has a verdict, and lockbox numbers
@@ -11,19 +15,13 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
-import urllib.parse
-import webbrowser
 from collections import Counter
 from datetime import datetime, timezone
-from functools import partial
-from http import HTTPStatus
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from .analysis import ANALYSIS_PATHS, AnalysisHandler, confined as _confined
 from . import library, rounds, rundb
 from .notebook import (
     NOTEBOOK_FILENAME,
@@ -34,7 +32,16 @@ from .notebook import (
 )
 from .skeptic import expected_max_sharpe
 
-DIST = Path(__file__).parent / "webui" / "dist"
+
+
+def _confined(authority: Path, path: Path) -> Path:
+    """``path`` resolved, refused unless it stays inside ``authority``."""
+    target = path.resolve()
+    try:
+        target.relative_to(authority.resolve())
+    except ValueError:
+        raise PermissionError("Outside the research read scope") from None
+    return target
 
 
 def _iso(ts: float) -> str:
@@ -67,7 +74,6 @@ def _runs(root: Path, nb: Notebook) -> Dict[Tuple[str, str], List[Trial]]:
 def _experiment(root: Path, h: Hypothesis, e, trials: List[Trial]) -> Dict[str, Any]:
     rd = _results(root, h.id, e.id)
     scores = [s for _, _, s, _ in trials if s is not None]
-    db = rd / rundb.DB_FILENAME
     cost = rundb.run_cost(rd)
     out: Dict[str, Any] = {
         "id": e.id,
@@ -81,19 +87,6 @@ def _experiment(root: Path, h: Hypothesis, e, trials: List[Trial]) -> Dict[str, 
         "spend_known": cost.known,
         "first_trial": _iso(trials[0][0]) if trials else None,
         "last_trial": _iso(trials[-1][0]) if trials else None,
-        # The experiment's analysis page (award-redesign design.md › 页面与路由),
-        # remembering the research it returns to.
-        "analysis_url": "/?"
-        + urllib.parse.urlencode(
-            {
-                "view": "run",
-                "run": f"workspace/{db.relative_to(root.parent).as_posix()}",
-                "direction": root.name,
-                "hypothesis": h.id,
-            }
-        )
-        if db.exists()
-        else None,
     }
     if h.verdict is not None:
         out["skeptic"] = e.skeptic
@@ -102,7 +95,7 @@ def _experiment(root: Path, h: Hypothesis, e, trials: List[Trial]) -> Dict[str, 
 
 def _body(root: Path, hid: str) -> str:
     path = _confined(root, root / "hypotheses" / f"{hid}.md")
-    return path.read_text() if path.exists() else ""
+    return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
 # The key a run's end event ends with, there so the end is recorded once; it
@@ -116,7 +109,7 @@ def _events(root: Path, nb: Notebook, limit: int) -> List[Dict[str, Any]]:
         return []
     judged = {h.id for h in nb.hypotheses if h.verdict is not None}
     rows = []
-    for line in path.read_text().splitlines()[1:][-limit:]:
+    for line in path.read_text(encoding="utf-8").splitlines()[1:][-limit:]:
         time, hid, eid, event, note = (line.split("\t", 4) + [""] * 5)[:5]
         if event in ("run", "run-failed"):
             note = _RUN_KEY.sub("", note)
@@ -181,15 +174,18 @@ def _trials(
 
 
 def _read(path: Path) -> str:
-    return path.read_text() if path.exists() else ""
+    return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
-def _library(workspace: Path) -> Optional[Dict[str, Any]]:
-    lib = _confined(workspace, workspace / "library")
+def library_snapshot(lib: Path) -> Optional[Dict[str, Any]]:
+    """The raw -> wiki -> log library, or None before it exists."""
+    path = Path(lib).absolute()
+    # The library may not relocate outside the directory that owns it.
+    lib = _confined(path.parent, path)
     manifest = _confined(lib, lib / library.MANIFEST)
     if not manifest.exists():
         return None
-    if not isinstance(json.loads(manifest.read_text()), dict):
+    if not isinstance(json.loads(manifest.read_text(encoding="utf-8")), dict):
         raise ValueError("Library manifest must be an object")
     raw = _confined(lib, lib / "raw")
     _confined(lib, lib / "wiki")
@@ -209,7 +205,11 @@ def _library(workspace: Path) -> Optional[Dict[str, Any]]:
     }
 
 
-def snapshot(root: Path, events: int = 50) -> Dict[str, Any]:
+def snapshot(
+    root: Path, events: int = 50, library_dir: Optional[Path] = None
+) -> Dict[str, Any]:
+    """One direction. ``library_dir`` adds its library; Studio serves the
+    Workspace library on its own route and leaves it out."""
     root = Path(root).resolve()
     _confined(root, root / NOTEBOOK_FILENAME)
     nb = Notebook.load(root)
@@ -255,7 +255,7 @@ def snapshot(root: Path, events: int = 50) -> Dict[str, Any]:
         "trial_points": points,
         "probes": probes,
         "events": _events(root, nb, events),
-        "library": _library(root.parent),
+        "library": None if library_dir is None else library_snapshot(library_dir),
         # The agent's rounds, runs, lockbox approvals and what waits on the
         # owner (research-agent 3.2); it reports what it cannot read.
         "rounds": rounds.overview(root),
@@ -380,101 +380,5 @@ def workspace_snapshot(root: Path) -> Dict[str, Any]:
         "name": root.name,
         "directions": directions,
         "events": events[:WORKSPACE_EVENTS],
-        "library": _library(root),
+        "library": library_snapshot(root / library.LIBRARY_DIRNAME),
     }
-
-
-class _Handler(AnalysisHandler):
-    def __init__(
-        self,
-        *args,
-        root: Path,
-        **kwargs,
-    ):
-        self.workspace_root = Path(root).resolve()
-        super().__init__(
-            *args, search_root=str(self.workspace_root), directory=str(DIST), **kwargs
-        )
-
-    def parse_request(self) -> bool:
-        """Answer only requests addressed to this machine by name. A page on
-        another site that points its own name at 127.0.0.1 (DNS rebinding)
-        still sends that name as its Host, so it cannot read the workspace."""
-        if not super().parse_request():
-            return False
-        port = self.server.server_address[1]
-        host = (self.headers.get("Host") or "").lower()
-        if host not in (f"127.0.0.1:{port}", f"localhost:{port}"):
-            self.send_error(HTTPStatus.MISDIRECTED_REQUEST, "Unexpected Host header")
-            return False
-        return True
-
-    def do_HEAD(self) -> None:
-        # The research data service accepts GET alone (research-agent spec).
-        self.send_response(HTTPStatus.METHOD_NOT_ALLOWED)
-        self.send_header("Allow", "GET")
-        self.send_header("Content-Length", "0")
-        self.end_headers()
-
-    def _json(self, payload: Dict[str, Any]) -> None:
-        body = json.dumps(payload, ensure_ascii=False, allow_nan=False).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
-
-    def do_GET(self) -> None:
-        url = urllib.parse.urlparse(self.path)
-        if url.path in ANALYSIS_PATHS or url.path.startswith("/plot_file/"):
-            super().do_GET()
-            return
-        if url.path not in {"/api/workspace", "/api/snapshot"}:
-            SimpleHTTPRequestHandler.do_GET(self)
-            return
-        try:
-            if url.path == "/api/workspace":
-                payload = workspace_snapshot(self.workspace_root)
-            else:
-                ids = urllib.parse.parse_qs(url.query, keep_blank_values=True).get(
-                    "direction", []
-                )
-                if len(ids) != 1 or not ids[0].strip():
-                    self.send_error(400, "Specify exactly one nonblank direction")
-                    return
-                try:
-                    root = _direction_root(self.workspace_root, ids[0])
-                except FileNotFoundError:
-                    self.send_error(404, "Unknown direction")
-                    return
-                payload = snapshot(root)
-            self._json(payload)
-        except (OSError, ValueError, sqlite3.Error) as error:
-            self.send_error(
-                500, f"Unable to read research data: {type(error).__name__}"
-            )
-
-
-def serve(
-    root: Path, port: int, open_browser: bool, runs_root: Optional[Path] = None
-) -> None:
-    root = _workspace_root(root)
-    if not (DIST / "index.html").exists():
-        raise SystemExit(
-            f"UI not built: run `pnpm install`, then `pnpm build` "
-            f"in {DIST.parent / 'app'}"
-        )
-    server = ThreadingHTTPServer(
-        ("127.0.0.1", port), partial(_Handler, root=root, runs_root=runs_root)
-    )
-    try:
-        url = f"http://127.0.0.1:{server.server_address[1]}/"
-        print(f"Research workspace UI for {root} at {url} (Ctrl+C to stop)", flush=True)
-        if open_browser:
-            webbrowser.open(url)
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.server_close()

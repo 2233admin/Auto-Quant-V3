@@ -1,19 +1,12 @@
-import http.client
 import json
 import sqlite3
-import threading
-import urllib.error
-import urllib.parse
-import urllib.request
-from functools import partial
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 import numpy as np
 
 import pytest
 pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
-from autoquant.shinka_research import analysis, library, ui
+from autoquant.shinka_research import library, ui
 from autoquant.shinka_research.notebook import (
     Experiment,
     Notebook,
@@ -78,64 +71,6 @@ def test_snapshot_shape(tmp_path: Path) -> None:
     assert snap["events"][0]["hypothesis"] == "h002"  # newest first
 
 
-def test_server_serves_snapshot(tmp_path: Path, monkeypatch) -> None:
-    dist = tmp_path / "dist"
-    dist.mkdir()
-    (dist / "index.html").write_text("<!doctype html><title>t</title>")
-    monkeypatch.setattr(ui, "DIST", dist)
-    root = tmp_path / "workspace"
-    direction = _direction(root / "d")
-    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(ui._Handler, root=root))
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    base = f"http://127.0.0.1:{server.server_address[1]}"
-    try:
-        query = urllib.parse.urlencode({"direction": direction.name})
-        snap = json.loads(urllib.request.urlopen(f"{base}/api/snapshot?{query}").read())
-        assert snap["hypotheses"][1]["verdict"] is None
-        assert b"<title>t</title>" in urllib.request.urlopen(f"{base}/").read()
-    finally:
-        server.shutdown()
-        server.server_close()
-
-
-def test_server_answers_only_requests_addressed_to_this_machine(
-    tmp_path: Path, monkeypatch
-) -> None:
-    dist = tmp_path / "dist"
-    dist.mkdir()
-    (dist / "index.html").write_text("<!doctype html><title>t</title>")
-    monkeypatch.setattr(ui, "DIST", dist)
-    root = tmp_path / "workspace"
-    _direction(root / "d")
-    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(ui._Handler, root=root))
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    port = server.server_address[1]
-
-    def status(method: str, path: str, host: str) -> int:
-        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
-        try:
-            conn.request(method, path, headers={"Host": host})
-            response = conn.getresponse()
-            response.read()
-            return response.status
-        finally:
-            conn.close()
-
-    try:
-        for path in ("/", "/api/workspace"):
-            # A rebinding page reaches 127.0.0.1 under its own name.
-            assert status("GET", path, f"attacker.example:{port}") == 421
-            assert status("GET", path, f"127.0.0.1:{port}") == 200
-            assert status("GET", path, f"LOCALHOST:{port}") == 200
-        # The Host is checked before anything else, and only GET is answered.
-        assert status("HEAD", "/", f"attacker.example:{port}") == 421
-        assert status("HEAD", "/", f"127.0.0.1:{port}") == 405
-        assert status("POST", "/api/workspace", f"127.0.0.1:{port}") == 501
-    finally:
-        server.shutdown()
-        server.server_close()
-
-
 def _programs(results: Path, rows: list) -> None:
     """rows: (timestamp, generation, correct, in-sample score, private metrics)."""
     results.mkdir(parents=True)
@@ -189,34 +124,7 @@ def test_library_contents(tmp_path: Path) -> None:
     lib = library.ensure(library.library_root(root))
     (lib / "wiki" / "momentum.md").write_text("# Momentum\n")
     (lib / "raw" / "paper.md").write_text("raw")
-    snap = ui.snapshot(root)["library"]
+    snap = ui.snapshot(root, library_dir=lib)["library"]
     assert snap["pages"] == [{"name": "momentum", "text": "# Momentum\n"}]
     assert snap["pending"] == ["raw/paper.md"]
     assert snap["index"].startswith("# Library index")
-
-
-def test_tree_server_stays_inside_experiments(tmp_path: Path) -> None:
-    root = _direction(tmp_path / "d")
-    _programs(experiment_dir(root, "h001", "e01") / "results", [(1.0, 0, 1, 0.5, {})])
-    outside = tmp_path / "other" / "programs.sqlite"
-    _programs(outside.parent, [(1.0, 0, 1, 0.5, {})])
-    server = ThreadingHTTPServer(
-        ("127.0.0.1", 0),
-        partial(analysis.AnalysisHandler, search_root=str(root / "experiments")),
-    )
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    base = f"http://127.0.0.1:{server.server_address[1]}"
-    try:
-        listing = urllib.request.urlopen(f"{base}/list_databases")
-        assert listing.status == 200
-        assert listing.headers.get("Access-Control-Allow-Origin") is None
-        for bad in ("../../other/programs.sqlite", str(outside)):
-            q = urllib.parse.quote(bad)
-            try:
-                urllib.request.urlopen(f"{base}/get_program_count?db_path={q}")
-                raise AssertionError(f"{bad} was served")
-            except urllib.error.HTTPError as err:
-                assert err.code == 403
-    finally:
-        server.shutdown()
-        server.server_close()

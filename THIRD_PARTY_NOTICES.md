@@ -72,14 +72,14 @@ All faces are licensed under the SIL Open Font License 1.1. Licence texts for th
 
 ## ShinkaEvolve research layer
 
-`autoquant/shinka_research/`, `tests/shinka_research/`, `examples/shinka_quant_research/`, `studio-shinka/` and
+`autoquant/shinka_research/`, `tests/shinka_research/`, `examples/shinka_quant_research/` and
 `docs/shinka-research/` are a direct port of the `shinka/research/` layer, its tests, example and docs from the
 [2233admin/ShinkaEvolve](https://github.com/2233admin/ShinkaEvolve) fork (commit `a43eb89`, branch `main`) of
-[SakanaAI/ShinkaEvolve](https://github.com/SakanaAI/ShinkaEvolve). Only imports (`shinka.research` to
-`autoquant.shinka_research`), lazy engine access and test paths were changed; see `docs/shinka-research/PORT.md`.
-`autoquant/shinka_research/webui/dist/` is the prebuilt web UI from the same commit.
+[SakanaAI/ShinkaEvolve](https://github.com/SakanaAI/ShinkaEvolve). Imports (`shinka.research` to
+`autoquant.shinka_research`), lazy engine access, test paths and the binding of a direction to an AutoQuant Project
+were changed; see `docs/shinka-research/PORT.md`. The fork's web UI was not carried over; Studio draws these pages
+with its own code.
 
 Licence: Apache License 2.0, Copyright Sakana AI and contributors; the licence text is shipped as
 `autoquant/shinka_research/LICENSE-ShinkaEvolve-Apache-2.0`. The ShinkaEvolve evolution engine itself (`shinka`) is
-not vendored; it is an optional dependency (extra `shinka-engine`). The web UI bundles its own third-party notices in
-`autoquant/shinka_research/webui/dist/analysis/THIRD_PARTY_NOTICES.txt`.
+not vendored; it is an optional dependency (extra `shinka-engine`).

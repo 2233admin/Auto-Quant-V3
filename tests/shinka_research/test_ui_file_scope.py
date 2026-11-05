@@ -1,23 +1,22 @@
-"""Filesystem read-authority regressions at the real workspace HTTP seam."""
+"""Filesystem read-authority regressions of the snapshot builders."""
 
 import errno
 import json
 import sqlite3
 import sys
-import threading
 import urllib.error
 import urllib.parse
 import urllib.request
 from contextlib import closing, contextmanager
-from functools import partial
 from http.client import HTTPException
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
 
 pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
-from autoquant.shinka_research import library, ui
+from autoquant.shinka_research import library
+
+import snapshot_reader
 from autoquant.shinka_research.notebook import (
     Experiment,
     Notebook,
@@ -28,34 +27,15 @@ from autoquant.shinka_research.notebook import (
 CREATED = "2026-01-02T03:04:05+00:00"
 SECRET = "read-scope-sibling-secret"
 SIBLING_SCORE = 9876.54321
-HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 @contextmanager
 def _server(workspace: Path):
-    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(ui._Handler, root=workspace))
-    # server_close must join request threads as well as closing the listener.
-    server.daemon_threads = False
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    try:
-        thread.start()
-        try:
-            yield f"http://127.0.0.1:{server.server_address[1]}"
-        finally:
-            server.shutdown()
-            thread.join(timeout=5)
-            assert not thread.is_alive(), "workspace HTTP server did not stop"
-    finally:
-        server.server_close()
+    yield workspace
 
 
-def _request(base: str, path: str) -> tuple[int, str]:
-    try:
-        response = HTTP.open(base + path, timeout=5)
-    except urllib.error.HTTPError as error:
-        response = error
-    with response:
-        return response.code, response.read().decode("utf-8")
+def _request(base: Path, path: str) -> tuple[int, str]:
+    return snapshot_reader.request(base, path)
 
 
 def _snapshot_path(direction: str) -> str:

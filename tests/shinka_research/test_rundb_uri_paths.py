@@ -2,42 +2,31 @@
 
 import json
 import sqlite3
-import threading
 import urllib.parse
 import urllib.request
 from contextlib import closing, contextmanager
-from functools import partial
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
 
 pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
-from autoquant.shinka_research import rundb, ui
+from autoquant.shinka_research import rundb
 from autoquant.shinka_research.notebook import Notebook, experiment_dir
 
+import snapshot_reader
+
 CREATED = "2026-01-02T03:04:05+00:00"
-HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 @contextmanager
 def _server(workspace: Path):
-    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(ui._Handler, root=workspace))
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        yield f"http://127.0.0.1:{server.server_address[1]}"
-    finally:
-        server.shutdown()
-        server.server_close()
-        thread.join(timeout=5)
-        assert not thread.is_alive(), "workspace HTTP server did not stop"
+    yield workspace
 
 
-def _get(base: str, path: str):
-    with HTTP.open(base + path, timeout=5) as response:
-        assert response.status == 200
-        return json.load(response)
+def _get(base: Path, path: str):
+    status, text = snapshot_reader.request(base, path)
+    assert status == 200, text
+    return json.loads(text)
 
 
 def _result_databases(results: Path) -> None:

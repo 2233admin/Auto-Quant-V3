@@ -20,6 +20,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/shinka-direction-as-project]] | A Shinka research direction lives in a V3 Project, `aq shinka` addresses it by Project, and Studio draws its research pages and the Workspace library natively. | 2026-11-05 |
 | [[plans/openalice-core-integrity]] | Desk-wide trial families, a Core trial gate, OpenAlice bars acquisition and a versioned handoff.json so an OpenAlice-hosted desk keeps its integrity rules. | 2026-11-04 |
 | [[plans/factor-to-portfolio-conversion]] | Turn a tested standalone Factor Lab into a research desk by reference with a caller-confirmed mandate, same-data proof and continued trial counting, from one confirmed Studio action. | 2026-11-03 |
 | [[plans/full-factor-tear-sheet]] | Publish frozen 3/5/10-group Factor diagnostics and a gated bilingual Studio tear sheet without rewriting historical evidence. | 2026-11-03 |

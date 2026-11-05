@@ -12,7 +12,7 @@ dependencies = [
 
 [project.optional-dependencies]
 columnar = ["pyarrow>=16"]
-# Ported Shinka research layer (`aq shinka ...`); runs/UI additionally need shinka-engine.
+# Ported Shinka research layer (`aq shinka ...`); runs and cost reads additionally need shinka-engine.
 shinka = ["pydantic>=2", "pyyaml", "scipy", "psutil"]
 # The ShinkaEvolve evolution engine itself (not vendored).
 shinka-engine = ["shinka-evolve"]
