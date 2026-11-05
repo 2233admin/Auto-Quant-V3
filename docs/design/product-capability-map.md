@@ -321,6 +321,7 @@ AutoQuant itself (read-only)
   [[docs/design/idea-verdict-card]], [[docs/design/studio-local-actions]],
   [[docs/design/studio-mods]], [[docs/design/pandaai-reference-notes]],
   [[docs/design/pandaai-frontend-study]],
+  [[docs/design/pandaai-mechanisms]],
   [[docs/design/factor-qualification-funnel]],
   [[docs/design/selection-adjusted-research-evidence]],
   [[docs/design/hypothesis-and-idea-verdict]],
