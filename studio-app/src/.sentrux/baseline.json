@@ -24,21 +24,21 @@
     }
   ],
   "metrics": {
-    "branch_density_per_fn": 17,
+    "branch_density_per_fn": 19,
     "complex_fn_count": 0,
-    "coupling_score": 59.55,
-    "cross_module_edges": 1060,
+    "coupling_score": 59.4,
+    "cross_module_edges": 1093,
     "cycle_count": 0,
-    "files": 178,
-    "functions": 842,
+    "files": 184,
+    "functions": 873,
     "god_file_count": 3,
-    "import_modeled_files": 178,
-    "max_complexity": 17,
-    "quality_signal": 9143,
-    "total_import_edges": 1060
+    "import_modeled_files": 184,
+    "max_complexity": 19,
+    "quality_signal": 9124,
+    "total_import_edges": 1093
   },
-  "savedAt": 1793857774,
+  "savedAt": 1793861053,
   "schema": "code-intel-sentrux-baseline.v5",
   "scope": ".",
-  "sourceCommit": "2f22d7d5d6d5d90d096b26c920c65a5193b50469"
+  "sourceCommit": "ad03e176579757b87d7282808eaf71e32996ce93"
 }

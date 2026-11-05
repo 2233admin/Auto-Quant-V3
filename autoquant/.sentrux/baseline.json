@@ -204,7 +204,7 @@
     },
     {
       "functions": 62,
-      "loc": 3061,
+      "loc": 3097,
       "path": "studio.py",
       "rule": "loc>800; functions>25&&loc>400"
     },
@@ -254,19 +254,19 @@
   "metrics": {
     "branch_density_per_fn": 650,
     "complex_fn_count": 2,
-    "coupling_score": 113.59,
-    "cross_module_edges": 1647,
+    "coupling_score": 113.77,
+    "cross_module_edges": 1661,
     "cycle_count": 0,
-    "files": 145,
-    "functions": 2345,
+    "files": 146,
+    "functions": 2371,
     "god_file_count": 41,
-    "import_modeled_files": 145,
+    "import_modeled_files": 146,
     "max_complexity": 650,
     "quality_signal": 0,
-    "total_import_edges": 1647
+    "total_import_edges": 1661
   },
-  "savedAt": 1793857775,
+  "savedAt": 1793861053,
   "schema": "code-intel-sentrux-baseline.v5",
   "scope": ".",
-  "sourceCommit": "2f22d7d5d6d5d90d096b26c920c65a5193b50469"
+  "sourceCommit": "ad03e176579757b87d7282808eaf71e32996ce93"
 }
