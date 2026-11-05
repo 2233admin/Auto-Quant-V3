@@ -52,21 +52,21 @@ deleted and redrawn in Studio's current design, not copied. This replaces the
   `research/` directory or Workspace with `--project`; bare directories keep
   working; library at `<workspace>/library/`.
 - [x] Standalone UI and its tests removed; snapshot builders kept.
-- [ ] `/api/v1/project/research?id=` and `/api/v1/research-library` serve
+- [x] `/api/v1/project/research?id=` and `/api/v1/research-library` serve
   filtered snapshots with ETag/304, documented in the Studio schema.
-- [ ] Studio research pages built, localized, screenshotted with the
+- [x] Studio research pages built, localized, screenshotted with the
   synthetic fixture.
-- [ ] Shinka tests, Studio/documentation tests, UI checks, full suite against
+- [x] Shinka tests, Studio/documentation tests, UI checks, full suite against
   the known-failure baseline, structural gate.
 
 ## Work
 
 - [x] Backend binding and CLI split.
 - [x] Delete the standalone UI.
-- [ ] Studio read model and routes.
-- [ ] Demo fixture Workspace.
-- [ ] Studio pages and bundle.
-- [ ] Docs and verification.
+- [x] Studio read model and routes.
+- [x] Demo fixture Workspace.
+- [x] Studio pages and bundle.
+- [x] Docs and verification.
 
 ## Findings and decisions
 
@@ -80,11 +80,26 @@ deleted and redrawn in Studio's current design, not copied. This replaces the
 
 ## Verification
 
-- Pending.
+2026-11-05, Windows Server 2025, `.venv` with the `shinka` and `shinka-engine` extras:
+
+- `pytest tests/shinka_research -q`: 276 passed (step 1: 336 passed, 1 skipped; UI, analysis and design-token tests removed, 5 binding tests added).
+- `unittest tests.test_studio_research`: 13 OK; `tests.test_studio tests.test_studio_cache tests.test_documentation` OK.
+- Full `unittest discover -s tests -t .`: 714 run, 1 failure, the known `test_sample_template_owned_files_match_a_fresh_research_desk`; `scripts/check_known_failures.py --no-rerun` exit 0.
+- `studio-app`: `pnpm typecheck` 0, `pnpm build` 0 (reproducible), `pnpm check:i18n` 0; `node studio-app/tests/run-idea-answer.cjs` from the repository root 89/89 (`pnpm test:ui` inside `studio-app/` fails one cwd-dependent test, as on the base).
+- `code-intel sentrux check autoquant` and `studio-app/src` pass after the explained re-baseline (`chore(structure)` commit).
+- Screenshots of the demo Workspace at 1440x900 in `D:	mpqv3-shinka-shots\`.
+
+## Deferred
+
+- Per-experiment evolution tree (the upstream run viewer) is not redrawn.
+- Shinka's cross-direction Compare does not map onto V3 Compare (immutable Runs under one authority).
+- Studio is read-only for research; select/drop, verdict and confirm stay on the CLI.
+- Shinka modules other than `ui.py`/`state.py` still use locale-default text encoding.
 
 ## Progress log
 
 - 2026-11-05 — Plan created; backend binding and UI removal done.
+- 2026-11-05 — Read model, fixture, Studio pages, docs and verification done; awaiting owner review.
 
 ## Completion
 
