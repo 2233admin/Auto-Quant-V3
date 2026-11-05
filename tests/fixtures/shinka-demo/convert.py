@@ -228,6 +228,24 @@ def convert(demo: Path) -> None:
     shutil.copytree(demo / "library", lib)
     shutil.copytree(HERE / "overlay" / "library", lib, dirs_exist_ok=True)
     shutil.copyfile(demo / "DEMO_DATA.md", lib / "DEMO_DATA.md")
+    _lf(out, lib)
+
+
+def _lf(*roots):
+    """The repository checks text out with LF (.gitattributes), so the fixture is LF on disk too, and the
+    library manifest hashes the LF raw sources it says were compiled (else a checkout shows them pending)."""
+    import hashlib
+
+    for root in roots:
+        for path in root.rglob("*"):
+            if path.is_file() and path.suffix in (".md", ".json", ".tsv", ".txt"):
+                data = path.read_bytes()
+                if b"\r\n" in data:
+                    path.write_bytes(data.replace(b"\r\n", b"\n"))
+    lib = roots[-1]
+    manifest = json.loads((lib / "manifest.json").read_text(encoding="utf-8"))
+    manifest = {rel: hashlib.sha256((lib / rel).read_bytes()).hexdigest() for rel in manifest}
+    (lib / "manifest.json").write_bytes((json.dumps(manifest, indent=2) + "\n").encode())
 
 
 if __name__ == "__main__":
