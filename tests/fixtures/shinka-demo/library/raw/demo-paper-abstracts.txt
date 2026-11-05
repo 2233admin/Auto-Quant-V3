@@ -1,0 +1,2 @@
+DEMO · 演示数据，非真实研究
+Fictional abstracts used to demo the library. Not real papers.

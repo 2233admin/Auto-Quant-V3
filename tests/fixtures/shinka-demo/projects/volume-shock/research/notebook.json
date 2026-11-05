@@ -1,0 +1,17 @@
+{
+  "direction": "DEMO · 演示数据，非真实研究 · 成交量冲击后的价格漂移（新方向）",
+  "created": "2026-10-17T16:00:00+00:00",
+  "budget_usd": 20.0,
+  "data": null,
+  "hypotheses": [
+    {
+      "id": "h001",
+      "title": "DEMO · 演示数据，非真实研究 · 成交量突增 3 倍后 5 日内正向漂移",
+      "status": "proposed",
+      "created": "2026-10-17T16:10:00+00:00",
+      "experiments": [],
+      "verdict": null,
+      "confirmation": null
+    }
+  ]
+}

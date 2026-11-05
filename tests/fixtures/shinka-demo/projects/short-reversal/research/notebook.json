@@ -1,0 +1,79 @@
+{
+  "direction": "DEMO · 演示数据，非真实研究 · 短期反转（预算超支与评估失败示例）",
+  "created": "2026-10-14T09:00:00+00:00",
+  "budget_usd": 8.0,
+  "data": {
+    "source_hash": "07b39cf7f6616327571907a77d1780c8bb00866e8d390c60f12c79b27dfdf9b3",
+    "timestamp_col": "timestamp",
+    "dev_path": "data/dev.csv",
+    "n_total": 1600,
+    "n_dev": 1280,
+    "lockbox_start": "2022-11-29 00:00:00",
+    "opened": false
+  },
+  "hypotheses": [
+    {
+      "id": "h001",
+      "title": "DEMO · 演示数据，非真实研究 · 3 日反转在低流动性日更强",
+      "status": "challenged",
+      "created": "2026-10-14T09:10:00+00:00",
+      "experiments": [
+        {
+          "id": "e01",
+          "created": "2026-10-14T09:30:00+00:00",
+          "evaluator_hash": "8592c1473a0aab699f7ca9efe7ee134532233c7635c8289bf3cf0925fe3f7cb6",
+          "data_path": "data/dev.csv",
+          "data_hash": "277b5cad2585a540332d50144415d2b7be15189d6839cb175a43f400b2a0349b",
+          "n_evaluated": 200,
+          "n_probed": 0,
+          "skeptic": {
+            "program_id": "9da87ad1-f572-44ba-979c-741886f5338b",
+            "is_score": 0.84787,
+            "is_sharpe": 0.8224,
+            "oos_sharpe": 0.31,
+            "oos_bars": 384,
+            "decay": 0.3769455252918288,
+            "n_trials": 200,
+            "trial_sharpe_var_per_period": 8.577175385522327e-05,
+            "expected_max_sharpe_annual": 0.40658357711677484,
+            "dsr": 0.42,
+            "oos_positive_fraction": 0.333,
+            "pbo": 0.55,
+            "baseline_seed_oos_sharpe": 0.1,
+            "baseline_buy_hold_oos_sharpe": 0.44,
+            "best_program": "experiments/h001/e01/best_program.py",
+            "rule_label": "inconclusive",
+            "rule_reason": "OOS Sharpe 0.31 does not beat buy-and-hold (0.44)",
+            "thresholds": {
+              "dsr_supported": 0.95,
+              "min_positive_fraction": 0.6666666666666666,
+              "max_pbo": 0.5
+            }
+          }
+        }
+      ],
+      "verdict": null,
+      "confirmation": null
+    },
+    {
+      "id": "h002",
+      "title": "DEMO · 演示数据，非真实研究 · 反转信号叠加波动率过滤（评估器多次失败）",
+      "status": "running",
+      "created": "2026-10-15T11:00:00+00:00",
+      "experiments": [
+        {
+          "id": "e01",
+          "created": "2026-10-15T11:20:00+00:00",
+          "evaluator_hash": "8592c1473a0aab699f7ca9efe7ee134532233c7635c8289bf3cf0925fe3f7cb6",
+          "data_path": "data/dev.csv",
+          "data_hash": "277b5cad2585a540332d50144415d2b7be15189d6839cb175a43f400b2a0349b",
+          "n_evaluated": 150,
+          "n_probed": 0,
+          "skeptic": null
+        }
+      ],
+      "verdict": null,
+      "confirmation": null
+    }
+  ]
+}

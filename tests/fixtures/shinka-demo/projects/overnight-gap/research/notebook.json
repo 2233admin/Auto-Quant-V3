@@ -1,0 +1,173 @@
+{
+  "direction": "DEMO · 演示数据，非真实研究 · 隔夜跳空的延续效应（已结题）",
+  "created": "2026-09-28T09:00:00+00:00",
+  "budget_usd": 40.0,
+  "data": {
+    "source_hash": "b465a290754bec8ef14a873fecfe644c403c10a80c82fcd3b87575f5b2aca909",
+    "timestamp_col": "timestamp",
+    "dev_path": "data/dev.csv",
+    "n_total": 1600,
+    "n_dev": 1280,
+    "lockbox_start": "2022-11-29 00:00:00",
+    "opened": true
+  },
+  "hypotheses": [
+    {
+      "id": "h001",
+      "title": "DEMO · 演示数据，非真实研究 · 大幅高开后当日延续，扣费后仍为正",
+      "status": "confirmed",
+      "created": "2026-09-28T09:10:00+00:00",
+      "experiments": [
+        {
+          "id": "e01",
+          "created": "2026-09-28T10:00:00+00:00",
+          "evaluator_hash": "64052951b9f2daef707d165e13acd1bdc0bc8b8562d74ea24e95eb626e7e2f09",
+          "data_path": "data/dev.csv",
+          "data_hash": "ecdc50b27538f22cac71e4dfa8b985eacab7bf4937094851ed9ff3db725fcbcc",
+          "n_evaluated": 240,
+          "n_probed": 1,
+          "skeptic": {
+            "program_id": "237d0821-5575-418f-bf6b-acec175fddb6",
+            "is_score": 0.92712,
+            "is_sharpe": 0.8993,
+            "oos_sharpe": 1.05,
+            "oos_bars": 384,
+            "decay": 1.1675747803847438,
+            "n_trials": 241,
+            "trial_sharpe_var_per_period": 0.00010400880556336463,
+            "expected_max_sharpe_annual": 0.4575056601171067,
+            "dsr": 0.968,
+            "oos_positive_fraction": 0.667,
+            "pbo": 0.22,
+            "baseline_seed_oos_sharpe": 0.15,
+            "baseline_buy_hold_oos_sharpe": 0.36,
+            "best_program": "experiments/h001/e01/best_program.py",
+            "rule_label": "supported",
+            "rule_reason": "DSR 0.968 >= 0.95 over 241 trials; 67% of OOS sub-periods positive; beats buy-and-hold (0.36)",
+            "thresholds": {
+              "dsr_supported": 0.95,
+              "min_positive_fraction": 0.6666666666666666,
+              "max_pbo": 0.5
+            }
+          }
+        }
+      ],
+      "verdict": {
+        "label": "supported",
+        "reason": "DSR 0.968 >= 0.95 over 241 trials; 67% of OOS sub-periods positive; beats buy-and-hold (0.36)",
+        "evidence": {
+          "experiment": "e01",
+          "program_id": "237d0821-5575-418f-bf6b-acec175fddb6",
+          "is_score": 0.92712,
+          "is_sharpe": 0.8993,
+          "oos_sharpe": 1.05,
+          "oos_bars": 384,
+          "decay": 1.1675747803847438,
+          "n_trials": 241,
+          "trial_sharpe_var_per_period": 0.00010400880556336463,
+          "expected_max_sharpe_annual": 0.4575056601171067,
+          "dsr": 0.968,
+          "oos_positive_fraction": 0.667,
+          "pbo": 0.22,
+          "baseline_seed_oos_sharpe": 0.15,
+          "baseline_buy_hold_oos_sharpe": 0.36,
+          "best_program": "experiments/h001/e01/best_program.py",
+          "rule_label": "supported",
+          "rule_reason": "DSR 0.968 >= 0.95 over 241 trials; 67% of OOS sub-periods positive; beats buy-and-hold (0.36)",
+          "thresholds": {
+            "dsr_supported": 0.95,
+            "min_positive_fraction": 0.6666666666666666,
+            "max_pbo": 0.5
+          }
+        },
+        "created": "2026-09-30T09:30:00+00:00"
+      },
+      "confirmation": {
+        "experiment": "e01",
+        "program_id": "237d0821-5575-418f-bf6b-acec175fddb6",
+        "lockbox_start": "2022-11-29 00:00:00",
+        "lockbox_bars": 320,
+        "lockbox_sharpe": 0.94,
+        "lockbox_annual_return": 0.112,
+        "lockbox_max_drawdown": -0.087,
+        "lockbox_buy_hold_sharpe": 0.38,
+        "n_trials": 401,
+        "dsr": 0.961,
+        "lockbox_positive_fraction": 0.667,
+        "passed": true
+      }
+    },
+    {
+      "id": "h002",
+      "title": "DEMO · 演示数据，非真实研究 · 小幅低开后当日反转",
+      "status": "refuted",
+      "created": "2026-09-28T09:12:00+00:00",
+      "experiments": [
+        {
+          "id": "e01",
+          "created": "2026-09-30T14:00:00+00:00",
+          "evaluator_hash": "64052951b9f2daef707d165e13acd1bdc0bc8b8562d74ea24e95eb626e7e2f09",
+          "data_path": "data/dev.csv",
+          "data_hash": "ecdc50b27538f22cac71e4dfa8b985eacab7bf4937094851ed9ff3db725fcbcc",
+          "n_evaluated": 160,
+          "n_probed": 0,
+          "skeptic": {
+            "program_id": "4a59ebba-3a1b-4d42-be4e-f09bf927893c",
+            "is_score": 0.73477,
+            "is_sharpe": 0.7127,
+            "oos_sharpe": -0.34,
+            "oos_bars": 384,
+            "decay": -0.4770590711379262,
+            "n_trials": 401,
+            "trial_sharpe_var_per_period": 0.000139481883804858,
+            "expected_max_sharpe_annual": 0.5597394734869791,
+            "dsr": 0.04,
+            "oos_positive_fraction": 0.0,
+            "pbo": 0.66,
+            "baseline_seed_oos_sharpe": 0.02,
+            "baseline_buy_hold_oos_sharpe": 0.36,
+            "best_program": "experiments/h002/e01/best_program.py",
+            "rule_label": "refuted",
+            "rule_reason": "OOS Sharpe -0.34 <= 0",
+            "thresholds": {
+              "dsr_supported": 0.95,
+              "min_positive_fraction": 0.6666666666666666,
+              "max_pbo": 0.5
+            }
+          }
+        }
+      ],
+      "verdict": {
+        "label": "refuted",
+        "reason": "OOS Sharpe -0.34 <= 0",
+        "evidence": {
+          "experiment": "e01",
+          "program_id": "4a59ebba-3a1b-4d42-be4e-f09bf927893c",
+          "is_score": 0.73477,
+          "is_sharpe": 0.7127,
+          "oos_sharpe": -0.34,
+          "oos_bars": 384,
+          "decay": -0.4770590711379262,
+          "n_trials": 401,
+          "trial_sharpe_var_per_period": 0.000139481883804858,
+          "expected_max_sharpe_annual": 0.5597394734869791,
+          "dsr": 0.04,
+          "oos_positive_fraction": 0.0,
+          "pbo": 0.66,
+          "baseline_seed_oos_sharpe": 0.02,
+          "baseline_buy_hold_oos_sharpe": 0.36,
+          "best_program": "experiments/h002/e01/best_program.py",
+          "rule_label": "refuted",
+          "rule_reason": "OOS Sharpe -0.34 <= 0",
+          "thresholds": {
+            "dsr_supported": 0.95,
+            "min_positive_fraction": 0.6666666666666666,
+            "max_pbo": 0.5
+          }
+        },
+        "created": "2026-10-02T09:20:00+00:00"
+      },
+      "confirmation": null
+    }
+  ]
+}

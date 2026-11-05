@@ -1,0 +1,262 @@
+{
+  "direction": "DEMO · 演示数据，非真实研究 · 日线动量在不同波动率状态下是否稳健",
+  "created": "2026-10-08T09:00:00+00:00",
+  "budget_usd": 80.0,
+  "data": {
+    "source_hash": "5fe56767ae2e2ee8a054fc725ae7b9fe10d683f8058ba5c19fee7222c328d2a2",
+    "timestamp_col": "timestamp",
+    "dev_path": "data/dev.csv",
+    "n_total": 1600,
+    "n_dev": 1280,
+    "lockbox_start": "2022-11-29 00:00:00",
+    "opened": false
+  },
+  "hypotheses": [
+    {
+      "id": "h001",
+      "title": "DEMO · 演示数据，非真实研究 · 波动率缩放的 12/63 日动量在验证段仍有正 Sharpe",
+      "status": "supported",
+      "created": "2026-10-08T09:05:00+00:00",
+      "experiments": [
+        {
+          "id": "e01",
+          "created": "2026-10-08T09:20:00+00:00",
+          "evaluator_hash": "5051f5edc69ff678cb1ef5ed580dd13ae76a2ddfa806012692abe4857ca3bb2e",
+          "data_path": "data/dev.csv",
+          "data_hash": "3c6f2b378d77835c749f47342b5e43df7ed515266dda59dd11f03b547d534165",
+          "n_evaluated": 320,
+          "n_probed": 3,
+          "skeptic": {
+            "program_id": "ec4f4e0f-c465-4bd4-bfba-26ef07f419d5",
+            "is_score": 1.02772,
+            "is_sharpe": 0.9969,
+            "oos_sharpe": 1.12,
+            "oos_bars": 384,
+            "decay": 1.123482796669676,
+            "n_trials": 543,
+            "trial_sharpe_var_per_period": 0.00017558734064416936,
+            "expected_max_sharpe_annual": 0.6473046164153459,
+            "dsr": 0.973,
+            "oos_positive_fraction": 1.0,
+            "pbo": 0.18,
+            "baseline_seed_oos_sharpe": 0.22,
+            "baseline_buy_hold_oos_sharpe": 0.41,
+            "best_program": "experiments/h001/e01/best_program.py",
+            "rule_label": "supported",
+            "rule_reason": "DSR 0.973 >= 0.95 over 543 trials; 100% of OOS sub-periods positive; beats buy-and-hold (0.41)",
+            "thresholds": {
+              "dsr_supported": 0.95,
+              "min_positive_fraction": 0.6666666666666666,
+              "max_pbo": 0.5
+            }
+          }
+        }
+      ],
+      "verdict": {
+        "label": "supported",
+        "reason": "DSR 0.973 >= 0.95 over 543 trials; 100% of OOS sub-periods positive; beats buy-and-hold (0.41)",
+        "evidence": {
+          "experiment": "e01",
+          "program_id": "ec4f4e0f-c465-4bd4-bfba-26ef07f419d5",
+          "is_score": 1.02772,
+          "is_sharpe": 0.9969,
+          "oos_sharpe": 1.12,
+          "oos_bars": 384,
+          "decay": 1.123482796669676,
+          "n_trials": 543,
+          "trial_sharpe_var_per_period": 0.00017558734064416936,
+          "expected_max_sharpe_annual": 0.6473046164153459,
+          "dsr": 0.973,
+          "oos_positive_fraction": 1.0,
+          "pbo": 0.18,
+          "baseline_seed_oos_sharpe": 0.22,
+          "baseline_buy_hold_oos_sharpe": 0.41,
+          "best_program": "experiments/h001/e01/best_program.py",
+          "rule_label": "supported",
+          "rule_reason": "DSR 0.973 >= 0.95 over 543 trials; 100% of OOS sub-periods positive; beats buy-and-hold (0.41)",
+          "thresholds": {
+            "dsr_supported": 0.95,
+            "min_positive_fraction": 0.6666666666666666,
+            "max_pbo": 0.5
+          }
+        },
+        "created": "2026-10-09T10:20:00+00:00"
+      },
+      "confirmation": null
+    },
+    {
+      "id": "h002",
+      "title": "DEMO · 演示数据，非真实研究 · 5 日超短回看动量优于买入持有",
+      "status": "refuted",
+      "created": "2026-10-08T09:06:00+00:00",
+      "experiments": [
+        {
+          "id": "e01",
+          "created": "2026-10-08T14:00:00+00:00",
+          "evaluator_hash": "5051f5edc69ff678cb1ef5ed580dd13ae76a2ddfa806012692abe4857ca3bb2e",
+          "data_path": "data/dev.csv",
+          "data_hash": "3c6f2b378d77835c749f47342b5e43df7ed515266dda59dd11f03b547d534165",
+          "n_evaluated": 220,
+          "n_probed": 0,
+          "skeptic": {
+            "program_id": "d71b3eb1-87a9-4034-8f32-6682aff56812",
+            "is_score": 1.10207,
+            "is_sharpe": 1.069,
+            "oos_sharpe": -0.21,
+            "oos_bars": 384,
+            "decay": -0.19644527595884004,
+            "n_trials": 543,
+            "trial_sharpe_var_per_period": 0.00017558734064416936,
+            "expected_max_sharpe_annual": 0.6473046164153459,
+            "dsr": 0.08,
+            "oos_positive_fraction": 0.333,
+            "pbo": 0.71,
+            "baseline_seed_oos_sharpe": 0.05,
+            "baseline_buy_hold_oos_sharpe": 0.41,
+            "best_program": "experiments/h002/e01/best_program.py",
+            "rule_label": "refuted",
+            "rule_reason": "OOS Sharpe -0.21 <= 0",
+            "thresholds": {
+              "dsr_supported": 0.95,
+              "min_positive_fraction": 0.6666666666666666,
+              "max_pbo": 0.5
+            }
+          }
+        }
+      ],
+      "verdict": {
+        "label": "refuted",
+        "reason": "OOS Sharpe -0.21 <= 0",
+        "evidence": {
+          "experiment": "e01",
+          "program_id": "d71b3eb1-87a9-4034-8f32-6682aff56812",
+          "is_score": 1.10207,
+          "is_sharpe": 1.069,
+          "oos_sharpe": -0.21,
+          "oos_bars": 384,
+          "decay": -0.19644527595884004,
+          "n_trials": 543,
+          "trial_sharpe_var_per_period": 0.00017558734064416936,
+          "expected_max_sharpe_annual": 0.6473046164153459,
+          "dsr": 0.08,
+          "oos_positive_fraction": 0.333,
+          "pbo": 0.71,
+          "baseline_seed_oos_sharpe": 0.05,
+          "baseline_buy_hold_oos_sharpe": 0.41,
+          "best_program": "experiments/h002/e01/best_program.py",
+          "rule_label": "refuted",
+          "rule_reason": "OOS Sharpe -0.21 <= 0",
+          "thresholds": {
+            "dsr_supported": 0.95,
+            "min_positive_fraction": 0.6666666666666666,
+            "max_pbo": 0.5
+          }
+        },
+        "created": "2026-10-09T11:15:00+00:00"
+      },
+      "confirmation": null
+    },
+    {
+      "id": "h003",
+      "title": "DEMO · 演示数据，非真实研究 · 高波动状态下切换为均值回归能提升稳定性",
+      "status": "inconclusive",
+      "created": "2026-10-10T09:00:00+00:00",
+      "experiments": [
+        {
+          "id": "e01",
+          "created": "2026-10-10T09:15:00+00:00",
+          "evaluator_hash": "5051f5edc69ff678cb1ef5ed580dd13ae76a2ddfa806012692abe4857ca3bb2e",
+          "data_path": "data/dev.csv",
+          "data_hash": "3c6f2b378d77835c749f47342b5e43df7ed515266dda59dd11f03b547d534165",
+          "n_evaluated": 180,
+          "n_probed": 0,
+          "skeptic": null
+        },
+        {
+          "id": "e02",
+          "created": "2026-10-11T10:00:00+00:00",
+          "evaluator_hash": "5051f5edc69ff678cb1ef5ed580dd13ae76a2ddfa806012692abe4857ca3bb2e",
+          "data_path": "data/dev.csv",
+          "data_hash": "3c6f2b378d77835c749f47342b5e43df7ed515266dda59dd11f03b547d534165",
+          "n_evaluated": 260,
+          "n_probed": 2,
+          "skeptic": {
+            "program_id": "85196d4a-a32b-43c7-888f-5d21ac98c9f0",
+            "is_score": 0.8843,
+            "is_sharpe": 0.8578,
+            "oos_sharpe": 0.58,
+            "oos_bars": 384,
+            "decay": 0.6761482863138261,
+            "n_trials": 985,
+            "trial_sharpe_var_per_period": 0.00015099167969204655,
+            "expected_max_sharpe_annual": 0.6341176521817176,
+            "dsr": 0.71,
+            "oos_positive_fraction": 0.333,
+            "pbo": 0.38,
+            "baseline_seed_oos_sharpe": 0.19,
+            "baseline_buy_hold_oos_sharpe": 0.41,
+            "best_program": "experiments/h003/e02/best_program.py",
+            "rule_label": "inconclusive",
+            "rule_reason": "OOS Sharpe 0.58 > 0 but DSR 0.710 (needs 0.95), sub-period stability 33% (needs 67%) or PBO 0.38 (max 0.5) falls short",
+            "thresholds": {
+              "dsr_supported": 0.95,
+              "min_positive_fraction": 0.6666666666666666,
+              "max_pbo": 0.5
+            }
+          }
+        }
+      ],
+      "verdict": {
+        "label": "inconclusive",
+        "reason": "OOS Sharpe 0.58 > 0 but DSR 0.710 (needs 0.95), sub-period stability 33% (needs 67%) or PBO 0.38 (max 0.5) falls short",
+        "evidence": {
+          "experiment": "e02",
+          "program_id": "85196d4a-a32b-43c7-888f-5d21ac98c9f0",
+          "is_score": 0.8843,
+          "is_sharpe": 0.8578,
+          "oos_sharpe": 0.58,
+          "oos_bars": 384,
+          "decay": 0.6761482863138261,
+          "n_trials": 985,
+          "trial_sharpe_var_per_period": 0.00015099167969204655,
+          "expected_max_sharpe_annual": 0.6341176521817176,
+          "dsr": 0.71,
+          "oos_positive_fraction": 0.333,
+          "pbo": 0.38,
+          "baseline_seed_oos_sharpe": 0.19,
+          "baseline_buy_hold_oos_sharpe": 0.41,
+          "best_program": "experiments/h003/e02/best_program.py",
+          "rule_label": "inconclusive",
+          "rule_reason": "OOS Sharpe 0.58 > 0 but DSR 0.710 (needs 0.95), sub-period stability 33% (needs 67%) or PBO 0.38 (max 0.5) falls short",
+          "thresholds": {
+            "dsr_supported": 0.95,
+            "min_positive_fraction": 0.6666666666666666,
+            "max_pbo": 0.5
+          }
+        },
+        "created": "2026-10-13T15:00:00+00:00"
+      },
+      "confirmation": null
+    },
+    {
+      "id": "h004",
+      "title": "DEMO · 演示数据，非真实研究 · 加入成交量确认可降低换手且不损失收益",
+      "status": "running",
+      "created": "2026-10-10T09:01:00+00:00",
+      "experiments": [
+        {
+          "id": "e01",
+          "created": "2026-10-18T08:00:00+00:00",
+          "evaluator_hash": "5051f5edc69ff678cb1ef5ed580dd13ae76a2ddfa806012692abe4857ca3bb2e",
+          "data_path": "data/dev.csv",
+          "data_hash": "3c6f2b378d77835c749f47342b5e43df7ed515266dda59dd11f03b547d534165",
+          "n_evaluated": 0,
+          "n_probed": 0,
+          "skeptic": null
+        }
+      ],
+      "verdict": null,
+      "confirmation": null
+    }
+  ]
+}
