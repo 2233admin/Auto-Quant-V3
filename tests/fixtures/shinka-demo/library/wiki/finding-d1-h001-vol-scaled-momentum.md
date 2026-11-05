@@ -1,9 +1,7 @@
 # finding-d1-h001-vol-scaled-momentum
 
-> DEMO · 演示数据，非真实研究
-
 Type: finding
 
-d1/h001 supported on synthetic data; lockbox still sealed.
+d1/h001 在合成数据上成立；封存段仍未开封。
 
-Synthetic demo finding: the volatility-scaled momentum program passed the skeptic rules on the demo data. Nothing was learned about real markets.
+合成演示结论：波动率缩放的动量程序在演示数据上通过了质疑者的规则。没有得出任何关于真实市场的结论。见 [[concept-volatility-regimes]]。

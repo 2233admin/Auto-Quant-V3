@@ -1,5 +1,5 @@
 {
-  "direction": "DEMO · 演示数据，非真实研究 · 日线动量在不同波动率状态下是否稳健",
+  "direction": "日线动量在不同波动率状态下是否稳健",
   "created": "2026-10-08T09:00:00+00:00",
   "budget_usd": 80.0,
   "data": {
@@ -14,7 +14,7 @@
   "hypotheses": [
     {
       "id": "h001",
-      "title": "DEMO · 演示数据，非真实研究 · 波动率缩放的 12/63 日动量在验证段仍有正 Sharpe",
+      "title": "波动率缩放的 12/63 日动量在验证段仍有正 Sharpe",
       "status": "supported",
       "created": "2026-10-08T09:05:00+00:00",
       "experiments": [
@@ -43,7 +43,7 @@
             "baseline_buy_hold_oos_sharpe": 0.41,
             "best_program": "experiments/h001/e01/best_program.py",
             "rule_label": "supported",
-            "rule_reason": "DSR 0.973 >= 0.95 over 543 trials; 100% of OOS sub-periods positive; beats buy-and-hold (0.41)",
+            "rule_reason": "DSR 0.973 >= 0.95（共 543 次试验）；验证段子区间 100% 为正；胜过买入持有（0.41）",
             "thresholds": {
               "dsr_supported": 0.95,
               "min_positive_fraction": 0.6666666666666666,
@@ -54,7 +54,7 @@
       ],
       "verdict": {
         "label": "supported",
-        "reason": "DSR 0.973 >= 0.95 over 543 trials; 100% of OOS sub-periods positive; beats buy-and-hold (0.41)",
+        "reason": "DSR 0.973 >= 0.95（共 543 次试验）；验证段子区间 100% 为正；胜过买入持有（0.41）",
         "evidence": {
           "experiment": "e01",
           "program_id": "ec4f4e0f-c465-4bd4-bfba-26ef07f419d5",
@@ -73,7 +73,7 @@
           "baseline_buy_hold_oos_sharpe": 0.41,
           "best_program": "experiments/h001/e01/best_program.py",
           "rule_label": "supported",
-          "rule_reason": "DSR 0.973 >= 0.95 over 543 trials; 100% of OOS sub-periods positive; beats buy-and-hold (0.41)",
+          "rule_reason": "DSR 0.973 >= 0.95（共 543 次试验）；验证段子区间 100% 为正；胜过买入持有（0.41）",
           "thresholds": {
             "dsr_supported": 0.95,
             "min_positive_fraction": 0.6666666666666666,
@@ -86,7 +86,7 @@
     },
     {
       "id": "h002",
-      "title": "DEMO · 演示数据，非真实研究 · 5 日超短回看动量优于买入持有",
+      "title": "5 日超短回看动量优于买入持有",
       "status": "refuted",
       "created": "2026-10-08T09:06:00+00:00",
       "experiments": [
@@ -115,7 +115,7 @@
             "baseline_buy_hold_oos_sharpe": 0.41,
             "best_program": "experiments/h002/e01/best_program.py",
             "rule_label": "refuted",
-            "rule_reason": "OOS Sharpe -0.21 <= 0",
+            "rule_reason": "验证段 Sharpe -0.21 <= 0",
             "thresholds": {
               "dsr_supported": 0.95,
               "min_positive_fraction": 0.6666666666666666,
@@ -126,7 +126,7 @@
       ],
       "verdict": {
         "label": "refuted",
-        "reason": "OOS Sharpe -0.21 <= 0",
+        "reason": "验证段 Sharpe -0.21 <= 0",
         "evidence": {
           "experiment": "e01",
           "program_id": "d71b3eb1-87a9-4034-8f32-6682aff56812",
@@ -145,7 +145,7 @@
           "baseline_buy_hold_oos_sharpe": 0.41,
           "best_program": "experiments/h002/e01/best_program.py",
           "rule_label": "refuted",
-          "rule_reason": "OOS Sharpe -0.21 <= 0",
+          "rule_reason": "验证段 Sharpe -0.21 <= 0",
           "thresholds": {
             "dsr_supported": 0.95,
             "min_positive_fraction": 0.6666666666666666,
@@ -158,7 +158,7 @@
     },
     {
       "id": "h003",
-      "title": "DEMO · 演示数据，非真实研究 · 高波动状态下切换为均值回归能提升稳定性",
+      "title": "高波动状态下切换为均值回归能提升稳定性",
       "status": "inconclusive",
       "created": "2026-10-10T09:00:00+00:00",
       "experiments": [
@@ -197,7 +197,7 @@
             "baseline_buy_hold_oos_sharpe": 0.41,
             "best_program": "experiments/h003/e02/best_program.py",
             "rule_label": "inconclusive",
-            "rule_reason": "OOS Sharpe 0.58 > 0 but DSR 0.710 (needs 0.95), sub-period stability 33% (needs 67%) or PBO 0.38 (max 0.5) falls short",
+            "rule_reason": "验证段 Sharpe 0.58 > 0，但 DSR 0.710（需要 0.95）、子区间稳定性 33%（需要 67%）或 PBO 0.38（上限 0.5）未达标",
             "thresholds": {
               "dsr_supported": 0.95,
               "min_positive_fraction": 0.6666666666666666,
@@ -208,7 +208,7 @@
       ],
       "verdict": {
         "label": "inconclusive",
-        "reason": "OOS Sharpe 0.58 > 0 but DSR 0.710 (needs 0.95), sub-period stability 33% (needs 67%) or PBO 0.38 (max 0.5) falls short",
+        "reason": "验证段 Sharpe 0.58 > 0，但 DSR 0.710（需要 0.95）、子区间稳定性 33%（需要 67%）或 PBO 0.38（上限 0.5）未达标",
         "evidence": {
           "experiment": "e02",
           "program_id": "85196d4a-a32b-43c7-888f-5d21ac98c9f0",
@@ -227,7 +227,7 @@
           "baseline_buy_hold_oos_sharpe": 0.41,
           "best_program": "experiments/h003/e02/best_program.py",
           "rule_label": "inconclusive",
-          "rule_reason": "OOS Sharpe 0.58 > 0 but DSR 0.710 (needs 0.95), sub-period stability 33% (needs 67%) or PBO 0.38 (max 0.5) falls short",
+          "rule_reason": "验证段 Sharpe 0.58 > 0，但 DSR 0.710（需要 0.95）、子区间稳定性 33%（需要 67%）或 PBO 0.38（上限 0.5）未达标",
           "thresholds": {
             "dsr_supported": 0.95,
             "min_positive_fraction": 0.6666666666666666,
@@ -240,7 +240,7 @@
     },
     {
       "id": "h004",
-      "title": "DEMO · 演示数据，非真实研究 · 加入成交量确认可降低换手且不损失收益",
+      "title": "加入成交量确认可降低换手且不损失收益",
       "status": "running",
       "created": "2026-10-10T09:01:00+00:00",
       "experiments": [

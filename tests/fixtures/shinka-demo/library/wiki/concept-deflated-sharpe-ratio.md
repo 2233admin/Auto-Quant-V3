@@ -1,9 +1,7 @@
 # concept-deflated-sharpe-ratio
 
-> DEMO · 演示数据，非真实研究
-
 Type: concept
 
-Deflated Sharpe ratio: how likely the best Sharpe beats the best of n null strategies.
+通缩 Sharpe 比率：最佳 Sharpe 胜过 n 个空策略中最佳者的可能性。
 
-The deflated Sharpe ratio (DSR) corrects an observed Sharpe ratio for the number of variants tried and the variance of their Sharpe ratios. The skeptic counts every evaluated program and every probe of the direction as a trial.
+通缩 Sharpe 比率（DSR）按尝试过的变体数量和它们 Sharpe 的方差，校正观察到的 Sharpe。质疑者把本课题评估过的每个程序和每次探测都计为一次试验。相关：[[concept-probability-of-backtest-overfitting]]。

@@ -1,6 +1,6 @@
 time	hypothesis	experiment	event	note
-2026-10-14T09:30:00+00:00	h001	e01	scaffold	seed initial.py
-2026-10-14T11:49:26+00:00	h001	e01	run	200 new programs, 200 total, best IS score 0.848, spend $7.88
-2026-10-15T10:00:00+00:00	h001	e01	skeptic	rule says inconclusive: OOS Sharpe 0.31 does not beat buy-and-hold (0.44)
-2026-10-15T11:20:00+00:00	h002	e01	scaffold	seed initial.py
-2026-10-15T13:15:25+00:00	h002	e01	run-failed	150 new programs, 150 total, best IS score 0.846, spend $6.72
+2026-10-14T09:30:00+00:00	h001	e01	scaffold	种子程序 initial.py
+2026-10-14T11:49:26+00:00	h001	e01	run	新增 200 个程序，共 200 个，样本内最佳 0.848，花费 $7.88
+2026-10-15T10:00:00+00:00	h001	e01	skeptic	规则判定证据不足：验证段 Sharpe 0.31 没有胜过买入持有（0.44）
+2026-10-15T11:20:00+00:00	h002	e01	scaffold	种子程序 initial.py
+2026-10-15T13:15:25+00:00	h002	e01	run-failed	新增 150 个程序，共 150 个，样本内最佳 0.846，花费 $6.72

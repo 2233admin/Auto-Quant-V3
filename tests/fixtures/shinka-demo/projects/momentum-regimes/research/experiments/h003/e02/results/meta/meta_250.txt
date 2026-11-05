@@ -2,142 +2,140 @@
 
 The following are summaries of individual programs evaluated since the last meta update:
 
-> DEMO · 演示数据，非真实研究: written by the demo generator, not by a language model.
-
 **Program Name: tune_entry_z (bd8f1a61, gen 25, island 2)**
 - **Implementation**: Retune entry_z, smooth; uses mean_revert_highvol.
 - **Performance**: Combined score 0.4093 (is_sharpe_std 0.3408, is_annual_return 0.0404, is_max_drawdown -0.2444).
-- **Feedback**: In-sample fold Sharpe: 0.34, 0.43, 0.46 (mean 0.41). Annual return 4.0%, max drawdown -24.4%, mean turnover 0.186 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.34、0.43、0.46（均值 0.41）。年化收益 4.0%，最大回撤 -24.4%，平均每根 K 线换手 0.186，成本 5.0 bps。
 
 **Program Name: rewrite_mean_revert_highvol (15d16d35, gen 25, island 1)**
 - **Implementation**: Rewrite around mean_revert_highvol; uses mean_revert_highvol.
 - **Performance**: Combined score 0.6939 (is_sharpe_std 0.2161, is_annual_return 0.0635, is_max_drawdown -0.2259).
-- **Feedback**: In-sample fold Sharpe: 0.62, 0.71, 0.74 (mean 0.69). Annual return 6.3%, max drawdown -22.6%, mean turnover 0.146 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.62、0.71、0.74（均值 0.69）。年化收益 6.3%，最大回撤 -22.6%，平均每根 K 线换手 0.146，成本 5.0 bps。
 
 **Program Name: tune_slow (cae139ee, gen 25, island 3)**
 - **Implementation**: Retune slow; uses trend_confirm.
 - **Performance**: Combined score 0.6822 (is_sharpe_std 0.3088, is_annual_return 0.0558, is_max_drawdown -0.2442).
-- **Feedback**: In-sample fold Sharpe: 0.61, 0.70, 0.73 (mean 0.68). Annual return 5.6%, max drawdown -24.4%, mean turnover 0.152 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.61、0.70、0.73（均值 0.68）。年化收益 5.6%，最大回撤 -24.4%，平均每根 K 线换手 0.152，成本 5.0 bps。
 
 **Program Name: tune_brake_level (5fba887d, gen 25, island 3)**
 - **Implementation**: Retune brake_level, vol_target; uses trend_confirm.
 - **Performance**: Combined score 0.7583 (is_sharpe_std 0.3032, is_annual_return 0.0707, is_max_drawdown -0.2363).
-- **Feedback**: In-sample fold Sharpe: 0.69, 0.78, 0.81 (mean 0.76). Annual return 7.1%, max drawdown -23.6%, mean turnover 0.111 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.69、0.78、0.81（均值 0.76）。年化收益 7.1%，最大回撤 -23.6%，平均每根 K 线换手 0.111，成本 5.0 bps。
 
 **Program Name: tune_vol_window (1ccca847, gen 25, island 2)**
 - **Implementation**: Retune vol_window; uses regime_filter.
 - **Performance**: Combined score 0.8297 (is_sharpe_std 0.2901, is_annual_return 0.0731, is_max_drawdown -0.25).
-- **Feedback**: In-sample fold Sharpe: 0.76, 0.85, 0.88 (mean 0.83). Annual return 7.3%, max drawdown -25.0%, mean turnover 0.187 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.76、0.85、0.88（均值 0.83）。年化收益 7.3%，最大回撤 -25.0%，平均每根 K 线换手 0.187，成本 5.0 bps。
 
 **Program Name: rewrite_drawdown_brake (921fbc82, gen 25, island 0)**
 - **Implementation**: Rewrite around drawdown_brake, smooth_entry, volume_gate; uses drawdown_brake, volume_gate, smooth_entry.
 - **Performance**: Combined score 0.3349 (is_sharpe_std 0.3083, is_annual_return 0.0076, is_max_drawdown -0.2608).
-- **Feedback**: In-sample fold Sharpe: 0.26, 0.35, 0.38 (mean 0.33). Annual return 0.8%, max drawdown -26.1%, mean turnover 0.119 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.26、0.35、0.38（均值 0.33）。年化收益 0.8%，最大回撤 -26.1%，平均每根 K 线换手 0.119，成本 5.0 bps。
 
 **Program Name: tune_fast (cf3fa14f, gen 25, island 0)**
 - **Implementation**: Retune fast, brake_level; uses regime_filter, drawdown_brake, volume_gate.
 - **Performance**: Combined score 0.3850 (is_sharpe_std 0.4477, is_annual_return 0.0265, is_max_drawdown -0.2847).
-- **Feedback**: In-sample fold Sharpe: 0.32, 0.41, 0.44 (mean 0.39). Annual return 2.6%, max drawdown -28.5%, mean turnover 0.151 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.32、0.41、0.44（均值 0.39）。年化收益 2.6%，最大回撤 -28.5%，平均每根 K 线换手 0.151，成本 5.0 bps。
 
 **Program Name: drop_volume_gate (f5f2134f, gen 25, island 1)**
 - **Implementation**: Drop volume_gate; uses trend_confirm, mean_revert_highvol.
 - **Performance**: Combined score 0.8216 (is_sharpe_std 0.2549, is_annual_return 0.0689, is_max_drawdown -0.2527).
-- **Feedback**: In-sample fold Sharpe: 0.75, 0.84, 0.87 (mean 0.82). Annual return 6.9%, max drawdown -25.3%, mean turnover 0.127 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.75、0.84、0.87（均值 0.82）。年化收益 6.9%，最大回撤 -25.3%，平均每根 K 线换手 0.127，成本 5.0 bps。
 
 **Program Name: tune_fast (c9836461, gen 25, island 3)**
 - **Implementation**: Retune fast, brake_level; uses trend_confirm.
 - **Performance**: Combined score 0.7975 (is_sharpe_std 0.2013, is_annual_return 0.0547, is_max_drawdown -0.2385).
-- **Feedback**: In-sample fold Sharpe: 0.73, 0.82, 0.85 (mean 0.80). Annual return 5.5%, max drawdown -23.8%, mean turnover 0.102 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.73、0.82、0.85（均值 0.80）。年化收益 5.5%，最大回撤 -23.8%，平均每根 K 线换手 0.102，成本 5.0 bps。
 
 **Program Name: crossover_entry_z (5b7762e0, gen 26, island 3)**
 - **Implementation**: Crossover with island 0 program; uses regime_filter, volume_gate, mean_revert_highvol.
 - **Performance**: Combined score 0.4137 (is_sharpe_std 0.305, is_annual_return 0.0306, is_max_drawdown -0.2699).
-- **Feedback**: In-sample fold Sharpe: 0.34, 0.43, 0.46 (mean 0.41). Annual return 3.1%, max drawdown -27.0%, mean turnover 0.135 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.34、0.43、0.46（均值 0.41）。年化收益 3.1%，最大回撤 -27.0%，平均每根 K 线换手 0.135，成本 5.0 bps。
 
 **Program Name: tune_fast (48743a95, gen 25, island 3)**
 - **Implementation**: Retune fast, brake_level; uses trend_confirm.
 - **Performance**: Combined score 0.5936 (is_sharpe_std 0.2877, is_annual_return 0.0544, is_max_drawdown -0.233).
-- **Feedback**: In-sample fold Sharpe: 0.52, 0.61, 0.64 (mean 0.59). Annual return 5.4%, max drawdown -23.3%, mean turnover 0.128 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.52、0.61、0.64（均值 0.59）。年化收益 5.4%，最大回撤 -23.3%，平均每根 K 线换手 0.128，成本 5.0 bps。
 
 **Program Name: rewrite_drawdown_brake (11597afd, gen 26, island 0)**
 - **Implementation**: Rewrite around drawdown_brake, smooth_entry; uses drawdown_brake, smooth_entry.
 - **Performance**: Combined score 0.5198 (is_sharpe_std 0.4174, is_annual_return 0.0525, is_max_drawdown -0.2356).
-- **Feedback**: In-sample fold Sharpe: 0.45, 0.54, 0.57 (mean 0.52). Annual return 5.2%, max drawdown -23.6%, mean turnover 0.118 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.45、0.54、0.57（均值 0.52）。年化收益 5.2%，最大回撤 -23.6%，平均每根 K 线换手 0.118，成本 5.0 bps。
 
 **Program Name: tune_smooth (ecb0ab20, gen 26, island 3)**
 - **Implementation**: Retune smooth; uses trend_confirm.
 - **Performance**: Combined score 0.6472 (is_sharpe_std 0.1721, is_annual_return 0.0537, is_max_drawdown -0.2701).
-- **Feedback**: In-sample fold Sharpe: 0.58, 0.67, 0.70 (mean 0.65). Annual return 5.4%, max drawdown -27.0%, mean turnover 0.148 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.58、0.67、0.70（均值 0.65）。年化收益 5.4%，最大回撤 -27.0%，平均每根 K 线换手 0.148，成本 5.0 bps。
 
 **Program Name: add_drawdown_brake (8ca0d9d4, gen 26, island 2)**
 - **Implementation**: Add drawdown_brake; uses regime_filter, drawdown_brake.
 - **Performance**: Combined score 0.5440 (is_sharpe_std 0.3845, is_annual_return 0.0334, is_max_drawdown -0.2591).
-- **Feedback**: In-sample fold Sharpe: 0.47, 0.56, 0.59 (mean 0.54). Annual return 3.3%, max drawdown -25.9%, mean turnover 0.119 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.47、0.56、0.59（均值 0.54）。年化收益 3.3%，最大回撤 -25.9%，平均每根 K 线换手 0.119，成本 5.0 bps。
 
 **Program Name: rewrite_regime_filter (4d10465d, gen 26, island 0)**
 - **Implementation**: Rewrite around regime_filter, trend_confirm; uses regime_filter, trend_confirm.
 - **Performance**: Combined score 0.8519 (is_sharpe_std 0.3792, is_annual_return 0.0805, is_max_drawdown -0.231).
-- **Feedback**: In-sample fold Sharpe: 0.78, 0.87, 0.90 (mean 0.85). Annual return 8.1%, max drawdown -23.1%, mean turnover 0.160 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.78、0.87、0.90（均值 0.85）。年化收益 8.1%，最大回撤 -23.1%，平均每根 K 线换手 0.160，成本 5.0 bps。
 
 **Program Name: tune_vol_target (a7e581ac, gen 26, island 2)**
 - **Implementation**: Retune vol_target, regime_damp; uses regime_filter.
 - **Performance**: Combined score 0.4705 (is_sharpe_std 0.3084, is_annual_return 0.0366, is_max_drawdown -0.2678).
-- **Feedback**: In-sample fold Sharpe: 0.40, 0.49, 0.52 (mean 0.47). Annual return 3.7%, max drawdown -26.8%, mean turnover 0.143 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.40、0.49、0.52（均值 0.47）。年化收益 3.7%，最大回撤 -26.8%，平均每根 K 线换手 0.143，成本 5.0 bps。
 
 **Program Name: rewrite_regime_filter (2df756e6, gen 26, island 0)**
 - **Implementation**: Rewrite around drawdown_brake, regime_filter, trend_confirm; uses regime_filter, trend_confirm, drawdown_brake.
 - **Performance**: Combined score 0.7866 (is_sharpe_std 0.2635, is_annual_return 0.0657, is_max_drawdown -0.2194).
-- **Feedback**: In-sample fold Sharpe: 0.72, 0.81, 0.84 (mean 0.79). Annual return 6.6%, max drawdown -21.9%, mean turnover 0.147 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.72、0.81、0.84（均值 0.79）。年化收益 6.6%，最大回撤 -21.9%，平均每根 K 线换手 0.147，成本 5.0 bps。
 
 **Program Name: crossover_entry_z (f30d9478, gen 26, island 2)**
 - **Implementation**: Crossover with island 0 program; uses regime_filter, trend_confirm, volume_gate.
 - **Performance**: Combined score 0.5920 (is_sharpe_std 0.2755, is_annual_return 0.0586, is_max_drawdown -0.2384).
-- **Feedback**: In-sample fold Sharpe: 0.52, 0.61, 0.64 (mean 0.59). Annual return 5.9%, max drawdown -23.8%, mean turnover 0.132 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.52、0.61、0.64（均值 0.59）。年化收益 5.9%，最大回撤 -23.8%，平均每根 K 线换手 0.132，成本 5.0 bps。
 
 **Program Name: add_trend_confirm (6d730c04, gen 26, island 2)**
 - **Implementation**: Add trend_confirm; uses regime_filter, trend_confirm.
 - **Performance**: Combined score 0.5814 (is_sharpe_std 0.1873, is_annual_return 0.0534, is_max_drawdown -0.2691).
-- **Feedback**: In-sample fold Sharpe: 0.51, 0.60, 0.63 (mean 0.58). Annual return 5.3%, max drawdown -26.9%, mean turnover 0.148 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.51、0.60、0.63（均值 0.58）。年化收益 5.3%，最大回撤 -26.9%，平均每根 K 线换手 0.148，成本 5.0 bps。
 
 **Program Name: crossover_brake_level (d2192a15, gen 27, island 0)**
 - **Implementation**: Crossover with island 3 program; uses trend_confirm.
 - **Performance**: Combined score 0.4887 (is_sharpe_std 0.2474, is_annual_return 0.0653, is_max_drawdown -0.2675).
-- **Feedback**: In-sample fold Sharpe: 0.42, 0.51, 0.54 (mean 0.49). Annual return 6.5%, max drawdown -26.8%, mean turnover 0.129 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.42、0.51、0.54（均值 0.49）。年化收益 6.5%，最大回撤 -26.8%，平均每根 K 线换手 0.129，成本 5.0 bps。
 
 **Program Name: rewrite_volume_gate (6a576d3e, gen 27, island 3)**
 - **Implementation**: Rewrite around volume_gate; uses volume_gate.
 - **Performance**: Combined score 0.6096 (is_sharpe_std 0.3313, is_annual_return 0.0548, is_max_drawdown -0.2293).
-- **Feedback**: In-sample fold Sharpe: 0.54, 0.63, 0.66 (mean 0.61). Annual return 5.5%, max drawdown -22.9%, mean turnover 0.101 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.54、0.63、0.66（均值 0.61）。年化收益 5.5%，最大回撤 -22.9%，平均每根 K 线换手 0.101，成本 5.0 bps。
 
 **Program Name: add_smooth_entry (18eb22e0, gen 27, island 3)**
 - **Implementation**: Add smooth_entry; uses regime_filter, trend_confirm, volume_gate, smooth_entry.
 - **Performance**: Combined score 0.1761 (is_sharpe_std 0.3136, is_annual_return 0.0067, is_max_drawdown -0.2703).
-- **Feedback**: In-sample fold Sharpe: 0.11, 0.20, 0.23 (mean 0.18). Annual return 0.7%, max drawdown -27.0%, mean turnover 0.118 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.11、0.20、0.23（均值 0.18）。年化收益 0.7%，最大回撤 -27.0%，平均每根 K 线换手 0.118，成本 5.0 bps。
 
 **Program Name: rewrite_mean_revert_highvol (1458f8ff, gen 27, island 1)**
 - **Implementation**: Rewrite around mean_revert_highvol; uses mean_revert_highvol.
 - **Performance**: Combined score 0.4402 (is_sharpe_std 0.1847, is_annual_return 0.038, is_max_drawdown -0.2506).
-- **Feedback**: In-sample fold Sharpe: 0.37, 0.46, 0.49 (mean 0.44). Annual return 3.8%, max drawdown -25.1%, mean turnover 0.085 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.37、0.46、0.49（均值 0.44）。年化收益 3.8%，最大回撤 -25.1%，平均每根 K 线换手 0.085，成本 5.0 bps。
 
 **Program Name: add_volume_gate (92007464, gen 27, island 3)**
 - **Implementation**: Add volume_gate; uses volume_gate, mean_revert_highvol.
 - **Performance**: Combined score 0.7950 (is_sharpe_std 0.2361, is_annual_return 0.052, is_max_drawdown -0.2278).
-- **Feedback**: In-sample fold Sharpe: 0.73, 0.82, 0.85 (mean 0.80). Annual return 5.2%, max drawdown -22.8%, mean turnover 0.129 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.73、0.82、0.85（均值 0.80）。年化收益 5.2%，最大回撤 -22.8%，平均每根 K 线换手 0.129，成本 5.0 bps。
 
 **Program Name: crossover_brake_level (6ef714f0, gen 27, island 1)**
 - **Implementation**: Crossover with island 0 program; uses drawdown_brake, volume_gate.
 - **Performance**: Combined score 0.5932 (is_sharpe_std 0.2718, is_annual_return 0.0542, is_max_drawdown -0.2335).
-- **Feedback**: In-sample fold Sharpe: 0.52, 0.61, 0.64 (mean 0.59). Annual return 5.4%, max drawdown -23.4%, mean turnover 0.112 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.52、0.61、0.64（均值 0.59）。年化收益 5.4%，最大回撤 -23.4%，平均每根 K 线换手 0.112，成本 5.0 bps。
 
 **Program Name: tune_slow (10a3f2a6, gen 27, island 1)**
 - **Implementation**: Retune slow; uses trend_confirm, volume_gate, mean_revert_highvol.
 - **Performance**: Combined score 0.6851 (is_sharpe_std 0.2848, is_annual_return 0.0606, is_max_drawdown -0.2512).
-- **Feedback**: In-sample fold Sharpe: 0.62, 0.71, 0.74 (mean 0.69). Annual return 6.1%, max drawdown -25.1%, mean turnover 0.117 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.62、0.71、0.74（均值 0.69）。年化收益 6.1%，最大回撤 -25.1%，平均每根 K 线换手 0.117，成本 5.0 bps。
 
 **Program Name: add_trend_confirm (7b459ac8, gen 27, island 2)**
 - **Implementation**: Add trend_confirm; uses regime_filter, trend_confirm.
 - **Performance**: Combined score 0.4487 (is_sharpe_std 0.1259, is_annual_return 0.0432, is_max_drawdown -0.2631).
-- **Feedback**: In-sample fold Sharpe: 0.38, 0.47, 0.50 (mean 0.45). Annual return 4.3%, max drawdown -26.3%, mean turnover 0.191 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.38、0.47、0.50（均值 0.45）。年化收益 4.3%，最大回撤 -26.3%，平均每根 K 线换手 0.191，成本 5.0 bps。
 
 **Program Name: add_drawdown_brake (2532db58, gen 27, island 2)**
 - **Implementation**: Add drawdown_brake; uses regime_filter, trend_confirm, drawdown_brake.
@@ -147,97 +145,97 @@ The following are summaries of individual programs evaluated since the last meta
 **Program Name: tune_brake_level (dba52a40, gen 27, island 2)**
 - **Implementation**: Retune brake_level, smooth; uses regime_filter.
 - **Performance**: Combined score 0.6027 (is_sharpe_std 0.2624, is_annual_return 0.0421, is_max_drawdown -0.2376).
-- **Feedback**: In-sample fold Sharpe: 0.53, 0.62, 0.65 (mean 0.60). Annual return 4.2%, max drawdown -23.8%, mean turnover 0.177 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.53、0.62、0.65（均值 0.60）。年化收益 4.2%，最大回撤 -23.8%，平均每根 K 线换手 0.177，成本 5.0 bps。
 
 **Program Name: crossover_vol_target (098d178e, gen 28, island 2)**
 - **Implementation**: Crossover with island 0 program; uses regime_filter, volume_gate.
 - **Performance**: Combined score 0.5348 (is_sharpe_std 0.19, is_annual_return 0.048, is_max_drawdown -0.2563).
-- **Feedback**: In-sample fold Sharpe: 0.46, 0.55, 0.58 (mean 0.53). Annual return 4.8%, max drawdown -25.6%, mean turnover 0.181 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.46、0.55、0.58（均值 0.53）。年化收益 4.8%，最大回撤 -25.6%，平均每根 K 线换手 0.181，成本 5.0 bps。
 
 **Program Name: tune_brake_level (5f851b08, gen 28, island 3)**
 - **Implementation**: Retune brake_level, vol_target; uses trend_confirm.
 - **Performance**: Combined score 0.7178 (is_sharpe_std 0.285, is_annual_return 0.0699, is_max_drawdown -0.3065).
-- **Feedback**: In-sample fold Sharpe: 0.65, 0.74, 0.77 (mean 0.72). Annual return 7.0%, max drawdown -30.6%, mean turnover 0.134 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.65、0.74、0.77（均值 0.72）。年化收益 7.0%，最大回撤 -30.6%，平均每根 K 线换手 0.134，成本 5.0 bps。
 
 **Program Name: add_volume_gate (06045c3d, gen 28, island 2)**
 - **Implementation**: Add volume_gate; uses regime_filter, trend_confirm, volume_gate.
 - **Performance**: Combined score 0.5990 (is_sharpe_std 0.2785, is_annual_return 0.064, is_max_drawdown -0.2472).
-- **Feedback**: In-sample fold Sharpe: 0.53, 0.62, 0.65 (mean 0.60). Annual return 6.4%, max drawdown -24.7%, mean turnover 0.135 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.53、0.62、0.65（均值 0.60）。年化收益 6.4%，最大回撤 -24.7%，平均每根 K 线换手 0.135，成本 5.0 bps。
 
 **Program Name: add_smooth_entry (950ef0bf, gen 28, island 2)**
 - **Implementation**: Add smooth_entry; uses regime_filter, smooth_entry.
 - **Performance**: Combined score 0.7031 (is_sharpe_std 0.4252, is_annual_return 0.054, is_max_drawdown -0.2496).
-- **Feedback**: In-sample fold Sharpe: 0.63, 0.72, 0.75 (mean 0.70). Annual return 5.4%, max drawdown -25.0%, mean turnover 0.204 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.63、0.72、0.75（均值 0.70）。年化收益 5.4%，最大回撤 -25.0%，平均每根 K 线换手 0.204，成本 5.0 bps。
 
 **Program Name: tune_vol_window (6c6d626f, gen 28, island 1)**
 - **Implementation**: Retune vol_window; uses drawdown_brake.
 - **Performance**: Combined score 0.4859 (is_sharpe_std 0.1694, is_annual_return 0.0464, is_max_drawdown -0.2576).
-- **Feedback**: In-sample fold Sharpe: 0.42, 0.51, 0.54 (mean 0.49). Annual return 4.6%, max drawdown -25.8%, mean turnover 0.127 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.42、0.51、0.54（均值 0.49）。年化收益 4.6%，最大回撤 -25.8%，平均每根 K 线换手 0.127，成本 5.0 bps。
 
 **Program Name: tune_vol_target (5716e081, gen 28, island 2)**
 - **Implementation**: Retune vol_target; uses the baseline signal only.
 - **Performance**: Combined score 0.4522 (is_sharpe_std 0.2753, is_annual_return 0.0424, is_max_drawdown -0.2399).
-- **Feedback**: In-sample fold Sharpe: 0.38, 0.47, 0.50 (mean 0.45). Annual return 4.2%, max drawdown -24.0%, mean turnover 0.137 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.38、0.47、0.50（均值 0.45）。年化收益 4.2%，最大回撤 -24.0%，平均每根 K 线换手 0.137，成本 5.0 bps。
 
 **Program Name: tune_entry_z (ee982b15, gen 28, island 2)**
 - **Implementation**: Retune entry_z; uses regime_filter, trend_confirm.
 - **Performance**: Combined score 0.5895 (is_sharpe_std 0.2731, is_annual_return 0.0473, is_max_drawdown -0.2424).
-- **Feedback**: In-sample fold Sharpe: 0.52, 0.61, 0.64 (mean 0.59). Annual return 4.7%, max drawdown -24.2%, mean turnover 0.159 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.52、0.61、0.64（均值 0.59）。年化收益 4.7%，最大回撤 -24.2%，平均每根 K 线换手 0.159，成本 5.0 bps。
 
 **Program Name: rewrite_regime_filter (592f2add, gen 28, island 3)**
 - **Implementation**: Rewrite around regime_filter, volume_gate; uses regime_filter, volume_gate.
 - **Performance**: Combined score 0.6979 (is_sharpe_std 0.3858, is_annual_return 0.0535, is_max_drawdown -0.2579).
-- **Feedback**: In-sample fold Sharpe: 0.63, 0.72, 0.75 (mean 0.70). Annual return 5.3%, max drawdown -25.8%, mean turnover 0.104 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.63、0.72、0.75（均值 0.70）。年化收益 5.3%，最大回撤 -25.8%，平均每根 K 线换手 0.104，成本 5.0 bps。
 
 **Program Name: add_mean_revert_highvol (a0688f6b, gen 29, island 1)**
 - **Implementation**: Add mean_revert_highvol; uses drawdown_brake, mean_revert_highvol.
 - **Performance**: Combined score 0.6039 (is_sharpe_std 0.342, is_annual_return 0.053, is_max_drawdown -0.2486).
-- **Feedback**: In-sample fold Sharpe: 0.53, 0.62, 0.65 (mean 0.60). Annual return 5.3%, max drawdown -24.9%, mean turnover 0.113 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.53、0.62、0.65（均值 0.60）。年化收益 5.3%，最大回撤 -24.9%，平均每根 K 线换手 0.113，成本 5.0 bps。
 
 **Program Name: tune_regime_damp (95b646d4, gen 29, island 2)**
 - **Implementation**: Retune regime_damp; uses drawdown_brake.
 - **Performance**: Combined score 0.1245 (is_sharpe_std 0.0033, is_annual_return 0.0248, is_max_drawdown -0.2658).
-- **Feedback**: In-sample fold Sharpe: 0.05, 0.14, 0.17 (mean 0.12). Annual return 2.5%, max drawdown -26.6%, mean turnover 0.123 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.05、0.14、0.17（均值 0.12）。年化收益 2.5%，最大回撤 -26.6%，平均每根 K 线换手 0.123，成本 5.0 bps。
 
 **Program Name: tune_smooth (e4147e83, gen 29, island 2)**
 - **Implementation**: Retune smooth, entry_z; uses regime_filter, trend_confirm.
 - **Performance**: Combined score 0.5681 (is_sharpe_std 0.3188, is_annual_return 0.0403, is_max_drawdown -0.2644).
-- **Feedback**: In-sample fold Sharpe: 0.50, 0.59, 0.62 (mean 0.57). Annual return 4.0%, max drawdown -26.4%, mean turnover 0.155 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.50、0.59、0.62（均值 0.57）。年化收益 4.0%，最大回撤 -26.4%，平均每根 K 线换手 0.155，成本 5.0 bps。
 
 **Program Name: add_trend_confirm (296e33f1, gen 29, island 2)**
 - **Implementation**: Add trend_confirm; uses regime_filter, trend_confirm.
 - **Performance**: Combined score 0.6057 (is_sharpe_std 0.1969, is_annual_return 0.0474, is_max_drawdown -0.2314).
-- **Feedback**: In-sample fold Sharpe: 0.54, 0.63, 0.66 (mean 0.61). Annual return 4.7%, max drawdown -23.1%, mean turnover 0.177 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.54、0.63、0.66（均值 0.61）。年化收益 4.7%，最大回撤 -23.1%，平均每根 K 线换手 0.177，成本 5.0 bps。
 
 **Program Name: tune_vol_window (f4914891, gen 29, island 1)**
 - **Implementation**: Retune vol_window; uses trend_confirm, volume_gate, mean_revert_highvol.
 - **Performance**: Combined score 0.7828 (is_sharpe_std 0.332, is_annual_return 0.0626, is_max_drawdown -0.2183).
-- **Feedback**: In-sample fold Sharpe: 0.71, 0.80, 0.83 (mean 0.78). Annual return 6.3%, max drawdown -21.8%, mean turnover 0.146 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.71、0.80、0.83（均值 0.78）。年化收益 6.3%，最大回撤 -21.8%，平均每根 K 线换手 0.146，成本 5.0 bps。
 
 **Program Name: crossover_slow (d7d09288, gen 29, island 3)**
 - **Implementation**: Crossover with island 0 program; uses trend_confirm, volume_gate.
 - **Performance**: Combined score 0.8017 (is_sharpe_std 0.2996, is_annual_return 0.0771, is_max_drawdown -0.2277).
-- **Feedback**: In-sample fold Sharpe: 0.73, 0.82, 0.85 (mean 0.80). Annual return 7.7%, max drawdown -22.8%, mean turnover 0.117 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.73、0.82、0.85（均值 0.80）。年化收益 7.7%，最大回撤 -22.8%，平均每根 K 线换手 0.117，成本 5.0 bps。
 
 **Program Name: crossover_fast (1ac52ba4, gen 29, island 0)**
 - **Implementation**: Crossover with island 3 program; uses trend_confirm, smooth_entry.
 - **Performance**: Combined score 0.5489 (is_sharpe_std 0.3731, is_annual_return 0.0269, is_max_drawdown -0.2609).
-- **Feedback**: In-sample fold Sharpe: 0.48, 0.57, 0.60 (mean 0.55). Annual return 2.7%, max drawdown -26.1%, mean turnover 0.134 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.48、0.57、0.60（均值 0.55）。年化收益 2.7%，最大回撤 -26.1%，平均每根 K 线换手 0.134，成本 5.0 bps。
 
 **Program Name: crossover_brake_level (4bd00843, gen 29, island 0)**
 - **Implementation**: Crossover with island 3 program; uses trend_confirm, volume_gate.
 - **Performance**: Combined score 0.7212 (is_sharpe_std 0.3134, is_annual_return 0.0577, is_max_drawdown -0.2299).
-- **Feedback**: In-sample fold Sharpe: 0.65, 0.74, 0.77 (mean 0.72). Annual return 5.8%, max drawdown -23.0%, mean turnover 0.093 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.65、0.74、0.77（均值 0.72）。年化收益 5.8%，最大回撤 -23.0%，平均每根 K 线换手 0.093，成本 5.0 bps。
 
 **Program Name: add_volume_gate (dee05dc7, gen 30, island 1)**
 - **Implementation**: Add volume_gate; uses regime_filter, volume_gate.
 - **Performance**: Combined score 0.5197 (is_sharpe_std 0.3259, is_annual_return 0.0555, is_max_drawdown -0.2919).
-- **Feedback**: In-sample fold Sharpe: 0.45, 0.54, 0.57 (mean 0.52). Annual return 5.5%, max drawdown -29.2%, mean turnover 0.205 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.45、0.54、0.57（均值 0.52）。年化收益 5.5%，最大回撤 -29.2%，平均每根 K 线换手 0.205，成本 5.0 bps。
 
 **Program Name: tune_vol_window (9d5adb63, gen 30, island 0)**
 - **Implementation**: Retune vol_window, slow; uses volume_gate.
 - **Performance**: Combined score 0.8003 (is_sharpe_std 0.3167, is_annual_return 0.0625, is_max_drawdown -0.2163).
-- **Feedback**: In-sample fold Sharpe: 0.73, 0.82, 0.85 (mean 0.80). Annual return 6.2%, max drawdown -21.6%, mean turnover 0.138 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.73、0.82、0.85（均值 0.80）。年化收益 6.2%，最大回撤 -21.6%，平均每根 K 线换手 0.138，成本 5.0 bps。
 
 **Program Name: tune_slow (007081fb, gen 30, island 3)**
 - **Implementation**: Retune slow; uses regime_filter, trend_confirm.
@@ -247,118 +245,116 @@ The following are summaries of individual programs evaluated since the last meta
 **Program Name: crossover_vol_window (78a765e4, gen 30, island 1)**
 - **Implementation**: Crossover with island 0 program; uses volume_gate.
 - **Performance**: Combined score 0.4034 (is_sharpe_std 0.2379, is_annual_return 0.0406, is_max_drawdown -0.2504).
-- **Feedback**: In-sample fold Sharpe: 0.33, 0.42, 0.45 (mean 0.40). Annual return 4.1%, max drawdown -25.0%, mean turnover 0.116 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.33、0.42、0.45（均值 0.40）。年化收益 4.1%，最大回撤 -25.0%，平均每根 K 线换手 0.116，成本 5.0 bps。
 
 **Program Name: tune_vol_target (7ece61a0, gen 30, island 3)**
 - **Implementation**: Retune vol_target, fast; uses trend_confirm, volume_gate.
 - **Performance**: Combined score 0.1099 (is_sharpe_std 0.3047, is_annual_return 0.0062, is_max_drawdown -0.2717).
-- **Feedback**: In-sample fold Sharpe: 0.04, 0.13, 0.16 (mean 0.11). Annual return 0.6%, max drawdown -27.2%, mean turnover 0.114 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.04、0.13、0.16（均值 0.11）。年化收益 0.6%，最大回撤 -27.2%，平均每根 K 线换手 0.114，成本 5.0 bps。
 
 **Program Name: tune_entry_z (72df6c3c, gen 30, island 3)**
 - **Implementation**: Retune entry_z, fast; uses regime_filter, trend_confirm.
 - **Performance**: Combined score 0.6396 (is_sharpe_std 0.3903, is_annual_return 0.0753, is_max_drawdown -0.2409).
-- **Feedback**: In-sample fold Sharpe: 0.57, 0.66, 0.69 (mean 0.64). Annual return 7.5%, max drawdown -24.1%, mean turnover 0.124 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.57、0.66、0.69（均值 0.64）。年化收益 7.5%，最大回撤 -24.1%，平均每根 K 线换手 0.124，成本 5.0 bps。
 
 **Program Name: tune_vol_window (9f36156e, gen 30, island 2)**
 - **Implementation**: Retune vol_window; uses trend_confirm.
 - **Performance**: Combined score 0.1173 (is_sharpe_std 0.3343, is_annual_return 0.0179, is_max_drawdown -0.2881).
-- **Feedback**: In-sample fold Sharpe: 0.05, 0.14, 0.17 (mean 0.12). Annual return 1.8%, max drawdown -28.8%, mean turnover 0.128 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.05、0.14、0.17（均值 0.12）。年化收益 1.8%，最大回撤 -28.8%，平均每根 K 线换手 0.128，成本 5.0 bps。
 
 **Program Name: fix_look_ahead_detected (fd3ed79a, gen 30, island 3)**
 - **Implementation**: Repair the parent's evaluation failure (look-ahead detected: positions on the first 1187 bars changed when later bars were removed); uses trend_confirm.
 - **Performance**: Combined score 0.5344 (is_sharpe_std 0.4888, is_annual_return 0.036, is_max_drawdown -0.2666).
-- **Feedback**: In-sample fold Sharpe: 0.46, 0.55, 0.58 (mean 0.53). Annual return 3.6%, max drawdown -26.7%, mean turnover 0.139 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.46、0.55、0.58（均值 0.53）。年化收益 3.6%，最大回撤 -26.7%，平均每根 K 线换手 0.139，成本 5.0 bps。
 
 **Program Name: crossover_slow (70a08469, gen 30, island 2)**
 - **Implementation**: Crossover with island 0 program; uses trend_confirm, drawdown_brake, volume_gate, smooth_entry.
 - **Performance**: Combined score 0.4297 (is_sharpe_std 0.2996, is_annual_return 0.018, is_max_drawdown -0.2877).
-- **Feedback**: In-sample fold Sharpe: 0.36, 0.45, 0.48 (mean 0.43). Annual return 1.8%, max drawdown -28.8%, mean turnover 0.157 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.36、0.45、0.48（均值 0.43）。年化收益 1.8%，最大回撤 -28.8%，平均每根 K 线换手 0.157，成本 5.0 bps。
 
 **Program Name: crossover_brake_level (5b470158, gen 30, island 1)**
 - **Implementation**: Crossover with island 0 program; uses volume_gate.
 - **Performance**: Combined score 0.7609 (is_sharpe_std 0.3099, is_annual_return 0.0462, is_max_drawdown -0.244).
-- **Feedback**: In-sample fold Sharpe: 0.69, 0.78, 0.81 (mean 0.76). Annual return 4.6%, max drawdown -24.4%, mean turnover 0.121 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.69、0.78、0.81（均值 0.76）。年化收益 4.6%，最大回撤 -24.4%，平均每根 K 线换手 0.121，成本 5.0 bps。
 
 **Program Name: crossover_vol_target (76fb66c3, gen 31, island 2)**
 - **Implementation**: Crossover with island 3 program; uses trend_confirm, mean_revert_highvol.
 - **Performance**: Combined score 0.4415 (is_sharpe_std 0.269, is_annual_return 0.0279, is_max_drawdown -0.2568).
-- **Feedback**: In-sample fold Sharpe: 0.37, 0.46, 0.49 (mean 0.44). Annual return 2.8%, max drawdown -25.7%, mean turnover 0.113 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.37、0.46、0.49（均值 0.44）。年化收益 2.8%，最大回撤 -25.7%，平均每根 K 线换手 0.113，成本 5.0 bps。
 
 **Program Name: crossover_slow (e6bf9162, gen 31, island 1)**
 - **Implementation**: Crossover with island 0 program; uses trend_confirm, volume_gate, mean_revert_highvol.
 - **Performance**: Combined score 0.8139 (is_sharpe_std 0.1759, is_annual_return 0.0737, is_max_drawdown -0.2296).
-- **Feedback**: In-sample fold Sharpe: 0.74, 0.83, 0.86 (mean 0.81). Annual return 7.4%, max drawdown -23.0%, mean turnover 0.115 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.74、0.83、0.86（均值 0.81）。年化收益 7.4%，最大回撤 -23.0%，平均每根 K 线换手 0.115，成本 5.0 bps。
 
 **Program Name: crossover_smooth (2552cd1d, gen 31, island 1)**
 - **Implementation**: Crossover with island 0 program; uses trend_confirm, volume_gate.
 - **Performance**: Combined score 0.4074 (is_sharpe_std 0.263, is_annual_return 0.0291, is_max_drawdown -0.3056).
-- **Feedback**: In-sample fold Sharpe: 0.34, 0.43, 0.46 (mean 0.41). Annual return 2.9%, max drawdown -30.6%, mean turnover 0.146 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.34、0.43、0.46（均值 0.41）。年化收益 2.9%，最大回撤 -30.6%，平均每根 K 线换手 0.146，成本 5.0 bps。
 
 **Program Name: tune_fast (321be9e9, gen 31, island 3)**
 - **Implementation**: Retune fast; uses trend_confirm.
 - **Performance**: Combined score 0.8839 (is_sharpe_std 0.2689, is_annual_return 0.0725, is_max_drawdown -0.2109).
-- **Feedback**: In-sample fold Sharpe: 0.81, 0.90, 0.93 (mean 0.88). Annual return 7.2%, max drawdown -21.1%, mean turnover 0.121 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.81、0.90、0.93（均值 0.88）。年化收益 7.2%，最大回撤 -21.1%，平均每根 K 线换手 0.121，成本 5.0 bps。
 
 **Program Name: rewrite_mean_revert_highvol (08685a59, gen 31, island 1)**
 - **Implementation**: Rewrite around mean_revert_highvol; uses mean_revert_highvol.
 - **Performance**: Combined score 0.4295 (is_sharpe_std 0.3219, is_annual_return 0.0562, is_max_drawdown -0.2665).
-- **Feedback**: In-sample fold Sharpe: 0.36, 0.45, 0.48 (mean 0.43). Annual return 5.6%, max drawdown -26.7%, mean turnover 0.141 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.36、0.45、0.48（均值 0.43）。年化收益 5.6%，最大回撤 -26.7%，平均每根 K 线换手 0.141，成本 5.0 bps。
 
 **Program Name: tune_vol_window (e34080fe, gen 31, island 3)**
 - **Implementation**: Retune vol_window, fast; uses mean_revert_highvol.
 - **Performance**: Combined score 0.7287 (is_sharpe_std 0.1508, is_annual_return 0.0663, is_max_drawdown -0.2387).
-- **Feedback**: In-sample fold Sharpe: 0.66, 0.75, 0.78 (mean 0.73). Annual return 6.6%, max drawdown -23.9%, mean turnover 0.094 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.66、0.75、0.78（均值 0.73）。年化收益 6.6%，最大回撤 -23.9%，平均每根 K 线换手 0.094，成本 5.0 bps。
 
 **Program Name: tune_fast (9033b71b, gen 32, island 1)**
 - **Implementation**: Retune fast; uses regime_filter.
 - **Performance**: Combined score 0.5124 (is_sharpe_std 0.2855, is_annual_return 0.0533, is_max_drawdown -0.2462).
-- **Feedback**: In-sample fold Sharpe: 0.44, 0.53, 0.56 (mean 0.51). Annual return 5.3%, max drawdown -24.6%, mean turnover 0.201 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.44、0.53、0.56（均值 0.51）。年化收益 5.3%，最大回撤 -24.6%，平均每根 K 线换手 0.201，成本 5.0 bps。
 
 **Program Name: add_volume_gate (7c682459, gen 31, island 1)**
 - **Implementation**: Add volume_gate; uses trend_confirm, volume_gate.
 - **Performance**: Combined score 0.5687 (is_sharpe_std 0.2307, is_annual_return 0.0614, is_max_drawdown -0.2311).
-- **Feedback**: In-sample fold Sharpe: 0.50, 0.59, 0.62 (mean 0.57). Annual return 6.1%, max drawdown -23.1%, mean turnover 0.128 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.50、0.59、0.62（均值 0.57）。年化收益 6.1%，最大回撤 -23.1%，平均每根 K 线换手 0.128，成本 5.0 bps。
 
 **Program Name: tune_brake_level (b574e1a1, gen 32, island 2)**
 - **Implementation**: Retune brake_level, smooth; uses mean_revert_highvol.
 - **Performance**: Combined score 0.4110 (is_sharpe_std 0.2042, is_annual_return 0.0397, is_max_drawdown -0.277).
-- **Feedback**: In-sample fold Sharpe: 0.34, 0.43, 0.46 (mean 0.41). Annual return 4.0%, max drawdown -27.7%, mean turnover 0.174 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.34、0.43、0.46（均值 0.41）。年化收益 4.0%，最大回撤 -27.7%，平均每根 K 线换手 0.174，成本 5.0 bps。
 
 **Program Name: tune_vol_window (55e7a9b5, gen 32, island 2)**
 - **Implementation**: Retune vol_window, vol_target; uses trend_confirm.
 - **Performance**: Combined score 0.7058 (is_sharpe_std 0.2613, is_annual_return 0.0697, is_max_drawdown -0.2271).
-- **Feedback**: In-sample fold Sharpe: 0.64, 0.73, 0.76 (mean 0.71). Annual return 7.0%, max drawdown -22.7%, mean turnover 0.119 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.64、0.73、0.76（均值 0.71）。年化收益 7.0%，最大回撤 -22.7%，平均每根 K 线换手 0.119，成本 5.0 bps。
 
 **Program Name: crossover_regime_damp (90e76ae2, gen 32, island 3)**
 - **Implementation**: Crossover with island 0 program; uses drawdown_brake, volume_gate.
 - **Performance**: Combined score 0.3485 (is_sharpe_std 0.2177, is_annual_return 0.0277, is_max_drawdown -0.2898).
-- **Feedback**: In-sample fold Sharpe: 0.28, 0.37, 0.40 (mean 0.35). Annual return 2.8%, max drawdown -29.0%, mean turnover 0.144 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.28、0.37、0.40（均值 0.35）。年化收益 2.8%，最大回撤 -29.0%，平均每根 K 线换手 0.144，成本 5.0 bps。
 
 **Program Name: tune_fast (85196d4a, gen 32, island 0)**
 - **Implementation**: Retune fast; uses volume_gate.
 - **Performance**: Combined score 0.8843 (is_sharpe_std 0.2464, is_annual_return 0.0588, is_max_drawdown -0.228).
-- **Feedback**: In-sample fold Sharpe: 0.81, 0.90, 0.93 (mean 0.88). Annual return 5.9%, max drawdown -22.8%, mean turnover 0.120 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.81、0.90、0.93（均值 0.88）。年化收益 5.9%，最大回撤 -22.8%，平均每根 K 线换手 0.120，成本 5.0 bps。
 
 **Program Name: tune_vol_target (4063ba70, gen 32, island 0)**
 - **Implementation**: Retune vol_target; uses volume_gate.
 - **Performance**: Combined score 0.7178 (is_sharpe_std 0.3724, is_annual_return 0.0629, is_max_drawdown -0.2288).
-- **Feedback**: In-sample fold Sharpe: 0.65, 0.74, 0.77 (mean 0.72). Annual return 6.3%, max drawdown -22.9%, mean turnover 0.155 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.65、0.74、0.77（均值 0.72）。年化收益 6.3%，最大回撤 -22.9%，平均每根 K 线换手 0.155，成本 5.0 bps。
 
 **Program Name: crossover_vol_window (648d04a9, gen 32, island 2)**
 - **Implementation**: Crossover with island 0 program; uses volume_gate.
 - **Performance**: Combined score 0.4170 (is_sharpe_std 0.216, is_annual_return 0.0201, is_max_drawdown -0.2603).
-- **Feedback**: In-sample fold Sharpe: 0.35, 0.44, 0.47 (mean 0.42). Annual return 2.0%, max drawdown -26.0%, mean turnover 0.158 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.35、0.44、0.47（均值 0.42）。年化收益 2.0%，最大回撤 -26.0%，平均每根 K 线换手 0.158，成本 5.0 bps。
 
 **Program Name: rewrite_trend_confirm (8892b2f8, gen 32, island 1)**
 - **Implementation**: Rewrite around trend_confirm; uses trend_confirm.
 - **Performance**: Combined score 0.2631 (is_sharpe_std 0.248, is_annual_return 0.0091, is_max_drawdown -0.2552).
-- **Feedback**: In-sample fold Sharpe: 0.19, 0.28, 0.31 (mean 0.26). Annual return 0.9%, max drawdown -25.5%, mean turnover 0.112 per bar, costs 5.0 bps.
+- **Feedback**: 样本内各折 Sharpe：0.19、0.28、0.31（均值 0.26）。年化收益 0.9%，最大回撤 -25.5%，平均每根 K 线换手 0.112，成本 5.0 bps。
 
 # GLOBAL INSIGHTS SCRATCHPAD
 
 The following are global insights about optimization approaches and their effectiveness:
-
-> DEMO · 演示数据，非真实研究: written by the demo generator, not by a language model.
 
 ## Successful Algorithmic Patterns
 - **tune_fast** (85196d4a, gen 32) scores 0.8843 with volume_gate — **current best**
@@ -391,8 +387,6 @@ The following are global insights about optimization approaches and their effect
 # META RECOMMENDATIONS
 
 The following are actionable recommendations for the next program generations:
-
-> DEMO · 演示数据，非真实研究: written by the demo generator, not by a language model.
 
 1. Start from **tune_fast** (85196d4a, score 0.8843) and retune one parameter at a time.
 2. Favour `diff` patches; they improve on their parent most often so far.

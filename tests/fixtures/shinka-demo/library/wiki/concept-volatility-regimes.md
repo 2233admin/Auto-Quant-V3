@@ -1,9 +1,7 @@
 # concept-volatility-regimes
 
-> DEMO · 演示数据，非真实研究
-
 Type: concept
 
-Splitting history into calm and turbulent regimes by rolling volatility.
+按滚动波动率把历史划分为平静期和动荡期。
 
-A regime filter compares rolling volatility with its long-run median. It is a frequent ingredient of the demo momentum programs.
+状态过滤器把滚动波动率与其长期中位数比较，是演示动量程序里常见的一环。

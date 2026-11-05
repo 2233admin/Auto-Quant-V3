@@ -1,9 +1,7 @@
 # concept-probability-of-backtest-overfitting
 
-> DEMO · 演示数据，非真实研究
-
 Type: concept
 
-PBO via combinatorially symmetric cross-validation.
+用组合对称交叉验证估计 PBO。
 
-PBO estimates how often the in-sample winner ranks below the median out of sample when the history is split into symmetric halves. The skeptic computes it over the best distinct programs of one experiment.
+把历史切成对称的两半，PBO 估计样本内的第一名在样本外落到中位数以下的频率。质疑者在一个实验的最佳若干个不同程序上计算它。相关：[[concept-deflated-sharpe-ratio]]。

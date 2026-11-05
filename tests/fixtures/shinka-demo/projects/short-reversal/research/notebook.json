@@ -1,5 +1,5 @@
 {
-  "direction": "DEMO · 演示数据，非真实研究 · 短期反转（预算超支与评估失败示例）",
+  "direction": "短期反转（预算超支与评估失败示例）",
   "created": "2026-10-14T09:00:00+00:00",
   "budget_usd": 8.0,
   "data": {
@@ -14,7 +14,7 @@
   "hypotheses": [
     {
       "id": "h001",
-      "title": "DEMO · 演示数据，非真实研究 · 3 日反转在低流动性日更强",
+      "title": "3 日反转在低流动性日更强",
       "status": "challenged",
       "created": "2026-10-14T09:10:00+00:00",
       "experiments": [
@@ -43,7 +43,7 @@
             "baseline_buy_hold_oos_sharpe": 0.44,
             "best_program": "experiments/h001/e01/best_program.py",
             "rule_label": "inconclusive",
-            "rule_reason": "OOS Sharpe 0.31 does not beat buy-and-hold (0.44)",
+            "rule_reason": "验证段 Sharpe 0.31 没有胜过买入持有（0.44）",
             "thresholds": {
               "dsr_supported": 0.95,
               "min_positive_fraction": 0.6666666666666666,
@@ -57,7 +57,7 @@
     },
     {
       "id": "h002",
-      "title": "DEMO · 演示数据，非真实研究 · 反转信号叠加波动率过滤（评估器多次失败）",
+      "title": "反转信号叠加波动率过滤（评估器多次失败）",
       "status": "running",
       "created": "2026-10-15T11:00:00+00:00",
       "experiments": [

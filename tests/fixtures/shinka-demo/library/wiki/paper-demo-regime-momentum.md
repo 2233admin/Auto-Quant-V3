@@ -1,9 +1,7 @@
 # paper-demo-regime-momentum
 
-> DEMO · 演示数据，非真实研究
-
 Type: paper
 
-Fictional paper note used only to show the paper page layout.
+虚构的论文笔记，只用于展示论文页的版式。
 
-This page summarises a fictional paper invented for the demo. It does not describe any real publication or result.
+本页概括一篇为演示编造的虚构论文，不描述任何真实的出版物或结果。

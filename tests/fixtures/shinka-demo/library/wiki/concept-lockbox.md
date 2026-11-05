@@ -1,9 +1,7 @@
 # concept-lockbox
 
-> DEMO · 演示数据，非真实研究
-
 Type: concept
 
-The lockbox is the untouched tail of the data, opened once per direction.
+封存段是数据中从未动过的尾部，每个研究课题只开封一次。
 
-`confirm` scores every supported hypothesis on the lockbox at the same time, then marks it opened; a new direction needs new data.
+`confirm` 在同一时刻用封存段给所有成立的假设打分，然后把它标记为已开封；想继续研究就要用新数据开新课题。

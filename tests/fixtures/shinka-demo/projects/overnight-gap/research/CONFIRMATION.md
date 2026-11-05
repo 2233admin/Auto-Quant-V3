@@ -1,10 +1,8 @@
 # Lockbox confirmation
 
-> DEMO · 演示数据，非真实研究
-
 Lockbox from 2022-11-29 00:00:00.
 
-## h001: DEMO · 演示数据，非真实研究 · 大幅高开后当日延续，扣费后仍为正 — confirmed
+## h001: 大幅高开后当日延续，扣费后仍为正 — confirmed
 
 | check | value |
 |---|---|

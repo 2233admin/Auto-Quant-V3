@@ -1,9 +1,7 @@
 # finding-d2-h001-overnight-gap
 
-> DEMO · 演示数据，非真实研究
-
 Type: finding
 
-d2/h001 confirmed on the synthetic lockbox.
+d2/h001 在合成封存段上得到确认。
 
-Synthetic demo finding: the demo lockbox confirmation passed. Not a result.
+合成演示结论：演示封存段的确认通过了。这不是研究结果。见 [[concept-lockbox]]。

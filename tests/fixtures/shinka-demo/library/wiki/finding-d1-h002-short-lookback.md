@@ -1,9 +1,7 @@
 # finding-d1-h002-short-lookback
 
-> DEMO · 演示数据，非真实研究
-
 Type: finding
 
-d1/h002 refuted on synthetic data: turnover eats the edge.
+d1/h002 在合成数据上被推翻：换手吃掉了优势。
 
-Synthetic demo finding: out-of-sample Sharpe below zero in the demo numbers.
+合成演示结论：演示数字里样本外 Sharpe 低于零。

@@ -1,5 +1,5 @@
 {
-  "direction": "DEMO · 演示数据，非真实研究 · 隔夜跳空的延续效应（已结题）",
+  "direction": "隔夜跳空的延续效应（已结题）",
   "created": "2026-09-28T09:00:00+00:00",
   "budget_usd": 40.0,
   "data": {
@@ -14,7 +14,7 @@
   "hypotheses": [
     {
       "id": "h001",
-      "title": "DEMO · 演示数据，非真实研究 · 大幅高开后当日延续，扣费后仍为正",
+      "title": "大幅高开后当日延续，扣费后仍为正",
       "status": "confirmed",
       "created": "2026-09-28T09:10:00+00:00",
       "experiments": [
@@ -43,7 +43,7 @@
             "baseline_buy_hold_oos_sharpe": 0.36,
             "best_program": "experiments/h001/e01/best_program.py",
             "rule_label": "supported",
-            "rule_reason": "DSR 0.968 >= 0.95 over 241 trials; 67% of OOS sub-periods positive; beats buy-and-hold (0.36)",
+            "rule_reason": "DSR 0.968 >= 0.95（共 241 次试验）；验证段子区间 67% 为正；胜过买入持有（0.36）",
             "thresholds": {
               "dsr_supported": 0.95,
               "min_positive_fraction": 0.6666666666666666,
@@ -54,7 +54,7 @@
       ],
       "verdict": {
         "label": "supported",
-        "reason": "DSR 0.968 >= 0.95 over 241 trials; 67% of OOS sub-periods positive; beats buy-and-hold (0.36)",
+        "reason": "DSR 0.968 >= 0.95（共 241 次试验）；验证段子区间 67% 为正；胜过买入持有（0.36）",
         "evidence": {
           "experiment": "e01",
           "program_id": "237d0821-5575-418f-bf6b-acec175fddb6",
@@ -73,7 +73,7 @@
           "baseline_buy_hold_oos_sharpe": 0.36,
           "best_program": "experiments/h001/e01/best_program.py",
           "rule_label": "supported",
-          "rule_reason": "DSR 0.968 >= 0.95 over 241 trials; 67% of OOS sub-periods positive; beats buy-and-hold (0.36)",
+          "rule_reason": "DSR 0.968 >= 0.95（共 241 次试验）；验证段子区间 67% 为正；胜过买入持有（0.36）",
           "thresholds": {
             "dsr_supported": 0.95,
             "min_positive_fraction": 0.6666666666666666,
@@ -99,7 +99,7 @@
     },
     {
       "id": "h002",
-      "title": "DEMO · 演示数据，非真实研究 · 小幅低开后当日反转",
+      "title": "小幅低开后当日反转",
       "status": "refuted",
       "created": "2026-09-28T09:12:00+00:00",
       "experiments": [
@@ -128,7 +128,7 @@
             "baseline_buy_hold_oos_sharpe": 0.36,
             "best_program": "experiments/h002/e01/best_program.py",
             "rule_label": "refuted",
-            "rule_reason": "OOS Sharpe -0.34 <= 0",
+            "rule_reason": "验证段 Sharpe -0.34 <= 0",
             "thresholds": {
               "dsr_supported": 0.95,
               "min_positive_fraction": 0.6666666666666666,
@@ -139,7 +139,7 @@
       ],
       "verdict": {
         "label": "refuted",
-        "reason": "OOS Sharpe -0.34 <= 0",
+        "reason": "验证段 Sharpe -0.34 <= 0",
         "evidence": {
           "experiment": "e01",
           "program_id": "4a59ebba-3a1b-4d42-be4e-f09bf927893c",
@@ -158,7 +158,7 @@
           "baseline_buy_hold_oos_sharpe": 0.36,
           "best_program": "experiments/h002/e01/best_program.py",
           "rule_label": "refuted",
-          "rule_reason": "OOS Sharpe -0.34 <= 0",
+          "rule_reason": "验证段 Sharpe -0.34 <= 0",
           "thresholds": {
             "dsr_supported": 0.95,
             "min_positive_fraction": 0.6666666666666666,

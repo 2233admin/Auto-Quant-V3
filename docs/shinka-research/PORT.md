@@ -128,5 +128,5 @@ the meta-note PDF export and the per-worker occupancy timeline (stage durations 
 
 The fixture `tests/fixtures/shinka-demo/` is the fork's seed-generated demo converted by its `convert.py` (four
 Projects and a library, all synthetic, marked by `DEMO_DATA.md`; 6.6 MB: embeddings dropped, metadata cut to what the
-pages read, program source and diffs kept for `momentum-regimes/h001/e01` and `overnight-gap/h001/e01` only); `python -m tests.shinka_demo <dir>` builds a V3
+pages read, program source and diffs kept for `momentum-regimes/h001/e01` and `overnight-gap/h001/e01` only); the generator's per-item demo label is removed (each page shows one demo notice) and user-facing prose is Chinese: templated texts are translated by `convert.py`, the agent-written library pages come from `overlay/library/`; `python -m tests.shinka_demo <dir>` builds a V3
 Workspace from it.

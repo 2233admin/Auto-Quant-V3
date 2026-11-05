@@ -1,10 +1,10 @@
 time	hypothesis	experiment	event	note
-2026-09-28T10:00:00+00:00	h001	e01	scaffold	seed initial.py
-2026-09-28T12:37:50+00:00	h001	e01	run	240 new programs, 240 total, best IS score 0.927, spend $10.52
-2026-09-30T09:00:00+00:00	h001	e01	skeptic	rule says supported: DSR 0.968 >= 0.95 over 241 trials; 67% of OOS sub-periods positive; beats buy-and-hold (0.36)
-2026-09-30T09:30:00+00:00	h001	e01	verdict	supported: DSR 0.968 >= 0.95 over 241 trials; 67% of OOS sub-periods positive; beats buy-and-hold (0.36)
-2026-09-30T14:00:00+00:00	h002	e01	scaffold	seed initial.py
-2026-09-30T15:49:34+00:00	h002	e01	run	160 new programs, 160 total, best IS score 0.735, spend $7.82
-2026-10-02T09:00:00+00:00	h002	e01	skeptic	rule says refuted: OOS Sharpe -0.34 <= 0
-2026-10-02T09:20:00+00:00	h002	e01	verdict	refuted: OOS Sharpe -0.34 <= 0
-2026-10-04T10:00:00+00:00	h001	e01	confirm	confirmed: lockbox Sharpe 0.94, DSR 0.961
+2026-09-28T10:00:00+00:00	h001	e01	scaffold	种子程序 initial.py
+2026-09-28T12:37:50+00:00	h001	e01	run	新增 240 个程序，共 240 个，样本内最佳 0.927，花费 $10.52
+2026-09-30T09:00:00+00:00	h001	e01	skeptic	规则判定成立：DSR 0.968 >= 0.95（共 241 次试验）；验证段子区间 67% 为正；胜过买入持有（0.36）
+2026-09-30T09:30:00+00:00	h001	e01	verdict	成立：DSR 0.968 >= 0.95（共 241 次试验）；验证段子区间 67% 为正；胜过买入持有（0.36）
+2026-09-30T14:00:00+00:00	h002	e01	scaffold	种子程序 initial.py
+2026-09-30T15:49:34+00:00	h002	e01	run	新增 160 个程序，共 160 个，样本内最佳 0.735，花费 $7.82
+2026-10-02T09:00:00+00:00	h002	e01	skeptic	规则判定被拒绝：验证段 Sharpe -0.34 <= 0
+2026-10-02T09:20:00+00:00	h002	e01	verdict	被拒绝：验证段 Sharpe -0.34 <= 0
+2026-10-04T10:00:00+00:00	h001	e01	confirm	已确认：封存段 Sharpe 0.94，DSR 0.961

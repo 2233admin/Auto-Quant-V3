@@ -1,16 +1,16 @@
 time	hypothesis	experiment	event	note
-2026-10-08T09:20:00+00:00	h001	e01	scaffold	seed initial.py
-2026-10-08T12:36:22+00:00	h001	e01	run	320 new programs, 320 total, best IS score 1.028, spend $12.95
-2026-10-08T14:00:00+00:00	h002	e01	scaffold	seed initial.py
-2026-10-08T16:22:37+00:00	h002	e01	run	220 new programs, 220 total, best IS score 1.102, spend $9.31
-2026-10-09T10:00:00+00:00	h001	e01	skeptic	rule says supported: DSR 0.973 >= 0.95 over 543 trials; 100% of OOS sub-periods positive; beats buy-and-hold (0.41)
-2026-10-09T10:20:00+00:00	h001	e01	verdict	supported: DSR 0.973 >= 0.95 over 543 trials; 100% of OOS sub-periods positive; beats buy-and-hold (0.41)
-2026-10-09T11:00:00+00:00	h002	e01	skeptic	rule says refuted: OOS Sharpe -0.21 <= 0
-2026-10-09T11:15:00+00:00	h002	e01	verdict	refuted: OOS Sharpe -0.21 <= 0
-2026-10-10T09:15:00+00:00	h003	e01	scaffold	seed initial.py
-2026-10-10T11:20:52+00:00	h003	e01	run	180 new programs, 180 total, best IS score 0.815, spend $8.50
-2026-10-11T10:00:00+00:00	h003	e02	scaffold	seed initial.py
-2026-10-11T12:43:11+00:00	h003	e02	run	260 new programs, 260 total, best IS score 0.884, spend $12.54
-2026-10-13T14:30:00+00:00	h003	e02	skeptic	rule says inconclusive: OOS Sharpe 0.58 > 0 but DSR 0.710 (needs 0.95), sub-period stability 33% (needs 67%) or PBO 0.38 (max 0.5) falls short
-2026-10-13T15:00:00+00:00	h003	e02	verdict	inconclusive: OOS Sharpe 0.58 > 0 but DSR 0.710 (needs 0.95), sub-period stability 33% (needs 67%) or PBO 0.38 (max 0.5) falls short
-2026-10-18T08:00:00+00:00	h004	e01	scaffold	seed initial.py
+2026-10-08T09:20:00+00:00	h001	e01	scaffold	种子程序 initial.py
+2026-10-08T12:36:22+00:00	h001	e01	run	新增 320 个程序，共 320 个，样本内最佳 1.028，花费 $12.95
+2026-10-08T14:00:00+00:00	h002	e01	scaffold	种子程序 initial.py
+2026-10-08T16:22:37+00:00	h002	e01	run	新增 220 个程序，共 220 个，样本内最佳 1.102，花费 $9.31
+2026-10-09T10:00:00+00:00	h001	e01	skeptic	规则判定成立：DSR 0.973 >= 0.95（共 543 次试验）；验证段子区间 100% 为正；胜过买入持有（0.41）
+2026-10-09T10:20:00+00:00	h001	e01	verdict	成立：DSR 0.973 >= 0.95（共 543 次试验）；验证段子区间 100% 为正；胜过买入持有（0.41）
+2026-10-09T11:00:00+00:00	h002	e01	skeptic	规则判定被拒绝：验证段 Sharpe -0.21 <= 0
+2026-10-09T11:15:00+00:00	h002	e01	verdict	被拒绝：验证段 Sharpe -0.21 <= 0
+2026-10-10T09:15:00+00:00	h003	e01	scaffold	种子程序 initial.py
+2026-10-10T11:20:52+00:00	h003	e01	run	新增 180 个程序，共 180 个，样本内最佳 0.815，花费 $8.50
+2026-10-11T10:00:00+00:00	h003	e02	scaffold	种子程序 initial.py
+2026-10-11T12:43:11+00:00	h003	e02	run	新增 260 个程序，共 260 个，样本内最佳 0.884，花费 $12.54
+2026-10-13T14:30:00+00:00	h003	e02	skeptic	规则判定证据不足：验证段 Sharpe 0.58 > 0，但 DSR 0.710（需要 0.95）、子区间稳定性 33%（需要 67%）或 PBO 0.38（上限 0.5）未达标
+2026-10-13T15:00:00+00:00	h003	e02	verdict	证据不足：验证段 Sharpe 0.58 > 0，但 DSR 0.710（需要 0.95）、子区间稳定性 33%（需要 67%）或 PBO 0.38（上限 0.5）未达标
+2026-10-18T08:00:00+00:00	h004	e01	scaffold	种子程序 initial.py
