@@ -11,6 +11,7 @@ import { RunAnalysisButton } from '../actions/RunAnalysisButton'
 import { RunList } from './run/RunList'
 import { Info } from '../components/Info'
 import { HeroLine, HeroTiles, type HeroTile } from './hero'
+import { ResearchSection } from '../research/ResearchSection'
 import {
   EvidenceDocsBlock,
   ExperimentsBlock,
@@ -181,6 +182,7 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
 
       <SectionNav
         items={[
+          ...(project.research ? [{ id: 'sec-research', label: uiText("Research direction") }] : []),
           { id: 'sec-next', label: uiText("Next move") },
           { id: 'sec-question', label: uiText("Question") },
           { id: 'sec-studies', label: uiText("Studies") },
@@ -222,6 +224,8 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
 
         <HeroTiles items={tiles} label={uiText("Core numbers")} />
       </div>
+
+      {project.research && <ResearchSection id={project.id} research={project.research} />}
 
       <Section title={uiText("Next move")} id="sec-next">
         <div className="pj-next">

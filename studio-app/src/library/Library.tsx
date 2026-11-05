@@ -5,20 +5,24 @@ import { FactorLibrary } from './FactorLibrary'
 import { RunHistory } from './RunHistory'
 import { StrategyLibrary } from './StrategyLibrary'
 import { TuningPage } from './Tuning'
+import { ResearchLibrary } from '../research/ResearchLibrary'
+import { KnowledgeLibrary } from '../research/KnowledgeLibrary'
 import { Loading } from '../components/States'
 
-export type LibraryRoute = Extract<Route, { view: 'factors' | 'runs' | 'strategies' | 'tuning' }>
+export type LibraryRoute = Extract<Route, { view: 'factors' | 'runs' | 'strategies' | 'tuning' | 'knowledge' }> | { view: 'research' }
 
 export const isLibraryRoute = (route: Route): route is LibraryRoute =>
-  route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'tuning'
+  route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'tuning' || route.view === 'knowledge' || (route.view === 'research' && !route.id)
 
-export const LIBRARY_TITLE: Record<LibraryRoute['view'], string> = { factors: 'Factor library', runs: 'Run history', strategies: 'Strategy library', tuning: 'Tuning tasks' }
+export const LIBRARY_TITLE: Record<LibraryRoute['view'], string> = { factors: 'Factor library', runs: 'Run history', strategies: 'Strategy library', tuning: 'Tuning tasks', research: 'Research directions', knowledge: 'Knowledge library' }
 
-/** The four read-only cross-Project pages: one list, filters on top, click a row to open detail. */
-export function LibraryPage({ route, workspace, go }: { route: LibraryRoute; workspace: WorkspaceSummary | null; go: (href: string) => void }) {
+/** The read-only cross-Project pages: one list, filters on top, click a row to open detail. */
+export function LibraryPage({ route, workspace, go, tick = null }: { route: LibraryRoute; workspace: WorkspaceSummary | null; go: (href: string) => void; tick?: Date | null }) {
   if (!workspace) return <div className="pg"><Loading label={uiText("Loading…")} minHeight={240} /></div>
   if (route.view === 'factors') return <FactorLibrary workspace={workspace} go={go} />
   if (route.view === 'runs') return <RunHistory workspace={workspace} go={go} />
   if (route.view === 'strategies') return <StrategyLibrary workspace={workspace} go={go} />
+  if (route.view === 'research') return <ResearchLibrary workspace={workspace} go={go} />
+  if (route.view === 'knowledge') return <KnowledgeLibrary tick={tick} />
   return <TuningPage workspace={workspace} id={route.id} go={go} />
 }

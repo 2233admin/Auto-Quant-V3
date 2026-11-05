@@ -22,6 +22,7 @@ import { RlPage } from './pages/rl/Rl'
 import { RunPage } from './pages/run/RunPage'
 import { routeHref, routeProjectId } from './route'
 import { isLibraryRoute, LIBRARY_TITLE, LibraryPage } from './library/Library'
+import { ResearchPage } from './research/ResearchPage'
 import { Palette } from './shell/Palette'
 import { Rail, TabBar } from './shell/Rail'
 import { assistantContextFor, HostedAssistantNote, isHosted } from './shell/Hosted'
@@ -104,6 +105,8 @@ export default function App() {
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: uiText("Factor evidence") },
             ]
+          : route.view === 'research' && route.id
+            ? [{ label: LIBRARY_TITLE.research, href: routeHref({ view: 'research' }) }, { label: data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id, data: true }]
           : isLibraryRoute(route)
             ? route.view === 'tuning' && route.id
               ? [{ label: LIBRARY_TITLE.tuning, href: routeHref({ view: 'tuning' }) }, { label: (data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id), data: true }]
@@ -113,7 +116,7 @@ export default function App() {
               : route.view === 'settings'
                 ? [{ label: uiText("Settings") }]
                 : [{ label: uiText("Factors") }]
-  const routeTitles: Record<string, string> = { assistant: 'Assistant', projects: 'Factors', factors: 'Factor library', strategies: 'Strategy library', runs: 'Run history', tuning: 'Tuning tasks', attention: 'Attention', settings: 'Settings', 'event-study': 'Price event study', factor: 'Factor evidence', portfolio: 'Portfolio', bookrisk: 'Book Risk', bookstress: 'Reported-book path stress', allocation: 'Strategic allocation', rl: 'Governed RL policy', run: 'Run', compare: 'Compare Runs', project: 'Project' }
+  const routeTitles: Record<string, string> = { assistant: 'Assistant', projects: 'Factors', factors: 'Factor library', strategies: 'Strategy library', runs: 'Run history', tuning: 'Tuning tasks', research: 'Research directions', knowledge: 'Knowledge library', attention: 'Attention', settings: 'Settings', 'event-study': 'Price event study', factor: 'Factor evidence', portfolio: 'Portfolio', bookrisk: 'Book Risk', bookstress: 'Reported-book path stress', allocation: 'Strategic allocation', rl: 'Governed RL policy', run: 'Run', compare: 'Compare Runs', project: 'Project' }
   routeTitles['strategy'] = 'Strategy workbench'
   routeTitles['portfolio'] = 'Strategy workbench'
   routeTitles['data-intake'] = 'Import data'
@@ -130,8 +133,10 @@ export default function App() {
     page = <HostedAssistantNote />
   } else if (route.view === 'assistant') {
     page = <AssistantPage workspace={data.workspace} go={go} />
+  } else if (route.view === 'research' && route.id) {
+    page = <ResearchPage key={route.id} id={route.id} h={route.h} name={data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id} tick={data.updated} go={go} />
   } else if (isLibraryRoute(route)) {
-    page = <LibraryPage route={route} workspace={data.workspace} go={go} />
+    page = <LibraryPage route={route} workspace={data.workspace} go={go} tick={data.updated} />
   } else if (route.view === 'attention') {
     page = <AttentionPage workspace={data.workspace} />
   } else if (route.view === 'settings') {

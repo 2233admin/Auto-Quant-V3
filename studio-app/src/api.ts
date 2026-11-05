@@ -63,8 +63,23 @@ export type StrategyRoute = {
 }
 export type LibrarySummary = { factor: FactorSummary | null; strategy: StrategySummary | null }
 
+export type ResearchState = 'none' | 'ready' | 'unavailable' | 'invalid'
+
+/** The Project list projection inside the workspace summary (notebook.json only). */
+export type ResearchSummary = {
+  state: ResearchState
+  direction?: string | null
+  hypotheses?: number
+  statusCounts?: Record<string, number>
+  latestVerdict?: { hypothesis: string; label: string; at: string | null } | null
+  lockbox?: 'none' | 'sealed' | 'opened'
+  demo: string | null
+}
+
 export type ProjectSummary = {
   library?: LibrarySummary
+  /** Shinka research direction of this Project (notebook.json projection), null when it has none. */
+  research?: ResearchSummary | null
   id: string
   name: string
   description: string | null
@@ -130,6 +145,7 @@ export type TimelineRow = {
 export type ProjectSnapshot = {
   rootDir?: string
   library?: LibrarySummary
+  research?: ResearchSummary | null
   id: string
   name: string
   description: string

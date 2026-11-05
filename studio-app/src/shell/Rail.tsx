@@ -15,6 +15,8 @@ const LIBRARY_NAV = [
   { view: 'strategies', get label() { return uiText("Strategies") }, icon: 'strategies' },
   { view: 'runs', get label() { return uiText("Runs") }, icon: 'runs' },
   { view: 'tuning', get label() { return uiText("Tuning") }, icon: 'tuning' },
+  { view: 'research', get label() { return uiText("Research") }, icon: 'doc' },
+  { view: 'knowledge', get label() { return uiText("Knowledge") }, icon: 'folder' },
 ] as const
 
 type RailProps = { route: Route; data: ShellData; narrow: boolean; onSearch: () => void }
@@ -80,8 +82,8 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
         {LIBRARY_NAV.filter((item) => item.view !== 'assistant').map((item, index) => (
           <a key={item.view} className={route.view === item.view ? 'nav is-on' : 'nav'} href={routeHref({ view: item.view })} aria-current={route.view === item.view ? 'page' : undefined}>
             <Icon name={item.icon} />
-            <span className="nav-label">{t(item.label, ({ factors: '因子', strategies: '策略', runs: '运行记录', tuning: '调优' } as Record<string, string>)[item.view] ?? item.label)}</span>
-            <span className="nav-short">{t(item.label, ({ factors: '因子', strategies: '策略', runs: '运行', tuning: '调优' } as Record<string, string>)[item.view] ?? item.label)}</span>
+            <span className="nav-label">{t(item.label, ({ factors: '因子', strategies: '策略', runs: '运行记录', tuning: '调优', research: '研究课题', knowledge: '资料库' } as Record<string, string>)[item.view] ?? item.label)}</span>
+            <span className="nav-short">{t(item.label, ({ factors: '因子', strategies: '策略', runs: '运行', tuning: '调优', research: '课题', knowledge: '资料' } as Record<string, string>)[item.view] ?? item.label)}</span>
             <span className="nav-idx mk" aria-hidden="true">{String(index + (hosted ? 1 : 2)).padStart(2, '0')}</span>
           </a>
         ))}
@@ -122,7 +124,7 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
 export function TabBar({ route, data }: { route: Route; data: ShellData }) {
   const language = useLanguage()
   const hosted = isHosted(data.workspace)
-  const labels: Record<string, string> = { Assistant: '助手', Factors: '因子', Strategies: '策略', Runs: '运行', Tuning: '调优', Attention: '待处理', Settings: '设置' }
+  const labels: Record<string, string> = { Assistant: '助手', Factors: '因子', Strategies: '策略', Runs: '运行', Tuning: '调优', Research: '课题', Knowledge: '资料', Attention: '待处理', Settings: '设置' }
   const attention = attentionItems(data.workspace).length
   const tab = (view: 'projects' | 'attention' | 'settings' | (typeof LIBRARY_NAV)[number]['view'], label: string, icon: IconName, badge?: ReactNode) => (
     <a key={view} className={route.view === view ? 'tab is-on' : 'tab'} href={routeHref({ view })} aria-current={route.view === view ? 'page' : undefined}>
