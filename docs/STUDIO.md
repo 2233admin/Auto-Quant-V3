@@ -42,6 +42,23 @@ audit gate: freezing alone cannot expose test data. Disabled actions keep a
 visible reason, and counted execution still asks for confirmation of trial N
 of M. More detail is in [[docs/design/studio-workbench-kit]].
 
+## Factor history
+
+The Factor library lists research references separately from formal Factor
+Studies. The library total, search and the list/card switch include both.
+Validation IC filters and their counts apply only to formal studies. A
+workspace with references but no formal studies opens directly on the
+references without empty validation controls.
+
+Choose **Historical performance** on a reference to open its history first.
+**Formula and usage** shows the definition, direction and source. A reference
+can link to an intact, same-Project `kit-confirmation` Research Run. The chart
+shows paired decision-period returns, not daily returns, cumulative NAV or
+independent holdout evidence. The decision table lists the two ranked stock
+codes, the second slot's actual cash decision, and KiT's return minus each
+control in basis points. A reference without the evidence shows the gap
+instead of a chart. A Q5−Q1 ranking diagnostic is labelled separately.
+
 ## Strategy workbench
 
 Open a Strategy library card or `?view=strategy&id=<project>`; the historical
@@ -324,6 +341,12 @@ kept in the browser's local storage and is never sent to the server. Fixed at th
 bottom are **Attention** (with a count) and **Settings**. The theme toggle stays
 in the top bar. One Project is one idea, so a card or row title is the Project
 name; the route key `?view=projects` is unchanged so existing links still work.
+
+**Factors** offers **List** and **Cards** in the same library. Both use the
+same search, verdict and split filters, sorting, and links to factor analysis.
+The layout preference stays in the current browser. Cards show the published
+validation rank IC and HAC t when available, plus the trial count and update
+time. A dash marks an unavailable metric.
 
 **Ideas** shows a one-row status strip (ideas, need attention, immutable Runs,
 last Run) above a table with one row per Project: verdict, headline metric,

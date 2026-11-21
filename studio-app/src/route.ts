@@ -10,7 +10,7 @@ export type Route =
   | { view: 'factor'; id: string; study?: string; run?: string }
   | { view: 'portfolio'; id: string }
   | { view: 'strategy'; id: string }
-  | { view: 'factors' }
+  | { view: 'factors'; section?: 'reference'; project?: string; item?: string }
   | { view: 'runs' }
   | { view: 'strategies' }
   | { view: 'attention' }
@@ -45,6 +45,11 @@ export function parseRoute(search: string, pathname = '/'): Route {
   const p = new URLSearchParams(search)
   const id = p.get('id')
   const view = p.get('view')
+  if (view === 'factors' && p.get('section') === 'reference') return {
+    view: 'factors', section: 'reference',
+    ...(p.get('project') ? { project: p.get('project')! } : {}),
+    ...(p.get('item') ? { item: p.get('item')! } : {}),
+  }
   if (isBare(view)) return { view }
   if (isIdView(view) && id) return { view, id }
   if (view === 'tuning') return id ? { view: 'tuning', id } : { view: 'tuning' }
@@ -70,6 +75,11 @@ export function routeHref(route: Route): string {
   if (route.view === 'project') return `/?${new URLSearchParams({ view: 'project', id: route.id })}`
   if (route.view === 'portfolio' || route.view === 'strategy') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`
   if (route.view === 'research') return `/?${new URLSearchParams({ view: 'research', ...(route.id ? { id: route.id } : {}), ...Object.fromEntries((['h', 'e', 'p'] as const).flatMap((k) => (route[k] ? [[k, route[k]!]] : []))) })}`
+  if (route.view === 'factors' && route.section === 'reference') return `/?${new URLSearchParams({
+    view: 'factors', section: 'reference',
+    ...(route.project ? { project: route.project } : {}),
+    ...(route.item ? { item: route.item } : {}),
+  })}`
   if (route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'attention' || route.view === 'settings' || route.view === 'knowledge') return `/?${new URLSearchParams({ view: route.view })}`
   if (route.view === 'tuning') return `/?${new URLSearchParams(route.id ? { view: 'tuning', id: route.id } : { view: 'tuning' })}`
   if (route.view === 'bookrisk' || route.view === 'bookstress') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`

@@ -112,6 +112,39 @@ test('a synthetic 120-factor library renders every row with sortable headers, de
   setLanguage('en')
 })
 
+test('factor cards show the same factor details and do not expose validation values for an untestable factor', () => {
+  const [first, second] = syntheticFactors(2)
+  const tested = first.library!.factor!
+  const unavailable = second.library!.factor!
+  tested.verdict = 'Supported'
+  tested.validation = { meanRankIc: 0.321, hacTStatistic: 4.2 }
+  unavailable.verdict = 'Could not be tested'
+  unavailable.validation = { meanRankIc: 9.876, hacTStatistic: 98.7 }
+  const workspace = syntheticWorkspace([first, second, ...syntheticStrategies(1)])
+  const library = () => page(workspace, <FactorLibrary workspace={workspace} go={() => undefined} />)
+  const list = library()
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: { getItem: (key: string) => key === 'aq-studio-factor-layout' ? 'cards' : null },
+  })
+  try {
+    const cards = library()
+    const links = (html: string) => [...html.matchAll(/aria-label="Factor analysis · [^"]*"/g)].map(match => match[0])
+    assert.equal(links(list).length, 2)
+    assert.deepEqual(links(cards), links(list))
+    const targets = (html: string) => [...new Set([...html.matchAll(/href="([^"]*\?view=factor&amp;id=[^"]+)"/g)].map(match => match[1]))]
+    assert.equal(targets(list).length, 2)
+    assert.deepEqual(targets(cards), targets(list))
+    assert.doesNotMatch(cards, /class="library-row"|9\.876|98\.7|strategy-001/)
+    assert.match(cards, /class="factor-card"/)
+    assert.match(cards, /0\.321/)
+  } finally {
+    if (previous) Object.defineProperty(globalThis, 'localStorage', previous)
+    else Reflect.deleteProperty(globalThis, 'localStorage')
+  }
+})
+
 test('a synthetic strategy library renders its rows and the sign-coloured curves', () => {
   const workspace = syntheticWorkspace(syntheticStrategies(40))
   const html = page(workspace, <StrategyLibrary workspace={workspace} go={() => undefined} />)

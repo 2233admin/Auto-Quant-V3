@@ -13,6 +13,7 @@ from .run_history import audit_visible
 from .research_verdict import factor_development_verdict
 from .selection import build_research_family, build_selection_adjustment
 from .studio_actions import _is_link, confine_workspace_path
+from .studio_factor_references import factor_references
 from .workspace import AutoQuantValidationError
 
 
@@ -61,6 +62,9 @@ def library_projection(project, snapshot, workspace_root):
     factor_ids = {s["id"] for s in studies if s.get("primaryMetric") == "validation_mean_ic"}
     portfolio_ids = {s["id"] for s in studies if s.get("primaryMetric") == "validation_net_sharpe"}
     result = {"factor": None, "strategy": None}
+    references = factor_references(project, snapshot["runs"])
+    if references is not None:
+        result["factorReferences"] = references
     if factor_ids:
         runs = sorted((r for r in snapshot["runs"] if r["studyId"] in factor_ids), key=lambda r: (r["startedAt"], r["id"]), reverse=True)
         latest = runs[0] if runs else None
