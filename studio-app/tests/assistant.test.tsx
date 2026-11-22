@@ -34,6 +34,8 @@ test('empty assistant chat shows template cards grouped by task type', () => {
   assert.match(html, /Research tool/)
   assert.match(html, /A-share 20-day momentum strategy/)
   assert.match(html, /Fill and confirm/)
+  assert.equal((html.match(/type="text"/g) || []).length, 6)
+  assert.equal((html.match(/aria-required="true"/g) || []).length, 3)
   assert.doesNotMatch(html, /<button[^>]*disabled[^>]*>Use template/)
   assert.match(html, /<button[^>]*disabled[^>]*>Send/)
   assert.doesNotMatch(html, /assistant-prompts/)
