@@ -22,7 +22,7 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Iterator, Protocol
 
 from .runs import list_runs, load_run
@@ -139,6 +139,10 @@ def confine_workspace_path(workspace: Path, raw: str, label: str) -> Path:
     candidate = Path(raw)
     resolved = (candidate if candidate.is_absolute() else root / candidate).resolve()
     try:
+        # A drive or UNC anchor (C:\..., \\server\...) is absolute on Windows;
+        # refuse it on every OS rather than read it as a file name on POSIX.
+        if PureWindowsPath(raw).drive and not candidate.is_absolute():
+            raise ValueError(raw)
         resolved.relative_to(root)
     except ValueError:
         raise ActionError(
