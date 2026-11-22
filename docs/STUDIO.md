@@ -122,12 +122,29 @@ Workspace may carry a knowledge library in `library/`
   hypothesis states, the latest recorded verdict and the lockbox state. The same
   projection (`research` in each workspace-summary Project) is read from
   `notebook.json` alone and needs no optional extra.
+  Its **RD-Agent and research candidates** reader opens a local extraction JSON.
+  RD-Agent factor receipts show the reported source, excerpt hash, formula and
+  variables. Research-feature receipts show the reported excerpt line when
+  present, the quote, observation unit, proposed rule, inputs and gap.
+  Preview does not save the file. **Save in this browser** keeps one full JSON
+  receipt for the current browser profile and site. Reloading validates that
+  copy again. A rejected import leaves the saved copy unchanged. **Remove
+  saved copy** removes only browser storage and leaves the source file intact.
+  Studio does not upload, execute or add candidates to the factor library.
+  Candidates remain unverified.
 - `?view=research&id=P[&h=H]` is the direction page: core numbers, the hypothesis
   table, every evaluated program against the noise frontier (record frontier,
   failed programs below the axis, dashed expected best of N pure-noise trials at
   every prefix), the selected hypothesis's claim and what was frozen before its
   trials (evaluator and data hashes, plan rule), the verdict band, the lockbox,
   the check ledger, experiments and the `results.tsv` ledger.
+  **Research results** lists exact hypothesis/experiment pairs, links to the
+  corresponding program inspector, and shows a verdict only for the experiment
+  named in its evidence. It can filter supported or confirmed outcomes, download
+  the shown rows as JSON, and expand recorded owner-grant round attempts when
+  available. Select two experiments to compare: the data and evaluator hashes
+  must match and both must have a finite in-sample score. The view reports the
+  number of evaluations and the score difference, not an out-of-sample result.
 - `?view=knowledge` shows the Workspace library: wiki pages (findings marked),
   `index.md`, raw sources not yet compiled and `log.md`.
 - The Project page gains a Research direction section linking to its page.
@@ -137,8 +154,8 @@ Workspace may carry a knowledge library in `library/`
   scrubber and the best ancestry drawn heavy, a program inspector (facts, why it
   failed, evaluator feedback, diff from its parent, source, model reasoning and
   log tails, offspring), the evolved system-prompt versions, meta-analysis notes,
-  stage durations and the programs table. The direction page links each
-  experiment to it and compares its experiments' running best by generation.
+  stage durations and the programs table. Retained source, parent diff and
+  evaluator feedback can be downloaded as text from the selected program.
 
 Routes: `GET /api/v1/project/research?id=P`, `GET /api/v1/research-library`, and
 for one experiment `GET /api/v1/project/research/run|program|prompt|meta?id=P&h=H&e=E`

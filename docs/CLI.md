@@ -1022,11 +1022,12 @@ invented metrics.
 ```bash
 aq research run <path> \
   --session ID \
-  --agent-command SHELL \
+  (--agent-command SHELL | --local-plan FILE) \
   [--max-turns 5] \
   [--max-wall-seconds 900] \
   [--turn-timeout-seconds 300] \
   [--project ID] [--json]
+aq research extract <excerpt.txt> --model NAME:TAG --output FILE [--json]
 aq research list <path> --session ID [--project ID] [--json]
 aq research show <path> \
   --session ID \
@@ -1034,11 +1035,14 @@ aq research show <path> \
   [--project ID] [--json]
 ```
 
-`research run` invokes the explicit shell command in the Session worktree. A
-fresh structured brief is provided on stdin every turn. The command edits the
-declared candidate closure and returns exactly one strict JSON `propose` or
-`stop` response. Valid proposals are evaluated through the existing fixed
-Judge and Experiment path; they cannot supply metrics, verdicts, or promotion.
+`research run` submits each valid proposal to the existing fixed Judge and
+Experiment path. Both connectors use the same Core trial gate. Neither
+Researcher can supply metrics, verdicts, or promotion decisions.
+
+With `--agent-command`, AutoQuant runs the explicit shell command in the
+Session worktree. It sends a structured brief on stdin each turn. The command
+edits the declared candidate closure and returns one strict JSON `propose` or
+`stop` response.
 
 The aggregate and per-turn budgets are mandatory and bounded. Command exit,
 timeout, malformed response, illegal fixed-source changes, unchanged
@@ -1050,6 +1054,34 @@ hash and referenced Experiment.
 The external command is explicit host-code execution, not an OS sandbox.
 Callers that require stronger isolation can wrap the same stdin/stdout
 protocol in their own sandbox.
+
+With `--local-plan`, the model selects one approved preset per turn. The plan is
+a version 1 JSON object with `model`, `modelDigest`, `candidatePath`, `options`,
+and optional `context`. Use an installed Ollama `name:tag` and the full SHA-256
+digest returned by Ollama. Each key in `options` identifies one preset. Its
+`description` explains the change and its `values` object contains the complete
+parameter set. Every set must use the same keys and scalar types as the baseline.
+The active Study must declare only `candidatePath` editable, and the Session
+must start at its verified leader. The fixed Judge must interpret these values
+as data. It can use any existing factor or model implementation the Study owns.
+
+AutoQuant sends the model the remaining approved choices and recent measured
+Experiment scores. It writes only the chosen preset to the Session worktree.
+The model cannot submit code or edit the Project. The Campaign retains the plan,
+prompt, raw model reply, and Experiment IDs. Do not put secrets or held-out
+labels in the plan's `context`. Iterative scoring is development evidence.
+
+`research extract` accepts a UTF-8 text excerpt up to 16 KiB. It writes a new
+candidate receipt with observation units, exact quotes, proposed rules, inputs,
+and missing evidence. AutoQuant validates each line number. If a candidate's
+name occurs on exactly one source line, it uses that line as the quote.
+Repeated identical candidates are listed in `duplicate_names`. Conflicting
+candidates with the same name stop the extraction. Load the JSON under
+**Research** in Studio. A quote does not verify a formula, admit a factor, or
+run a backtest. The command reads no PDF or URL itself.
+
+Both local operations use Ollama on `127.0.0.1:11434`. They refuse missing,
+remote, or mismatched models and do not fall back to a cloud provider.
 
 ## Research Report commands
 

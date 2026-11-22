@@ -1,4 +1,5 @@
 import { uiTemplate, uiText } from '../i18n'
+import { downloadText } from '../download'
 import type { EvoProgram, ProgramResponse } from './evolutionApi'
 import { fixed, money, vocab } from './words'
 
@@ -51,6 +52,8 @@ function Facts({ r }: { r: Required<ProgramResponse>['program'] }) {
 export function ProgramInspector({ data, onSelect }: { data: ProgramResponse; onSelect: (id: string) => void }) {
   const r = data.program
   if (!r) return <p className="muted small">{uiText("Select a program in the lineage or the table.")}</p>
+  const filename = `${data.demo ? 'demo-' : ''}${data.projectId}-${data.hypothesis}-${data.experiment}-${r.id}`
+  const { code, diff, feedback } = r
   return (
     <div className="vstack">
       <p className="rs-claim" translate="no">{r.patchName ?? r.id}</p>
@@ -58,6 +61,11 @@ export function ProgramInspector({ data, onSelect }: { data: ProgramResponse; on
       <Facts r={r} />
       {data.parent && <p className="small">{uiText("Parent")} <button type="button" className="wb-link mono" onClick={() => onSelect(data.parent!.id)} translate="no">{data.parent.patchName ?? data.parent.id.slice(0, 8)}</button> · {fixed(data.parent.score)}</p>}
       {r.description && <p className="small" translate="no">{r.description}</p>}
+      {(code || diff || feedback) && <div className="rs-result-controls">
+        {code && <button type="button" className="abtn" onClick={() => downloadText(`${filename}-source.txt`, code, 'text/plain;charset=utf-8')}>{uiText("Download source (TXT)")}</button>}
+        {diff && <button type="button" className="abtn" onClick={() => downloadText(`${filename}-diff.txt`, diff, 'text/plain;charset=utf-8')}>{uiText("Download parent diff (TXT)")}</button>}
+        {feedback && <button type="button" className="abtn" onClick={() => downloadText(`${filename}-feedback.txt`, feedback, 'text/plain;charset=utf-8')}>{uiText("Download feedback (TXT)")}</button>}
+      </div>}
       {r.feedback && <><h3 className="pj-sub">{uiText("Evaluator feedback")}</h3><pre className="rs-pre" translate="no">{r.feedback}</pre></>}
       <h3 className="pj-sub">{uiText("Change from parent")}</h3>
       {r.diff ? <Diff text={r.diff} /> : <p className="muted small">{uiText("No diff recorded (a seed program, or the source was not retained).")}</p>}
