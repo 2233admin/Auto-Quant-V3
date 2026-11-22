@@ -6,6 +6,7 @@ import './project.css'
 import { routeHref } from '../../route'
 import { Info } from '../../components/Info'
 import { useFitWidth } from '../../design/useFitWidth'
+import { vocab } from '../../research/words'
 
 const NA = (text: string) => <p className="pj-na">{uiText("Not available: ")}{uiValue(text)}</p>
 
@@ -16,6 +17,40 @@ export function sessionMeta(s: SessionSnapshot) {
     status: s.session?.status ?? s.status,
     studyId: s.session?.studyId ?? s.studyId,
   }
+}
+
+export function CampaignBlock({ project }: { project: ProjectSnapshot }) {
+  const rows = project.sessions.flatMap((s) => s.campaigns ?? [])
+  if (rows.length === 0) return <p className="pj-na">{uiText("No Researcher Campaign has completed in this Project.")}</p>
+  return (
+    <div className="tablewrap">
+      <table className="tbl">
+        <thead>
+          <tr>
+            <th scope="col">{uiText("Campaign")}</th>
+            <th scope="col">{uiText("Status")}</th>
+            <th scope="col">{uiText("Reason")}</th>
+            <th scope="col" className="r">{uiText("Turns")}</th>
+            <th scope="col" className="r">{uiText("Experiments")}</th>
+            <th scope="col">{uiText("Verdicts")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((campaign) => (
+            <tr key={campaign.id}>
+              <td className="mono small" translate="no">{campaign.id}</td>
+              <td>{vocab(campaign.status)}</td>
+              <td>{campaign.reason}</td>
+              <td className="r num mono">{campaign.turnsCompleted}</td>
+              <td className="r num mono">{campaign.experiments}</td>
+              <td className="mono small" translate="no">KEEP {campaign.verdicts.KEEP} · REVERT {campaign.verdicts.REVERT} · CRASH {campaign.verdicts.CRASH}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="faint small">{uiText("Completed Campaigns are immutable. Each Session remains responsible for its Runs.")}</p>
+    </div>
+  )
 }
 
 /** Signed value with an explicit minus sign; null shows as a dash, never zero. */

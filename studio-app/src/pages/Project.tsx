@@ -13,6 +13,7 @@ import { Info } from '../components/Info'
 import { HeroLine, HeroTiles, type HeroTile } from './hero'
 import { ResearchSection } from '../research/ResearchSection'
 import {
+  CampaignBlock,
   EvidenceDocsBlock,
   ExperimentsBlock,
   focusSessionIndex,
@@ -189,6 +190,7 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
           { id: 'sec-selection', label: uiText("Selection-adjusted") },
           { id: 'sec-experiments', label: uiText("Experiments") },
           { id: 'sec-runs', label: uiText("Runs") },
+          { id: 'sec-campaigns', label: uiText("Researcher campaigns") },
           { id: 'sec-sessions', label: uiText("Sessions") },
           { id: 'sec-docs', label: uiText("Reports") },
           { id: 'sec-lanes', label: uiText("Other lanes") },
@@ -265,6 +267,10 @@ export function ProjectPage({ project }: { project: ProjectSnapshot }) {
 
       <Section title={uiText("Runs")} id="sec-runs">
         <RunList project={project} />
+      </Section>
+
+      <Section title={uiText("Researcher campaigns")} id="sec-campaigns">
+        <CampaignBlock project={project} />
       </Section>
 
       <div className="cols">
