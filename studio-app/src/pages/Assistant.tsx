@@ -6,6 +6,7 @@ import { actionCall, errorCopy } from '../actions/client'
 import { routeHref } from '../route'
 import { Icon, SectionBar } from '../design/marks'
 import './assistant.css'
+import '../library/cards.css'
 import { DiagnosticText } from '../components/DiagnosticText'
 
 type Provider = { id: string; label: string; available: boolean; reason?: string | null }
@@ -27,6 +28,60 @@ type AssistantSession = SessionSummary & {
   pendingAction?: PendingAction | null; error?: string | { message?: string } | null
 }
 type AssistantIndex = { providers: Provider[]; sessions: SessionSummary[] }
+
+type ChatTemplate = {
+  id: string
+  group: 'strategy' | 'factor' | 'data' | 'tool'
+  title: [string, string]
+  description: [string, string]
+  prompt: [string, string]
+}
+
+const CHAT_TEMPLATES: ChatTemplate[] = [
+  {
+    id: 'momentum-strategy', group: 'strategy',
+    title: ['A-share 20-day momentum strategy', 'A 股 20 日动量策略'],
+    description: ['Top 10, 5-day rebalance, 10 bp one-way cost.', '前 10，5 日调仓，单边 10 bp 成本。'],
+    prompt: ['Create an A-share 20-day momentum strategy with top 10 equal weight, 5-day rebalance, 10 bp one-way cost and T+1 sell constraint.', '创建一个 A 股 20 日动量策略：等权前 10，5 日调仓，单边 10 bp 成本，卖出遵守 T+1。'],
+  },
+  {
+    id: 'etf-grid', group: 'strategy',
+    title: ['ETF grid strategy', 'ETF 网格策略'],
+    description: ['510300.SH, 3% grid, 10% to 90% position.', '510300.SH，3% 网格，仓位 10% 到 90%。'],
+    prompt: ['Create an ETF grid strategy on 510300.SH with 3% grid spacing and position limits from 10% to 90%.', '创建一个 510300.SH 的 ETF 网格策略：网格间距 3%，仓位限制在 10% 到 90%。'],
+  },
+  {
+    id: 'value-quality', group: 'factor',
+    title: ['Value plus quality factor', '估值加质量因子'],
+    description: ['Low PB, low PE and high ROE.', '低 PB、低 PE 和高 ROE。'],
+    prompt: ['Build an A-share value plus quality factor using low PB, low PE and high ROE, with missing values left blank.', '构建一个 A 股估值加质量因子：使用低 PB、低 PE 和高 ROE，缺失值留空。'],
+  },
+  {
+    id: 'low-volatility', group: 'factor',
+    title: ['Low-volatility factor', '低波动因子'],
+    description: ['60-day volatility, liquidity filtered.', '60 日波动，过滤流动性。'],
+    prompt: ['Build a 60-day low-volatility factor and exclude the bottom 10% by liquidity.', '构建一个 60 日低波动因子，并剔除流动性最低的 10%。'],
+  },
+  {
+    id: 'compare-etf', group: 'data',
+    title: ['Compare CSI300 and CSI500', '比较沪深 300 与中证 500'],
+    description: ['ETF return, drawdown and turnover.', 'ETF 收益、回撤和换手。'],
+    prompt: ['Compare CSI300 and CSI500 ETF performance over the last year, including drawdown and turnover.', '比较沪深 300 与中证 500 ETF 近一年的表现，包括回撤和换手。'],
+  },
+  {
+    id: 'explain-verdict', group: 'tool',
+    title: ['Explain a verdict', '解释判决'],
+    description: ['Show the recorded ledger and next action.', '展示已记录的检查清单和下一步。'],
+    prompt: ['Explain why the latest factor verdict failed and show the recorded ledger.', '解释最新的因子判决为什么失败，并展示已记录的检查清单。'],
+  },
+]
+
+const CHAT_TEMPLATE_GROUPS: Array<{ id: ChatTemplate['group']; label: [string, string] }> = [
+  { id: 'strategy', label: ['Strategy', '策略'] },
+  { id: 'factor', label: ['Factor', '因子'] },
+  { id: 'data', label: ['Data query', '数据查询'] },
+  { id: 'tool', label: ['Research tool', '研究工具'] },
+]
 
 /** Identifiers only. Project snapshots and hidden evidence never enter a chat from the browser. */
 export type AssistantContext = { project: string; study?: string; run?: string; page?: string }
@@ -354,7 +409,29 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
             {working && <button type="button" className="abtn" disabled={busy} onClick={() => void changeSession('cancel')}>{t('Stop', '停止')}</button>}
           </div>
           <div className="assistant-thread" ref={thread} onScroll={() => { const box = thread.current; if (box) follow.current = box.scrollHeight - box.scrollTop - box.clientHeight < 100 }}>
-            {!session && !loading && <div className="assistant-empty"><h2>{t('What would you like to investigate?', '你想研究什么？')}</h2><p>{t('Ask about your factors, explain a verdict, or describe a candidate change.', '查询因子、解释判决，或描述你想尝试的改动。')}</p><div className="assistant-prompts">{(language === 'zh' ? ['列出我的因子并比较验证证据。', '解释这个因子为什么没有通过。', '提出一项改动并展示差异。'] : ['List my factors and compare their validation evidence.', 'Explain why this factor did not pass.', 'Propose a change and show me the diff.']).map((prompt) => <button type="button" key={prompt} onClick={() => setDraft(prompt)} disabled={!bootstrap || busy}>{prompt}</button>)}</div></div>}
+            {!session && !loading && <div className="assistant-empty assistant-empty--templates">
+              <h2>{t('What would you like to investigate?', '你想研究什么？')}</h2>
+              <p>{t('Start from a template, or describe the research question in your own words.', '从模板开始，或者用自己的话描述研究问题。')}</p>
+              <div className="assistant-templates">
+                {CHAT_TEMPLATE_GROUPS.map((group) => {
+                  const items = CHAT_TEMPLATES.filter((item) => item.group === group.id)
+                  if (!items.length) return null
+                  return <section className="assistant-template-group" key={group.id} aria-label={t(group.label[0], group.label[1])}>
+                    <h3>{t(group.label[0], group.label[1])}</h3>
+                    <ul className="factor-card-grid">
+                      {items.map((item) => <li className="factor-card" key={item.id}>
+                        <header><h3 translate="no">{t(item.title[0], item.title[1])}</h3></header>
+                        <p className="factor-card-description">{t(item.description[0], item.description[1])}</p>
+                        <footer>
+                          <button type="button" className="abtn" onClick={() => setDraft(t(item.prompt[0], item.prompt[1]))} disabled={busy}>{t('Use template', '使用模板')}</button>
+                          <span>{t('Fill and confirm', '填入后确认')}</span>
+                        </footer>
+                      </li>)}
+                    </ul>
+                  </section>
+                })}
+              </div>
+            </div>}
             <div role="log" aria-label={uiText("Messages")} aria-live="polite" aria-relevant="additions text">
               {(session?.messages ?? []).map((message) => <article className={'assistant-message assistant-message--' + (message.role === 'user' ? 'user' : 'agent')} key={message.id}><header><strong>{message.role === 'user' ? t('You', '你') : message.role === 'assistant' ? selectedProvider?.label ?? t('Assistant', '助手') : message.role}</strong><time dateTime={message.at}>{new Date(message.at).toLocaleTimeString()}</time></header><div>{message.content}</div></article>)}
             </div>
@@ -366,7 +443,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
           </div>
           <form className="assistant-compose" onSubmit={(event) => void send(event)}>
             <label htmlFor={composer}>{t('Message', '消息')}</label>
-            <textarea id={composer} rows={3} maxLength={16000} value={draft} disabled={busy || working || !bootstrap || sealed} placeholder={t('Ask about your research…', '输入你的研究问题…')} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => {
+            <textarea id={composer} rows={3} maxLength={16000} value={draft} disabled={busy || working || sealed} placeholder={t('Ask about your research…', '输入你的研究问题…')} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => {
               if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); event.currentTarget.form?.requestSubmit() }
             }} />
             <div><span>{t('Ctrl / ⌘ + Enter to send', 'Ctrl / ⌘ + Enter 发送')}</span><button className="abtn abtn--primary" type="submit" disabled={!canSend}>{busy ? t('Sending…', '发送中…') : t('Send', '发送')}</button></div>
