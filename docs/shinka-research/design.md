@@ -79,11 +79,15 @@ ShinkaEvolve 能把"一个程序 + 一个评估器"进化到更高分，但它�
 | `shinka/research/grants.py` | 所有者给 Agent 的批准（`ledger.json`）：轮次授权与已用尝试、封存段批准与其消耗；Agent 执行环境（`SHINKA_RESEARCH_AGENT`）中 `run` 的授权、尝试、参数白名单与费用上限，`confirm` 的封存段批准；账本与 `results.tsv` 对照，手改后授权的运行与开封拒绝 |
 | `shinka/research/rounds.py` | Agent 轮次的只读视图（工作台、`brief` 与 Agent 服务共用）：每份授权的尝试与运行状态、进行中的运行、封存段批准、待决事项与轮次状态；方向预算的已花与进行中授权运行的余量（`run` 用同一规则）；`news()`：运行日志里某个读者没读过的消息（所有者的授权与批准、运行结束），终端 `watch --since` 与之后的网页 Agent 共用 |
 | `shinka/research/scaffold.py` | 由假设生成 Shinka 任务目录；评估器是单个自包含的 `evaluate.py`（配置内嵌，因为 Shinka 会把它复制到结果目录再运行）；记录评估器与数据的哈希并校验 |
+| `autoquant/shinka_research/intake.py` | 立项：严格的 `IntakeSpec`（标题、市场、标的、信号、仓位、风控、回测、证伪判据、判决规则）、把模板与回答合并、列出未决问题与采用了默认值的字段、规范化 JSON 与其 sha256 |
+| `autoquant/shinka_research/intake_templates.py` | 量化立项模板（市场 × 场景，共 6 个）：参数默认值与上下界、读取的列、证伪判据建议、`initial.py` 种子程序（EVOLVE-BLOCK 与固定的 `run_experiment(bars)`） |
+| `autoquant/shinka_research/intake_render.py` | 由 `IntakeSpec` 渲染种子程序与假设正文，以及 `intake templates` 的目录条目 |
+| `autoquant/shinka_research/intake_apply.py` | `apply_intake`：加假设、写 spec、切分数据、脚手架、冻结计划；失败时撤销本次创建的全部文件 |
 | `shinka/research/quant.py` | 量化评估框架：数据加载、样本内/样本外切分、样本内多折、成本模型、绩效指标、前视检测；产出符合 `run_shinka_eval` 约定的 `public`/`private` 指标 |
 | `shinka/research/rundb.py` | 只读访问 Shinka 结果库（评估次数，排除岛屿迁移副本）；`run_cost` 用 `shinka/database/cost.py` 的费用规则（非岛副本程序、`attempt_log` 中没有成为程序的已付费工作、提示词进化；读不出或 `cost-unrecorded.json` 时未知），与运行器续跑的起点相同 |
 | `shinka/research/skeptic.py` | DSR、PBO、子区间稳定性、样本内外衰减、基线；lockbox 一次性确认 |
 | `shinka/research/library.py` | 工作区资料库的记账：`raw/` 中哪些资料是新的/已编译（按哈希）、操作日志；编译本身由 agent 完成 |
-| `shinka/research/cli.py` | `shinka_research` 命令：`init` / `hypothesis` / `scaffold` / `run` / `probe` / `skeptic` / `verdict` / `confirm` / `grant` / `approve` / `watch` / `library` / `brief` / `status` |
+| `shinka/research/cli.py` | `shinka_research` 命令（`intake` 子命令在 `cli_intake.py`）：`init` / `hypothesis` / `intake` / `scaffold` / `run` / `probe` / `skeptic` / `verdict` / `confirm` / `grant` / `approve` / `watch` / `library` / `brief` / `status` |
 | `skills/shinka-research/` | 研究循环 program：每一步做什么、何时停下问人、产出格式 |
 
 ## 5. 研究笔记本（数据模型）
@@ -95,6 +99,7 @@ research/<direction-slug>/
   program.md                 # 人写：方向、约束、预算、数据说明（autoresearch 的 program.md）
   notebook.json              # 机器可读索引：假设、状态、实验、结论、累计试验数
   hypotheses/<hid>.md        # 每个假设一份：可证伪陈述、测试方法、成立/推翻判据、风险
+  hypotheses/<hid>.intake.json  # 经立项（`intake apply`）建立的假设才有：冻结的 IntakeSpec，列入该实验计划的检查集
   experiments/<hid>/<eid>/   # Shinka 任务目录 + 结果目录 + 质疑报告
   REPORT.md                  # 该方向的阶段性研究报告（agent 生成）
 ```
@@ -180,6 +185,37 @@ research/<direction-slug>/
 - 前沿图：方向内所有试验的样本内分数按时间排开，叠加"N 个纯噪声试验的期望最大值"门槛线（与质疑者同一近似：方差取试验样本内分数）。试得越多线越高，直观表达多重检验代价。
 - 可见性纪律与 agent 相同：未出结论的假设只显示样本内指标，验证段证据在 verdict 之后才显示；lockbox 数字只在 `confirm` 之后显示。过滤在服务端做（`ui.snapshot`），浏览器拿不到不该显示的数；质疑者事件的说明里带验证段数字，未出结论时同样隐去。
 - 视觉规范按 design-pipeline 走：方向与组件选型由所有者定，DESIGN.md 与设计系统包从 token 生成。
+
+## 7.4 立项（intake）：从半个想法到冻结的实验计划
+
+要解决的问题：证伪判据若在看到结果之后才写，就等于事后挑判据。立项把"什么结果会让我放弃这个想法"、成本假设和判决规则在第一次评估之前写进一份严格的规格，并冻结进实验计划，之后的 `probe` / `run` / `skeptic` 都会校验它没被改过。
+
+命令（均在 `aq shinka intake` 下，实现见 `cli_intake.py`）：
+
+| 命令 | 作用 |
+|---|---|
+| `templates [--json]` | 列出模板：市场、场景、信号参数与上下界、读取的列、建议的证伪判据、按建议值生成的种子程序、一份接受全部建议的草稿 |
+| `questions (--template ID \| --spec FILE) [--json]` | 对一份草稿只列出还没回答的、会改变测试含义的问题（每个都带默认建议）、已回答的字段、采用了默认值的字段和 `ready` 标志；不读方向目录 |
+| `apply <dir> --spec FILE --data CSV [--json]` | 所有者命令（与 `grant` 同一道门，Agent 环境中拒绝）。草稿未就绪时拒绝并列出未决问题；就绪则在一次 `Notebook.edit` 锁内建好假设与实验 |
+
+必须由人回答的问题：市场、标的、模板留给调用者的信号选择（如量价相关性的方向）、证伪判据、成本（`backtest.cost_bps`）。默认值只是建议：未在草稿里写出就仍算未回答。其余字段（仓位模式与上限、止损、样本外比例、折数、年化周期数、lockbox 比例、时间戳列、判决规则及阈值）取自模板与市场，写入 `defaulted`，随规格一起保存。
+
+`IntakeSpec` 是严格模型（未知字段、非有限数、字符串当数字都拒绝），以规范化 JSON（键排序、两空格缩进）保存为 `hypotheses/<hid>.intake.json`，其 sha256 同时写进计划的 `rationale`。判决规则只接受 `dsr_pbo`（`skeptic` 只支持这一种）；证伪判据是所有者的原话，用于留档和提示变异模型，裁决的仍是冻结的规则。
+
+`apply` 的顺序与冻结内容：
+
+1. 预检：方向必须是量化域；数据文件含模板需要的列；方向已有切分时，时间戳列与 lockbox 比例必须与之相同（切分按方向固定）。
+2. 加假设（正文由规格渲染）、写 spec、`prepare_data` 切出 lockbox 并写 `data/dev.csv`、以 `QuantConfig`（取自 `backtest`）和模板种子程序调用 `scaffold_experiment`。
+3. `scaffold.freeze_plan`：检查集 = `task/evaluate.py` + `hypotheses/<hid>.intake.json`，数据集 = `data/dev.csv`，`claim = "empirical"`，`rationale` 含证伪判据与 spec 的 sha256，规则为规格中的 `dsr_pbo`。校验复用既有的 `scaffold._verify_plan`，不另写一套。
+4. 任一步失败，撤销本次创建的假设文件、spec、数据与实验目录，笔记本因 `Notebook.edit` 不保存而不变；方向里原有的文件不动。
+
+漂移：改动 `intake.json` 或任务消息后，下一条 `probe` / `run` / `skeptic` 报"changed since the plan was frozen"。改动 `evaluate.py` 或 `dev.csv` 先被已有的评估器与数据哈希检查拦下（报"evaluator was modified"或"data changed since scaffolding"），那两道检查在计划检查之前。
+
+诚实的边界：
+
+- 仓位上限、做空限制与止损写在种子程序的 EVOLVE-BLOCK 之外，变异模型只改块内；但冻结的评估器只检查仓位落在 [-1, 1]，并不强制规格里更窄的上限，也不强制止损。
+- 模板里各市场的成本、仓位模式和参数默认值是起点，没有经过校准。
+- 只覆盖量化域；不含 V3 Hypothesis 对象、`untestable` 原因码，也不做自然语言到代码的翻译。
 
 ## 8. 分阶段路线（渐进式，每一步都端到端可用）
 

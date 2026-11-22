@@ -20,6 +20,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/shinka-panda-intake]] | A template plus only the meaning-changing questions turn a rough quant idea into a Shinka experiment whose plan is frozen before the first trial. | 2026-11-23 |
 | [[plans/local-research-presets]] | Extract quoted candidates and run local-model preset selection through the fixed Session Judge and trial gate. | 2026-11-21 |
 | [[plans/shinka-direction-as-project]] | A Shinka research direction lives in a V3 Project, `aq shinka` addresses it by Project, and Studio draws its research pages and the Workspace library natively. | 2026-11-05 |
 | [[plans/openalice-core-integrity]] | Desk-wide trial families, a Core trial gate, OpenAlice bars acquisition and a versioned handoff.json so an OpenAlice-hosted desk keeps its integrity rules. | 2026-11-04 |
