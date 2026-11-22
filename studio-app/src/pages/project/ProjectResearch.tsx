@@ -20,7 +20,7 @@ export function sessionMeta(s: SessionSnapshot) {
 }
 
 export function CampaignBlock({ project }: { project: ProjectSnapshot }) {
-  const rows = project.sessions.flatMap((s) => s.campaigns ?? [])
+  const rows = project.sessions.flatMap((s) => (s.campaigns ?? []).map((campaign) => ({ campaign, session: sessionMeta(s) })))
   if (rows.length === 0) return <p className="pj-na">{uiText("No Researcher Campaign has completed in this Project.")}</p>
   return (
     <div className="tablewrap">
@@ -28,6 +28,7 @@ export function CampaignBlock({ project }: { project: ProjectSnapshot }) {
         <thead>
           <tr>
             <th scope="col">{uiText("Campaign")}</th>
+            <th scope="col">{uiText("Session")}</th>
             <th scope="col">{uiText("Status")}</th>
             <th scope="col">{uiText("Reason")}</th>
             <th scope="col" className="r">{uiText("Turns")}</th>
@@ -36,9 +37,10 @@ export function CampaignBlock({ project }: { project: ProjectSnapshot }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((campaign) => (
+          {rows.map(({ campaign, session }) => (
             <tr key={campaign.id}>
               <td className="mono small" translate="no">{campaign.id}</td>
+              <td className="mono small" translate="no"><a href="#sec-experiments">{session.id ?? session.studyId ?? '—'}</a></td>
               <td>{vocab(campaign.status)}</td>
               <td>{campaign.reason}</td>
               <td className="r num mono">{campaign.turnsCompleted}</td>
