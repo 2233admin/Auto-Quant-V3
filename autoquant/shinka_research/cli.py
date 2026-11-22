@@ -75,6 +75,7 @@ from autoquant.shinka_research.cli_common import (
     _thresholds,
 )
 from autoquant.shinka_research.cli_confirm import cmd_confirm
+from autoquant.shinka_research.cli_intake import add_intake_parser
 from autoquant.shinka_research.cli_read import (
     _consumer,
     cmd_brief,
@@ -729,12 +730,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     s.set_defaults(func=cmd_watch)
 
+    add_intake_parser(sub)
+
     return p
 
 
 def _resolve(args: argparse.Namespace) -> None:
     """Turn ``dir`` into the paths the command works on (``project.py``)."""
     kind = getattr(args, "resolve", "direction")
+    if kind == "none":
+        return
     if kind == "library":
         args.library = project.library_for(args.dir, args.project)
     elif kind == "watch":
