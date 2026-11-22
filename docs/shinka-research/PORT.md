@@ -59,6 +59,10 @@ blank Project through V3's own creation path (`create_project`, as `aq project c
 direction as its description. `aq shinka library ...` given a Workspace works on its library; `aq shinka watch` given
 a Workspace visits every Project with research and prints the Project id.
 
+`aq shinka intake templates|questions|apply` turns a template and the owner's answers into a hypothesis, its first
+experiment and a frozen plan whose checker set includes `hypotheses/<hid>.intake.json`; `apply` is owner-only like
+`grant`. Design and limits: [design.md](design.md) section 7.4.
+
 ## Install and run
 
 ```
@@ -87,6 +91,9 @@ the V3 binding:
 - `cli.py` split into `cli.py`, `cli_common.py`, `cli_confirm.py` and `cli_read.py` so no module is a god file under
   the structural ratchet ([[docs/design/structural-rules]]); behaviour unchanged except the `dir` resolution and the
   removed `ui` command.
+- `cli_intake.py` (new) holds the `intake` commands; `scaffold.py` gains `freeze_plan` (a plan frozen from the
+  files an intake writes, checked by the existing `_verify_plan`); the intake modules are `intake.py`,
+  `intake_templates.py`, `intake_render.py` and `intake_apply.py`, split so none is a god file.
 - `ui.py`: HTTP server, analysis links and the built-bundle path removed; `snapshot(root, library_dir=None)` leaves
   the library out unless asked; text read as UTF-8.
 - `state.py`: notebook reads and atomic writes are explicitly UTF-8, so a Studio process without Python UTF-8 mode
