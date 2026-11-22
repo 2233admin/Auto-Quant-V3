@@ -83,6 +83,10 @@ const CHAT_TEMPLATE_GROUPS: Array<{ id: ChatTemplate['group']; label: [string, s
   { id: 'tool', label: ['Research tool', '研究工具'] },
 ]
 
+type Intake = { market: string; symbol: string; signal: string; position: string; risk: string; backtest: string }
+
+const EMPTY_INTAKE: Intake = { market: '', symbol: '', signal: '', position: '', risk: '', backtest: '' }
+
 /** Identifiers only. Project snapshots and hidden evidence never enter a chat from the browser. */
 export type AssistantContext = { project: string; study?: string; run?: string; page?: string }
 type SurfaceProps = {
@@ -214,6 +218,33 @@ function ArtifactLinks({ session }: { session: AssistantSession | null }) {
   ) : <p className="assistant-subtle">{translate(language, 'Run links appear here when an action records its result.', '操作产生运行结果后，链接会显示在这里。')}</p>
 }
 
+function IntakeFields({ value, onChange, disabled }: { value: Intake; onChange: (value: Intake) => void; disabled: boolean }) {
+  const language = useLanguage()
+  const t = (en: string, zh: string) => translate(language, en, zh)
+  const fields: Array<{ key: keyof Intake; label: string; placeholder: string; required?: boolean }> = [
+    { key: 'market', label: t('Market', '市场'), placeholder: t('A-share, ETF, futures', 'A 股、ETF、期货'), required: true },
+    { key: 'symbol', label: t('Symbol', '标的'), placeholder: t('000300.SH, 510300.SH', '000300.SH、510300.SH'), required: true },
+    { key: 'signal', label: t('Signal', '信号'), placeholder: t('Momentum, value, volume', '动量、估值、量能'), required: true },
+    { key: 'position', label: t('Position sizing', '仓位'), placeholder: t('Top 10, equal weight', '前 10，等权') },
+    { key: 'risk', label: t('Risk control', '风控'), placeholder: t('Stop loss, volatility cap', '止损、波动上限') },
+    { key: 'backtest', label: t('Backtest specification', '回测规格'), placeholder: t('5-day rebalance, 10 bp cost', '5 日调仓，10 bp 成本') },
+  ]
+  return <div className="assistant-intake">
+    {fields.map((field) => <label key={field.key}>
+      <span>{field.label}{field.required && <span aria-hidden="true"> *</span>}</span>
+      <input
+        type="text"
+        value={value[field.key]}
+        placeholder={field.placeholder}
+        disabled={disabled}
+        aria-required={field.required ? 'true' : undefined}
+        onChange={(event) => onChange({ ...value, [field.key]: event.target.value })}
+      />
+    </label>)}
+    <p className="assistant-subtle">{t('Market, symbol and signal are required. Other fields may start with defaults.', '市场、标的和信号为必填。其余字段可以先用默认值。')}</p>
+  </div>
+}
+
 function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) {
   const language = useLanguage()
   const t = (en: string, zh: string) => translate(language, en, zh)
@@ -227,6 +258,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
   const [project, setProject] = useState(context?.project ?? '')
   const [budget, setBudget] = useState(10)
   const [draft, setDraft] = useState('')
+  const [intake, setIntake] = useState<Intake>(EMPTY_INTAKE)
   const [error, setError] = useState<string | null>(null)
   const [connectionError, setConnectionError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -244,6 +276,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
     setSelected(remember(storageKey))
     setSession(null)
     setProject(context?.project ?? '')
+    setIntake(EMPTY_INTAKE)
     setIndex(null)
   }, [storageKey, context?.project])
 
@@ -298,6 +331,16 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
   const working = isWorking(session)
   const sessions = (index?.sessions ?? []).filter((item) => !context || item.project === context.project)
   const stage = session?.pendingAction ? t('Review action', '审阅操作') : session?.status === 'running' ? t('Researching', '研究中') : session?.status === 'error' ? t('Needs attention', '需要处理') : session?.messages.length ? t('Review response', '查看回复') : t('Describe your research', '描述研究需求')
+  const isNewChat = selected === null && !session
+  const intakeReady = !!(intake.market.trim() && intake.symbol.trim() && intake.signal.trim())
+  const intakeLines = [
+    intake.market.trim() ? t('Market', '市场') + ': ' + intake.market.trim() : '',
+    intake.symbol.trim() ? t('Symbol', '标的') + ': ' + intake.symbol.trim() : '',
+    intake.signal.trim() ? t('Signal', '信号') + ': ' + intake.signal.trim() : '',
+    intake.position.trim() ? t('Position sizing', '仓位') + ': ' + intake.position.trim() : '',
+    intake.risk.trim() ? t('Risk control', '风控') + ': ' + intake.risk.trim() : '',
+    intake.backtest.trim() ? t('Backtest specification', '回测规格') + ': ' + intake.backtest.trim() : '',
+  ].filter(Boolean)
 
   function newChat(nextProvider = session?.provider ?? provider) {
     sequence.current += 1
@@ -305,6 +348,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
     setSession(null)
     setProvider(nextProvider)
     setDraft('')
+    setIntake(EMPTY_INTAKE)
     setError(null)
     follow.current = true
   }
@@ -312,7 +356,8 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
   async function send(event: FormEvent) {
     event.preventDefault()
     if (!bootstrap || busy || working || (selected !== null && !session) || !draft.trim() || sealed || selectedProvider?.available !== true) return
-    const text = draft.trim()
+    if (isNewChat && !intakeReady) return
+    const text = isNewChat && intakeLines.length ? intakeLines.join('\n') + '\n\n' + draft.trim() : draft.trim()
     const turn = ++sequence.current
     setBusy(true)
     setError(null)
@@ -366,7 +411,7 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
   }
 
   const sessionError = typeof session?.error === 'string' ? session.error : session?.error?.message
-  const canSend = !!bootstrap && !!index && !loading && (selected === null || !!session) && !busy && !working && !sealed && selectedProvider?.available === true && !!draft.trim()
+  const canSend = !!bootstrap && !!index && !loading && (selected === null || !!session) && (!isNewChat || intakeReady) && !busy && !working && !sealed && selectedProvider?.available === true && !!draft.trim()
   return (
     <div className={'assistant' + (drawer ? ' assistant--drawer' : '')}>
       <header className="assistant-head">
@@ -463,6 +508,8 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
           {context?.study && <p>{t('Study', '研究')} <span className="mono">{context.study}</span></p>}
           {context?.run && <p>{t('Run', '运行')} <span className="mono">{context.run}</span></p>}
           <p className="assistant-subtle">{t('Only these object identifiers are attached. Evidence is queried through the governed aq tools.', '这里只附带对象标识；研究证据通过受约束的 aq 工具查询。')}</p>
+          <SectionBar as="h2" icon="params" micro="INTAKE">{t('Intake fields', '六项清单')}</SectionBar>
+          <IntakeFields value={intake} onChange={setIntake} disabled={!!session || busy} />
           <label htmlFor={budgetField}>{t('Trial budget', '试验预算')}
             <input id={budgetField} type="number" min={0} max={100} step={1} value={session?.trialBudget ?? budget} disabled={!!session || busy} onChange={(event) => setBudget(Math.max(0, Math.min(100, Math.floor(Number(event.target.value) || 0))))} />
           </label>
