@@ -1,7 +1,7 @@
 name: Studio Assistant checks
 on:
   push:
-    branches: [feat/studio-assistant]
+    branches: [main, 'feature/**']
   pull_request:
   workflow_dispatch:
 permissions:
@@ -15,6 +15,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -22,10 +25,17 @@ jobs:
       - run: uv sync --locked
       - run: uv run python scripts/check_doc_links.py
       - run: uv run python -m unittest tests.test_studio_assistant tests.test_studio_assistant_providers -v
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
         working-directory: studio-app
-      - run: npm run build
+      - run: pnpm run typecheck
         working-directory: studio-app
+      - run: pnpm run check:i18n
+        working-directory: studio-app
+      - run: pnpm run test:ui
+        working-directory: studio-app
+      - run: pnpm run build
+        working-directory: studio-app
+      - run: git diff --exit-code -- autoquant/studio_app
   regression:
     runs-on: ${{ vars.CI_5070X_ENABLED == 'true' && (((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/heads/')) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) && 'ci-5070x-linux' || 'ubuntu-latest' }}
     timeout-minutes: 30
