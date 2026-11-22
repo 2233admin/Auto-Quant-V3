@@ -340,6 +340,9 @@ def build_research_library(directory: str | Path, *, project_id: str | None = No
         return payload
     workspace = load_workspace(root).root_dir
     lib = workspace / LIBRARY_DIRNAME
+    if not lib.is_dir():
+        # No library yet: nothing to read, with or without the shinka extra.
+        return payload
     try:
         from .shinka_research import library, ui
 
