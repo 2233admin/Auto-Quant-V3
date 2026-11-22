@@ -1440,7 +1440,7 @@ class LibraryRecoveryTests(unittest.TestCase):
     def test_library_uses_lane_metric_and_never_borrows_an_older_success(self):
         from autoquant.studio_library import library_projection
         with tempfile.TemporaryDirectory() as directory:
-            project = SimpleNamespace(root_dir=Path(directory), manifest=SimpleNamespace(id="fixture", description="Frozen question"))
+            project = SimpleNamespace(root_dir=Path(directory), manifest=SimpleNamespace(id="fixture", description="Frozen question", directories={"factors": "factors"}))
             snapshot = {"studies": [
                 {"id": "factor", "subjectKind": "factor", "primaryMetric": "validation_mean_ic"},
                 {"id": "portfolio", "subjectKind": "factor", "primaryMetric": "validation_net_sharpe"},
