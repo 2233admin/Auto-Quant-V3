@@ -2,7 +2,7 @@
 version: 3.0.0
 ---
 
-# AutoQuant V2
+# AutoQuant V3
 
 AutoQuant turns quantitative research into a versioned, testable,
 Agent-operable engineering workflow.
