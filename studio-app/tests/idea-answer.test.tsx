@@ -370,6 +370,8 @@ test('project campaigns show completed rounds, reasons and verdict counts', () =
   } as unknown as ProjectSnapshot
   const html = renderToStaticMarkup(<CampaignBlock project={project} />)
   assert.match(html, /campaign-1/)
+  assert.match(html, />s1<\/a>/)
+  assert.match(html, /href="#sec-experiments"/)
   assert.match(html, /Budget exhausted/)
   assert.match(html, /Maximum turn budget reached/)
   assert.match(html, /KEEP 0 · REVERT 2 · CRASH 0/)
