@@ -27,6 +27,7 @@ import { groupReturnCaption, rankIcCaption, portfolioCaption } from '../src/page
 import { SignedValue, ComparisonFigure, StatChips, ActionRow, SignConventionSetting } from '../src/components/workbench'
 import { STATE_COPY } from '../src/components/stateCopy'
 import { StateCatalogue } from '../src/components/workbench/StateCatalogue'
+import { CampaignBlock } from '../src/pages/project/ProjectResearch'
 
 test('landing and legacy projects alias both open Factors', () => {
   for (const query of ['', '?view=projects', '?view=factors']) assert.equal(parseRoute(query).view, 'factors')
@@ -353,4 +354,25 @@ test('Factor library lists only Factor Projects; strategies and multi-lane desks
   const strategies = withWindow(() => renderToStaticMarkup(<ActionsProvider workspace={workspace} routeKey="strategies" go={() => {}} refresh={() => {}}><StrategyLibrary workspace={workspace} go={() => {}} /></ActionsProvider>))
   for (const name of ['Momentum strategy', 'Sample desk']) assert.match(strategies, new RegExp(`>${name}</a>`))
   assert.doesNotMatch(strategies, />Momentum factor<\/a>/)
+})
+
+test('project campaigns show completed rounds, reasons and verdict counts', () => {
+  const project = {
+    id: 'p1',
+    sessions: [{
+      session: { id: 's1', status: 'active', studyId: 'study' },
+      campaigns: [{
+        id: 'campaign-1', status: 'budget_exhausted', reason: 'Maximum turn budget reached',
+        turnsCompleted: 2, experiments: 2, verdicts: { KEEP: 0, REVERT: 2, CRASH: 0 },
+        startedAt: '2026-11-21T14:42:40Z', completedAt: '2026-11-21T14:43:46Z',
+      }],
+    }],
+  } as unknown as ProjectSnapshot
+  const html = renderToStaticMarkup(<CampaignBlock project={project} />)
+  assert.match(html, /campaign-1/)
+  assert.match(html, /Budget exhausted/)
+  assert.match(html, /Maximum turn budget reached/)
+  assert.match(html, /KEEP 0 · REVERT 2 · CRASH 0/)
+  const empty = renderToStaticMarkup(<CampaignBlock project={{ sessions: [] } as unknown as ProjectSnapshot} />)
+  assert.match(empty, /No Researcher Campaign has completed/)
 })

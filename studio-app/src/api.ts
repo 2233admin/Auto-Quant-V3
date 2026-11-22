@@ -500,6 +500,26 @@ export type ResearchAgenda = {
   moves?: { priority: number; id: string; title: string; hypothesis?: string; rationale?: string }[]
 }
 
+export type CampaignRow = {
+  id: string
+  status: string
+  reason: string
+  turnsCompleted: number
+  experiments: number
+  verdicts: { KEEP: number; REVERT: number; CRASH: number }
+  startedAt: string
+  completedAt: string
+}
+
+export type CampaignProgressRow = {
+  campaignId: string
+  status: string
+  phase: string
+  message: string
+  turn: number
+  updatedAt: string
+}
+
 export type SessionSnapshot = {
   authority?: { valid: boolean }
   session?: { id?: string; status?: string; studyId?: string; createdAt?: string; updatedAt?: string; leader?: { runId?: string } }
@@ -510,6 +530,8 @@ export type SessionSnapshot = {
   selectionIntegrity?: SelectionIntegrity
   delegation?: { request?: { title?: string; question?: string; decisionContext?: string; horizon?: string; hypotheses?: string[]; constraints?: string[]; deliverables?: string[] } } | null
   experiments?: ExperimentRow[]
+  campaigns?: CampaignRow[]
+  progress?: CampaignProgressRow[]
   decisionMatrix?: {
     objective?: { direction?: string; metric?: string; minimumImprovement?: number }
     scope?: { trialLimit: number; totalCandidateTrials: number; displayedCandidateTrials: number; omittedCandidateTrials: number }
