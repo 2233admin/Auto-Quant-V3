@@ -1238,6 +1238,7 @@ class AgentCliTests(unittest.TestCase):
                 "experiment.list",
                 "experiment.show",
                 "research.run",
+                "research.extract",
                 "research.list",
                 "research.show",
                 "report.draft",

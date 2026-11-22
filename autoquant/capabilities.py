@@ -1088,8 +1088,8 @@ CLI_COMMANDS = [
     ),
     descriptor(
         "research.run",
-        "aq research run <path> --session ID --agent-command SHELL [budgets] [--project ID] [--confirm-trial] [--json]",
-        "Run a user-authorized external shell Researcher against one governed Session and publish immutable Campaign evidence.",
+        "aq research run <path> --session ID (--agent-command SHELL | --local-plan FILE) [budgets] [--project ID] [--confirm-trial] [--json]",
+        "Run a bounded shell or local-model Researcher against a governed Session and publish immutable Campaign evidence.",
         "creates-artifact",
         [
             PATH_ARGUMENT,
@@ -1099,8 +1099,15 @@ CLI_COMMANDS = [
                 "agent-command",
                 "option",
                 "string",
-                True,
+                False,
                 "Explicit host shell command receiving a turn brief on stdin.",
+            ),
+            argument(
+                "local-plan",
+                "option",
+                "string",
+                False,
+                "Local model and approved JSON presets. Supply this or agent-command.",
             ),
             argument(
                 "max-turns",
@@ -1134,6 +1141,20 @@ CLI_COMMANDS = [
                 "Acknowledge cross-Project repetition (needed only when the family has trials from other Projects); the desk budget must have --max-turns trials remaining.",
                 default=False,
             ),
+            JSON_ARGUMENT,
+        ],
+    ),
+    descriptor(
+        "research.extract",
+        "aq research extract <excerpt> --model NAME:TAG --output FILE [--json]",
+        "Extract quote-checked research candidates from UTF-8 text with a local model.",
+        "creates-artifact",
+        [
+            argument("excerpt", "positional", "string", True, "UTF-8 excerpt file."),
+            argument(
+                "model", "option", "string", True, "Installed local Ollama name:tag."
+            ),
+            argument("output", "option", "string", True, "New receipt JSON file."),
             JSON_ARGUMENT,
         ],
     ),

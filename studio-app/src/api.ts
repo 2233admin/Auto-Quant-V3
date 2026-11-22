@@ -61,7 +61,22 @@ export type StrategyRoute = {
   template: string; argv: string[]; display: string; studyId: string | null; runId: string | null
   factorRunId?: string | null
 }
-export type LibrarySummary = { factor: FactorSummary | null; strategy: StrategySummary | null }
+export type FactorReference = {
+  id: string; name: string; formula: string; direction: 'higher' | 'lower' | 'diagnostic'
+  evidence: string; source: string; market?: string; tags?: string[]
+  evidenceUniverse?: string; plannedUniverses?: string[]
+  meaning?: string; usage?: string; strategyUrl?: string
+  strategyUses?: { id?: string; name: string; rule: string }[]
+  replay?: {
+    runId: string; dates: number; triggered: number
+    versusMomentumBp: number; versusSameExposureBp: number
+    daily: { day: string; first: string; second: string; cash: boolean; momentum: number; kit: number; control: number }[]
+  }
+}
+export type LibrarySummary = {
+  factor: FactorSummary | null; strategy: StrategySummary | null
+  factorReferences?: { factors: FactorReference[]; invalid: boolean }
+}
 
 export type ResearchState = 'none' | 'ready' | 'unavailable' | 'invalid'
 

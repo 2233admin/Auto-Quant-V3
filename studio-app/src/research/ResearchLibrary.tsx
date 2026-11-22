@@ -4,7 +4,10 @@ import { Icon, PageMark } from '../design/marks'
 import { DataTable, type Col } from '../library/DataTable'
 import { routeHref } from '../route'
 import { StateWord, Status } from './ResearchParts'
+import { RdAgentCandidates } from './RdAgentCandidates'
 import { rowStateOf, statusOf } from './words'
+
+import './research.css'
 
 const ORDER = ['proposed', 'selected', 'running', 'challenged', 'supported', 'rejected', 'inconclusive', 'confirmed', 'unconfirmed', 'dropped']
 
@@ -29,6 +32,7 @@ export function ResearchLibrary({ workspace, go }: { workspace: WorkspaceSummary
   return (
     <div className="pg object-library rs-library">
       <header className="library-title sec-bar"><Icon name="doc" /><h1>{uiText("Research directions")}</h1><p>{uiText("Hypothesis-driven research: every Project here owns its hypotheses, trials, verdicts and lockbox.")}</p><PageMark kind="barcode" micro={`RESEARCH / ${String(rows.length).padStart(2, '0')}`} /></header>
+      <RdAgentCandidates />
       {rows.length === 0 ? (
         <p className="muted">{uiText("No Project has a research direction yet. Attach one with aq shinka init <workspace> --project ID --direction TEXT.")}</p>
       ) : (

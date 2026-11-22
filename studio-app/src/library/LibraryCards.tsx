@@ -116,7 +116,7 @@ export function LibraryTable({ kind, columns, sections, footer, sort, onSort, de
  * One library object as one row: name with its split/state line, verdict or state, the focal metric (the only number
  * that may carry sign colour), the neutral numbers, an optional overlap line, the curve and the update time.
  */
-export function LibraryRow({ name, badge, metric, headline, secondary, numbers, points, updated, href, strategy, description, overlap, go }: { name: string; badge: string; metric: string; secondary?: string; headline?: { value: number | null | undefined; label: string; digits: number; unit?: string }; numbers: ReactNode[]; points: LibraryPoint[]; updated: string | null; href: string; strategy?: boolean; description?: string | null; overlap?: ReactNode; go: (href: string) => void }) {
+export function LibraryRow({ name, badge, metric, headline, secondary, numbers, points, updated, href, strategy, description, overlap, go, actionLabel }: { name: string; badge: string; metric: string; secondary?: string; headline?: { value: number | null | undefined; label: string; digits: number; unit?: string }; numbers: ReactNode[]; points: LibraryPoint[]; updated: string | null; href: string; strategy?: boolean; description?: string | null; overlap?: ReactNode; go: (href: string) => void; actionLabel?: string }) {
   const language = useLanguage()
   return <tr className="library-row" data-measure="card" aria-label={name} onClick={e => { if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !(e.target as Element).closest('a,button,.info')) go(href) }}>
     <th scope="row" className="library-name">
@@ -130,5 +130,6 @@ export function LibraryRow({ name, badge, metric, headline, secondary, numbers, 
     {!strategy && <td className="library-overlap">{overlap}</td>}
     <td className="library-curve"><MiniCurve points={points} label={strategy ? uiText("Net growth, train and validation only") : uiText("Latest Run long-short cumulative curve, permitted splits only")} /></td>
     <td className="library-updated" title={updated ?? uiText("No Run yet")}>{updated ? <span className="mono">{when(updated)}</span> : translate(language, 'Not run', '未运行')}</td>
+    {actionLabel && <td className="library-row-action"><a className="abtn abtn--quiet" href={href} aria-label={`${actionLabel} · ${name}`}>{actionLabel}</a></td>}
   </tr>
 }

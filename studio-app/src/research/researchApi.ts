@@ -76,7 +76,11 @@ export type Direction = {
   trial_points: TrialPoint[]
   probes: number
   events: ResearchEvent[]
-  rounds: { state: string; pending: { kind: string; do: string }[] } & Record<string, unknown>
+  rounds: {
+    state: string
+    pending: { kind: string; do: string }[]
+    grants?: { id: string; attempts: number; used: number; runs: { attempt: number; hypothesis: string; experiment: string; event: string | null; state: string }[] }[]
+  }
   frontier: Frontier
   /** Running best in-sample score by generation for each experiment (server-computed). */
   experimentCurves: { hypothesis: string; experiment: string; steps: [number, number][] }[]

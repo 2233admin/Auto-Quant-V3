@@ -7,12 +7,12 @@ Related: [[docs/design/research-session-loop]], [[docs/CLI]], and
 
 ## Scope
 
-This document owns provider-neutral external Researcher invocation, turn
-budgets, proposal/stop responses, automatic Experiment repetition, failure
+This document owns external shell and local model Researcher invocation, turn
+budgets, proposal and stop responses, Experiment repetition, failure
 restoration, and immutable Campaign evidence.
 
-It does not own one model vendor, credentials, OS sandboxing, Judge semantics,
-verdicts, promotion, or Studio presentation.
+It does not own credentials, OS sandboxing, Judge semantics, verdicts,
+promotion, or Studio presentation.
 
 ## Platform differences
 
@@ -26,7 +26,7 @@ stdio is UTF-8 on both platforms. Portable commands are
 
 ## Connector contract
 
-`aq research run` receives one explicit `--agent-command`. AutoQuant invokes it
+With `--agent-command`, `aq research run` receives one explicit command. AutoQuant invokes it
 through the platform shell (`/bin/sh -lc` on POSIX, `cmd.exe /d /s /c` on
 Windows; see Platform differences) with:
 
@@ -70,6 +70,30 @@ leader.
 The command is explicit host-code execution, not a security sandbox. OpenAlice
 or another host may provide a stronger process sandbox without changing this
 protocol.
+
+## Local model preset contract
+
+The alternative `--local-plan` connector writes one existing JSON parameter
+file inside the Session worktree. The Study must declare that file as its
+entire editable closure. The verified leader sets the names and scalar types
+of the parameters. The operator defines the approved values. The local model
+receives those choices, the current leader, and recent measured Experiment
+feedback. It returns an offered ID and proposal prose. AutoQuant validates
+the reply before it writes the corresponding preset. It never executes model
+output or gives the model worktree access. The fixed Judge interprets
+parameters as data and still owns every measurement.
+
+The bundled worker contacts Ollama only on loopback. It requires a locally
+installed completion model and verifies the pinned digest before each turn.
+AutoQuant hashes `local-plan.json`, each prompted turn's model request and
+raw response, and the normalized Campaign and Experiment evidence. It
+refuses a dirty leader before calling the model and does not restore files in
+response to a proposal failure that made no worktree change.
+
+The model cannot see the holdout through this protocol. The operator must
+keep held-out labels out of proposed context and any data used by an
+iterative Study or its fixed Judge. The same Core trial gate applies to both
+connectors.
 
 ## Turn brief
 
@@ -160,10 +184,12 @@ Campaign wall time. Judge time consumes the aggregate wall budget. Reaching
 
 1. A Campaign operates on one existing active Session.
 2. Every turn brief is frozen before the command starts.
-3. The Researcher controls only candidate source and proposal prose.
+3. The shell Researcher controls candidate source and proposal prose. The
+   local Researcher controls only the choice of an approved preset and prose.
 4. Session authority, immutable history, Judge, verdict, restoration, and
    promotion remain Core-owned.
-5. Command/protocol failure is terminal and restores the leader worktree.
+5. Connector or protocol failure is terminal. AutoQuant restores the leader
+   after a shell failure or an applied local preset.
 6. CRASH Experiment evidence does not disappear or impersonate command failure.
 7. Campaign files are immutable and manifest-last after publication.
 
