@@ -27,6 +27,7 @@ export function LaneChart({
   yLabel,
   xLabel,
   fill = false,
+  endLabels = true,
   note,
 }: {
   title: string
@@ -37,6 +38,7 @@ export function LaneChart({
   xLabel?: string
   /** Fill the area between the first series and zero (drawdown style). */
   fill?: boolean
+  endLabels?: boolean
   note?: string
 }) {
   const id = useId()
@@ -82,7 +84,7 @@ export function LaneChart({
     const pts = real.map((p) => `${px(p.x).toFixed(1)},${py(p.y as number).toFixed(1)}`)
     return `${px(real[0].x).toFixed(1)},${py(0).toFixed(1)} ${pts.join(' ')} ${px(real[real.length - 1].x).toFixed(1)},${py(0).toFixed(1)}`
   })()
-  const xTicks = [...new Set([0, 0.25, 0.5, 0.75, 1].map((f) => xs[Math.round(f * (xs.length - 1))]))]
+  const xTicks = [...new Set((W <= 420 ? [0, 0.5, 1] : [0, 0.25, 0.5, 0.75, 1]).map((f) => xs[Math.round(f * (xs.length - 1))]))]
   const labelOf = (xv: number) => series.flatMap((s) => s.points).find((p) => p.x === xv)?.xl ?? ''
 
   const nearest = (clientX: number) => {
@@ -157,7 +159,7 @@ export function LaneChart({
             <path d={path(s)} fill="none" stroke={s.tone === 'muted' ? 'var(--muted)' : 'var(--text)'} strokeWidth="1.9" strokeLinejoin="round" strokeDasharray={s.dash ?? DASHES[i % DASHES.length]} />
           </g>
         ))}
-        {series.length > 1 &&
+        {endLabels && series.length > 1 &&
           series.map((s) => {
             const real = s.points.filter((p) => finite(p.y))
             const last = real[real.length - 1]

@@ -38,6 +38,13 @@
 .assistant-prompts { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
 .assistant-prompts button { padding: var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
 .assistant-prompts button:hover { background: var(--hover); }
+.assistant-empty--templates { max-width: 760px; }
+.assistant-templates { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+.assistant-template-group { display: grid; gap: var(--space-2); }
+.assistant-template-group h3 { margin: 0; color: var(--muted); font: var(--type-label); }
+.assistant-template-group .factor-card-grid { margin-bottom: 0; }
+.assistant-template-group .factor-card footer { gap: var(--space-2); justify-content: space-between; }
+.assistant-template-group .factor-card footer span { color: var(--muted); font: var(--type-small); }
 .assistant-message { padding: 0 0 var(--space-6); overflow-wrap: anywhere; }
 .assistant-message + .assistant-message { padding-top: var(--space-6); border-top: 1px solid var(--line); }
 .assistant-message header { display: flex; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); font: var(--type-small); }

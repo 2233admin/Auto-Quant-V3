@@ -42,6 +42,23 @@ audit gate: freezing alone cannot expose test data. Disabled actions keep a
 visible reason, and counted execution still asks for confirmation of trial N
 of M. More detail is in [[docs/design/studio-workbench-kit]].
 
+## Factor history
+
+The Factor library lists research references separately from formal Factor
+Studies. The library total, search and the list/card switch include both.
+Validation IC filters and their counts apply only to formal studies. A
+workspace with references but no formal studies opens directly on the
+references without empty validation controls.
+
+Choose **Historical performance** on a reference to open its history first.
+**Formula and usage** shows the definition, direction and source. A reference
+can link to an intact, same-Project `kit-confirmation` Research Run. The chart
+shows paired decision-period returns, not daily returns, cumulative NAV or
+independent holdout evidence. The decision table lists the two ranked stock
+codes, the second slot's actual cash decision, and KiT's return minus each
+control in basis points. A reference without the evidence shows the gap
+instead of a chart. A Q5−Q1 ranking diagnostic is labelled separately.
+
 ## Strategy workbench
 
 Open a Strategy library card or `?view=strategy&id=<project>`; the historical
@@ -105,12 +122,29 @@ Workspace may carry a knowledge library in `library/`
   hypothesis states, the latest recorded verdict and the lockbox state. The same
   projection (`research` in each workspace-summary Project) is read from
   `notebook.json` alone and needs no optional extra.
+  Its **RD-Agent and research candidates** reader opens a local extraction JSON.
+  RD-Agent factor receipts show the reported source, excerpt hash, formula and
+  variables. Research-feature receipts show the reported excerpt line when
+  present, the quote, observation unit, proposed rule, inputs and gap.
+  Preview does not save the file. **Save in this browser** keeps one full JSON
+  receipt for the current browser profile and site. Reloading validates that
+  copy again. A rejected import leaves the saved copy unchanged. **Remove
+  saved copy** removes only browser storage and leaves the source file intact.
+  Studio does not upload, execute or add candidates to the factor library.
+  Candidates remain unverified.
 - `?view=research&id=P[&h=H]` is the direction page: core numbers, the hypothesis
   table, every evaluated program against the noise frontier (record frontier,
   failed programs below the axis, dashed expected best of N pure-noise trials at
   every prefix), the selected hypothesis's claim and what was frozen before its
   trials (evaluator and data hashes, plan rule), the verdict band, the lockbox,
   the check ledger, experiments and the `results.tsv` ledger.
+  **Research results** lists exact hypothesis/experiment pairs, links to the
+  corresponding program inspector, and shows a verdict only for the experiment
+  named in its evidence. It can filter supported or confirmed outcomes, download
+  the shown rows as JSON, and expand recorded owner-grant round attempts when
+  available. Select two experiments to compare: the data and evaluator hashes
+  must match and both must have a finite in-sample score. The view reports the
+  number of evaluations and the score difference, not an out-of-sample result.
 - `?view=knowledge` shows the Workspace library: wiki pages (findings marked),
   `index.md`, raw sources not yet compiled and `log.md`.
 - The Project page gains a Research direction section linking to its page.
@@ -120,8 +154,8 @@ Workspace may carry a knowledge library in `library/`
   scrubber and the best ancestry drawn heavy, a program inspector (facts, why it
   failed, evaluator feedback, diff from its parent, source, model reasoning and
   log tails, offspring), the evolved system-prompt versions, meta-analysis notes,
-  stage durations and the programs table. The direction page links each
-  experiment to it and compares its experiments' running best by generation.
+  stage durations and the programs table. Retained source, parent diff and
+  evaluator feedback can be downloaded as text from the selected program.
 
 Routes: `GET /api/v1/project/research?id=P`, `GET /api/v1/research-library`, and
 for one experiment `GET /api/v1/project/research/run|program|prompt|meta?id=P&h=H&e=E`
@@ -324,6 +358,12 @@ kept in the browser's local storage and is never sent to the server. Fixed at th
 bottom are **Attention** (with a count) and **Settings**. The theme toggle stays
 in the top bar. One Project is one idea, so a card or row title is the Project
 name; the route key `?view=projects` is unchanged so existing links still work.
+
+**Factors** offers **List** and **Cards** in the same library. Both use the
+same search, verdict and split filters, sorting, and links to factor analysis.
+The layout preference stays in the current browser. Cards show the published
+validation rank IC and HAC t when available, plus the trial count and update
+time. A dash marks an unavailable metric.
 
 **Ideas** shows a one-row status strip (ideas, need attention, immutable Runs,
 last Run) above a table with one row per Project: verdict, headline metric,

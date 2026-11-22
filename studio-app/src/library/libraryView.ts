@@ -27,6 +27,12 @@ export function useLibraryView() {
   }
 }
 
+export function useFactorLibraryLayout() {
+  const key = 'aq-studio-factor-layout'
+  const [layout, setLayout] = useState<'list' | 'cards'>(() => read(key) === 'cards' ? 'cards' : 'list')
+  return [layout, (next: typeof layout) => { setLayout(next); write(key, next) }] as const
+}
+
 /** Order by a published value; a missing value sorts last in either direction. */
 export function sortRows<T>(rows: readonly T[], sort: Sort, get: (row: T) => string | number | null | undefined): T[] {
   return [...rows].sort((a, b) => {

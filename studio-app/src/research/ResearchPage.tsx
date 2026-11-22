@@ -9,12 +9,12 @@ import { routeHref } from '../route'
 import { researchUrl, useResearchJson, type Direction, type ProjectResearch, type ResearchHypothesis } from './researchApi'
 import { Claim, Criteria, Events, Experiments, Ledger, Lockbox, Status, Verdict } from './ResearchParts'
 import { TrialFrontier } from './TrialFrontier'
-import { SeriesChart } from './SeriesChart'
+import { ResearchResults } from './ResearchResults'
 import { fixed, lockboxWord, money, vocab } from './words'
 import './research.css'
 
 const NAV = [
-  ['rs-hyp', 'Hypotheses'], ['rs-trials', 'Trials and noise frontier'], ['rs-claim', 'Claim and criteria'], ['rs-ledger', 'Check ledger'],
+  ['rs-results', 'Research results'], ['rs-hyp', 'Hypotheses'], ['rs-trials', 'Trials and noise frontier'], ['rs-claim', 'Claim and criteria'], ['rs-ledger', 'Check ledger'],
   ['rs-verdict', 'Verdict'], ['rs-exp', 'Experiments'], ['rs-events', 'Results ledger'],
 ] as const
 
@@ -51,7 +51,7 @@ function hypothesisCols(d: Direction): Col<ResearchHypothesis>[] {
   ]
 }
 
-function Body({ id, d, h, go }: { id: string; d: Direction; h: ResearchHypothesis; go: (href: string) => void }) {
+function Body({ id, d, h, synthetic, go }: { id: string; d: Direction; h: ResearchHypothesis; synthetic: boolean; go: (href: string) => void }) {
   const clears = d.frontier.clears
   const hrefOf = (row: ResearchHypothesis) => routeHref({ view: 'research', id, h: row.id })
   return (
@@ -62,6 +62,9 @@ function Body({ id, d, h, go }: { id: string; d: Direction; h: ResearchHypothesi
         </HeroLine>
         <HeroTiles items={tiles(d)} label={uiText("Direction numbers")} />
       </div>
+      <Section title={uiText("Research results")} id="rs-results" icon={<Icon name="runs" />} micro="RESEARCH RESULTS">
+        <ResearchResults key={id} id={id} direction={d} synthetic={synthetic} />
+      </Section>
       <Section title={uiText("Hypotheses")} id="rs-hyp" icon={<Icon name="doc" />} micro="HYPOTHESES" caption={uiText("Select a row to read its claim, ledger and verdict.")}>
         <DataTable rows={d.hypotheses} cols={hypothesisCols(d)} rowKey={(row) => row.id} href={hrefOf} go={go} caption={uiText("Hypotheses of this direction")} selected={(row) => row.id === h.id} />
       </Section>
@@ -88,11 +91,6 @@ function Body({ id, d, h, go }: { id: string; d: Direction; h: ResearchHypothesi
       <Section title={uiText("Experiments")} id="rs-exp" icon={<Icon name="runs" />} micro="EXPERIMENTS">
         <Experiments h={h} runHref={(eid) => routeHref({ view: 'research', id, h: h.id, e: eid })} />
       </Section>
-      {d.experimentCurves.length > 1 && (
-        <Section title={uiText("Compare experiments")} id="rs-compare" icon={<Icon name="versions" />} micro="COMPARE" caption={uiText("In-sample scores compare only within this direction's fixed evaluator and data.")}>
-          <SeriesChart title={uiText("Running best by generation")} short={uiText("One step line per experiment; the dash pattern tells them apart.")} desc={uiText("The running best in-sample score of each experiment of this direction, by generation. More generations also mean more trials: read it beside the noise frontier.")} xLabel={uiText("generation")} format={(v) => v.toFixed(3)} series={d.experimentCurves.map((c, i) => ({ label: `${c.hypothesis}/${c.experiment}`, kind: 'step' as const, dashes: ['', '5 3', '2 3', '8 3 2 3', '1 2'][i % 5], points: c.steps }))} />
-        </Section>
-      )}
       <Section title={uiText("Results ledger")} id="rs-events" icon={<Icon name="versions" />} micro="RESULTS.TSV" fold caption={uiTemplate("{0} recent events; agent rounds {1}.", [d.events.length, vocab(d.rounds.state)])}>
         <Events d={d} selected={h.id} />
       </Section>
@@ -112,7 +110,7 @@ export function ResearchPage({ id, h, name, tick, go }: { id: string; h?: string
   if (load.state === 'error') return <div className="pg"><Notice kind="error" label={uiText("Error")} title={uiText("Could not load this research direction.")} subtitle={load.message} /></div>
   const data = load.data
   const d = data.research
-  const current = d?.hypotheses.find((x) => x.id === h) ?? d?.hypotheses[0]
+  const current = h ? d?.hypotheses.find((x) => x.id === h) : d?.hypotheses[0]
   return (
     <div className="pg rs-page">
       <header className="pg-head">
@@ -124,9 +122,9 @@ export function ResearchPage({ id, h, name, tick, go }: { id: string; h?: string
       {d && current ? (
         <>
           <SectionNav items={NAV.map(([key, label]) => ({ id: key, label: uiText(label) }))} />
-          <Body id={id} d={d} h={current} go={go} />
+          <Body id={id} d={d} h={current} synthetic={Boolean(data.demo)} go={go} />
         </>
-      ) : d ? <Notice kind="info" label={uiText("Info")} title={uiText("No hypothesis yet.")} subtitle={ADD_HYPOTHESIS} /> : <Unavailable data={data} />}
+      ) : d ? <Notice kind={h ? 'error' : 'info'} label={h ? uiText("Error") : uiText("Info")} title={h ? uiText("Hypothesis not found.") : uiText("No hypothesis yet.")} subtitle={h ?? ADD_HYPOTHESIS} /> : <Unavailable data={data} />}
     </div>
   )
 }

@@ -93,6 +93,7 @@ const VOCABULARY: Record<string, string> = {
   scaffold: 'Scaffold', run: 'Run', 'run-failed': 'Run failed', skeptic: 'Skeptic', verdict: 'Verdict', confirm: 'Lockbox opened', probe: 'Probe', event: 'Event',
   sampling: 'Sampling', evaluation: 'Evaluation', postprocess: 'Post-processing', pipeline: 'Whole pipeline',
   diff: 'Diff patch', full: 'Full rewrite', cross: 'Crossover', init: 'Seed',
+  stopped: 'Stopped', budget_exhausted: 'Budget exhausted', failed: 'Failed',
 }
 export const vocab = (value: string | null | undefined) => (value ? (VOCABULARY[value] ? uiText(VOCABULARY[value]) : value) : '—')
 

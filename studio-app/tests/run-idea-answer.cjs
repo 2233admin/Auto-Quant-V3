@@ -14,7 +14,7 @@ try {
     buildSync({ entryPoints: [join(__dirname, name)], outfile: out, bundle: true, platform: 'node', format: 'cjs', jsx: 'automatic', loader: { '.css': 'empty' }, logLevel: 'warning' })
     return out
   })
-  const result = spawnSync(process.execPath, ['--test', ...outs], { stdio: 'inherit' })
+  const result = spawnSync(process.execPath, ['--test', ...outs], { stdio: 'inherit', cwd: resolve(__dirname, '../..') })
   process.exitCode = result.status ?? 1
 } finally {
   rmSync(dir, { recursive: true, force: true })

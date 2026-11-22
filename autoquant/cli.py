@@ -90,6 +90,7 @@ from .cli_contract import (
     success_envelope,
     workspace_context,
 )
+from .local_research import LocalResearchPlan, extract_candidates
 from .runs import (
     JUDGE_OUTPUT_JSON_SCHEMA,
     RUN_RESULT_JSON_SCHEMA,
@@ -1099,7 +1100,11 @@ def build_parser() -> RaisingArgumentParser:
     research_run.add_argument("path")
     research_run.add_argument("--project")
     research_run.add_argument("--session", required=True)
-    research_run.add_argument("--agent-command", required=True)
+    researcher = research_run.add_mutually_exclusive_group(required=True)
+    researcher.add_argument("--agent-command", help="explicit host shell command")
+    researcher.add_argument(
+        "--local-plan", type=Path, help="local model and approved JSON presets"
+    )
     research_run.add_argument("--max-turns", type=int, default=5)
     research_run.add_argument("--max-wall-seconds", type=int, default=900)
     research_run.add_argument("--turn-timeout-seconds", type=int, default=300)
@@ -1110,6 +1115,15 @@ def build_parser() -> RaisingArgumentParser:
     )
     research_run.set_defaults(command_id="research.run")
     _json_argument(research_run)
+
+    research_extract = research_actions.add_parser(
+        "extract", help="extract quote-checked candidate features from local text"
+    )
+    research_extract.add_argument("excerpt", type=Path)
+    research_extract.add_argument("--model", required=True)
+    research_extract.add_argument("--output", type=Path, required=True)
+    research_extract.set_defaults(command_id="research.extract")
+    _json_argument(research_extract)
 
     research_list = research_actions.add_parser(
         "list",
@@ -4410,12 +4424,34 @@ def _campaign_artifact(campaign) -> dict[str, Any]:
     )
 
 
+def _research_extract(args: argparse.Namespace) -> CommandResult:
+    receipt = extract_candidates(args.excerpt, args.model, args.output)
+    return CommandResult(
+        "research.extract",
+        receipt,
+        f"Extracted {len(receipt['items'])} candidates into {args.output}\n",
+        artifacts=[
+            artifact(
+                "research-candidates",
+                receipt["source_sha256"],
+                args.output,
+                immutable=False,
+            )
+        ],
+    )
+
+
 def _research_run(args: argparse.Namespace) -> CommandResult:
     project = _selected_project(args)
+    researcher = (
+        LocalResearchPlan.load(args.local_plan)
+        if args.local_plan is not None
+        else args.agent_command
+    )
     campaign = run_campaign(
         project,
         args.session,
-        args.agent_command,
+        researcher,
         max_turns=args.max_turns,
         max_wall_seconds=args.max_wall_seconds,
         turn_timeout_seconds=args.turn_timeout_seconds,
@@ -6304,6 +6340,8 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
         return _experiment_show(args)
     if args.command_id == "research.run":
         return _research_run(args)
+    if args.command_id == "research.extract":
+        return _research_extract(args)
     if args.command_id == "research.list":
         return _research_list(args)
     if args.command_id == "research.show":

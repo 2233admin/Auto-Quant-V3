@@ -8,6 +8,7 @@ import { TuningPage } from './Tuning'
 import { ResearchLibrary } from '../research/ResearchLibrary'
 import { KnowledgeLibrary } from '../research/KnowledgeLibrary'
 import { Loading } from '../components/States'
+import { ReferenceSelection } from './FactorResearch'
 
 export type LibraryRoute = Extract<Route, { view: 'factors' | 'runs' | 'strategies' | 'tuning' | 'knowledge' }> | { view: 'research' }
 
@@ -19,7 +20,9 @@ export const LIBRARY_TITLE: Record<LibraryRoute['view'], string> = { factors: 'F
 /** The read-only cross-Project pages: one list, filters on top, click a row to open detail. */
 export function LibraryPage({ route, workspace, go, tick = null }: { route: LibraryRoute; workspace: WorkspaceSummary | null; go: (href: string) => void; tick?: Date | null }) {
   if (!workspace) return <div className="pg"><Loading label={uiText("Loading…")} minHeight={240} /></div>
-  if (route.view === 'factors') return <FactorLibrary workspace={workspace} go={go} />
+  if (route.view === 'factors') return route.section === 'reference'
+    ? <ReferenceSelection workspace={workspace} route={route} />
+    : <FactorLibrary workspace={workspace} go={go} />
   if (route.view === 'runs') return <RunHistory workspace={workspace} go={go} />
   if (route.view === 'strategies') return <StrategyLibrary workspace={workspace} go={go} />
   if (route.view === 'research') return <ResearchLibrary workspace={workspace} go={go} />

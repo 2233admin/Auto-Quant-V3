@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .local_research import LocalResearchPlan
 from .shell_launch import kill_process_tree, launch_shell_command
 from .sessions import (
     EXPERIMENT_ID,
@@ -38,10 +39,11 @@ from .workspace import (
 CAMPAIGN_RESULT = "result.json"
 CAMPAIGN_MANIFEST = "manifest.json"
 CAMPAIGN_PROGRESS = "progress.json"
-CAMPAIGN_ID = re.compile(
-    r"^campaign-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$"
-)
+CAMPAIGN_ID = re.compile(r"^campaign-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$")
 CAMPAIGN_STATUSES = {"stopped", "budget_exhausted", "failed"}
+EXTERNAL_RESEARCHER = "external-shell-command"
+LOCAL_RESEARCHER = "local-ollama-presets"
+RESEARCHER_KINDS = {EXTERNAL_RESEARCHER, LOCAL_RESEARCHER}
 RESPONSE_VERSION = 1
 MAX_OUTPUT_BYTES = 1_000_000
 PROGRESS_PHASES = {
@@ -490,15 +492,22 @@ def _turn_failure(
 def run_campaign(
     project: ProjectContext,
     session_id: str,
-    agent_command: str,
+    agent_command: str | LocalResearchPlan,
     *,
     max_turns: int = 5,
     max_wall_seconds: int = 900,
     turn_timeout_seconds: int = 300,
 ) -> CampaignContext:
-    if not isinstance(agent_command, str) or not agent_command.strip():
+    local_plan = agent_command if isinstance(agent_command, LocalResearchPlan) else None
+    if local_plan is None and (
+        not isinstance(agent_command, str) or not agent_command.strip()
+    ):
         raise AutoQuantValidationError(
-            [_issue("agent_command", "schema.string", "Agent command must be non-empty")]
+            [
+                _issue(
+                    "agent_command", "schema.string", "Agent command must be non-empty"
+                )
+            ]
         )
     budget_issues: list[ValidationIssue] = []
     for value, name, maximum in (
@@ -526,9 +535,31 @@ def run_campaign(
             [_issue(session.manifest_path, "session.closed", "Session is not active")]
         )
     study = validate_session_authority(project, session)
+    if local_plan is not None:
+        if study.source_hash != session.manifest["leader"]["sourceHash"]:
+            raise AutoQuantValidationError(
+                [
+                    _issue(
+                        study.root_dir,
+                        "local-research.dirty",
+                        "Start with an unchanged Session leader",
+                    )
+                ]
+            )
+        local_plan.candidate(
+            session.worktree_project.root_dir, session.manifest["editablePaths"]
+        )
     started = datetime.now(timezone.utc)
     stamp = started.strftime("%Y%m%dT%H%M%S%fZ")
-    command_hash = hash_json({"shell": agent_command})
+    plan_receipt = local_plan.receipt() if local_plan is not None else None
+    researcher_kind = (
+        LOCAL_RESEARCHER if local_plan is not None else EXTERNAL_RESEARCHER
+    )
+    command_hash = hash_json(
+        {"localPlan": plan_receipt}
+        if local_plan is not None
+        else {"shell": agent_command}
+    )
     identity = hash_json(
         {
             "session": session_id,
@@ -563,6 +594,8 @@ def run_campaign(
     status = "budget_exhausted"
     reason = "Maximum turn budget reached"
     try:
+        if plan_receipt is not None:
+            _write_json(staging / "local-plan.json", plan_receipt)
         _write_progress(
             staging,
             campaign_id=campaign_id,
@@ -609,7 +642,7 @@ def run_campaign(
                 started_at=started.isoformat(),
                 phase="researcher",
                 status="running",
-                message=f"External Researcher is working on turn {turn}",
+                message=f"Researcher is working on turn {turn}",
                 turn=turn,
                 budget=budget,
                 experiment_ids=experiment_ids,
@@ -619,25 +652,50 @@ def run_campaign(
                 float(turn_timeout_seconds),
                 max(0.001, remaining - judge_reserve),
             )
-            execution = _invoke_researcher(
-                agent_command,
-                session,
-                campaign_id,
-                input_path,
-                brief,
-                command_timeout,
-            )
-            (turn_root / "stdout.txt").write_text(
-                execution.pop("stdout"),
-                encoding="utf-8",
-            )
-            (turn_root / "stderr.txt").write_text(
-                execution.pop("stderr"),
-                encoding="utf-8",
-            )
+            execution = None
+            local_values = None
+            local_applied = False
+            if local_plan is None:
+                execution = _invoke_researcher(
+                    agent_command,
+                    session,
+                    campaign_id,
+                    input_path,
+                    brief,
+                    command_timeout,
+                )
+                (turn_root / "stdout.txt").write_text(
+                    execution.pop("stdout"),
+                    encoding="utf-8",
+                )
+                (turn_root / "stderr.txt").write_text(
+                    execution.pop("stderr"),
+                    encoding="utf-8",
+                )
             turns_completed = turn
             try:
-                if execution["timedOut"]:
+                if local_plan is not None:
+                    local_target, current = local_plan.candidate(
+                        session.worktree_project.root_dir,
+                        session.manifest["editablePaths"],
+                    )
+                    if study.source_hash != session.manifest["leader"]["sourceHash"]:
+                        raise AutoQuantValidationError(
+                            [
+                                _issue(
+                                    local_target,
+                                    "local-research.dirty",
+                                    "Session candidate changed outside this Campaign",
+                                )
+                            ]
+                        )
+                    response, local_values = local_plan.propose(
+                        current, brief, turn_root, command_timeout
+                    )
+                    stdout = json.dumps(response, ensure_ascii=False)
+                else:
+                    stdout = (turn_root / "stdout.txt").read_text(encoding="utf-8")
+                if execution is not None and execution["timedOut"]:
                     raise AutoQuantValidationError(
                         [
                             _issue(
@@ -647,7 +705,7 @@ def run_campaign(
                             )
                         ]
                     )
-                if execution["exitCode"] != 0:
+                if execution is not None and execution["exitCode"] != 0:
                     raise AutoQuantValidationError(
                         [
                             _issue(
@@ -657,7 +715,7 @@ def run_campaign(
                             )
                         ]
                     )
-                if execution["stdoutTruncated"]:
+                if execution is not None and execution["stdoutTruncated"]:
                     raise AutoQuantValidationError(
                         [
                             _issue(
@@ -667,12 +725,14 @@ def run_campaign(
                             )
                         ]
                     )
-                stdout = (turn_root / "stdout.txt").read_text(encoding="utf-8")
                 response = parse_researcher_response(stdout.strip(), turn_root)
                 _write_json(turn_root / "response.json", response)
                 if response["action"] == "stop":
                     candidate = validate_session_authority(project, session)
-                    if candidate.source_hash != session.manifest["leader"]["sourceHash"]:
+                    if (
+                        candidate.source_hash
+                        != session.manifest["leader"]["sourceHash"]
+                    ):
                         raise AutoQuantValidationError(
                             [
                                 _issue(
@@ -701,7 +761,8 @@ def run_campaign(
                     time.monotonic() - monotonic_started
                 )
                 if remaining_after_command <= judge_reserve:
-                    restore_session_worktree(project, session)
+                    if local_plan is None:
+                        restore_session_worktree(project, session)
                     _write_json(
                         turn_root / "result.json",
                         {
@@ -730,6 +791,24 @@ def run_campaign(
                     experiment_ids=experiment_ids,
                     verdicts=verdicts,
                 )
+                if local_values is not None:
+                    latest = load_session(project, session_id)
+                    candidate = validate_session_authority(project, latest)
+                    if (
+                        latest.manifest["leader"] != session.manifest["leader"]
+                        or candidate.source_hash != study.source_hash
+                    ):
+                        raise AutoQuantValidationError(
+                            [
+                                _issue(
+                                    local_target,
+                                    "local-research.dirty",
+                                    "Session changed while the model was choosing",
+                                )
+                            ]
+                        )
+                    _atomic_write_json(local_target, local_values)
+                    local_applied = True
                 experiment = evaluate_experiment(
                     project,
                     session_id,
@@ -748,6 +827,16 @@ def run_campaign(
                         "verdict": verdict,
                     }
                 )
+                if local_plan is not None:
+                    campaign_history[-1].update(
+                        leaderValue=experiment.result["leader"]["value"],
+                        candidateValue=experiment.result["candidate"]["value"],
+                        runId=experiment.result["candidate"]["runId"],
+                        improvement=experiment.result["improvement"],
+                        diagnostics=json.dumps(
+                            experiment.result["errors"], ensure_ascii=False
+                        )[:512],
+                    )
                 _write_json(
                     turn_root / "result.json",
                     {
@@ -802,7 +891,8 @@ def run_campaign(
                         experiment_ids=experiment_ids,
                         verdicts=verdicts,
                     )
-                    restore_session_worktree(project, session)
+                    if local_plan is None or local_applied:
+                        restore_session_worktree(project, session)
                 except AutoQuantValidationError as restore_error:
                     validation_error = AutoQuantValidationError(
                         [*validation_error.issues, *restore_error.issues]
@@ -850,7 +940,7 @@ def run_campaign(
             "completedAt": completed.isoformat(),
             "durationMs": int((time.monotonic() - monotonic_started) * 1000),
             "researcher": {
-                "kind": "external-shell-command",
+                "kind": researcher_kind,
                 "commandHash": command_hash,
             },
             "budget": budget,
@@ -913,10 +1003,14 @@ def _validate_campaign_result(
     if value.get("status") not in CAMPAIGN_STATUSES:
         issues.append(_issue(path, "campaign.status", "Invalid Campaign status"))
     if not isinstance(value.get("reason"), str) or not value["reason"]:
-        issues.append(_issue(path, "schema.string", "Campaign reason must be non-empty"))
+        issues.append(
+            _issue(path, "schema.string", "Campaign reason must be non-empty")
+        )
     for key in ("startedAt", "completedAt"):
         if not isinstance(value.get(key), str) or not value[key]:
-            issues.append(_issue(f"{path}/{key}", "schema.string", f"{key} must be non-empty"))
+            issues.append(
+                _issue(f"{path}/{key}", "schema.string", f"{key} must be non-empty")
+            )
     if (
         not isinstance(value.get("durationMs"), int)
         or isinstance(value.get("durationMs"), bool)
@@ -930,12 +1024,16 @@ def _validate_campaign_result(
         issues.extend(
             _strict_keys(researcher, {"kind", "commandHash"}, f"{path}/researcher")
         )
-        if researcher.get("kind") != "external-shell-command":
-            issues.append(_issue(path, "campaign.researcher", "Invalid Researcher kind"))
+        if researcher.get("kind") not in RESEARCHER_KINDS:
+            issues.append(
+                _issue(path, "campaign.researcher", "Invalid Researcher kind")
+            )
         if not isinstance(researcher.get("commandHash"), str) or not re.fullmatch(
             r"[0-9a-f]{64}", researcher.get("commandHash", "")
         ):
-            issues.append(_issue(path, "schema.hash", "Invalid Researcher command hash"))
+            issues.append(
+                _issue(path, "schema.hash", "Invalid Researcher command hash")
+            )
     budget = value.get("budget")
     if not isinstance(budget, dict):
         issues.append(_issue(path, "schema.type", "budget must be an object"))
@@ -986,11 +1084,13 @@ def _validate_campaign_result(
             for key in ("KEEP", "REVERT", "CRASH")
         ):
             issues.append(_issue(path, "campaign.verdicts", "Invalid verdict counts"))
-        elif isinstance(value.get("experiments"), list) and sum(verdicts.values()) != len(
-            value["experiments"]
-        ):
+        elif isinstance(value.get("experiments"), list) and sum(
+            verdicts.values()
+        ) != len(value["experiments"]):
             issues.append(
-                _issue(path, "campaign.verdicts", "Verdict counts differ from Experiments")
+                _issue(
+                    path, "campaign.verdicts", "Verdict counts differ from Experiments"
+                )
             )
     for key in ("initialLeader", "finalLeader"):
         leader = value.get(key)
@@ -1028,9 +1128,13 @@ def _validate_campaign_result(
     ):
         issues.append(_issue(path, "campaign.errors", "Invalid Campaign errors"))
     elif value.get("status") == "failed" and not errors:
-        issues.append(_issue(path, "campaign.errors", "Failed Campaign must record an error"))
+        issues.append(
+            _issue(path, "campaign.errors", "Failed Campaign must record an error")
+        )
     elif value.get("status") != "failed" and errors:
-        issues.append(_issue(path, "campaign.errors", "Successful Campaign cannot record errors"))
+        issues.append(
+            _issue(path, "campaign.errors", "Successful Campaign cannot record errors")
+        )
     if issues:
         raise AutoQuantValidationError(issues)
 
@@ -1063,10 +1167,7 @@ def _validate_campaign_progress(
         issues.append(_issue(path, "schema.version", "Expected Campaign progress V1"))
     if value.get("kind") != "campaign-progress":
         issues.append(_issue(path, "progress.kind", "Invalid Campaign progress kind"))
-    if (
-        value.get("campaignId") != campaign_id
-        or value.get("sessionId") != session_id
-    ):
+    if value.get("campaignId") != campaign_id or value.get("sessionId") != session_id:
         issues.append(_issue(path, "progress.identity", "Progress identity mismatch"))
     status = value.get("status")
     if status not in {"running", *CAMPAIGN_STATUSES}:
@@ -1075,12 +1176,18 @@ def _validate_campaign_progress(
     if phase not in PROGRESS_PHASES:
         issues.append(_issue(path, "progress.phase", "Invalid progress phase"))
     if status == "running" and phase == "terminal":
-        issues.append(_issue(path, "progress.phase", "Running progress cannot be terminal"))
+        issues.append(
+            _issue(path, "progress.phase", "Running progress cannot be terminal")
+        )
     if status in CAMPAIGN_STATUSES and phase != "terminal":
-        issues.append(_issue(path, "progress.phase", "Terminal progress must use terminal phase"))
+        issues.append(
+            _issue(path, "progress.phase", "Terminal progress must use terminal phase")
+        )
     for key in ("message", "startedAt", "updatedAt"):
         if not isinstance(value.get(key), str) or not value[key]:
-            issues.append(_issue(f"{path}/{key}", "schema.string", f"{key} must be non-empty"))
+            issues.append(
+                _issue(f"{path}/{key}", "schema.string", f"{key} must be non-empty")
+            )
     if not isinstance(value.get("commandHash"), str) or not re.fullmatch(
         r"[0-9a-f]{64}", value.get("commandHash", "")
     ):
@@ -1109,16 +1216,15 @@ def _validate_campaign_progress(
             or isinstance(item, bool)
             or not 1 <= item <= maximum
         ):
-            issues.append(_issue(path, "schema.range", f"Invalid progress budget {key}"))
+            issues.append(
+                _issue(path, "schema.range", f"Invalid progress budget {key}")
+            )
     turn = value.get("turn")
     if (
         not isinstance(turn, int)
         or isinstance(turn, bool)
         or turn < 0
-        or (
-            isinstance(budget.get("maxTurns"), int)
-            and turn > budget["maxTurns"]
-        )
+        or (isinstance(budget.get("maxTurns"), int) and turn > budget["maxTurns"])
     ):
         issues.append(_issue(path, "progress.turn", "Invalid progress turn"))
     experiments = value.get("experiments")
@@ -1126,10 +1232,14 @@ def _validate_campaign_progress(
         isinstance(item, str) and EXPERIMENT_ID.fullmatch(item)
         for item in (experiments if isinstance(experiments, list) else [])
     ):
-        issues.append(_issue(path, "progress.experiments", "Invalid progress Experiments"))
+        issues.append(
+            _issue(path, "progress.experiments", "Invalid progress Experiments")
+        )
     verdicts = value.get("verdicts")
     if not isinstance(verdicts, dict):
-        issues.append(_issue(path, "schema.type", "Progress verdicts must be an object"))
+        issues.append(
+            _issue(path, "schema.type", "Progress verdicts must be an object")
+        )
     else:
         issues.extend(
             _strict_keys(verdicts, {"KEEP", "REVERT", "CRASH"}, f"{path}/verdicts")
@@ -1141,10 +1251,18 @@ def _validate_campaign_progress(
             for key in ("KEEP", "REVERT", "CRASH")
         )
         if not counts_valid:
-            issues.append(_issue(path, "progress.verdicts", "Invalid progress verdicts"))
-        elif isinstance(experiments, list) and sum(verdicts.values()) != len(experiments):
             issues.append(
-                _issue(path, "progress.verdicts", "Progress verdicts differ from Experiments")
+                _issue(path, "progress.verdicts", "Invalid progress verdicts")
+            )
+        elif isinstance(experiments, list) and sum(verdicts.values()) != len(
+            experiments
+        ):
+            issues.append(
+                _issue(
+                    path,
+                    "progress.verdicts",
+                    "Progress verdicts differ from Experiments",
+                )
             )
     if issues:
         raise AutoQuantValidationError(issues)
@@ -1162,7 +1280,11 @@ def list_campaign_progress(session: SessionContext) -> list[dict[str, Any]]:
             continue
         if entry.is_symlink() or not entry.is_dir():
             raise AutoQuantValidationError(
-                [_issue(entry, "progress.entry", "Campaign progress must be a directory")]
+                [
+                    _issue(
+                        entry, "progress.entry", "Campaign progress must be a directory"
+                    )
+                ]
             )
         campaign_id = entry.name[1 : -len(".creating")]
         if not CAMPAIGN_ID.fullmatch(campaign_id):
@@ -1172,7 +1294,13 @@ def list_campaign_progress(session: SessionContext) -> list[dict[str, Any]]:
         progress_path = entry / CAMPAIGN_PROGRESS
         if progress_path.is_symlink():
             raise AutoQuantValidationError(
-                [_issue(progress_path, "path.symlink", "Campaign progress cannot be a symlink")]
+                [
+                    _issue(
+                        progress_path,
+                        "path.symlink",
+                        "Campaign progress cannot be a symlink",
+                    )
+                ]
             )
         if not progress_path.is_file():
             continue
@@ -1223,11 +1351,17 @@ def load_campaign(
         or manifest.get("status") not in CAMPAIGN_STATUSES
         or manifest.get("completed") is not True
     ):
-        issues.append(_issue(root, "campaign.manifest", "Invalid terminal Campaign manifest"))
+        issues.append(
+            _issue(root, "campaign.manifest", "Invalid terminal Campaign manifest")
+        )
     if not isinstance(files, dict) or files != actual:
         issues.append(_issue(root, "campaign.tampered", "Campaign files changed"))
-    if isinstance(files, dict) and files.get(CAMPAIGN_RESULT) != manifest.get("resultHash"):
-        issues.append(_issue(root, "campaign.result-hash", "Campaign result hash mismatch"))
+    if isinstance(files, dict) and files.get(CAMPAIGN_RESULT) != manifest.get(
+        "resultHash"
+    ):
+        issues.append(
+            _issue(root, "campaign.result-hash", "Campaign result hash mismatch")
+        )
     if issues:
         raise AutoQuantValidationError(issues)
     result = _read_json(root / CAMPAIGN_RESULT, "campaign-result")
@@ -1241,6 +1375,18 @@ def load_campaign(
         raise AutoQuantValidationError(
             [_issue(root, "campaign.status", "Campaign status differs from manifest")]
         )
+    if result["researcher"]["kind"] == LOCAL_RESEARCHER:
+        plan = _read_json(root / "local-plan.json", "local-research-plan")
+        if hash_json({"localPlan": plan}) != result["researcher"]["commandHash"]:
+            raise AutoQuantValidationError(
+                [
+                    _issue(
+                        root,
+                        "local-research.plan-hash",
+                        "Local plan does not match the Campaign identity",
+                    )
+                ]
+            )
     progress_path = root / CAMPAIGN_PROGRESS
     if progress_path.exists() or progress_path.is_symlink():
         progress = _read_json(progress_path, "campaign-progress")
@@ -1252,7 +1398,11 @@ def load_campaign(
         )
         if progress["status"] != result["status"]:
             raise AutoQuantValidationError(
-                [_issue(root, "campaign.status", "Campaign progress differs from result")]
+                [
+                    _issue(
+                        root, "campaign.status", "Campaign progress differs from result"
+                    )
+                ]
             )
     for experiment_id in result["experiments"]:
         load_experiment(project, session, experiment_id)
@@ -1272,7 +1422,11 @@ def list_campaigns(
             continue
         if entry.is_symlink() or not entry.is_dir():
             raise AutoQuantValidationError(
-                [_issue(entry, "campaign.entry", "Campaign entries must be directories")]
+                [
+                    _issue(
+                        entry, "campaign.entry", "Campaign entries must be directories"
+                    )
+                ]
             )
         campaign = load_campaign(project, session, entry.name)
         result = campaign.result
@@ -1370,7 +1524,7 @@ CAMPAIGN_RESULT_JSON_SCHEMA: dict[str, Any] = {
             "additionalProperties": False,
             "required": ["kind", "commandHash"],
             "properties": {
-                "kind": {"const": "external-shell-command"},
+                "kind": {"enum": sorted(RESEARCHER_KINDS)},
                 "commandHash": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$",

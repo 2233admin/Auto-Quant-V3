@@ -14,6 +14,15 @@
 .rs-page-btn:hover { border-color: var(--line-strong); }
 .rs-page-btn.is-on { border-color: var(--text); background: var(--raised); }
 .rs-library .library-title { margin-bottom: var(--space-4); }
+.rs-result-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.rs-result-controls select, .rs-result-controls input[type='file'] { max-width: 100%; }
+.rs-result-compare { border: 1px solid var(--line); padding: var(--space-4); min-width: 0; }
+.rs-result-compare > :first-child { margin-top: 0; }
+.rs-result-compare h2, .rs-result-compare h3 { font: var(--type-section); }
+.rs-result-compare[aria-label] > * + * { margin-top: var(--space-3); }
+.rs-result-compare details { border-top: 1px solid var(--line); padding-top: var(--space-2); overflow-wrap: anywhere; }
+.rs-result-compare summary { cursor: pointer; }
+.rs-variable { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(6rem, 1fr) minmax(0, 3fr); gap: var(--space-2); }
 @media (max-width: 900px) { .rs-wiki { grid-template-columns: minmax(0, 1fr); } }
 .rs-diff span { display: block; }
 .rs-diff .is-add { color: var(--text); background: var(--raised); }

@@ -21,6 +21,7 @@ invariants live in `docs/design/`.
 | Plan | Outcome | Updated |
 | --- | --- | --- |
 | [[plans/shinka-panda-intake]] | A template plus only the meaning-changing questions turn a rough quant idea into a Shinka experiment whose plan is frozen before the first trial. | 2026-11-23 |
+| [[plans/local-research-presets]] | Extract quoted candidates and run local-model preset selection through the fixed Session Judge and trial gate. | 2026-11-21 |
 | [[plans/shinka-direction-as-project]] | A Shinka research direction lives in a V3 Project, `aq shinka` addresses it by Project, and Studio draws its research pages and the Workspace library natively. | 2026-11-05 |
 | [[plans/openalice-core-integrity]] | Desk-wide trial families, a Core trial gate, OpenAlice bars acquisition and a versioned handoff.json so an OpenAlice-hosted desk keeps its integrity rules. | 2026-11-04 |
 | [[plans/factor-to-portfolio-conversion]] | Turn a tested standalone Factor Lab into a research desk by reference with a caller-confirmed mandate, same-data proof and continued trial counting, from one confirmed Studio action. | 2026-11-03 |
@@ -42,6 +43,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/panda-style-chat-intake]] | Open Studio into a chat workspace with task-grouped templates, six intake fields, read-only-safe send, and result summaries that link to full evidence. | 2026-11-22 |
 | [[plans/order-native-bar-execution-kernel]] | Build a standalone deterministic bar-by-bar order/TPSL execution kernel with fixture coverage, no lane dependency yet. | 2026-08-19 |
 | [[plans/order-native-mechanical-portfolio-integration]] | Replace `simulate_targets`'s implicit close-target execution with kernel-backed order realization in the mechanical Portfolio lane. | 2026-08-19 |
 | [[plans/order-native-governed-rl-integration]] | Route governed RL and its baselines through the same fixed execution kernel as the mechanical lane. | 2026-08-19 |

@@ -61,7 +61,22 @@ export type StrategyRoute = {
   template: string; argv: string[]; display: string; studyId: string | null; runId: string | null
   factorRunId?: string | null
 }
-export type LibrarySummary = { factor: FactorSummary | null; strategy: StrategySummary | null }
+export type FactorReference = {
+  id: string; name: string; formula: string; direction: 'higher' | 'lower' | 'diagnostic'
+  evidence: string; source: string; market?: string; tags?: string[]
+  evidenceUniverse?: string; plannedUniverses?: string[]
+  meaning?: string; usage?: string; strategyUrl?: string
+  strategyUses?: { id?: string; name: string; rule: string }[]
+  replay?: {
+    runId: string; dates: number; triggered: number
+    versusMomentumBp: number; versusSameExposureBp: number
+    daily: { day: string; first: string; second: string; cash: boolean; momentum: number; kit: number; control: number }[]
+  }
+}
+export type LibrarySummary = {
+  factor: FactorSummary | null; strategy: StrategySummary | null
+  factorReferences?: { factors: FactorReference[]; invalid: boolean }
+}
 
 export type ResearchState = 'none' | 'ready' | 'unavailable' | 'invalid'
 
@@ -485,6 +500,26 @@ export type ResearchAgenda = {
   moves?: { priority: number; id: string; title: string; hypothesis?: string; rationale?: string }[]
 }
 
+export type CampaignRow = {
+  id: string
+  status: string
+  reason: string
+  turnsCompleted: number
+  experiments: number
+  verdicts: { KEEP: number; REVERT: number; CRASH: number }
+  startedAt: string
+  completedAt: string
+}
+
+export type CampaignProgressRow = {
+  campaignId: string
+  status: string
+  phase: string
+  message: string
+  turn: number
+  updatedAt: string
+}
+
 export type SessionSnapshot = {
   authority?: { valid: boolean }
   session?: { id?: string; status?: string; studyId?: string; createdAt?: string; updatedAt?: string; leader?: { runId?: string } }
@@ -495,6 +530,8 @@ export type SessionSnapshot = {
   selectionIntegrity?: SelectionIntegrity
   delegation?: { request?: { title?: string; question?: string; decisionContext?: string; horizon?: string; hypotheses?: string[]; constraints?: string[]; deliverables?: string[] } } | null
   experiments?: ExperimentRow[]
+  campaigns?: CampaignRow[]
+  progress?: CampaignProgressRow[]
   decisionMatrix?: {
     objective?: { direction?: string; metric?: string; minimumImprovement?: number }
     scope?: { trialLimit: number; totalCandidateTrials: number; displayedCandidateTrials: number; omittedCandidateTrials: number }
