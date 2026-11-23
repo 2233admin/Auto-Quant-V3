@@ -14,7 +14,8 @@ import { NewIdeaDialog } from './NewIdeaDialog'
 import { Info } from '../components/Info'
 import { Icon } from '../design/icons'
 import { routeHref } from '../route'
-import { candidateExpression, expressionSource } from './ideaEditor'
+import { candidateExpression, DEFAULT_QUANTILES, expressionSource, intakeParams } from './ideaEditor'
+import { QuantileSelect } from './QuantileSelect'
 import { SessionRecovery } from './FactorEditorState'
 import { STATE_COPY } from '../components/stateCopy'
 import './factorEdit.css'
@@ -31,6 +32,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
   const [dataset, setDataset] = useState('')
   const [assets, setAssets] = useState<string[]>([])
   const [horizon, setHorizon] = useState(1)
+  const [quantiles, setQuantiles] = useState(DEFAULT_QUANTILES)
   const [accepted, setAccepted] = useState(false)
   const [doc, setDoc] = useState<CandidateDoc | null>(null)
   const [draft, setDraft] = useState('')
@@ -112,7 +114,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
     try {
       if (!idea.bound) {
         setBusy('Checking the staged package…')
-        setPreview(await previewAction(b, 'project.intake', project.id, { dataset, horizon, predictionAssets: assets }))
+        setPreview(await previewAction(b, 'project.intake', project.id, intakeParams(dataset, horizon, assets, quantiles)))
       } else {
         if (!doc) return
         setBusy('Saving the candidate…')
@@ -190,6 +192,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
           {selectedPackage && <><p className="small muted">{selectedPackage.path} · {selectedPackage.adjustment} · {selectedPackage.frequency}</p><fieldset className="idea-assets"><legend>{uiText("Prediction assets")}</legend>{selectedPackage.assets.map(a => <label key={a}><input type="checkbox" checked={assets.includes(a)} onChange={e => { setAssets(e.target.checked ? [...assets, a] : assets.filter(x => x !== a)); setAccepted(false) }} />{a}</label>)}</fieldset><p className="small muted">{uiText("Unselected assets supply context only.")}</p></>}
           <label className="afield">{uiText("Forward horizon (completed daily bars)")}<input className="fe-input" type="number" min={1} max={60} value={horizon} onChange={e => { setHorizon(Number(e.target.value)); setAccepted(false) }} /></label>
           <p className="small muted">{uiText("The fixed protocol also reports a ")}{horizon === 5 ? 20 : 5}{uiText("-bar context horizon; it does not select the candidate.")}</p>
+          <QuantileSelect value={quantiles} onChange={next => { setQuantiles(next); setAccepted(false) }} />
           <label className="asecond"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} /><span>{uiText("I am testing whether higher factor values rank higher forward returns for these assets. This is development evidence, not a sealed-holdout confirmation.")}</span></label>
           {packages?.datasets.length === 0 && <div className="apreview"><h3>{uiText("No supported staged data")}</h3><p className="small">{packages.stagingNote}</p><pre className="cmd mono">{packages.stagingCommand}</pre><button className="abtn" onClick={() => void reload()}>{uiText("Refresh staged data")}</button></div>}
           {packages?.unavailable.map(d => <p className="small" key={d.path}>{d.path}: {uiValue(d.reason)}</p>)}

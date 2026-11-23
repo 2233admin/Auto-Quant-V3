@@ -3093,5 +3093,9 @@
   "annualized net Sharpe": "年化净夏普",
   "· does not pass the Core check": "· 未通过核心检验",
   "Selection and noise": "选择与噪声",
-  "Projects": "项目"
+  "Projects": "项目",
+  "Tear-sheet groups": "分组数",
+  "{0} groups": "{0} 组",
+  "{0} groups (default)": "{0} 组（默认）",
+  "Frozen with the Study. Needs at least one prediction asset per group.": "随 Study 一同冻结。每组至少需要一个预测资产。"
 }
