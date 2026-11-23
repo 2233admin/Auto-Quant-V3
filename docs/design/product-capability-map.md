@@ -90,7 +90,7 @@ Eleven products in total; BigQuant was effectively skipped.
 | Capability | How mature products do it (who) | AutoQuant today | Why it matters for honest factor research | Suggested priority |
 |---|---|---|---|---|
 | Preset universes (index constituents, TOP3000, etc.) | BRAIN uses preset pools such as TOP3000 [second-hand]; Qlib's `instruments/csi300.txt` gives every stock start and end dates [doc]; PandaAI has all A-shares/CSI 300/500/1000 [our docs]; QC has universe selection [inferred] | **Missing**. The universe is the asset list the caller writes in the request; see [[docs/design/caller-owned-factor-population]] | Backtesting the past with today's constituents introduces survivorship bias | **P1**: first support a "membership file with date ranges", not a data service |
-| Point-in-time data | Qlib has a PIT database that stores every revision by publication date [doc]; QC Security Master delisting and ticker-change events [doc] | **Missing**; OHLCV only, no fundamentals, see `research-intake...md:683` | Fundamental factors not taken point-in-time are look-ahead | **P2**: not needed at the OHLCV stage; becomes P0 once fundamentals are connected |
+| Point-in-time data | Qlib has a PIT database that stores every revision by publication date [doc]; QC Security Master delisting and ticker-change events [doc] | **Missing**; OHLCV only, no fundamentals, see `research-intake...md:683`; as-of join proposed in [[docs/design/as-of-alternative-features]] | Fundamental factors not taken point-in-time are look-ahead | **P2**: not needed at the OHLCV stage; becomes P0 once fundamentals are connected |
 | Corporate actions (splits, dividends, renames, delistings) | QC Security Master tracks these since 1998 and pushes them to algorithms as events [doc]; Qlib adjusts prices with a `factor` field [doc] | **Partial**. Adjustment semantics are declared by the caller and locked into the package; Core does not certify them, see [[docs/STATUS]] | Wrong adjustment means wrong returns | **P1**: add an intake "adjustment consistency" self-check (split-jump detection) |
 | Survivorship bias | QC datasets include delisted names [doc]; QuantRocket has a securities master [doc] | **Missing**; disclosure only (Honest boundary) | Using only survivors systematically overstates results | **P1**: the intake report states explicitly whether delisted assets are present, and the Verdict carries a caveat |
 | Trading calendar | Qlib's `calendars/day.txt` [doc]; QuantRocket has exchange calendars [doc] | **Present**: the XNYS calendar and half days are verified; crypto is continuous UTC ([[docs/design/configurable-session-interval-inputs]]) | Misalignment creates false signals | Already present, keep |
@@ -394,5 +394,6 @@ AutoQuant itself (read-only)
   [[docs/design/factor-qualification-funnel]],
   [[docs/design/selection-adjusted-research-evidence]],
   [[docs/design/hypothesis-and-idea-verdict]],
-  [[docs/design/research-intake-and-dataset-snapshots]]
+  [[docs/design/research-intake-and-dataset-snapshots]],
+  [[docs/design/as-of-alternative-features]]
 - PR #3: https://github.com/2233admin/Auto-Quant-V3/pull/3 (DRAFT)

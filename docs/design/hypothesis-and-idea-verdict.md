@@ -988,7 +988,7 @@ routing check returns reason codes and what would unblock it:
 | Reason code | Meaning | `unblockedBy` |
 | --- | --- | --- |
 | `data-interval-unsupported` | needs bars finer than the lane evaluates (the Event lane is daily-session only) | a lane that evaluates the finer bars; none exists for events today |
-| `data-non-ohlcv` | needs fundamentals, order book, flows, news | external data intake not available |
+| `data-non-ohlcv` | needs fundamentals, order book, flows, news | external data intake not available; first step proposed in [[docs/design/as-of-alternative-features]] |
 | `needs-event-calendar` | conditioning on macro or earnings dates | event calendar data (reference inventory slice F) |
 | `needs-execution-model` | depends on order-level behavior or fills | out of AutoQuant scope (no orders) |
 | `universe-too-small` | for example three decision assets for a cross-sectional claim | change the basket |

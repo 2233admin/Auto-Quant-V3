@@ -37,6 +37,7 @@ READS = {
     "candidate.show": ("candidate", "show"),
 }
 TRIAL_ACTIONS = {"session.start", "experiment.evaluate"}
+CONFIRMATION_TIMEOUT_SECONDS = 900
 EXECUTION_ACTIONS = TRIAL_ACTIONS | {"session.check"}
 IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 MAX_STATE = 4 * 1024 * 1024
@@ -532,15 +533,17 @@ class AssistantService:
                     "id": pending_id, "preview": preview,
                     "trialNumber": current["usedTrials"] + 1,
                     "trialBudget": current["trialBudget"]})
-            deadline = time.monotonic() + 900
+            deadline = time.monotonic() + CONFIRMATION_TIMEOUT_SECONDS
             while not stop.wait(0.1):
                 current = self.view(identity)
                 pending = current["pendingAction"]
                 if not pending or pending.get("accepted") is False:
+                    self._release_pending(identity, pending_id, "declined")
                     raise refuse("declined", "The user declined the action")
                 if pending.get("accepted") is True:
                     break
                 if time.monotonic() > deadline:
+                    self._release_pending(identity, pending_id, "expired")
                     raise refuse("confirmation-timeout", "Confirmation expired")
             if stop.is_set():
                 raise refuse("cancelled", "Action cancelled before launch")
@@ -576,6 +579,17 @@ class AssistantService:
                       "createdRefs": result["createdRefs"]})
         self.emit(identity, "tool.completed", {"operation": action_id, "result": result})
         return clean_result(result)
+
+    def _release_pending(self, identity, pending_id, outcome):
+        """A refused confirmation ends only the tool call; the turn keeps
+        running, so the chat must stop showing the action as awaiting."""
+        with self._state(identity) as current:
+            pending = current["pendingAction"]
+            if pending is not None and pending["id"] == pending_id:
+                current["pendingAction"] = None
+            if current["status"] == "awaiting-confirmation":
+                current["status"] = "running"
+            self._event(current, "action.released", {"id": pending_id, "outcome": outcome})
 
     def confirm(self, body: dict) -> dict:
         identity = body.get("sessionId")
