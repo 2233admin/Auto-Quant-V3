@@ -33,7 +33,7 @@ from .sessions import (
     load_session,
     session_snapshot,
 )
-from .studies import STUDY_ID, load_study, path_matches_pattern
+from .studies import QUANTILE_CHOICES, STUDY_ID, load_study, path_matches_pattern
 from .workspace import (
     SCHEMA_VERSION,
     AutoQuantValidationError,
@@ -1385,7 +1385,7 @@ class ActionService:
                  "classification": "writes-working-file", "writes": "Binds staged data through strict Core intake; raw CSV packaging is V1.",
                  "requiresSecondConfirm": True, "timeoutSeconds": 120, "targets": [],
                  "params": {"source": {"type": "string"}, "options": {"type": "object"}, "dataset": {"type": "string"}, "horizon": {"type": "integer", "minimum": 1, "maximum": 60},
-                            "predictionAssets": {"type": "array"}}},
+                            "predictionAssets": {"type": "array"}, "quantiles": {"type": "integer", "enum": list(QUANTILE_CHOICES)}}},
                 {"id": "data.check", "label": "Check staged data", "command": "aq data check",
                  "classification": "read-only", "writes": "None", "requiresSecondConfirm": False,
                  "confirmationRequired": False, "timeoutSeconds": 120, "targets": [],

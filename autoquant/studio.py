@@ -75,6 +75,7 @@ from .studio_actions import (
     is_loopback_host,
     success,
 )
+from .studio_frontier import factor_noise_frontier
 from .studies import hash_json, list_studies, load_study
 from .workspace import (
     PROJECT_MANIFEST,
@@ -1821,6 +1822,7 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
         "reviews": reviews,
         "intake": intake,
         "factorExplorer": factor_explorer,
+        "noiseFrontier": factor_noise_frontier(sessions, runs),
         "portfolioExplorer": portfolio_explorer,
         "rlExplorer": rl_explorer,
         "bookRiskExplorer": book_risk_explorer,
@@ -3105,6 +3107,7 @@ STUDIO_SNAPSHOT_JSON_SCHEMA: dict[str, Any] = {
                 "reviews",
                 "intake",
                 "factorExplorer",
+                "noiseFrontier",
                 "portfolioExplorer",
                 "rlExplorer",
                 "bookRiskExplorer",
@@ -3147,6 +3150,7 @@ STUDIO_SNAPSHOT_JSON_SCHEMA: dict[str, Any] = {
                 "reviews": {"type": "array"},
                 "intake": {"type": ["object", "null"]},
                 "factorExplorer": {"type": ["object", "null"]},
+                "noiseFrontier": {"type": "object"},
                 "library": {"type": ["object", "null"]},
                 "research": {
                     "oneOf": [

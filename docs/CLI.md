@@ -83,7 +83,7 @@ aq project intake <workspace-dir> <project-id> \
   --request research-request.json \
   --dataset ohlcv-dataset-package.json \
   [--template ohlcv-factor-lab|ohlcv-portfolio-lab|ohlcv-rl-factor-lab|ohlcv-book-risk-lab|ohlcv-event-study-lab|ohlcv-allocation-lab|ohlcv-research-desk] \
-  [--name NAME] [--json]
+  [--name NAME] [--quantiles 3|5|10] [--json]
 aq project from-factor <workspace-dir> <source-project> <project-id>   --mandate strategy-mandate.json [--dataset ohlcv-dataset-package.json]   [--name NAME] [--json]
 aq project list <workspace-dir> [--json]
 aq project default <workspace-dir> <project-id> [--json]
@@ -365,6 +365,11 @@ already established the exact selected template so an Agent could clarify
 preserves `research.md` plus `framework-needs.md`. It refuses any existing
 candidate edit, data, Run, Session, or unknown file instead of replacing
 worked-in research. An absent target is created atomically as before.
+`--quantiles 3|5|10` is accepted only with `ohlcv-factor-lab`. It freezes the
+Factor tear-sheet group count in the Study judge exactly as `aq study create
+--quantiles` does, and intake refuses a count larger than the dataset universe
+or, for a cross-sectional population, larger than the prediction population.
+Leaving it out leaves the Study bytes unchanged and means 3 groups.
 
 `--dataset` names the package manifest JSON file, not its containing directory;
 a directory returns `dataset.manifest-path-required`. Every asset `path` is

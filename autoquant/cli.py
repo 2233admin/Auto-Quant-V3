@@ -219,6 +219,7 @@ from .sessions import (
     start_session,
 )
 from .studies import (
+    QUANTILE_CHOICES,
     STUDY_JSON_SCHEMA,
     StudyDataset,
     StudyDefinition,
@@ -533,6 +534,15 @@ def build_parser() -> RaisingArgumentParser:
         ),
     )
     project_intake.add_argument("--name")
+    project_intake.add_argument(
+        "--quantiles",
+        type=int,
+        choices=QUANTILE_CHOICES,
+        help=(
+            "freeze the Factor tear-sheet group count in the Study judge "
+            "(ohlcv-factor-lab only; default 3)"
+        ),
+    )
     project_intake.set_defaults(command_id="project.intake")
     _json_argument(project_intake)
 
@@ -1772,6 +1782,7 @@ def _project_intake(args: argparse.Namespace) -> CommandResult:
         args.request,
         args.dataset,
         args.template,
+        quantiles=args.quantiles,
     )
     project = create_or_intake_project(
         args.workspace,

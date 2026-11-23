@@ -93,7 +93,7 @@ export function TopBar({ crumbs, data, theme, onTheme, onSearch }: Props) {
   )
   return (
     <header className="top">
-      <a className="top-mark" href={routeHref({ view: 'projects' })} aria-label={uiText("AutoQuant Studio")}>
+      <a className="top-mark" href={routeHref({ view: 'factors' })} aria-label={uiText("AutoQuant Studio")}>
         <Mark />
       </a>
       <nav className="crumbs" aria-label={uiText("Breadcrumb")}>
