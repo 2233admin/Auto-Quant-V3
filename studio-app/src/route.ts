@@ -26,7 +26,7 @@ export type Route =
 const EVENT_STUDY_PATH = /^\/projects\/([^/]+)\/event-study\/?$/
 
 /** Views addressed by name alone, and views that also need a Project `id`. */
-const BARE_VIEWS = ['data-intake', 'assistant', 'factors', 'runs', 'strategies', 'attention', 'settings', 'knowledge'] as const
+const BARE_VIEWS = ['data-intake', 'assistant', 'projects', 'factors', 'runs', 'strategies', 'attention', 'settings', 'knowledge'] as const
 const ID_VIEWS = ['project', 'portfolio', 'strategy', 'bookrisk', 'bookstress', 'allocation', 'rl'] as const
 type BareView = (typeof BARE_VIEWS)[number]
 type IdView = (typeof ID_VIEWS)[number]
@@ -39,7 +39,7 @@ export function parseRoute(search: string, pathname = '/'): Route {
     try {
       return { view: 'event-study', id: decodeURIComponent(study[1]) }
     } catch {
-      return { view: 'projects' }
+      return { view: 'factors' }
     }
   }
   const p = new URLSearchParams(search)
@@ -80,7 +80,7 @@ export function routeHref(route: Route): string {
     ...(route.project ? { project: route.project } : {}),
     ...(route.item ? { item: route.item } : {}),
   })}`
-  if (route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'attention' || route.view === 'settings' || route.view === 'knowledge') return `/?${new URLSearchParams({ view: route.view })}`
+  if (route.view === 'projects' || route.view === 'factors' || route.view === 'runs' || route.view === 'strategies' || route.view === 'attention' || route.view === 'settings' || route.view === 'knowledge') return `/?${new URLSearchParams({ view: route.view })}`
   if (route.view === 'tuning') return `/?${new URLSearchParams(route.id ? { view: 'tuning', id: route.id } : { view: 'tuning' })}`
   if (route.view === 'bookrisk' || route.view === 'bookstress') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`
   if (route.view === 'allocation' || route.view === 'rl') return `/?${new URLSearchParams({ view: route.view, id: route.id })}`

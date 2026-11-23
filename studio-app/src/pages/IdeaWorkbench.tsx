@@ -14,7 +14,8 @@ import { NewIdeaDialog } from './NewIdeaDialog'
 import { Info } from '../components/Info'
 import { Icon } from '../design/icons'
 import { routeHref } from '../route'
-import { candidateExpression, expressionSource } from './ideaEditor'
+import { candidateExpression, DEFAULT_QUANTILES, expressionSource, intakeParams } from './ideaEditor'
+import { QuantileSelect } from './QuantileSelect'
 import { SessionRecovery } from './FactorEditorState'
 import { STATE_COPY } from '../components/stateCopy'
 import './factorEdit.css'
@@ -31,6 +32,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
   const [dataset, setDataset] = useState('')
   const [assets, setAssets] = useState<string[]>([])
   const [horizon, setHorizon] = useState(1)
+  const [quantiles, setQuantiles] = useState(DEFAULT_QUANTILES)
   const [accepted, setAccepted] = useState(false)
   const [doc, setDoc] = useState<CandidateDoc | null>(null)
   const [draft, setDraft] = useState('')
@@ -112,7 +114,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
     try {
       if (!idea.bound) {
         setBusy('Checking the staged package…')
-        setPreview(await previewAction(b, 'project.intake', project.id, { dataset, horizon, predictionAssets: assets }))
+        setPreview(await previewAction(b, 'project.intake', project.id, intakeParams(dataset, horizon, assets, quantiles)))
       } else {
         if (!doc) return
         setBusy('Saving the candidate…')
@@ -180,7 +182,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
   const trialChip = uiTemplate("Trial {0} of {1}", [latest ? Math.max(1, currentIntegrity?.candidateTrials ?? familyTrials) : 0, familyTrials])
   const enableCommand = `aq studio serve '${(project.rootDir ?? '.').replaceAll("'", "''")}' --allow-actions --port ${window.location.port || '8881'}`
   return <div className="pg idea-workbench">
-    <TitleCard title={project.name} subtitle={question} backHref={routeHref({ view: 'projects' })} type="Factor" micro="FACTOR" />
+    <TitleCard title={project.name} subtitle={question} backHref={routeHref({ view: 'factors' })} type="Factor" micro="FACTOR" />
     <WorkbenchShell id="idea" ratio={40} left={<PaneCard label={uiText("Factor idea editor")} tabs={<TabList label={uiText("Idea editor")} tabs={[{ id: 'hypothesis', label: uiText("Factor") }, { id: 'history', label: uiText("History") }]} active={editorTab} onSelect={setEditorTab} />} actions={<ActionRow primary={primary} secondary={[saveButton]} chip={trialChip} />}>
       <div className="idea-form" onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !reason) { e.preventDefault(); void prepare() } }} hidden={editorTab !== 'hypothesis'} role="tabpanel" aria-label={uiText("Factor")}>
         <div className="idea-question-line"><Icon name="lock" /><p className={expandedQuestion ? 'idea-question is-expanded' : 'idea-question'}>{question}</p><Info label={uiText("About the frozen question")}>{uiText("The original question is frozen at the first attempt. A new question needs a new Project; every trial stays in this history.")}<p>{uiText("Supported requires Core's decision-signal-positive diagnosis and a passed trial-family adjustment. Otherwise valid evidence is Inconclusive. Core has no arbitrary-question refutation protocol; this flow never invents a falsification. Execution or protocol failure means Could not be tested.")}</p><button className="linklike" onClick={() => setNewIdea(true)}>{uiText("Start a new question")}</button></Info><button className="linklike idea-question-expand" onClick={() => setExpandedQuestion(v => !v)} aria-expanded={expandedQuestion}>{expandedQuestion ? uiText("Less") : uiText("Expand question")}</button></div>
@@ -190,6 +192,7 @@ export function IdeaWorkbench({ project }: { project: ProjectSnapshot }) {
           {selectedPackage && <><p className="small muted">{selectedPackage.path} · {selectedPackage.adjustment} · {selectedPackage.frequency}</p><fieldset className="idea-assets"><legend>{uiText("Prediction assets")}</legend>{selectedPackage.assets.map(a => <label key={a}><input type="checkbox" checked={assets.includes(a)} onChange={e => { setAssets(e.target.checked ? [...assets, a] : assets.filter(x => x !== a)); setAccepted(false) }} />{a}</label>)}</fieldset><p className="small muted">{uiText("Unselected assets supply context only.")}</p></>}
           <label className="afield">{uiText("Forward horizon (completed daily bars)")}<input className="fe-input" type="number" min={1} max={60} value={horizon} onChange={e => { setHorizon(Number(e.target.value)); setAccepted(false) }} /></label>
           <p className="small muted">{uiText("The fixed protocol also reports a ")}{horizon === 5 ? 20 : 5}{uiText("-bar context horizon; it does not select the candidate.")}</p>
+          <QuantileSelect value={quantiles} onChange={next => { setQuantiles(next); setAccepted(false) }} />
           <label className="asecond"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} /><span>{uiText("I am testing whether higher factor values rank higher forward returns for these assets. This is development evidence, not a sealed-holdout confirmation.")}</span></label>
           {packages?.datasets.length === 0 && <div className="apreview"><h3>{uiText("No supported staged data")}</h3><p className="small">{packages.stagingNote}</p><pre className="cmd mono">{packages.stagingCommand}</pre><button className="abtn" onClick={() => void reload()}>{uiText("Refresh staged data")}</button></div>}
           {packages?.unavailable.map(d => <p className="small" key={d.path}>{d.path}: {uiValue(d.reason)}</p>)}

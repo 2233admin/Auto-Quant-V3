@@ -4,7 +4,7 @@ import { ActionsProvider } from './actions/ActionsContext'
 import { useTheme } from './design/theme'
 import { useWidth } from './design/useWidth'
 import { Notice } from './Notice'
-import { FactorLibrary } from './library/FactorLibrary'
+import { Projects } from './pages/Projects'
 import { DataIntake } from './pages/intake/DataIntake'
 import { AttentionPage } from './pages/Attention'
 import { SettingsPage } from './pages/Settings'
@@ -27,7 +27,7 @@ import { EvolutionPage } from './research/EvolutionPage'
 import { Palette } from './shell/Palette'
 import { Rail, TabBar } from './shell/Rail'
 import { assistantContextFor, HostedAssistantNote, isHosted } from './shell/Hosted'
-import { TopBar, type Crumb } from './shell/TopBar'
+import { TopBar, Updated, type Crumb } from './shell/TopBar'
 import { useRouter } from './useRouter'
 import { useShellData } from './useShellData'
 import { Loading } from './components/States'
@@ -69,28 +69,28 @@ export default function App() {
       : route.view === 'assistant'
       ? [{ label: uiText("Assistant") }]
       : route.view === 'project'
-      ? [{ label: uiText("Factors"), href: routeHref({ view: 'projects' }) }, projectCrumb(route.id)]
+      ? [{ label: uiText("Factors"), href: routeHref({ view: 'factors' }) }, projectCrumb(route.id)]
       : route.view === 'event-study'
         ? [
-            { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
+            { label: uiText("Factors"), href: routeHref({ view: 'factors' }) },
             { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
             { label: uiText("Price event study") },
           ]
         : route.view === 'run' || route.view === 'compare'
           ? [
-              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
+              { label: uiText("Factors"), href: routeHref({ view: 'factors' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'run' ? 'Run' : 'Compare Runs' },
             ]
         : route.view === 'allocation' || route.view === 'rl'
           ? [
-              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
+              { label: uiText("Factors"), href: routeHref({ view: 'factors' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'rl' ? 'Governed RL policy' : 'Strategic allocation' },
             ]
         : route.view === 'bookrisk' || route.view === 'bookstress'
           ? [
-              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
+              { label: uiText("Factors"), href: routeHref({ view: 'factors' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: route.view === 'bookrisk' ? 'Book Risk' : 'Reported-book path stress' },
             ]
@@ -102,7 +102,7 @@ export default function App() {
             ]
         : route.view === 'factor'
           ? [
-              { label: uiText("Factors"), href: routeHref({ view: 'projects' }) },
+              { label: uiText("Factors"), href: routeHref({ view: 'factors' }) },
               { ...projectCrumb(route.id), href: routeHref({ view: 'project', id: route.id }) },
               { label: uiText("Factor evidence") },
             ]
@@ -112,12 +112,14 @@ export default function App() {
             ? route.view === 'tuning' && route.id
               ? [{ label: LIBRARY_TITLE.tuning, href: routeHref({ view: 'tuning' }) }, { label: (data.workspace?.projects.find((p) => p.id === route.id)?.name ?? route.id), data: true }]
               : [{ label: LIBRARY_TITLE[route.view] }]
+            : route.view === 'projects'
+              ? [{ label: uiText("Projects") }]
             : route.view === 'attention'
               ? [{ label: uiText("Attention") }]
               : route.view === 'settings'
                 ? [{ label: uiText("Settings") }]
                 : [{ label: uiText("Factors") }]
-  const routeTitles: Record<string, string> = { assistant: 'Assistant', projects: 'Factors', factors: 'Factor library', strategies: 'Strategy library', runs: 'Run history', tuning: 'Tuning tasks', research: 'Research directions', knowledge: 'Knowledge library', attention: 'Attention', settings: 'Settings', 'event-study': 'Price event study', factor: 'Factor evidence', portfolio: 'Portfolio', bookrisk: 'Book Risk', bookstress: 'Reported-book path stress', allocation: 'Strategic allocation', rl: 'Governed RL policy', run: 'Run', compare: 'Compare Runs', project: 'Project' }
+  const routeTitles: Record<string, string> = { assistant: 'Assistant', projects: 'Projects', factors: 'Factor library', strategies: 'Strategy library', runs: 'Run history', tuning: 'Tuning tasks', research: 'Research directions', knowledge: 'Knowledge library', attention: 'Attention', settings: 'Settings', 'event-study': 'Price event study', factor: 'Factor evidence', portfolio: 'Portfolio', bookrisk: 'Book Risk', bookstress: 'Reported-book path stress', allocation: 'Strategic allocation', rl: 'Governed RL policy', run: 'Run', compare: 'Compare Runs', project: 'Project' }
   routeTitles['strategy'] = 'Strategy workbench'
   routeTitles['portfolio'] = 'Strategy workbench'
   routeTitles['data-intake'] = 'Import data'
@@ -146,7 +148,7 @@ export default function App() {
     page = <SettingsPage workspace={data.workspace} />
   } else if (route.view === 'projects') {
     page = data.workspace ? (
-      <FactorLibrary workspace={data.workspace} go={go} />
+      <Projects workspace={data.workspace} freshness={<Updated data={data} />} error={data.error} go={go} />
     ) : (
       <div className="pg">{data.error ? <Notice kind="error" label={uiText("Error")} title={uiText("Could not load the Workspace.")} subtitle={data.error} /> : <Loading label={uiText("Loading…")} minHeight={240} />}</div>
     )
@@ -180,7 +182,7 @@ export default function App() {
       <div className="pg">
         <Notice kind="error" label={uiText("Error")} title={uiText("Could not load this Project")} subtitle={project.message} />
         <p>
-          <a href={routeHref({ view: 'projects' })}>{uiText("Back to Factors")}</a>
+          <a href={routeHref({ view: 'factors' })}>{uiText("Back to Factors")}</a>
         </p>
       </div>
     )

@@ -49,7 +49,7 @@ export type StrategyLineage = {
 export type StrategySummary = {
   state: 'Backtested' | 'Defined' | 'Tuned'; updatedAt: string | null; points: LibraryPoint[]
   studyId?: string | null; lineage?: StrategyLineage | null
-  evidence?: { runId: string; researchFamily: SelectionIntegrity['researchFamily']; selectionAdjustment: StrategyAdjustment } | null
+  evidence?: { runId: string; researchFamily: SelectionIntegrity['researchFamily']; selectionAdjustment: StrategyAdjustment; noiseFrontier?: PortfolioNoiseFrontier } | null
   net: { totalReturn?: number | null; sharpe?: number | null; maximumDrawdown?: number | null } | null
 }
 export type StrategyAdjustment = Omit<NonNullable<SelectionIntegrity['selectionAdjustment']>, 'statistics'> & {
@@ -157,6 +157,42 @@ export type TimelineRow = {
   value: number | null
 }
 
+/** One plotted abscissa of a server-computed noise frontier; the browser draws these and computes nothing. */
+export type NoiseFrontierPoint = { trials: number; expected: number; passLine?: number }
+export type NoiseFrontierUnavailable = {
+  schemaVersion: 1
+  kind: 'factor-mean-ic' | 'portfolio-net-sharpe'
+  status: 'unavailable'
+  reasonCode: string
+  detail: { status?: string | null; reason?: string | null; trials?: number; successfulTrials?: number | null } | null
+}
+/** Best mean IC expected from N noise-only trials and the IC the family-wise HAC rule demands (autoquant/studio_frontier.py). */
+export type FactorNoiseFrontierSeries = {
+  schemaVersion: 1; kind: 'factor-mean-ic'; status: 'available'; reasonCode: null; detail: null
+  method: string | null; trials: number; axisMaximumTrials: number
+  standardError: number; selectedValue: number; rawPValue: number; adjustedPValue: number
+  /** Core's published family-wise verdict; null when the ledger publishes none. */
+  passes: boolean | null
+  expectedAtTrials: number; passLineAtTrials: number
+  trialCountAssumption: string | null; totalExecutions: number | null
+  leaderRunId: string | null
+  curve: (NoiseFrontierPoint & { passLine: number })[]
+  table: (NoiseFrontierPoint & { passLine: number })[]
+}
+/** Best annualized net Sharpe expected from N noise-only trials, scaled by the trial dispersion Core measured. */
+export type PortfolioNoiseFrontierSeries = {
+  schemaVersion: 1; kind: 'portfolio-net-sharpe'; status: 'available'; reasonCode: null; detail: null
+  method: string | null; trials: number; axisMaximumTrials: number
+  successfulTrials: number | null; trialDispersion: number; selectedValue: number
+  passes: boolean | null; deflatedSharpeProbability: number | null
+  expectedAtTrials: number
+  trialCountAssumption: string | null; totalExecutions: number | null
+  curve: NoiseFrontierPoint[]
+  table: NoiseFrontierPoint[]
+}
+export type FactorNoiseFrontier = FactorNoiseFrontierSeries | NoiseFrontierUnavailable
+export type PortfolioNoiseFrontier = PortfolioNoiseFrontierSeries | NoiseFrontierUnavailable
+
 export type ProjectSnapshot = {
   rootDir?: string
   library?: LibrarySummary
@@ -185,6 +221,8 @@ export type ProjectSnapshot = {
     authority?: { selectionSplit?: string; testRole?: string; testEntersSelection?: boolean; tradingAuthority?: string }
   } | null
   factorExplorer: FactorDiagnostics | null
+  /** Server-computed noise frontier of the Factor selection ledger; absent from servers that predate it. */
+  noiseFrontier?: FactorNoiseFrontier
   /** Lane explorers other than Factor: present means the lane has evidence; each has a native page here (Portfolio, RL, Book Risk, event study, path stress, Allocation). */
   portfolioExplorer: PortfolioDiagnostics | null
   rlExplorer: object | null
@@ -372,6 +410,9 @@ export type FactorSpreadStats = {
 
 export type FactorSpreadSplit = FactorSpreadStats & { split: FactorSplit; role?: string }
 
+/** One asset of the Run's input panel: how many bars it has, over what span, and how much of the panel and of its factor values are present. */
+export type FactorAssetAvailability = { asset: string; observations: number; start: string; end: string; inputCoverage: number; factorCoverage: number }
+
 export type FactorDiagnostics = {
   tearSheet?: FactorTearSheet
   redundancy?: FactorRedundancy
@@ -410,7 +451,19 @@ export type FactorDiagnostics = {
     weakestValidationFold?: { id: string; meanRankIc: number | null }
     maximumValidationStyleOverlap?: { style: string; meanRankCorrelation: number | null }
   }
-  inputAvailability: { available: boolean; observationCoverage?: number; observedRows?: number; possibleRows?: number }
+  /** Observed-only input availability of the Run's panel; `byAsset` is present when `available`. */
+  inputAvailability: {
+    available: boolean
+    reason?: string
+    timestamps?: number
+    completeTimestamps?: number
+    observationCoverage?: number
+    observedRows?: number
+    possibleRows?: number
+    byAsset?: FactorAssetAvailability[]
+  }
+  /** Per-asset share of finite factor values, as the Run's factor report published it. */
+  coverage?: { asset: string; coverage: number }[]
   factorQualification: {
     available: boolean
     diagnosis?: { stage: string; iterationFocus?: string; explanation: string; qualifiesForPortfolio: boolean }
@@ -489,8 +542,17 @@ export type TrialRow = {
   primaryValue: number | null
   objectiveImprovementVsBaseline: number | null
   isCurrentLeader: boolean
+  /** Validation values keyed by the matrix metric descriptors; null where a trial published none. */
+  metrics?: Record<string, number | null>
+  /** The Run that was the Session leader when this trial was judged; null for the baseline. Absent on older servers. */
+  priorLeaderRunId?: string | null
+  /** The primary objective's change against the previous kept result, as Core states it; null for the baseline. */
+  objectiveImprovementVsPriorLeader?: number | null
   errors: unknown[]
 }
+
+/** One column of the Session decision matrix: the descriptor behind a `TrialRow.metrics` key. */
+export type MatrixMetric = { key: string; label: string; group?: string; split: string; unit: string; preference: string; selectionEligible: boolean; primary: boolean }
 
 export type ResearchAgenda = {
   status?: string
@@ -535,6 +597,7 @@ export type SessionSnapshot = {
   decisionMatrix?: {
     objective?: { direction?: string; metric?: string; minimumImprovement?: number }
     scope?: { trialLimit: number; totalCandidateTrials: number; displayedCandidateTrials: number; omittedCandidateTrials: number }
+    metrics?: MatrixMetric[]
     trials?: TrialRow[]
   } | null
   reports?: ReportRow[]

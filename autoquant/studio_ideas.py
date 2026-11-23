@@ -14,6 +14,7 @@ from .studio_actions import (
     ActionError, CANDIDATE_RELATIVE, _is_link, _params_object, _sha256,
     confine_workspace_path, validate_save_params,
 )
+from .intake import quantile_intake_issues
 from .runs import list_runs
 from .sessions import list_sessions
 from .workspace import load_workspace
@@ -154,7 +155,7 @@ def prepare(service, body):
         request = None
         writes = "Creates one dedicated Project and stores the hypothesis in its description and research.md. No trial or Run."
     else:
-        params = _params_object(body.get("params"), {"dataset", "horizon", "predictionAssets"})
+        params = _params_object(body.get("params"), {"dataset", "horizon", "predictionAssets", "quantiles"})
         project = service._project(body.get("project"))
         pid = project.manifest.id
         if list_runs(project) or list_sessions(project) or (project.root_dir / "request.json").exists():
@@ -171,10 +172,16 @@ def prepare(service, body):
         request = request_for(project, package, horizon, assets)
         from .briefs import validate_research_request
         validate_research_request(request)
+        if "quantiles" in params:
+            # The same allowed set and population rule `aq project intake --quantiles` applies.
+            refused = quantile_intake_issues(TEMPLATES[1], params["quantiles"], request, universe)
+            if refused:
+                raise ActionError(422, "validation.failed", refused[0].message)
         request_path = safe_path(service, f".autoquant/idea-inputs/{pid}.json")
         argv = [sys.executable, "-m", "autoquant", "project", "intake", str(service.root), pid,
                 "--request", str(request_path), "--dataset", str(safe_path(service, params["dataset"])),
-                "--template", "ohlcv-factor-lab", "--name", project.manifest.name, "--json"]
+                "--template", "ohlcv-factor-lab", "--name", project.manifest.name,
+                *(["--quantiles", str(params["quantiles"])] if "quantiles" in params else []), "--json"]
         fingerprint = service._fingerprint(project) + digest + json.dumps(request, sort_keys=True)
         writes = "Writes the displayed request and binds a normalized Project-local snapshot through strict Core intake. No trial."
     preview = {"actionId": action, "project": pid, "params": params, "argv": argv,

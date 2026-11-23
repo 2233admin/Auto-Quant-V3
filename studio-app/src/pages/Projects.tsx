@@ -100,7 +100,7 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
   return (
     <div className="pg">
       <header className="pg-head idea-head">
-        <h1>{uiText("Ideas")}</h1>
+        <h1>{uiText("Projects")}</h1>
         <p className="muted small">
           {workspace.source.workspace ? <span translate="no">{workspace.source.workspace.name}</span> : <span>{uiText("Single Project")}</span>}
           {' · '}
