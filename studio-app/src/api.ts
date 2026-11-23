@@ -542,8 +542,17 @@ export type TrialRow = {
   primaryValue: number | null
   objectiveImprovementVsBaseline: number | null
   isCurrentLeader: boolean
+  /** Validation values keyed by the matrix metric descriptors; null where a trial published none. */
+  metrics?: Record<string, number | null>
+  /** The Run that was the Session leader when this trial was judged; null for the baseline. Absent on older servers. */
+  priorLeaderRunId?: string | null
+  /** The primary objective's change against the previous kept result, as Core states it; null for the baseline. */
+  objectiveImprovementVsPriorLeader?: number | null
   errors: unknown[]
 }
+
+/** One column of the Session decision matrix: the descriptor behind a `TrialRow.metrics` key. */
+export type MatrixMetric = { key: string; label: string; group?: string; split: string; unit: string; preference: string; selectionEligible: boolean; primary: boolean }
 
 export type ResearchAgenda = {
   status?: string
@@ -588,6 +597,7 @@ export type SessionSnapshot = {
   decisionMatrix?: {
     objective?: { direction?: string; metric?: string; minimumImprovement?: number }
     scope?: { trialLimit: number; totalCandidateTrials: number; displayedCandidateTrials: number; omittedCandidateTrials: number }
+    metrics?: MatrixMetric[]
     trials?: TrialRow[]
   } | null
   reports?: ReportRow[]

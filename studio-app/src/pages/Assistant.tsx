@@ -1,5 +1,5 @@
 import { translate, uiTemplate, uiText, uiValue, useLanguage } from '../i18n'
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { Fragment, useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import type { WorkspaceSummary } from '../api'
 import { ACTIONS_OFF_COPY, useActions } from '../actions/ActionsContext'
 import { actionCall, errorCopy } from '../actions/client'
@@ -8,6 +8,10 @@ import { Icon, SectionBar } from '../design/marks'
 import './assistant.css'
 import '../library/cards.css'
 import { DiagnosticText } from '../components/DiagnosticText'
+import { BeforeAfterView, confirmationTable } from './assistant/BeforeAfter'
+import { TurnCards } from './assistant/ResultCard'
+import { refsByTurn, runRefsOf } from './assistant/resultModel'
+import { useProjectSnapshots, type SnapshotLoad } from './assistant/useProjectSnapshots'
 
 type Provider = { id: string; label: string; available: boolean; reason?: string | null }
 type SessionStatus = 'idle' | 'running' | 'awaiting-confirmation' | 'cancelled' | 'error'
@@ -18,6 +22,7 @@ type SessionSummary = {
 type Message = { id: string; role: string; content: string; at: string }
 type AssistantEvent = { id: string; type: string; at: string; data: Record<string, unknown> }
 type ActionPreview = {
+  actionId?: string; project?: string | null; params?: Record<string, unknown> | null
   display?: string; argv?: string[] | null; commandHash?: string | null; writes?: string
   requiresSecondConfirm?: boolean
   trial?: { n?: number; m?: number; notice?: string; adjustment?: { interpretation?: string; status?: string } | null } | null
@@ -162,9 +167,11 @@ function EventTimeline({ events, running }: { events: AssistantEvent[]; running:
   )
 }
 
-function Confirmation({ session, busy, onConfirm }: {
+export function Confirmation({ session, busy, snapshot, onConfirm }: {
   session: AssistantSession
   busy: boolean
+  /** The pending action's Project snapshot, the source of the previous kept result shown for a counted trial. */
+  snapshot?: SnapshotLoad
   onConfirm: (accepted: boolean, second: boolean) => void
 }) {
   const language = useLanguage()
@@ -184,6 +191,7 @@ function Confirmation({ session, busy, onConfirm }: {
       {preview.writes && <p>{preview.writes}</p>}
       {preview.trial?.notice && <p className="assistant-subtle">{preview.trial.notice}</p>}
       {preview.trial?.adjustment?.interpretation && <p className="assistant-subtle">{preview.trial.adjustment.interpretation}</p>}
+      {preview.trial && <BeforeAfterView table={confirmationTable(snapshot, preview)} />}
       {preview.commandHash && <details><summary>{t('Command identity', '命令标识')}</summary><code>{preview.commandHash}</code></details>}
       {preview.requiresSecondConfirm && (
         <label className="assistant-check" htmlFor={checkbox}>
@@ -201,19 +209,10 @@ function Confirmation({ session, busy, onConfirm }: {
 
 function ArtifactLinks({ session }: { session: AssistantSession | null }) {
   const language = useLanguage()
-  const refs: { key: string; project: string; run: string }[] = []
-  for (const event of session?.events ?? []) {
-    const data = event.data ?? {}
-    const created = data.createdRefs && typeof data.createdRefs === 'object' ? data.createdRefs as Record<string, unknown> : data
-    const project = typeof data.project === 'string' ? data.project : session?.project
-    const run = created.runId
-    if (project && typeof run === 'string' && !refs.some((ref) => ref.project === project && ref.run === run)) {
-      refs.push({ key: project + ':' + run, project, run })
-    }
-  }
+  const refs = runRefsOf(session?.events ?? [], session?.project)
   return refs.length ? (
     <ul className="assistant-artifacts">
-      {refs.map((ref) => <li key={ref.key}><a href={routeHref({ view: 'run', id: ref.project, run: ref.run })}>{translate(language, 'Inspect Run', '查看运行记录')} <span className="mono">{ref.run}</span></a></li>)}
+      {refs.map((ref) => <li key={ref.project + ':' + ref.run}><a href={routeHref({ view: 'run', id: ref.project, run: ref.run })}>{translate(language, 'Inspect Run', '查看运行记录')} <span className="mono">{ref.run}</span></a></li>)}
     </ul>
   ) : <p className="assistant-subtle">{translate(language, 'Run links appear here when an action records its result.', '操作产生运行结果后，链接会显示在这里。')}</p>
 }
@@ -329,6 +328,13 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
   const boundProject = context?.project ?? session?.project ?? project
   const sealed = !!boundProject && workspace?.projects.find((item) => item.id === boundProject)?.externalHoldout.present
   const working = isWorking(session)
+  const runRefs = runRefsOf(session?.events ?? [], session?.project)
+  const pendingProject = session?.pendingAction?.preview.project ?? session?.project ?? null
+  const snapshots = useProjectSnapshots(
+    session ? [...runRefs.map((ref) => ref.project), ...(pendingProject ? [pendingProject] : [])] : [],
+    [runRefs.length, session?.status ?? '', session?.pendingAction?.id ?? '', session?.usedTrials ?? 0].join(':'),
+  )
+  const turnCards = new Map(refsByTurn(session?.messages ?? [], runRefs).map((turn) => [turn.anchor, turn.refs]))
   const sessions = (index?.sessions ?? []).filter((item) => !context || item.project === context.project)
   const stage = session?.pendingAction ? t('Review action', '审阅操作') : session?.status === 'running' ? t('Researching', '研究中') : session?.status === 'error' ? t('Needs attention', '需要处理') : session?.messages.length ? t('Review response', '查看回复') : t('Describe your research', '描述研究需求')
   const isNewChat = selected === null && !session
@@ -478,10 +484,11 @@ function AssistantSurface({ workspace, context, drawer = false }: SurfaceProps) 
               </div>
             </div>}
             <div role="log" aria-label={uiText("Messages")} aria-live="polite" aria-relevant="additions text">
-              {(session?.messages ?? []).map((message) => <article className={'assistant-message assistant-message--' + (message.role === 'user' ? 'user' : 'agent')} key={message.id}><header><strong>{message.role === 'user' ? t('You', '你') : message.role === 'assistant' ? selectedProvider?.label ?? t('Assistant', '助手') : message.role}</strong><time dateTime={message.at}>{new Date(message.at).toLocaleTimeString()}</time></header><div>{message.content}</div></article>)}
+              {(session?.messages ?? []).map((message) => <Fragment key={message.id}><article className={'assistant-message assistant-message--' + (message.role === 'user' ? 'user' : 'agent')}><header><strong>{message.role === 'user' ? t('You', '你') : message.role === 'assistant' ? selectedProvider?.label ?? t('Assistant', '助手') : message.role}</strong><time dateTime={message.at}>{new Date(message.at).toLocaleTimeString()}</time></header><div>{message.content}</div></article>{turnCards.has(message.id) && <TurnCards refs={turnCards.get(message.id) ?? []} snapshots={snapshots} />}</Fragment>)}
+              {turnCards.has(null) && <TurnCards refs={turnCards.get(null) ?? []} snapshots={snapshots} />}
             </div>
             {session && <EventTimeline events={session.events} running={session.status === 'running'} />}
-            {session?.pendingAction && <Confirmation session={session} busy={busy} onConfirm={(accepted, second) => void changeSession('confirm', accepted, second)} />}
+            {session?.pendingAction && <Confirmation session={session} busy={busy} snapshot={pendingProject ? snapshots[pendingProject] : undefined} onConfirm={(accepted, second) => void changeSession('confirm', accepted, second)} />}
             {sessionError && <p className="assistant-session-error" role="alert"><DiagnosticText value={sessionError} error /></p>}
             {session?.status === 'cancelled' && <p className="assistant-subtle" role="status">{t('Turn stopped. Retained research evidence remains in the Project.', '本轮已停止，已保留的研究证据仍在项目中。')}</p>}
             {session?.status === 'running' && <p className="assistant-subtle" role="status">{t('The local agent is working. Recorded activity appears above.', '本地智能体正在工作，操作记录显示在上方。')}</p>}
