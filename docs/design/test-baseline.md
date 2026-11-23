@@ -19,6 +19,12 @@ on an idle machine, with its platform, category, cause and GitHub issue:
 Recording a failure here does not accept it. Every entry points at an issue,
 and the change that fixes a test removes its entry in the same commit.
 
+Historical sample Projects may retain Judges pinned to immutable Run evidence.
+`test_repository_workspace` excludes the sample Judge from fresh-template
+parity and checks it byte-for-byte against the selected Run's
+`inputs/judge-sources/judges/ohlcv_factor.py` snapshot. Fresh-project Judge
+execution and diagnostics are covered by `test_factor_redundancy`.
+
 ## Checking a change
 
 ```bash

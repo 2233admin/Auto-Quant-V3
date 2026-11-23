@@ -5,6 +5,5 @@
   "recordedOn": "main d744d6d, Windows Server 2025 checkout",
   "note": "Tests that still fail when rerun alone on an idle machine. scripts/check_known_failures.py fails on any failure not listed here and reports listed entries that now pass. Remove an entry in the same change that fixes it.",
   "failures": [
-    {"id": "test_repository_workspace.RepositoryWorkspaceTests.test_sample_template_owned_files_match_a_fresh_research_desk", "platform": "all", "category": "product-defect", "cause": "checked-in projects/sample-research-desk/judges/ohlcv_factor.py predates the template judge (no factor_redundancy/factor_tearsheet); CRLF was only a symptom on Windows. Swapping the judge invalidates the sample Runs, so the sample needs a regenerated evidence set", "issue": 20}
   ]
 }
