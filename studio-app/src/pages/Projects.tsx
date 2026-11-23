@@ -111,7 +111,7 @@ export function Projects({ workspace, freshness, error, go }: { workspace: Works
       <p className="muted">{uiText("Bring a factor idea. Test it on staged data. Keep an honest answer, including an inconclusive one.")}</p>
       {error && <Notice kind="error" label={uiText("Error")} title={uiText("Could not refresh.")} subtitle={error} />}
       {projects.length === 0 ? (
-        <Empty title={uiText("What would you like to test?")}>{uiText("Choose New idea to write your first question. No analysis runs until you confirm a trial.")}</Empty>
+        <Empty kind="message" title={uiText("What would you like to test?")}>{uiText("Choose New idea to write your first question. No analysis runs until you confirm a trial.")}</Empty>
       ) : (
         <div className="idea-table">
         <DataTable

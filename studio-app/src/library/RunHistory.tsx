@@ -44,7 +44,7 @@ export function RunHistory({ workspace, go, projectId, lane, revision }: { works
       <CompareSelection count={picked.length} decision={check?.data} error={check?.error} onCompare={openCompare} />
       {picked.length > 0 && <button className="btn" onClick={() => setPicked([])}>{uiText('Clear selection')}</button>}
     </div>
-    {!history.loading && !shown.length && <Empty>{uiText('No Run matches these filters.')}</Empty>}
+    {!history.loading && !shown.length && <Empty kind="message">{uiText('No Run matches these filters.')}</Empty>}
     {shown.length > 0 && <DataTable rows={shown} cols={runColumns(picked, toggle)} rowKey={runKey} href={href} go={go} className="lib-tbl--runs" edge={runEdge} dayOf={r => dayOf(r.startedAt)} initial={{ id: 'started', dir: -1 }} caption={uiText(projectId ? 'Portfolio Runs in this Project' : 'Runs across all Projects')} selected={r => picked.includes(runKey(r))} />}
   </div>
 }

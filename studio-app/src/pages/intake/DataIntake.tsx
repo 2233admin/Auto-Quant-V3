@@ -82,13 +82,13 @@ export function DataIntake({ workspace }: { workspace: WorkspaceSummary | null }
     <TitleCard title={uiText('Import data')} subtitle={uiText('Inspect staged OHLCV, review quality, then bind through strict intake.')} backHref={routeHref({ view: 'factors' })} type={uiText('Data intake')} />
     <ol className="intake-steps">{STEPS.map((title, index) => <li key={title} aria-current={step === index ? 'step' : undefined}><span className="mono">{index + 1}</span>{uiText(title)}</li>)}</ol>
     <PaneCard label={uiText('Data intake')}>
-      {state.mode === 'loading' ? <Loading /> : !bootstrap && <Empty title={STATE_COPY.readOnly}><p>{STATE_COPY.readOnlyReason}</p><code>uv run aq studio serve &lt;workspace&gt; --allow-actions</code></Empty>}
+      {state.mode === 'loading' ? <Loading /> : !bootstrap && <Empty kind="readOnly"><p>{STATE_COPY.readOnlyReason}</p><code>uv run aq studio serve &lt;workspace&gt; --allow-actions</code></Empty>}
       {busy && <Loading label={uiText('Working…')} />}
       {error && <details open role="alert"><summary>{uiText('Data intake needs attention')}</summary><p>{uiText('Check the source and declared metadata, then retry. Original diagnostic:')}</p><pre className="cmd small">{error}</pre></details>}
       {bootstrap && step === 0 && <div>
         <h2>{uiText('Choose staged data')}</h2><p className="muted">{uiText('Only folders and dataset packages under this Workspace’s staging directory are listed. Source files stay unchanged.')}</p>
         {!candidates && !error && <Loading />}
-        {candidates?.length === 0 && <Empty title={uiText('No staged CSV files or dataset packages.')}><p>{uiText('Copy complete CSV sets or a complete dataset package into Workspace staging, then refresh.')}</p></Empty>}
+        {candidates?.length === 0 && <Empty kind="message" title={uiText('No staged CSV files or dataset packages.')}><p>{uiText('Copy complete CSV sets or a complete dataset package into Workspace staging, then refresh.')}</p></Empty>}
         {!!candidates?.length && <label className="intake-field">{uiText('Staged source')}<select className="fe-input mono" value={source} onChange={e => { setSource(e.target.value); changed() }}><option value="">{uiText('Choose a staged source')}</option>{candidates.map(c => <option key={c.path} value={c.path}>{c.path}</option>)}</select></label>}
         <p className="small muted">{uiText('CSV filenames name assets unless an asset column is mapped. Existing package paths resolve from their manifest directory.')}</p>
       </div>}

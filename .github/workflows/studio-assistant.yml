@@ -38,6 +38,8 @@ jobs:
       - run: pnpm run build
         working-directory: studio-app
       - run: git diff --exit-code -- autoquant/studio_app
+      - run: pnpm run smoke
+        working-directory: studio-app
   regression:
     runs-on: ubuntu-latest
     timeout-minutes: 90
