@@ -7,8 +7,6 @@ import { Info } from '../components/Info'
 import { FigureCard } from '../components/workbench'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import {
-  expectedMaxZ,
-  familywiseThreshold,
   hacStandardError,
   niceTicks,
   samplePoints,
@@ -16,10 +14,9 @@ import {
   SPLIT_LABEL,
   SPLIT_ROLE,
   trailingMean,
-  type NoiseFrontier,
 } from './factorMath'
 
-const ic4 = (v: number | null | undefined) =>
+export const ic4 = (v: number | null | undefined) =>
   typeof v === 'number' && Number.isFinite(v) ? `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(4)}` : '—'
 const int = (v: number) => v.toLocaleString('en-US')
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10)
@@ -123,7 +120,7 @@ export function Swatch({ kind, label }: { kind: 'train' | 'validation' | 'test' 
 }
 
 /** Width of the plot column in CSS px. The SVG viewBox uses it 1:1, so 11px text stays 11px at every viewport. */
-function useChartWidth(): [(el: HTMLDivElement | null) => void, number] {
+export function useChartWidth(): [(el: HTMLDivElement | null) => void, number] {
   const [el, setEl] = useState<HTMLDivElement | null>(null)
   const [w, setW] = useState(760)
   useEffect(() => {
@@ -658,117 +655,5 @@ export function Empty({ title, reason, code }: { title: string; reason: string; 
         {code && <p className="faint small mono">{code}</p>}
       </div>
     </figure>
-  )
-}
-
-/* ---------------------------------------------------------------- 4. Noise frontier */
-
-export function NoiseFrontierChart({ frontier, runIc }: { frontier: NoiseFrontier; runIc: number | null }) {
-  const [plotRef, W] = useChartWidth()
-  const H = 340
-  const m = { l: 64, r: 20, t: 24, b: 54 }
-  const { standardError: se, trials: n, leaderIc } = frontier
-  const maxN = Math.max(50, n * 4)
-  const x = (t: number) => m.l + (Math.log(t) / Math.log(maxN)) * (W - m.l - m.r)
-  const expected = (t: number) => se * Math.max(0, expectedMaxZ(t))
-  const bonf = (t: number) => familywiseThreshold(se, t)
-  const ys = [leaderIc, runIc ?? 0, 0, expected(maxN), bonf(maxN), bonf(1)]
-  const lo = Math.min(...ys)
-  const hi = Math.max(...ys)
-  const pad = (hi - lo) * 0.1
-  const ticks = niceTicks(lo - pad, hi + pad)
-  const yMin = Math.min(lo - pad, ticks[0])
-  const yMax = Math.max(hi + pad, ticks[ticks.length - 1])
-  const y = (v: number) => m.t + ((yMax - v) / (yMax - yMin)) * (H - m.t - m.b)
-  const grid = Array.from({ length: 80 }, (_, i) => Math.exp((i / 79) * Math.log(maxN)))
-  const path = (f: (t: number) => number) => grid.map((t) => `${x(t).toFixed(1)},${y(f(t)).toFixed(1)}`).join(' ')
-  const xticks = [1, 2, 5, 10, 20, 50, 100, 200].filter((t) => t <= maxN)
-  const cleared = leaderIc > bonf(n)
-  const marker = runIc !== null && Math.abs(runIc - leaderIc) > 1e-12
-  return (
-    <Chart
-      title={uiText("Noise frontier: how large the best IC looks by luck alone")}
-      plotRef={plotRef}
-      short={uiTemplate("Best IC expected from {0} trial{1} of pure noise, against the family-wise pass line.", [n, n === 1 ? '' : 's'])}
-      desc={uiTemplate("With {0} independent trial{1} in the Project ledger, the best mean IC is expected to reach {2} under pure noise. The solid curve is that expectation as trials grow; the dotted curve is the mean IC the published family-wise HAC rule demands.", [n, n === 1 ? '' : 's', ic4(expected(n))])}
-      legend={
-        <span className="legend">
-          <Swatch kind="line" label={uiText("Expected best IC under noise")} />
-          <Swatch kind="ref" label={uiText("IC needed to pass family-wise HAC rule")} />
-        </span>
-      }
-      note={
-        <>{uiText("N is the Project ledger's ")}<span className="mono">{frontier.family.trialCountAssumption}</span>{uiText(" count of unique candidate sources (")}{frontier.family.totalExecutions}{uiText(" execution")}{frontier.family.totalExecutions === 1 ? '' : 's'}{uiText("), an upper bound on independent trials. The null spread is the HAC standard error ")}{num(se, 4)}{uiText(" implied by the selected value's published raw p-value ")}{num(frontier.rawP, 3)}{uiText(". The expectation uses the closed form of ")}<span className="mono">{uiText("autoquant/selection.py")}</span>{uiText("; the dotted curve inverts its published Bonferroni rule (adjusted p = raw p × N ≤ 0.05).")}</>
-      }
-      table={
-        <table className="tbl">
-          <caption className="small muted">{uiText("Noise frontier at selected trial counts")}</caption>
-          <thead>
-            <tr>
-              <th scope="col" className="r">{uiText("Trials N")}</th>
-              <th scope="col" className="r">{uiText("Expected best IC under noise")}</th>
-              <th scope="col" className="r">{uiText("IC needed to pass family-wise HAC")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...new Set([1, 2, 5, 10, 20, 50, n])]
-              .sort((a, b) => a - b)
-              .map((t) => (
-                <tr key={t}>
-                  <td className="r mono">
-                    {t}
-                    {t === n && uiText(" · this ledger")}
-                  </td>
-                  <td className="r mono">{ic4(expected(t))}</td>
-                  <td className="r mono">{ic4(bonf(t))}</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      }
-    >
-      {({ labelledBy }) => (
-          <svg className="plot" viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={labelledBy}>
-          {ticks.map((t) => (
-            <g key={t}>
-              <line x1={m.l} x2={W - m.r} y1={y(t)} y2={y(t)} stroke="var(--grid)" strokeWidth={t === 0 ? 0 : 1} opacity=".7" />
-              <text x={m.l - 8} y={y(t) + 4} textAnchor="end" className="ax">
-                {t === 0 ? '0' : t.toFixed(3)}
-              </text>
-            </g>
-          ))}
-          <text transform={`translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)`} textAnchor="middle" className="ax">{uiText("mean rank IC")}</text>
-          {xticks.map((t) => (
-            <g key={t}>
-              <line x1={x(t)} x2={x(t)} y1={H - m.b} y2={H - m.b + 5} stroke="var(--stroke)" />
-              <text x={x(t)} y={H - m.b + 18} textAnchor="middle" className="ax">
-                {t}
-              </text>
-            </g>
-          ))}
-          <text x={(m.l + W - m.r) / 2} y={H - 8} textAnchor="middle" className="ax">{uiText("independent trials N (log scale)")}</text>
-          <line x1={m.l} x2={W - m.r} y1={y(0)} y2={y(0)} stroke="var(--text)" strokeWidth="1.2" />
-          <line x1={x(n)} x2={x(n)} y1={m.t} y2={H - m.b} stroke="var(--line-strong)" strokeDasharray="3 3" />
-          <polyline points={path(bonf)} fill="none" stroke="var(--signal-graphic)" strokeWidth="1.8" strokeDasharray="2 4" strokeLinecap="round" />
-          <polyline points={path(expected)} fill="none" stroke="var(--text)" strokeWidth="1.8" />
-          <text x={x(n) + 6} y={m.t + 10} className="ax">
-            N = {n}
-          </text>
-          <g transform={`translate(${x(n)} ${y(leaderIc)})`}>
-            <path d="M0 -7 L7 0 L0 7 L-7 0 Z" fill="var(--text)" stroke="var(--bg)" strokeWidth="1.5" />
-          </g>
-          <text x={x(n) + 12} y={y(leaderIc) + 4} className="val" textAnchor="start">{uiText("selected ")}{ic4(leaderIc)}
-            {cleared ? '' : uiText(" · below the pass line")}
-          </text>
-          {marker && runIc !== null && (
-            <>
-              <circle cx={x(n)} cy={y(runIc)} r="5.5" fill="var(--bg)" stroke="var(--text)" strokeWidth="1.8" />
-              <text x={x(n) + 12} y={y(runIc) + 4} className="val" textAnchor="start">{uiText("this Run ")}{ic4(runIc)}
-              </text>
-            </>
-          )}
-        </svg>
-      )}
-    </Chart>
   )
 }

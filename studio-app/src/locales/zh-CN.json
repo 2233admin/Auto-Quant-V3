@@ -3079,5 +3079,18 @@
   "Full rewrite": "整体重写",
   "Crossover": "交叉",
   "Seed": "种子",
-  "Round open": "轮次进行中"
+  "Round open": "轮次进行中",
+  "Core published no selection adjustment for this Portfolio Run.": "核心未为此组合运行发布选择校正。",
+  "Core measured no spread across successful trials in this Project, so the noise scale is unknown and no frontier is drawn.": "核心在此项目的成功试验之间没有测得离散程度，噪声尺度未知，因此不绘制噪声边界。",
+  "The selection adjustment does not publish the trial statistics the frontier needs.": "选择校正未发布绘制噪声边界所需的试验统计量。",
+  "The server published no noise frontier.": "服务器未发布噪声边界。",
+  "Noise frontier: how large the best Sharpe looks by luck alone": "噪声边界：纯随机条件下最优夏普能达到多大",
+  "Best annualized net Sharpe expected from {0} trial{1} of pure noise, against the selected Run.": "{0} 次纯噪声试验的最优年化净夏普期望值，对照所选运行。",
+  "With {0} independent trial{1} in the Project ledger, the best annualized net Sharpe is expected to reach {2} under pure noise. The curve is that expectation as trials grow, scaled by the {3} spread Core measured across {4} successful trials.": "项目记录中有 {0} 次独立试验时，纯噪声下最优年化净夏普的期望值为 {2}。曲线表示该期望值随试验数增长的变化，并按核心在 {4} 次成功试验之间测得的离散程度 {3} 缩放。",
+  "Expected best Sharpe under noise": "噪声下的最优夏普期望值",
+  "), an upper bound on independent trials. The curve scales the expected maximum of N standard-normal trials, the closed form of": "），是独立试验数的上界。曲线用 N 次标准正态试验的期望最大值（闭式见",
+  ", by the dispersion of the Project's successful trial Sharpe ratios; the deflated Sharpe ratio uses the same product.": "）乘以项目成功试验夏普比率的离散程度；缩水夏普比率使用同一个乘积。",
+  "annualized net Sharpe": "年化净夏普",
+  "· does not pass the Core check": "· 未通过核心检验",
+  "Selection and noise": "选择与噪声"
 }
