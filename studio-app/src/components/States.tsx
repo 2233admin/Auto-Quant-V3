@@ -6,12 +6,20 @@ import { STATE_COPY } from './stateCopy'
 /**
  * The three shared page states. One size and one tone everywhere: a centred muted sentence, never an icon or a
  * button of its own. `title` names what is missing or what is loading; children say what to do next.
+ *
+ * `kind` picks the headline. `evidence` (the default) is the catalogue's Empty state, "No evidence in this Project",
+ * with `title` as its cause. `readOnly` is the catalogue's Read-only state. `message` is for a blank that is not missing
+ * Project evidence (nothing needs attention, no filter match, no Project yet): `title` itself is the headline, so the
+ * page never claims a Project has no evidence when it does.
  */
-export function Empty({ title = 'No evidence in this Project', children, minHeight }: { title?: string; children?: ReactNode; minHeight?: number }) {
+export type EmptyKind = 'evidence' | 'readOnly' | 'message'
+export function Empty({ title = 'No evidence in this Project', kind = 'evidence', children, minHeight }: { title?: string; kind?: EmptyKind; children?: ReactNode; minHeight?: number }) {
+  const headline = kind === 'readOnly' ? STATE_COPY.readOnly : kind === 'message' ? uiValue(title) : STATE_COPY.empty
+  const cause = kind === 'evidence' && title !== STATE_COPY.empty && title !== 'No evidence in this Project'
   return (
-    <div className="st st--empty" role="status" style={minHeight ? { minHeight } : undefined}>
-      <p className="st-title">{STATE_COPY.empty}</p>
-      {title !== STATE_COPY.empty && title !== 'No evidence in this Project' && <p className="st-body">{uiValue(title)}</p>}
+    <div className="st st--empty" role="status" data-empty-kind={kind} style={minHeight ? { minHeight } : undefined}>
+      <p className="st-title">{headline}</p>
+      {cause && <p className="st-body">{uiValue(title)}</p>}
       {children && <div className="st-body">{children}</div>}
     </div>
   )

@@ -26,7 +26,7 @@ export function AttentionPage({ workspace }: { workspace: WorkspaceSummary | nul
         lede={items.length === 0 ? t('Everything in this Workspace verifies.', '工作区中的所有项目均已通过验证。') : language === 'zh' ? `有 ${items.length} 项需要查看。` : uiTemplate("{0} {1} a look.", [items.length, items.length === 1 ? 'item needs' : 'items need'])}
       />
       {items.length === 0 ? (
-        <Empty title={t('Nothing needs attention', '没有需要处理的事项')} minHeight={96} />
+        <Empty kind="message" title={t('Nothing needs attention', '没有需要处理的事项')} minHeight={96} />
       ) : (
         <ul className="att-list" aria-label={uiText("Items that need attention")}>
           {items.map((item, i) => (

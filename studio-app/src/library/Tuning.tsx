@@ -102,7 +102,7 @@ function Index({ workspace, go }: { workspace: WorkspaceSummary | null; go: (hre
       />
       <LoadNote all={all} />
       {rows.length === 0 ? (
-        <Empty>{t('No Session was found in this Workspace, so there are no trials to list.', '此工作区没有会话，因此没有可列出的试验。')}</Empty>
+        <Empty kind="message">{t('No Session was found in this Workspace, so there are no trials to list.', '此工作区没有会话，因此没有可列出的试验。')}</Empty>
       ) : (
         <DataTable rows={rows} cols={cols} rowKey={(t) => t.key} href={href} go={go} initial={{ id: 'updated', dir: -1 }} caption={uiText("Sessions across all Projects")} />
       )}

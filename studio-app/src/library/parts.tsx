@@ -5,7 +5,7 @@ import { Glyph, Icon, type IconName } from '../design/icons'
 import { PageMark } from '../design/marks'
 import { plural } from '../format'
 import { Notice } from '../Notice'
-import { Empty as EmptyState } from '../components/States'
+import { Empty as EmptyState, type EmptyKind } from '../components/States'
 import type { Verdict } from '../pages/FactorEvidence'
 import '../components/states.css'
 import { loadState, type Loaded } from './data'
@@ -65,8 +65,8 @@ export function Field({ label, children, visible = false }: { label: string; chi
   )
 }
 
-export function Empty({ children }: { children: ReactNode }) {
-  return <EmptyState title={String(children)} minHeight={96} />
+export function Empty({ children, kind }: { children: ReactNode; kind?: EmptyKind }) {
+  return <EmptyState title={String(children)} kind={kind} minHeight={96} />
 }
 
 export const uniq = (xs: string[]) => [...new Set(xs)].sort((a, b) => a.localeCompare(b))
