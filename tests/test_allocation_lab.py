@@ -245,10 +245,7 @@ class AllocationLabTests(unittest.TestCase):
             )
             self.assertEqual(prepared.package["assetClass"], "mixed")
             self.assertEqual(
-                {
-                    asset.symbol: asset.asset_class
-                    for asset in prepared.assets
-                },
+                {asset.symbol: asset.asset_class for asset in prepared.assets},
                 requested_classes,
             )
             workspace = initialize_workspace(root / "workspace")
@@ -267,9 +264,7 @@ class AllocationLabTests(unittest.TestCase):
                 },
                 requested_classes,
             )
-            contract = load_allocation_contract(
-                project.root_dir / ALLOCATION_POLICY
-            )
+            contract = load_allocation_contract(project.root_dir / ALLOCATION_POLICY)
             self.assertEqual(
                 contract["tradableAssets"],
                 ["AAPL", "NVDA", "GLD", "TLT"],
@@ -307,14 +302,12 @@ class AllocationLabTests(unittest.TestCase):
                 0.0,
             )
             self.assertEqual(
-                diagnostics["latestDecision"][
-                    "targetRiskContributionShares"
-                ]["SPY"],
+                diagnostics["latestDecision"]["targetRiskContributionShares"]["SPY"],
                 0.0,
             )
-            validation_fidelity = diagnostics["constructionFidelity"][
-                "bySplit"
-            ]["validation"]
+            validation_fidelity = diagnostics["constructionFidelity"]["bySplit"][
+                "validation"
+            ]
             self.assertEqual(
                 validation_fidelity["scheduledDecisions"],
                 6,
@@ -338,9 +331,7 @@ class AllocationLabTests(unittest.TestCase):
             )
             self.assertGreaterEqual(
                 validation_fidelity["latestEligibleDecision"]["asOf"],
-                diagnostics["splitProtocol"]["splits"]["validation"][
-                    "start"
-                ],
+                diagnostics["splitProtocol"]["splits"]["validation"]["start"],
             )
             self.assertLessEqual(
                 validation_fidelity["latestEligibleDecision"]["asOf"],
@@ -355,12 +346,12 @@ class AllocationLabTests(unittest.TestCase):
                 "relative-performance-only",
             )
             self.assertEqual(
-                run.result["metrics"]["construction_fidelity"]["bySplit"][
-                    "validation"
-                ]["eligibleDecisions"],
-                diagnostics["constructionFidelity"]["bySplit"][
-                    "validation"
-                ]["eligibleDecisions"],
+                run.result["metrics"]["construction_fidelity"]["bySplit"]["validation"][
+                    "eligibleDecisions"
+                ],
+                diagnostics["constructionFidelity"]["bySplit"]["validation"][
+                    "eligibleDecisions"
+                ],
             )
             snapshot = build_studio_snapshot(project.root_dir)
             self.assertTrue(snapshot["valid"])
@@ -375,9 +366,7 @@ class AllocationLabTests(unittest.TestCase):
             )
             studio_contract = studio_project["allocationExplorer"]["contract"]
             self.assertEqual(
-                studio_project["allocationExplorer"]["dataset"][
-                    "assetClasses"
-                ],
+                studio_project["allocationExplorer"]["dataset"]["assetClasses"],
                 requested_classes,
             )
             self.assertEqual(
@@ -390,9 +379,7 @@ class AllocationLabTests(unittest.TestCase):
                 {"SPY": 0.60, "TLT": 0.40},
             )
             self.assertEqual(
-                studio_project["allocationExplorer"][
-                    "constructionFidelity"
-                ],
+                studio_project["allocationExplorer"]["constructionFidelity"],
                 diagnostics["constructionFidelity"],
             )
             self.assertEqual(
@@ -417,9 +404,7 @@ class AllocationLabTests(unittest.TestCase):
                 encoding="utf-8",
             )
             intake_path = project.root_dir / "intake.json"
-            intake_manifest = json.loads(
-                intake_path.read_text(encoding="utf-8")
-            )
+            intake_manifest = json.loads(intake_path.read_text(encoding="utf-8"))
             intake_manifest["datasetSnapshotHash"] = hashlib.sha256(
                 dataset_snapshot_path.read_bytes()
             ).hexdigest()
@@ -449,10 +434,7 @@ class AllocationLabTests(unittest.TestCase):
             )
             study = json.loads(
                 (
-                    project.root_dir
-                    / "studies"
-                    / ALLOCATION_STUDY_ID
-                    / "study.json"
+                    project.root_dir / "studies" / ALLOCATION_STUDY_ID / "study.json"
                 ).read_text(encoding="utf-8")
             )
             self.assertEqual(study["editable"]["paths"], [])
@@ -460,9 +442,7 @@ class AllocationLabTests(unittest.TestCase):
                 study["dependencies"]["paths"],
                 [ALLOCATION_POLICY],
             )
-            contract = load_allocation_contract(
-                project.root_dir / ALLOCATION_POLICY
-            )
+            contract = load_allocation_contract(project.root_dir / ALLOCATION_POLICY)
             self.assertEqual(contract["tradingAuthority"], "none")
             run = execute_study(project, ALLOCATION_STUDY_ID)
             self.assertEqual(run.result["status"], "succeeded")
@@ -487,23 +467,15 @@ class AllocationLabTests(unittest.TestCase):
                 ALLOCATION_DIAGNOSTICS_JSON_SCHEMA,
             )
             self.assertTrue(diagnostics["verification"]["strict"])
-            self.assertFalse(
-                diagnostics["conclusion"]["testUsedForSelection"]
-            )
+            self.assertFalse(diagnostics["conclusion"]["testUsedForSelection"])
             self.assertEqual(
                 diagnostics["latestDecision"]["tradingAuthority"],
                 "none",
             )
+            self.assertTrue(diagnostics["verification"]["riskContributionsReconciled"])
+            self.assertTrue(diagnostics["verification"]["currentStateReconciled"])
             self.assertTrue(
-                diagnostics["verification"]["riskContributionsReconciled"]
-            )
-            self.assertTrue(
-                diagnostics["verification"]["currentStateReconciled"]
-            )
-            self.assertTrue(
-                diagnostics["verification"][
-                    "constructionFidelityReconciled"
-                ]
+                diagnostics["verification"]["constructionFidelityReconciled"]
             )
             self.assertEqual(
                 diagnostics["conclusion"]["scope"],
@@ -524,9 +496,7 @@ class AllocationLabTests(unittest.TestCase):
                 observed["agentWorkBrief"]["question"],
                 {
                     "title": "Synthetic equal-risk-contribution allocation",
-                    "text": (
-                        "Does fixed ERC improve on a fixed 60/40 reference?"
-                    ),
+                    "text": ("Does fixed ERC improve on a fixed 60/40 reference?"),
                     "origin": "project-request",
                     "sourcePath": str(request_path),
                     "requestPath": str(request_path),
@@ -536,9 +506,7 @@ class AllocationLabTests(unittest.TestCase):
                 observed["allocationExplorer"]["run"]["id"],
                 run.result["id"],
             )
-            self.assertIsNone(
-                observed["agentWorkBrief"]["primaryAction"]
-            )
+            self.assertIsNone(observed["agentWorkBrief"]["primaryAction"])
             self.assertIn(
                 "run.allocation",
                 {command["id"] for command in observed["commands"]},
@@ -582,9 +550,7 @@ class AllocationLabTests(unittest.TestCase):
                 template="ohlcv-allocation-lab",
             )
             run = execute_study(project, ALLOCATION_STUDY_ID)
-            report_path = (
-                run.root_dir / "artifacts" / "allocation-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "allocation-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             expected = report.pop("constructionFidelity")
             report["conclusion"].pop("scope")
@@ -605,18 +571,16 @@ class AllocationLabTests(unittest.TestCase):
                 ],
             )
             self.assertEqual(
-                diagnostics["constructionFidelity"]["bySplit"][
-                    "validation"
-                ]["eligibleDecisions"],
+                diagnostics["constructionFidelity"]["bySplit"]["validation"][
+                    "eligibleDecisions"
+                ],
                 expected["bySplit"]["validation"]["eligibleDecisions"],
             )
             self.assertAlmostEqual(
-                diagnostics["constructionFidelity"]["bySplit"][
-                    "validation"
-                ]["maximumContributionError"],
-                expected["bySplit"]["validation"][
+                diagnostics["constructionFidelity"]["bySplit"]["validation"][
                     "maximumContributionError"
                 ],
+                expected["bySplit"]["validation"]["maximumContributionError"],
             )
             self.assertEqual(
                 diagnostics["conclusion"]["scope"],
@@ -632,9 +596,7 @@ class AllocationLabTests(unittest.TestCase):
                 template="ohlcv-allocation-lab",
             )
             run = execute_study(project, ALLOCATION_STUDY_ID)
-            report_path = (
-                run.root_dir / "artifacts" / "allocation-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "allocation-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             report["constructionFidelity"]["bySplit"]["validation"][
                 "withinToleranceRate"
@@ -661,9 +623,7 @@ class AllocationLabTests(unittest.TestCase):
                 template="ohlcv-allocation-lab",
             )
             run = execute_study(project, ALLOCATION_STUDY_ID)
-            daily_path = (
-                run.root_dir / "artifacts" / "allocation-daily.csv"
-            )
+            daily_path = run.root_dir / "artifacts" / "allocation-daily.csv"
             daily = pd.read_csv(daily_path)
             daily.loc[50, "excess_net_return"] += 0.01
             daily.to_csv(daily_path, index=False)
@@ -684,17 +644,12 @@ class AllocationLabTests(unittest.TestCase):
                 template="ohlcv-allocation-lab",
             )
             run = execute_study(project, ALLOCATION_STUDY_ID)
-            decisions_path = (
-                run.root_dir / "artifacts" / "allocation-decisions.csv"
-            )
+            decisions_path = run.root_dir / "artifacts" / "allocation-decisions.csv"
             decisions = pd.read_csv(decisions_path)
-            eligible = decisions[
-                decisions["solver_status"] != "insufficient-history"
-            ]
+            eligible = decisions[decisions["solver_status"] != "insufficient-history"]
             latest = eligible["timestamp"].max()
             row = decisions.index[
-                (decisions["timestamp"] == latest)
-                & (decisions["asset"] == "ALPHA")
+                (decisions["timestamp"] == latest) & (decisions["asset"] == "ALPHA")
             ][0]
             decisions.loc[row, "target_risk_contribution_share"] += 0.01
             decisions.to_csv(decisions_path, index=False)

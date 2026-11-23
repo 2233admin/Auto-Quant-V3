@@ -63,9 +63,7 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
             "lanes": [
                 {
                     "id": lane_id,
-                    "assessment": (
-                        "weakened" if lane_id == "factor" else "persisted"
-                    ),
+                    "assessment": ("weakened" if lane_id == "factor" else "persisted"),
                     "summary": f"The frozen {lane_id} lane was assessed separately.",
                 }
                 for lane_id in lane_ids
@@ -231,9 +229,7 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
                 dataset_id="later-equities",
                 dataset_version="2025-v1",
             )
-            source_request = (
-                source.root_dir / "request.json"
-            )
+            source_request = source.root_dir / "request.json"
             with self.assertRaises(AutoQuantValidationError) as ordinary_error:
                 prepare_project_intake(
                     source_request,
@@ -262,9 +258,7 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
                 json.loads(cli_create.stdout)["command"],
                 "holdout.create-target",
             )
-            target = load_project(
-                workspace.projects_dir / "short-factor-holdout"
-            )
+            target = load_project(workspace.projects_dir / "short-factor-holdout")
             binding = load_holdout_binding(target)
             self.assertEqual(
                 [lane["id"] for lane in binding.binding["source"]["lanes"]],
@@ -329,9 +323,9 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
                 hash_file(target_factor_judge),
             )
             self.assertFalse(
-                holdout_run.result["metrics"]["horizon_quality"]["10"][
-                    "validation"
-                ]["sufficient"]
+                holdout_run.result["metrics"]["horizon_quality"]["10"]["validation"][
+                    "sufficient"
+                ]
             )
 
             overlap_input = root / "overlap-atomic-input"
@@ -347,9 +341,7 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
                 root / "empty-target-workspace",
                 name="Empty Target Desk",
             )
-            configuration_before = (
-                empty_workspace.configuration_path.read_bytes()
-            )
+            configuration_before = empty_workspace.configuration_path.read_bytes()
             with self.assertRaises(AutoQuantValidationError) as overlap_error:
                 create_holdout_target(
                     source,
@@ -363,9 +355,7 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
                 {issue.code for issue in overlap_error.exception.issues},
             )
             self.assertFalse(
-                (
-                    empty_workspace.projects_dir / "overlap-atomic-target"
-                ).exists()
+                (empty_workspace.projects_dir / "overlap-atomic-target").exists()
             )
             self.assertEqual(
                 empty_workspace.configuration_path.read_bytes(),
@@ -419,15 +409,13 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
             self.assertEqual(
                 (target.root_dir / "factors/candidate.py").read_bytes(),
                 (
-                    binding.root_dir
-                    / "imported-sources/factors/candidate.py"
+                    binding.root_dir / "imported-sources/factors/candidate.py"
                 ).read_bytes(),
             )
             self.assertEqual(
                 (target.root_dir / "models/candidate.py").read_bytes(),
                 (
-                    binding.root_dir
-                    / "imported-sources/models/candidate.py"
+                    binding.root_dir / "imported-sources/models/candidate.py"
                 ).read_bytes(),
             )
             brief = build_agent_work_brief(target)
@@ -455,9 +443,7 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
                 ["holdout.run"],
             )
             self.assertEqual(
-                bound_project["researchProgramStatus"][
-                    "recommendedAction"
-                ]["id"],
+                bound_project["researchProgramStatus"]["recommendedAction"]["id"],
                 "holdout.run",
             )
             self.assertIsNone(
@@ -640,9 +626,7 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
                 "assessed",
             )
             self.assertEqual(
-                assessed_snapshot["projects"][0]["externalHoldout"][
-                    "assessment"
-                ]["id"],
+                assessed_snapshot["projects"][0]["externalHoldout"]["assessment"]["id"],
                 assessment.assessment["id"],
             )
 
@@ -658,9 +642,7 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
                 load_holdout_result(portable).result["id"],
                 result.result["id"],
             )
-            assessment_markdown = (
-                target.root_dir / "holdout/assessment/assessment.md"
-            )
+            assessment_markdown = target.root_dir / "holdout/assessment/assessment.md"
             assessment_markdown_bytes = assessment_markdown.read_bytes()
             assessment_markdown.write_text(
                 "# Fabricated conclusion\n",
@@ -674,12 +656,8 @@ class FrozenExternalHoldoutTests(unittest.TestCase):
             )
             assessment_markdown.write_bytes(assessment_markdown_bytes)
 
-            result_path = (
-                target.root_dir / "holdout/result/result.json"
-            )
-            result_manifest_path = (
-                target.root_dir / "holdout/result/manifest.json"
-            )
+            result_path = target.root_dir / "holdout/result/result.json"
+            result_manifest_path = target.root_dir / "holdout/result/manifest.json"
             fabricated = json.loads(result_path.read_text(encoding="utf-8"))
             fabricated["lanes"][0]["delta"] += 1.0
             result_path.write_text(

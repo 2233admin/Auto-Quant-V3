@@ -63,12 +63,15 @@ class AgentOrientationTests(unittest.TestCase):
                 ],
             }
 
-            with patch(
-                "autoquant.orientation.load_run",
-                return_value=SimpleNamespace(result={"status": "succeeded"}),
-            ), patch(
-                "autoquant.orientation.load_factor_diagnostics",
-                return_value=diagnostics,
+            with (
+                patch(
+                    "autoquant.orientation.load_run",
+                    return_value=SimpleNamespace(result={"status": "succeeded"}),
+                ),
+                patch(
+                    "autoquant.orientation.load_factor_diagnostics",
+                    return_value=diagnostics,
+                ),
             ):
                 contrast = _factor_split_contrast(
                     project,
@@ -96,12 +99,15 @@ class AgentOrientationTests(unittest.TestCase):
             self.assertNotEqual(brief["reasons"][0]["code"], "factor-split-contrast")
 
             diagnostics["horizonProfile"][0]["train"]["meanRankIc"] = 0.50
-            with patch(
-                "autoquant.orientation.load_run",
-                return_value=SimpleNamespace(result={"status": "succeeded"}),
-            ), patch(
-                "autoquant.orientation.load_factor_diagnostics",
-                return_value=diagnostics,
+            with (
+                patch(
+                    "autoquant.orientation.load_run",
+                    return_value=SimpleNamespace(result={"status": "succeeded"}),
+                ),
+                patch(
+                    "autoquant.orientation.load_factor_diagnostics",
+                    return_value=diagnostics,
+                ),
             ):
                 below_threshold = _factor_split_contrast(
                     project,
@@ -168,9 +174,7 @@ class AgentOrientationTests(unittest.TestCase):
                 template="ohlcv-portfolio-lab",
             )
 
-            legacy_contract = build_agent_work_brief(legacy)[
-                "candidateContract"
-            ]
+            legacy_contract = build_agent_work_brief(legacy)["candidateContract"]
 
             self.assertEqual(legacy_contract["data"]["baseInterval"], "1d")
             self.assertEqual(legacy_contract["data"]["featureIntervals"], [])
@@ -193,9 +197,7 @@ class AgentOrientationTests(unittest.TestCase):
                 daily_root,
                 observations=260,
             )
-            package = json.loads(
-                daily_package.read_text(encoding="utf-8")
-            )
+            package = json.loads(daily_package.read_text(encoding="utf-8"))
             package["schemaVersion"] = 4
             package["panelPolicy"] = {
                 "alignment": "observed-only",
@@ -217,9 +219,7 @@ class AgentOrientationTests(unittest.TestCase):
                 template_intake=daily_prepared,
             )
 
-            daily_contract = build_agent_work_brief(daily)[
-                "candidateContract"
-            ]
+            daily_contract = build_agent_work_brief(daily)["candidateContract"]
             jsonschema.validate(
                 build_agent_work_brief(daily),
                 AGENT_WORK_BRIEF_JSON_SCHEMA,
@@ -261,9 +261,7 @@ class AgentOrientationTests(unittest.TestCase):
                 template_intake=prepared,
             )
 
-            multi_contract = build_agent_work_brief(multi)[
-                "candidateContract"
-            ]
+            multi_contract = build_agent_work_brief(multi)["candidateContract"]
 
             jsonschema.validate(
                 build_agent_work_brief(multi),
@@ -301,9 +299,7 @@ class AgentOrientationTests(unittest.TestCase):
                 brief["question"],
                 {
                     "title": "Synthetic equal-risk-contribution allocation",
-                    "text": (
-                        "Does fixed ERC improve on a fixed 60/40 reference?"
-                    ),
+                    "text": ("Does fixed ERC improve on a fixed 60/40 reference?"),
                     "origin": "project-request",
                     "sourcePath": str(request_path),
                     "requestPath": str(request_path),
@@ -481,8 +477,7 @@ Stop the extracted section here.
             )
             project = create_project(workspace.root_dir, "bounded-lab")
             (project.root_dir / "research.md").write_text(
-                "# Bounded Lab\n\n## Research question\n\n"
-                + "signal " * 1_000,
+                "# Bounded Lab\n\n## Research question\n\n" + "signal " * 1_000,
                 encoding="utf-8",
             )
 
@@ -764,11 +759,7 @@ Do not include this sibling section.
                 "factor-quality",
                 request=research_request(),
             )
-            candidate = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text("SCORE = 2.0\n", encoding="utf-8")
             experiment = evaluate_experiment(
                 project,
@@ -836,11 +827,7 @@ Do not include this sibling section.
                 "does not authorize open-ended tuning",
                 before_trial["reasons"][0]["message"],
             )
-            candidate = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(
                 "import pandas as pd\n\n"
                 "FACTOR_COMPONENTS = {\n"
@@ -900,9 +887,7 @@ Do not include this sibling section.
             _, project = make_project(directory)
             create_study(project, study_definition())
             session = start_session(project, "factor-quality")
-            candidate = (
-                session.worktree_project.root_dir / "factors" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text("SCORE = 2.0\n", encoding="utf-8")
             experiment = evaluate_experiment(
                 project,
@@ -1091,9 +1076,7 @@ Do not include this sibling section.
                 study_definition(
                     study_id="drawdown-recovery",
                     dependencies=["requests/recovery.json"],
-                    research_request=StudyResearchRequest(
-                        "requests/recovery.json"
-                    ),
+                    research_request=StudyResearchRequest("requests/recovery.json"),
                     upstream_evidence=bind_upstream_evidence(
                         project,
                         prior.result["id"],

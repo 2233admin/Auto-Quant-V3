@@ -54,8 +54,14 @@ _STUDIO_WORD = {"ref" + "uted": "rejected"}
 
 def _word(status: Any) -> Any:
     return _STUDIO_WORD.get(status, status) if isinstance(status, str) else status
+
+
 # Shinka's own defaults (skeptic.Thresholds) for evidence recorded without them.
-_DEFAULT_THRESHOLDS = {"dsr_supported": 0.95, "min_positive_fraction": 2 / 3, "max_pbo": 0.5}
+_DEFAULT_THRESHOLDS = {
+    "dsr_supported": 0.95,
+    "min_positive_fraction": 2 / 3,
+    "max_pbo": 0.5,
+}
 
 
 def _issue(path: str, code: str, message: str) -> AutoQuantValidationError:
@@ -67,7 +73,10 @@ def _demo(research: Path) -> str | None:
     marker = research / DEMO_MARKER
     if not marker.is_file() or marker.is_symlink():
         return None
-    lines = [line.strip("# ").strip() for line in marker.read_text(encoding="utf-8").splitlines()]
+    lines = [
+        line.strip("# ").strip()
+        for line in marker.read_text(encoding="utf-8").splitlines()
+    ]
     return next((line for line in lines if line), "synthetic demo data")
 
 
@@ -91,16 +100,30 @@ def research_summary(project_root: Path) -> dict[str, Any] | None:
         for h in hypotheses:
             verdict = h.get("verdict")
             if isinstance(verdict, dict):
-                label = h.get("status") if h.get("status") in ("confirmed", "unconfirmed") else verdict.get("label")
-                judged.append({"hypothesis": h.get("id"), "label": _word(label), "at": verdict.get("created")})
+                label = (
+                    h.get("status")
+                    if h.get("status") in ("confirmed", "unconfirmed")
+                    else verdict.get("label")
+                )
+                judged.append(
+                    {
+                        "hypothesis": h.get("id"),
+                        "label": _word(label),
+                        "at": verdict.get("created"),
+                    }
+                )
         judged.sort(key=lambda v: v["at"] or "")
         return {
             "state": "ready",
             "direction": raw.get("direction"),
             "hypotheses": len(hypotheses),
-            "statusCounts": dict(Counter(str(_word(h.get("status"))) for h in hypotheses)),
+            "statusCounts": dict(
+                Counter(str(_word(h.get("status"))) for h in hypotheses)
+            ),
             "latestVerdict": judged[-1] if judged else None,
-            "lockbox": "none" if not data else ("opened" if data.get("opened") else "sealed"),
+            "lockbox": "none"
+            if not data
+            else ("opened" if data.get("opened") else "sealed"),
             "demo": _demo(research),
         }
     except (OSError, ValueError, AttributeError, TypeError):
@@ -110,11 +133,17 @@ def research_summary(project_root: Path) -> dict[str, Any] | None:
 # --------------------------------------------------------------------------- resolution
 
 
-def _project_root(directory: str | Path, requested: str | None, project_id: str | None) -> Path:
+def _project_root(
+    directory: str | Path, requested: str | None, project_id: str | None
+) -> Path:
     if not requested:
         raise _issue("id", "project.id-required", "Query parameter id is required")
     if project_id is not None and requested != project_id:
-        raise _issue(requested, "project.unknown", f"Studio is restricted to Project {project_id}")
+        raise _issue(
+            requested,
+            "project.unknown",
+            f"Studio is restricted to Project {project_id}",
+        )
     if not _PROJECT_ID.fullmatch(requested):
         raise _issue(requested, "project.unknown", f"Unknown Project: {requested}")
     root = Path(directory).expanduser().absolute()
@@ -130,14 +159,32 @@ def _project_root(directory: str | Path, requested: str | None, project_id: str 
 
 
 def _unavailable(error: ImportError) -> str:
-    return "shinka-engine-missing" if type(error).__name__ == "EngineNotInstalled" else "shinka-extra-missing"
+    return (
+        "shinka-engine-missing"
+        if type(error).__name__ == "EngineNotInstalled"
+        else "shinka-extra-missing"
+    )
 
 
 # --------------------------------------------------------------------------- check ledger
 
 
-def _row(row_id: str, role: str, state: str, value: Any = None, threshold: str | None = None, **extra: Any) -> dict[str, Any]:
-    return {"id": row_id, "role": role, "state": state, "value": value, "threshold": threshold, **extra}
+def _row(
+    row_id: str,
+    role: str,
+    state: str,
+    value: Any = None,
+    threshold: str | None = None,
+    **extra: Any,
+) -> dict[str, Any]:
+    return {
+        "id": row_id,
+        "role": role,
+        "state": state,
+        "value": value,
+        "threshold": threshold,
+        **extra,
+    }
 
 
 def _context(row_id: str, value: Any) -> dict[str, Any]:
@@ -146,16 +193,30 @@ def _context(row_id: str, value: Any) -> dict[str, Any]:
 
 
 def _num(value: Any) -> float | None:
-    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+    return (
+        float(value)
+        if isinstance(value, (int, float)) and not isinstance(value, bool)
+        else None
+    )
 
 
-def _gate(row_id: str, value: float | None, ok: Callable[[float], bool], threshold: str, **extra: Any) -> dict[str, Any]:
+def _gate(
+    row_id: str,
+    value: float | None,
+    ok: Callable[[float], bool],
+    threshold: str,
+    **extra: Any,
+) -> dict[str, Any]:
     if value is None:
         return _row(row_id, "gate", "not-computed", None, threshold, **extra)
-    return _row(row_id, "gate", "pass" if ok(value) else "fail", value, threshold, **extra)
+    return _row(
+        row_id, "gate", "pass" if ok(value) else "fail", value, threshold, **extra
+    )
 
 
-def _lockbox_row(lockbox: dict[str, Any] | None, hypothesis: dict[str, Any]) -> dict[str, Any]:
+def _lockbox_row(
+    lockbox: dict[str, Any] | None, hypothesis: dict[str, Any]
+) -> dict[str, Any]:
     confirmation = hypothesis.get("confirmation")
     if isinstance(confirmation, dict) and "passed" in confirmation:
         state = "confirmed" if confirmation.get("passed") else "unconfirmed"
@@ -166,7 +227,9 @@ def _lockbox_row(lockbox: dict[str, Any] | None, hypothesis: dict[str, Any]) -> 
     return _row("lockbox", "context", state)
 
 
-def ledger(hypothesis: dict[str, Any], lockbox: dict[str, Any] | None, frontier: dict[str, Any]) -> list[dict[str, Any]]:
+def ledger(
+    hypothesis: dict[str, Any], lockbox: dict[str, Any] | None, frontier: dict[str, Any]
+) -> list[dict[str, Any]]:
     """The check ledger of one hypothesis, from what the snapshot already
     allows: validation figures only when a verdict exists."""
     verdict = hypothesis.get("verdict")
@@ -193,18 +256,45 @@ def ledger(hypothesis: dict[str, Any], lockbox: dict[str, Any] | None, frontier:
         rows = [
             _context(key, value)
             for key, value in sorted(ev.items())
-            if isinstance(value, (int, float, str, bool)) and key not in ("experiment", "program_id", "best_program")
+            if isinstance(value, (int, float, str, bool))
+            and key not in ("experiment", "program_id", "best_program")
         ]
         rows.append(_lockbox_row(lockbox, hypothesis))
         return rows
-    th = {**_DEFAULT_THRESHOLDS, **{k: v for k, v in (ev.get("thresholds") or {}).items() if _num(v) is not None}}
+    th = {
+        **_DEFAULT_THRESHOLDS,
+        **{
+            k: v for k, v in (ev.get("thresholds") or {}).items() if _num(v) is not None
+        },
+    }
     oos, hold = _num(ev.get("oos_sharpe")), _num(ev.get("baseline_buy_hold_oos_sharpe"))
     return [
         _gate("validation-sharpe", oos, lambda v: v > 0, "> 0"),
-        _gate("beats-buy-hold", oos if hold is not None else None, lambda v: v > (hold or 0.0), "> buy and hold", reference=hold),
-        _gate("dsr", _num(ev.get("dsr")), lambda v: v >= th["dsr_supported"], f">= {th['dsr_supported']:g}"),
-        _gate("subperiods", _num(ev.get("oos_positive_fraction")), lambda v: v >= th["min_positive_fraction"], f">= {th['min_positive_fraction']:.3g}"),
-        _gate("pbo", _num(ev.get("pbo")), lambda v: v <= th["max_pbo"], f"<= {th['max_pbo']:g}"),
+        _gate(
+            "beats-buy-hold",
+            oos if hold is not None else None,
+            lambda v: v > (hold or 0.0),
+            "> buy and hold",
+            reference=hold,
+        ),
+        _gate(
+            "dsr",
+            _num(ev.get("dsr")),
+            lambda v: v >= th["dsr_supported"],
+            f">= {th['dsr_supported']:g}",
+        ),
+        _gate(
+            "subperiods",
+            _num(ev.get("oos_positive_fraction")),
+            lambda v: v >= th["min_positive_fraction"],
+            f">= {th['min_positive_fraction']:.3g}",
+        ),
+        _gate(
+            "pbo",
+            _num(ev.get("pbo")),
+            lambda v: v <= th["max_pbo"],
+            f"<= {th['max_pbo']:g}",
+        ),
         _context("in-sample-sharpe", _num(ev.get("is_sharpe"))),
         _context("noise-frontier", _num(ev.get("expected_max_sharpe_annual"))),
         _context("family-trials", _num(ev.get("n_trials"))),
@@ -219,7 +309,11 @@ def ledger(hypothesis: dict[str, Any], lockbox: dict[str, Any] | None, frontier:
 
 def _strip_paths(evidence: Any) -> Any:
     if isinstance(evidence, dict):
-        return {k: _strip_paths(v) for k, v in evidence.items() if k not in ("best_program", "data_path", "dev_path")}
+        return {
+            k: _strip_paths(v)
+            for k, v in evidence.items()
+            if k not in ("best_program", "data_path", "dev_path")
+        }
     return evidence
 
 
@@ -230,7 +324,9 @@ def _frontier(snapshot: dict[str, Any]) -> dict[str, Any]:
     by_hypothesis: dict[str, float] = {}
     for p in points:
         if p["score"] is not None:
-            by_hypothesis[p["hypothesis"]] = max(p["score"], by_hypothesis.get(p["hypothesis"], p["score"]))
+            by_hypothesis[p["hypothesis"]] = max(
+                p["score"], by_hypothesis.get(p["hypothesis"], p["score"])
+            )
     best = max(scores) if scores else None
     bar = points[-1]["bar"] if points else None
     return {
@@ -258,7 +354,12 @@ def _plans(research: Path) -> dict[tuple[str, str], dict[str, Any]]:
                 "dataHash": e.data_hash,
                 "plan": None
                 if plan is None
-                else {"domain": plan.domain, "claim": plan.claim, "rationale": plan.rationale, "rule": plan.rule.model_dump(mode="json")},
+                else {
+                    "domain": plan.domain,
+                    "claim": plan.claim,
+                    "rationale": plan.rationale,
+                    "rule": plan.rule.model_dump(mode="json"),
+                },
             }
     return out
 
@@ -323,7 +424,9 @@ def build_project_research(
 # --------------------------------------------------------------------------- workspace library
 
 
-def build_research_library(directory: str | Path, *, project_id: str | None = None) -> dict[str, Any]:
+def build_research_library(
+    directory: str | Path, *, project_id: str | None = None
+) -> dict[str, Any]:
     from .studio import SCHEMA_VERSION
 
     payload: dict[str, Any] = {
@@ -368,7 +471,9 @@ def build_research_library(directory: str | Path, *, project_id: str | None = No
 # --------------------------------------------------------------------------- routes
 
 
-def serve_research(handler: Any, path: str, directory: Path, project_id: str | None, head_only: bool) -> bool:
+def serve_research(
+    handler: Any, path: str, directory: Path, project_id: str | None, head_only: bool
+) -> bool:
     """GET-only routes beside the Project route, sharing its fingerprint
     cache, ETag and 304 handling (``StudioHandler._cached``)."""
     if path == RESEARCH_PATH:

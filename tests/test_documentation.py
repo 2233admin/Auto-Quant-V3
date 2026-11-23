@@ -29,15 +29,11 @@ class DocumentationTests(unittest.TestCase):
 
     def test_release_document_ownership_does_not_drift(self) -> None:
         readme = (PROJECT_DIR / "README.md").read_text(encoding="utf-8")
-        operator_guide = (
-            PROJECT_DIR / "docs" / "OPERATOR_GUIDE.md"
-        ).read_text(encoding="utf-8")
-        status = (PROJECT_DIR / "docs" / "STATUS.md").read_text(
+        operator_guide = (PROJECT_DIR / "docs" / "OPERATOR_GUIDE.md").read_text(
             encoding="utf-8"
         )
-        changelog = (PROJECT_DIR / "docs" / "CHANGELOG.md").read_text(
-            encoding="utf-8"
-        )
+        status = (PROJECT_DIR / "docs" / "STATUS.md").read_text(encoding="utf-8")
+        changelog = (PROJECT_DIR / "docs" / "CHANGELOG.md").read_text(encoding="utf-8")
         agents = (PROJECT_DIR / "AGENTS.md").read_text(encoding="utf-8")
 
         self.assertEqual(

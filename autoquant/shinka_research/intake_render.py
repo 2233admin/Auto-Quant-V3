@@ -53,7 +53,11 @@ def render_hypothesis(spec: IntakeSpec) -> str:
             f"- Signal: {spec.signal.kind} ({params})",
             f"- Position sizing: {sizing}, positions within [{lower:g}, {upper:g}]",
             "- Risk control: "
-            + (f"flat once the close is {stop:.1%} against the entry price" if stop else "none"),
+            + (
+                f"flat once the close is {stop:.1%} against the entry price"
+                if stop
+                else "none"
+            ),
             f"- Backtest: out-of-sample {bt.oos_fraction:.0%}, {bt.n_folds} in-sample "
             f"folds, {bt.cost_bps:g} bps cost, {bt.periods_per_year:g} bars a year, "
             f"lockbox {bt.lockbox_fraction:.0%}",

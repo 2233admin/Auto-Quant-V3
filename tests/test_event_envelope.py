@@ -13,7 +13,9 @@ from autoquant.event_envelope import (
 )
 
 
-def _event(index: int, timestamp: str, asset: float, reference: float, primary: bool = True):
+def _event(
+    index: int, timestamp: str, asset: float, reference: float, primary: bool = True
+):
     return {
         "eventIndex": index,
         "eventTimestamp": timestamp,
@@ -116,7 +118,9 @@ class PerYearAndQuantileTests(unittest.TestCase):
 
 
 class EnvelopeTests(unittest.TestCase):
-    def test_envelope_uses_primary_events_and_labels_unconditional_overlap(self) -> None:
+    def test_envelope_uses_primary_events_and_labels_unconditional_overlap(
+        self,
+    ) -> None:
         events = [
             _event(1, "2023-01-05", 0.02, 0.01),
             _event(2, "2023-02-06", -0.01, 0.00),
@@ -127,9 +131,7 @@ class EnvelopeTests(unittest.TestCase):
         positive = envelope["outcomes"]["primaryPositiveReturn"]
         self.assertEqual((positive["n"], positive["successes"]), (3, 2))
         self.assertEqual(positive["guard"], "withheld")
-        self.assertEqual(
-            [row["year"] for row in positive["perYear"]], [2023, 2024]
-        )
+        self.assertEqual([row["year"] for row in positive["perYear"]], [2023, 2024])
         excess = envelope["outcomes"]["primaryPositiveExcess"]
         self.assertEqual((excess["n"], excess["successes"]), (3, 2))
         unconditional = envelope["unconditionalPositiveReturn"]

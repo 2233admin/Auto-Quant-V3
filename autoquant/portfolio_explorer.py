@@ -64,12 +64,24 @@ from .workspace import (
 
 # Compatibility imports: existing callers retain the same projection surface.
 from .portfolio_projection import (
-    BREAK_EVEN_COST_SEARCH_MAX_BPS, STRATEGY_VIABILITY_METHOD, ParsedDaily,
-    _issue, _fail, _finite, _optional_finite, _session_date, _split_for, _sample_indices,
+    BREAK_EVEN_COST_SEARCH_MAX_BPS,
+    STRATEGY_VIABILITY_METHOD,
+    ParsedDaily,
+    _issue,
+    _fail,
+    _finite,
+    _optional_finite,
+    _session_date,
+    _split_for,
+    _sample_indices,
 )
 from .portfolio_performance import (
-    _reconcile_performance_metrics, _project_performance, _break_even_cost,
-    _temporal_viability, _strategy_viability_projection, _path_projection,
+    _reconcile_performance_metrics,
+    _project_performance,
+    _break_even_cost,
+    _temporal_viability,
+    _strategy_viability_projection,
+    _path_projection,
 )
 
 PORTFOLIO_DIAGNOSTICS_KIND = "autoquant-portfolio-diagnostics"
@@ -96,18 +108,12 @@ NULLABLE_TIMESTAMP_JSON_SCHEMA = {
         *TIMESTAMP_JSON_SCHEMA["anyOf"],
     ]
 }
-MECHANICAL_DECISION_METHOD = (
-    "stateful-percentile-target-risk-execution-chain-v1"
-)
-SIZING_ANATOMY_METHOD = (
-    "conviction-inverse-volatility-capped-waterfill-anatomy-v1"
-)
+MECHANICAL_DECISION_METHOD = "stateful-percentile-target-risk-execution-chain-v1"
+SIZING_ANATOMY_METHOD = "conviction-inverse-volatility-capped-waterfill-anatomy-v1"
 SIGNAL_MONETIZATION_METHOD = (
     "prediction-mode-intent-sizing-governance-execution-cost-bridge-v2"
 )
-DIVERSIFICATION_STRESS_METHOD = (
-    "causal-executed-book-diversification-stress-v1"
-)
+DIVERSIFICATION_STRESS_METHOD = "causal-executed-book-diversification-stress-v1"
 DIVERSIFICATION_SHOCK_METHOD = (
     "observed-to-perfect-position-aligned-covariance-blend-ladder"
 )
@@ -149,23 +155,15 @@ BASE_ARTIFACT_KINDS = {
     "portfolio-decisions",
 }
 POSITION_EPISODE_ARTIFACT_KIND = "portfolio-position-episodes"
-PARAMETER_NEIGHBORHOOD_ARTIFACT_KIND = (
-    "portfolio-parameter-neighborhood"
-)
-TRANSLATION_ROBUSTNESS_ARTIFACT_KIND = (
-    "portfolio-translation-robustness"
-)
+PARAMETER_NEIGHBORHOOD_ARTIFACT_KIND = "portfolio-parameter-neighborhood"
+TRANSLATION_ROBUSTNESS_ARTIFACT_KIND = "portfolio-translation-robustness"
 EXPECTED_ARTIFACT_KINDS = BASE_ARTIFACT_KINDS | {
     POSITION_EPISODE_ARTIFACT_KIND,
     PARAMETER_NEIGHBORHOOD_ARTIFACT_KIND,
     TRANSLATION_ROBUSTNESS_ARTIFACT_KIND,
 }
-PARAMETER_NEIGHBORHOOD_METHOD = (
-    "predeclared-signal-threshold-no-trade-neighborhood-v1"
-)
-TRANSLATION_ROBUSTNESS_METHOD = (
-    "predeclared-temporal-translation-window-stability-v1"
-)
+PARAMETER_NEIGHBORHOOD_METHOD = "predeclared-signal-threshold-no-trade-neighborhood-v1"
+TRANSLATION_ROBUSTNESS_METHOD = "predeclared-temporal-translation-window-stability-v1"
 TRANSLATION_ROBUSTNESS_PROFILES: tuple[dict[str, Any], ...] = (
     {
         "id": "short-history",
@@ -378,9 +376,7 @@ EXECUTION_RISK_DAILY_COLUMNS = (
     | EXECUTION_RISK_DAILY_BOOLEANS
     | EXECUTION_RISK_DAILY_STRINGS
 )
-EXECUTION_RISK_DECISION_COLUMNS = EXECUTION_RISK_DAILY_COLUMNS - {
-    "execution_reason"
-}
+EXECUTION_RISK_DECISION_COLUMNS = EXECUTION_RISK_DAILY_COLUMNS - {"execution_reason"}
 EXECUTION_RISK_DECISION_FLOATS = EXECUTION_RISK_DAILY_FLOATS
 EXECUTION_CONSTRAINT_DAILY_FLOATS = {
     "constraint_repair_one_way",
@@ -390,8 +386,7 @@ EXECUTION_CONSTRAINT_DAILY_BOOLEANS = {
     "constraint_rebalance_override",
 }
 EXECUTION_CONSTRAINT_DAILY_COLUMNS = (
-    EXECUTION_CONSTRAINT_DAILY_FLOATS
-    | EXECUTION_CONSTRAINT_DAILY_BOOLEANS
+    EXECUTION_CONSTRAINT_DAILY_FLOATS | EXECUTION_CONSTRAINT_DAILY_BOOLEANS
 )
 
 
@@ -554,10 +549,7 @@ def _parse_flat_decision_schedule(
         bars = int(raw["decision_every_bars"])
     except ValueError:
         bars = 0
-    if (
-        str(bars) != raw["decision_every_bars"]
-        or not 1 <= bars <= 252
-    ):
+    if str(bars) != raw["decision_every_bars"] or not 1 <= bars <= 252:
         _fail(
             f"{path}/decision_every_bars",
             "portfolio.decision-cadence",
@@ -570,11 +562,15 @@ def _parse_flat_decision_schedule(
             "portfolio.decision-anchor",
             "decision_anchor must be dataset-start or session-start",
         )
-    return {
-        "kind": kind,
-        "bars": bars,
-        "anchor": anchor,
-    }, bars, anchor
+    return (
+        {
+            "kind": kind,
+            "bars": bars,
+            "anchor": anchor,
+        },
+        bars,
+        anchor,
+    )
 
 
 def _parse_daily(path: Path) -> ParsedDaily:
@@ -603,9 +599,7 @@ def _parse_daily(path: Path) -> ParsedDaily:
             "portfolio.execution-risk-columns",
             "Daily evidence must contain the complete execution-risk column set",
         )
-    has_execution_constraints = (
-        EXECUTION_CONSTRAINT_DAILY_COLUMNS.issubset(fields)
-    )
+    has_execution_constraints = EXECUTION_CONSTRAINT_DAILY_COLUMNS.issubset(fields)
     if (
         EXECUTION_CONSTRAINT_DAILY_COLUMNS & set(fields)
         and not has_execution_constraints
@@ -651,12 +645,8 @@ def _parse_daily(path: Path) -> ParsedDaily:
             _parse_flat_decision_schedule(raw, f"{path}:{index}")
         )
         decision_session = raw["decision_session"]
-        if (
-            not decision_session
-            or (
-                decision_anchor == "dataset-start"
-                and decision_session != "dataset"
-            )
+        if not decision_session or (
+            decision_anchor == "dataset-start" and decision_session != "dataset"
         ):
             _fail(
                 f"{path}:{index}/decision_session",
@@ -713,31 +703,18 @@ def _parse_daily(path: Path) -> ParsedDaily:
                 )
             if (
                 any(value < 0 for value in execution_numeric.values())
-                or not 0
-                <= execution_numeric["proposed_runtime_risk_scale"]
-                <= 1
-                or not 0
-                <= execution_numeric["execution_risk_repair_scale"]
-                <= 1
+                or not 0 <= execution_numeric["proposed_runtime_risk_scale"] <= 1
+                or not 0 <= execution_numeric["execution_risk_repair_scale"] <= 1
                 or not math.isclose(
                     execution_numeric["execution_risk_observations"],
-                    round(
-                        execution_numeric["execution_risk_observations"]
-                    ),
+                    round(execution_numeric["execution_risk_observations"]),
                     rel_tol=0.0,
                     abs_tol=1e-12,
                 )
                 or (
-                    execution_boolean[
-                        "execution_risk_forecast_available"
-                    ]
-                    and execution_numeric[
-                        "executed_risk_forecast_annualized"
-                    ]
-                    > execution_numeric[
-                        "execution_risk_ceiling_annualized"
-                    ]
-                    + 1e-10
+                    execution_boolean["execution_risk_forecast_available"]
+                    and execution_numeric["executed_risk_forecast_annualized"]
+                    > execution_numeric["execution_risk_ceiling_annualized"] + 1e-10
                 )
                 or (
                     execution_boolean["risk_rebalance_override"]
@@ -761,9 +738,7 @@ def _parse_daily(path: Path) -> ParsedDaily:
                 **execution_numeric,
                 **execution_boolean,
                 "execution_reason": raw["execution_reason"],
-                "execution_risk_status": raw[
-                    "execution_risk_status"
-                ],
+                "execution_risk_status": raw["execution_risk_status"],
             }
             if has_execution_constraints:
                 for key in EXECUTION_CONSTRAINT_DAILY_BOOLEANS:
@@ -790,14 +765,9 @@ def _parse_daily(path: Path) -> ParsedDaily:
                         float(execution_values[key]) < 0
                         for key in EXECUTION_CONSTRAINT_DAILY_FLOATS
                     )
-                    or execution_values[
-                        "executed_constraint_maximum_error"
-                    ]
-                    > 1e-10
+                    or execution_values["executed_constraint_maximum_error"] > 1e-10
                     or (
-                        execution_values[
-                            "constraint_rebalance_override"
-                        ]
+                        execution_values["constraint_rebalance_override"]
                         and (
                             execution_boolean["ordinary_rebalance"]
                             or raw["execution_reason"]
@@ -809,11 +779,8 @@ def _parse_daily(path: Path) -> ParsedDaily:
                         )
                     )
                     or (
-                        raw["execution_reason"]
-                        == "mandate_and_risk_override"
-                        and not execution_boolean[
-                            "risk_rebalance_override"
-                        ]
+                        raw["execution_reason"] == "mandate_and_risk_override"
+                        and not execution_boolean["risk_rebalance_override"]
                     )
                 ):
                     _fail(
@@ -823,38 +790,25 @@ def _parse_daily(path: Path) -> ParsedDaily:
                     )
             else:
                 execution_values.update(
-                    {
-                        key: 0.0
-                        for key in EXECUTION_CONSTRAINT_DAILY_FLOATS
-                    }
+                    {key: 0.0 for key in EXECUTION_CONSTRAINT_DAILY_FLOATS}
                 )
                 execution_values.update(
-                    {
-                        key: False
-                        for key in EXECUTION_CONSTRAINT_DAILY_BOOLEANS
-                    }
+                    {key: False for key in EXECUTION_CONSTRAINT_DAILY_BOOLEANS}
                 )
-            if (
-                not (raw["decision_eligible"] == "True")
-                and (
-                    execution_boolean["ordinary_rebalance"]
-                    or (
-                        raw["rebalanced"] == "True"
-                        and not execution_boolean[
-                            "risk_rebalance_override"
-                        ]
-                        and not execution_values[
-                            "constraint_rebalance_override"
-                        ]
-                    )
-                    or raw["execution_reason"]
-                    not in {
-                        "decision_schedule_hold",
-                        "risk_ceiling_override",
-                        "mandate_constraint_override",
-                        "mandate_and_risk_override",
-                    }
+            if not (raw["decision_eligible"] == "True") and (
+                execution_boolean["ordinary_rebalance"]
+                or (
+                    raw["rebalanced"] == "True"
+                    and not execution_boolean["risk_rebalance_override"]
+                    and not execution_values["constraint_rebalance_override"]
                 )
+                or raw["execution_reason"]
+                not in {
+                    "decision_schedule_hold",
+                    "risk_ceiling_override",
+                    "mandate_constraint_override",
+                    "mandate_and_risk_override",
+                }
             ):
                 _fail(
                     f"{path}:{index}",
@@ -863,22 +817,10 @@ def _parse_daily(path: Path) -> ParsedDaily:
                 )
         else:
             execution_values = {
-                **{
-                    key: 0.0
-                    for key in EXECUTION_RISK_DAILY_FLOATS
-                },
-                **{
-                    key: False
-                    for key in EXECUTION_RISK_DAILY_BOOLEANS
-                },
-                **{
-                    key: 0.0
-                    for key in EXECUTION_CONSTRAINT_DAILY_FLOATS
-                },
-                **{
-                    key: False
-                    for key in EXECUTION_CONSTRAINT_DAILY_BOOLEANS
-                },
+                **{key: 0.0 for key in EXECUTION_RISK_DAILY_FLOATS},
+                **{key: False for key in EXECUTION_RISK_DAILY_BOOLEANS},
+                **{key: 0.0 for key in EXECUTION_CONSTRAINT_DAILY_FLOATS},
+                **{key: False for key in EXECUTION_CONSTRAINT_DAILY_BOOLEANS},
                 "execution_reason": "legacy_unavailable",
                 "execution_risk_status": "legacy_unavailable",
             }
@@ -888,9 +830,7 @@ def _parse_daily(path: Path) -> ParsedDaily:
                 **values,
                 "cash_weight": cash_weight,
                 "rebalanced": raw["rebalanced"] == "True",
-                "decision_eligible": (
-                    raw["decision_eligible"] == "True"
-                ),
+                "decision_eligible": (raw["decision_eligible"] == "True"),
                 "decision_schedule": decision_schedule,
                 "decision_schedule_kind": decision_schedule["kind"],
                 "decision_every_bars": decision_every_bars,
@@ -960,11 +900,7 @@ def _parse_decisions(
         },
         maximum_rows=MAX_DECISION_ROWS,
     )
-    expected = {
-        (timestamp, asset)
-        for timestamp in daily.dates
-        for asset in universe
-    }
+    expected = {(timestamp, asset) for timestamp in daily.dates for asset in universe}
     decisions: dict[tuple[str, str], dict[str, Any]] = {}
     ordered: list[dict[str, Any]] = []
     mandate_columns = {"tradable", "permitted_direction", "mandate_id"}
@@ -989,20 +925,15 @@ def _parse_decisions(
             "portfolio.liquidity-columns",
             "Decision ledger must contain the complete liquidity-capacity column set",
         )
-    has_execution_risk_columns = EXECUTION_RISK_DECISION_COLUMNS.issubset(
-        fields
-    )
-    if (
-        EXECUTION_RISK_DECISION_COLUMNS & set(fields)
-        and not has_execution_risk_columns
-    ):
+    has_execution_risk_columns = EXECUTION_RISK_DECISION_COLUMNS.issubset(fields)
+    if EXECUTION_RISK_DECISION_COLUMNS & set(fields) and not has_execution_risk_columns:
         _fail(
             path,
             "portfolio.execution-risk-columns",
             "Decision ledger must contain the complete execution-risk column set",
         )
-    has_execution_constraint_columns = (
-        EXECUTION_CONSTRAINT_DAILY_COLUMNS.issubset(fields)
+    has_execution_constraint_columns = EXECUTION_CONSTRAINT_DAILY_COLUMNS.issubset(
+        fields
     )
     if (
         EXECUTION_CONSTRAINT_DAILY_COLUMNS & set(fields)
@@ -1058,12 +989,8 @@ def _parse_decisions(
             _parse_flat_decision_schedule(raw, row_path)
         )
         decision_session = raw["decision_session"]
-        if (
-            not decision_session
-            or (
-                decision_anchor == "dataset-start"
-                and decision_session != "dataset"
-            )
+        if not decision_session or (
+            decision_anchor == "dataset-start" and decision_session != "dataset"
         ):
             _fail(
                 f"{row_path}/decision_session",
@@ -1071,10 +998,7 @@ def _parse_decisions(
                 "decision_session is inconsistent with the anchor",
             )
         position_role = raw["position_role"]
-        if (
-            position_role
-            != mandate["assetPositionRoles"].get(asset)
-        ):
+        if position_role != mandate["assetPositionRoles"].get(asset):
             _fail(
                 f"{row_path}/position_role",
                 "portfolio.asset-position-role",
@@ -1088,19 +1012,16 @@ def _parse_decisions(
             raw["short_gross_limit"],
             f"{row_path}/short_gross_limit",
         )
-        if (
-            not math.isclose(
-                long_gross_limit,
-                float(mandate["longGrossLimit"]),
-                rel_tol=0.0,
-                abs_tol=1e-12,
-            )
-            or not math.isclose(
-                short_gross_limit,
-                float(mandate["shortGrossLimit"]),
-                rel_tol=0.0,
-                abs_tol=1e-12,
-            )
+        if not math.isclose(
+            long_gross_limit,
+            float(mandate["longGrossLimit"]),
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ) or not math.isclose(
+            short_gross_limit,
+            float(mandate["shortGrossLimit"]),
+            rel_tol=0.0,
+            abs_tol=1e-12,
         ):
             _fail(
                 row_path,
@@ -1130,15 +1051,11 @@ def _parse_decisions(
             )
         translation_method = raw["translation_method"]
         evaluation_mode = raw["evaluation_mode"]
-        if (
-            translation_method != SIGNAL_TRANSLATION_METHOD
-            or evaluation_mode
-            not in {
-                "cross-sectional",
-                "single-asset-temporal",
-                "two-asset-relative-value",
-            }
-        ):
+        if translation_method != SIGNAL_TRANSLATION_METHOD or evaluation_mode not in {
+            "cross-sectional",
+            "single-asset-temporal",
+            "two-asset-relative-value",
+        }:
             _fail(
                 row_path,
                 "portfolio.translation-semantics",
@@ -1155,9 +1072,7 @@ def _parse_decisions(
             }
             if has_risk_columns
             else {
-                "pre_governor_target_weight": numeric[
-                    "proposed_target_weight"
-                ],
+                "pre_governor_target_weight": numeric["proposed_target_weight"],
                 "risk_estimation_observations": 0.0,
                 "risk_forecast_pre_annualized": 0.0,
                 "risk_forecast_post_annualized": 0.0,
@@ -1187,9 +1102,7 @@ def _parse_decisions(
                 for field in EXECUTION_RISK_DECISION_FLOATS
             }
             if has_execution_risk_columns
-            else {
-                field: 0.0 for field in EXECUTION_RISK_DECISION_FLOATS
-            }
+            else {field: 0.0 for field in EXECUTION_RISK_DECISION_FLOATS}
         )
         execution_risk_booleans: dict[str, bool] = {}
         if has_execution_risk_columns:
@@ -1209,8 +1122,7 @@ def _parse_decisions(
                 )
         else:
             execution_risk_booleans = {
-                field: False
-                for field in EXECUTION_RISK_DAILY_BOOLEANS
+                field: False for field in EXECUTION_RISK_DAILY_BOOLEANS
             }
         execution_constraint_numeric = (
             {
@@ -1218,10 +1130,7 @@ def _parse_decisions(
                 for field in EXECUTION_CONSTRAINT_DAILY_FLOATS
             }
             if has_execution_constraint_columns
-            else {
-                field: 0.0
-                for field in EXECUTION_CONSTRAINT_DAILY_FLOATS
-            }
+            else {field: 0.0 for field in EXECUTION_CONSTRAINT_DAILY_FLOATS}
         )
         execution_constraint_booleans = (
             {
@@ -1229,10 +1138,7 @@ def _parse_decisions(
                 for field in EXECUTION_CONSTRAINT_DAILY_BOOLEANS
             }
             if has_execution_constraint_columns
-            else {
-                field: False
-                for field in EXECUTION_CONSTRAINT_DAILY_BOOLEANS
-            }
+            else {field: False for field in EXECUTION_CONSTRAINT_DAILY_BOOLEANS}
         )
         if has_execution_constraint_columns and any(
             raw[field] not in {"True", "False"}
@@ -1279,33 +1185,18 @@ def _parse_decisions(
             )
         if has_execution_risk_columns and (
             any(value < 0 for value in execution_risk_numeric.values())
-            or not 0
-            <= execution_risk_numeric["proposed_runtime_risk_scale"]
-            <= 1
-            or not 0
-            <= execution_risk_numeric["execution_risk_repair_scale"]
-            <= 1
+            or not 0 <= execution_risk_numeric["proposed_runtime_risk_scale"] <= 1
+            or not 0 <= execution_risk_numeric["execution_risk_repair_scale"] <= 1
             or not math.isclose(
                 execution_risk_numeric["execution_risk_observations"],
-                round(
-                    execution_risk_numeric[
-                        "execution_risk_observations"
-                    ]
-                ),
+                round(execution_risk_numeric["execution_risk_observations"]),
                 rel_tol=0.0,
                 abs_tol=1e-12,
             )
             or (
-                execution_risk_booleans[
-                    "execution_risk_forecast_available"
-                ]
-                and execution_risk_numeric[
-                    "executed_risk_forecast_annualized"
-                ]
-                > execution_risk_numeric[
-                    "execution_risk_ceiling_annualized"
-                ]
-                + 1e-10
+                execution_risk_booleans["execution_risk_forecast_available"]
+                and execution_risk_numeric["executed_risk_forecast_annualized"]
+                > execution_risk_numeric["execution_risk_ceiling_annualized"] + 1e-10
             )
             or (
                 execution_risk_booleans["risk_rebalance_override"]
@@ -1318,18 +1209,10 @@ def _parse_decisions(
                     }
                 )
             )
-            or any(
-                value < 0
-                for value in execution_constraint_numeric.values()
-            )
-            or execution_constraint_numeric[
-                "executed_constraint_maximum_error"
-            ]
-            > 1e-10
+            or any(value < 0 for value in execution_constraint_numeric.values())
+            or execution_constraint_numeric["executed_constraint_maximum_error"] > 1e-10
             or (
-                execution_constraint_booleans[
-                    "constraint_rebalance_override"
-                ]
+                execution_constraint_booleans["constraint_rebalance_override"]
                 and (
                     execution_risk_booleans["ordinary_rebalance"]
                     or raw["execution_reason"]
@@ -1342,9 +1225,7 @@ def _parse_decisions(
             or (
                 raw["execution_reason"] == "mandate_and_risk_override"
                 and (
-                    not execution_risk_booleans[
-                        "risk_rebalance_override"
-                    ]
+                    not execution_risk_booleans["risk_rebalance_override"]
                     or not execution_constraint_booleans[
                         "constraint_rebalance_override"
                     ]
@@ -1388,8 +1269,7 @@ def _parse_decisions(
             )
             or (
                 raw["risk_governor_status"] != "diagnostic_disabled"
-                and
-                risk_numeric["risk_volatility_ceiling_annualized"] > 0
+                and risk_numeric["risk_volatility_ceiling_annualized"] > 0
                 and risk_numeric["risk_forecast_post_annualized"]
                 > risk_numeric["risk_volatility_ceiling_annualized"] + 1e-10
             )
@@ -1399,14 +1279,11 @@ def _parse_decisions(
                 "portfolio.risk-governor-reconciliation",
                 "Risk-governor weights or volatility forecasts do not reconcile",
             )
-        if (
-            any(value < 0 for value in liquidity_numeric.values())
-            or not math.isclose(
-                liquidity_numeric["liquidity_adv_observations"],
-                round(liquidity_numeric["liquidity_adv_observations"]),
-                rel_tol=0.0,
-                abs_tol=1e-12,
-            )
+        if any(value < 0 for value in liquidity_numeric.values()) or not math.isclose(
+            liquidity_numeric["liquidity_adv_observations"],
+            round(liquidity_numeric["liquidity_adv_observations"]),
+            rel_tol=0.0,
+            abs_tol=1e-12,
         ):
             _fail(
                 row_path,
@@ -1419,17 +1296,13 @@ def _parse_decisions(
             adv = liquidity_numeric["causal_adv_dollar_volume"]
             if status == "available" and trade > 1e-12:
                 expected_participation = (
-                    trade * reference_nav / adv
-                    if adv > 0
-                    else math.inf
+                    trade * reference_nav / adv if adv > 0 else math.inf
                 )
                 expected_1pct = 0.01 * adv / trade
                 if (
                     adv <= 0
                     or not math.isclose(
-                        liquidity_numeric[
-                            "reference_nav_adv_participation"
-                        ],
+                        liquidity_numeric["reference_nav_adv_participation"],
                         expected_participation,
                         rel_tol=1e-10,
                         abs_tol=1e-8,
@@ -1531,9 +1404,7 @@ def _parse_decisions(
             "execution_action": raw["execution_action"],
             "execution_reason": raw["execution_reason"],
             "risk_governor_status": (
-                raw["risk_governor_status"]
-                if has_risk_columns
-                else "legacy_none"
+                raw["risk_governor_status"] if has_risk_columns else "legacy_none"
             ),
             "execution_risk_status": (
                 raw["execution_risk_status"]
@@ -1550,34 +1421,24 @@ def _parse_decisions(
                 if has_liquidity_columns
                 else False
             ),
-            "tradable": (
-                raw["tradable"] == "True"
-                if has_mandate_columns
-                else True
-            ),
+            "tradable": (raw["tradable"] == "True" if has_mandate_columns else True),
             "permitted_direction": (
-                raw["permitted_direction"]
-                if has_mandate_columns
-                else "dollar-neutral"
+                raw["permitted_direction"] if has_mandate_columns else "dollar-neutral"
             ),
             "mandate_id": (
-                raw["mandate_id"]
-                if has_mandate_columns
-                else "legacy-dollar-neutral"
+                raw["mandate_id"] if has_mandate_columns else "legacy-dollar-neutral"
             ),
         }
         if not decision_eligible:
             scheduled_signal = (
                 parsed["signal_event"] == "decision_schedule_hold"
-                and parsed["allocation_status"]
-                == "decision_schedule_hold"
+                and parsed["allocation_status"] == "decision_schedule_hold"
                 if parsed["tradable"]
                 else parsed["signal_event"] == "context_only"
                 and parsed["allocation_status"] == "context_only"
             )
             if (
-                parsed["prior_signal_state"]
-                != parsed["signal_state"]
+                parsed["prior_signal_state"] != parsed["signal_state"]
                 or abs(parsed["target_delta"]) > 1e-12
                 or not scheduled_signal
                 or parsed["ordinary_rebalance"]
@@ -1722,15 +1583,9 @@ def _parse_decisions(
                         "portfolio.execution-risk-daily",
                         "Decision execution-risk evidence differs from daily evidence",
                     )
-        status, capacity_1pct, capacity_5pct = next(
-            iter(liquidity_signatures)
-        )
-        active_rows = [
-            item for item in rows if abs(item["trade_weight"]) > 1e-12
-        ]
-        binding_rows = [
-            item for item in rows if item["capacity_binding_asset"]
-        ]
+        status, capacity_1pct, capacity_5pct = next(iter(liquidity_signatures))
+        active_rows = [item for item in rows if abs(item["trade_weight"]) > 1e-12]
+        binding_rows = [item for item in rows if item["capacity_binding_asset"]]
         if status == "available":
             if (
                 not active_rows
@@ -1767,10 +1622,7 @@ def _parse_decisions(
                 or binding_rows
                 or capacity_1pct
                 or capacity_5pct
-                or all(
-                    item["causal_adv_dollar_volume"] > 0
-                    for item in active_rows
-                )
+                or all(item["causal_adv_dollar_volume"] > 0 for item in active_rows)
             ):
                 _fail(
                     f"{path}/{timestamp}",
@@ -1811,9 +1663,7 @@ def _parse_decisions(
                     "portfolio.reconciliation",
                     f"Decision ledger does not reconcile daily {label}",
                 )
-        has_trade = (
-            sum(abs(item["trade_weight"]) for item in rows) > 1e-12
-        )
+        has_trade = sum(abs(item["trade_weight"]) for item in rows) > 1e-12
         if has_trade != bool(expected_daily["rebalanced"]):
             _fail(
                 f"{path}/{timestamp}",
@@ -1878,9 +1728,9 @@ def _split_contract(result: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
             "start": start,
             "end": end,
             "signalEnd": signal_end,
-            "role": "selection" if name == "validation" else (
-                "visible-audit" if name == "test" else "training"
-            ),
+            "role": "selection"
+            if name == "validation"
+            else ("visible-audit" if name == "test" else "training"),
         }
         prior_end = end
     return normalized, ordered_names
@@ -1962,18 +1812,20 @@ def _parameter_neighborhood_projection(
             "portfolio.parameter-neighborhood-availability",
             "Parameter-neighborhood metric and artifact must appear together",
         )
-    signal_parameters = result["metrics"].get("signal_policy", {}).get(
-        "parameters",
-        {},
+    signal_parameters = (
+        result["metrics"]
+        .get("signal_policy", {})
+        .get(
+            "parameters",
+            {},
+        )
     )
     base_band = _finite(
         signal_parameters.get("no_trade_one_way"),
         "RunResult/metrics/signal_policy/parameters/no_trade_one_way",
     )
     adverse_band = min(1.0, max(0.10, 2.0 * base_band))
-    no_trade_bands = tuple(
-        dict.fromkeys((0.0, base_band, adverse_band))
-    )
+    no_trade_bands = tuple(dict.fromkeys((0.0, base_band, adverse_band)))
     base_configuration_id = _parameter_configuration_id(
         "base",
         base_band,
@@ -2004,8 +1856,7 @@ def _parameter_neighborhood_projection(
         payload["schemaVersion"] != 1
         or payload["inputHash"] != result["inputHash"]
         or payload["method"] != PARAMETER_NEIGHBORHOOD_METHOD
-        or payload["baseConfigurationId"]
-        != base_configuration_id
+        or payload["baseConfigurationId"] != base_configuration_id
         or payload["signalProfiles"] != list(PARAMETER_SIGNAL_PROFILES)
         or payload["noTradeBands"] != list(no_trade_bands)
     ):
@@ -2015,10 +1866,7 @@ def _parameter_neighborhood_projection(
             "Parameter-neighborhood fixed contract does not reconcile",
         )
     raw_rows = payload["rows"]
-    if (
-        not isinstance(raw_rows, list)
-        or len(raw_rows) > MAX_NEIGHBORHOOD_ROWS
-    ):
+    if not isinstance(raw_rows, list) or len(raw_rows) > MAX_NEIGHBORHOOD_ROWS:
         _fail(
             artifact_path,
             "portfolio.parameter-neighborhood-rows",
@@ -2060,11 +1908,7 @@ def _parameter_neighborhood_projection(
         split: [
             timestamp
             for timestamp in daily.dates
-            if (
-                splits[split]["start"]
-                <= timestamp
-                <= splits[split]["signalEnd"]
-            )
+            if (splits[split]["start"] <= timestamp <= splits[split]["signalEnd"])
         ]
         for split in ("validation", "test")
     }
@@ -2109,9 +1953,7 @@ def _parameter_neighborhood_projection(
             )
         profile_id, band = profile_by_configuration[configuration_id]
         expected_role = (
-            "selection-context"
-            if split == "validation"
-            else "visible-audit"
+            "selection-context" if split == "validation" else "visible-audit"
         )
         if (
             row["signalProfile"] != profile_id
@@ -2160,11 +2002,7 @@ def _parameter_neighborhood_projection(
             "reversals",
         ):
             value = row[key]
-            if (
-                not isinstance(value, int)
-                or isinstance(value, bool)
-                or value < 0
-            ):
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 _fail(
                     f"{path}/{key}",
                     "portfolio.parameter-neighborhood-signal",
@@ -2172,11 +2010,8 @@ def _parameter_neighborhood_projection(
                 )
             counts[key] = value
         if (
-            counts["signalTransitions"]
-            > counts["signalDecisionRows"]
-            or counts["entries"]
-            + counts["exits"]
-            + counts["reversals"]
+            counts["signalTransitions"] > counts["signalDecisionRows"]
+            or counts["entries"] + counts["exits"] + counts["reversals"]
             > counts["signalTransitions"]
         ):
             _fail(
@@ -2215,12 +2050,9 @@ def _parameter_neighborhood_projection(
             decision_rows = int(frame["signalDecisionRows"].sum())
             transitions = int(frame["signalTransitions"].sum())
             implementation = {
-                "mean_one_way_turnover": float(
-                    frame["oneWayTurnover"].mean()
-                ),
+                "mean_one_way_turnover": float(frame["oneWayTurnover"].mean()),
                 "annualized_one_way_turnover": float(
-                    frame["oneWayTurnover"].mean()
-                    * annualization_periods(frame.index)
+                    frame["oneWayTurnover"].mean() * annualization_periods(frame.index)
                 ),
                 "total_cost_drag": float(frame["cost"].sum()),
                 "rebalance_rate": float(frame["rebalanced"].mean()),
@@ -2231,9 +2063,7 @@ def _parameter_neighborhood_projection(
                 "timestamps": int(len(frame)),
                 "signal_transitions": transitions,
                 "state_change_rate": (
-                    float(transitions / decision_rows)
-                    if decision_rows
-                    else 0.0
+                    float(transitions / decision_rows) if decision_rows else 0.0
                 ),
                 "entries": int(frame["entries"].sum()),
                 "exits": int(frame["exits"].sum()),
@@ -2252,20 +2082,15 @@ def _parameter_neighborhood_projection(
             current = reconstructed[split][configuration_id]
             current["delta_vs_base"] = {
                 "net_sharpe": (
-                    current["performance"]["sharpe"]
-                    - base["performance"]["sharpe"]
+                    current["performance"]["sharpe"] - base["performance"]["sharpe"]
                 ),
                 "total_return": (
                     current["performance"]["total_return"]
                     - base["performance"]["total_return"]
                 ),
                 "annualized_one_way_turnover": (
-                    current["implementation"][
-                        "annualized_one_way_turnover"
-                    ]
-                    - base["implementation"][
-                        "annualized_one_way_turnover"
-                    ]
+                    current["implementation"]["annualized_one_way_turnover"]
+                    - base["implementation"]["annualized_one_way_turnover"]
                 ),
                 "total_cost_drag": (
                     current["implementation"]["total_cost_drag"]
@@ -2288,15 +2113,11 @@ def _parameter_neighborhood_projection(
             for configuration_id in configuration_ids
         ]
         costs = [
-            reconstructed[split][configuration_id]["implementation"][
-                "total_cost_drag"
-            ]
+            reconstructed[split][configuration_id]["implementation"]["total_cost_drag"]
             for configuration_id in configuration_ids
         ]
         transitions = [
-            reconstructed[split][configuration_id]["signal"][
-                "signal_transitions"
-            ]
+            reconstructed[split][configuration_id]["signal"]["signal_transitions"]
             for configuration_id in configuration_ids
         ]
         base_sign = 1 if base_sharpe > 0 else -1 if base_sharpe < 0 else 0
@@ -2310,14 +2131,7 @@ def _parameter_neighborhood_projection(
                 ),
                 "sign_agreement_with_base_rate": float(
                     sum(
-                        (
-                            1
-                            if value > 0
-                            else -1
-                            if value < 0
-                            else 0
-                        )
-                        == base_sign
+                        (1 if value > 0 else -1 if value < 0 else 0) == base_sign
                         for value in sharpes
                     )
                     / len(sharpes)
@@ -2325,15 +2139,9 @@ def _parameter_neighborhood_projection(
                 "minimum_net_sharpe": min(sharpes),
                 "median_net_sharpe": float(pd.Series(sharpes).median()),
                 "maximum_net_sharpe": max(sharpes),
-                "net_sharpe_std": float(
-                    pd.Series(sharpes).std(ddof=0)
-                ),
-                "worst_net_sharpe_delta": min(
-                    value - base_sharpe for value in sharpes
-                ),
-                "best_net_sharpe_delta": max(
-                    value - base_sharpe for value in sharpes
-                ),
+                "net_sharpe_std": float(pd.Series(sharpes).std(ddof=0)),
+                "worst_net_sharpe_delta": min(value - base_sharpe for value in sharpes),
+                "best_net_sharpe_delta": max(value - base_sharpe for value in sharpes),
                 "minimum_annualized_one_way_turnover": min(turnovers),
                 "maximum_annualized_one_way_turnover": max(turnovers),
                 "minimum_total_cost_drag": min(costs),
@@ -2418,75 +2226,52 @@ def _parameter_neighborhood_projection(
             "aggregate": {
                 "configurationCount": aggregate["configuration_count"],
                 "baseNetSharpe": aggregate["base_net_sharpe"],
-                "positiveNetSharpeRate": aggregate[
-                    "positive_net_sharpe_rate"
-                ],
-                "signAgreementWithBaseRate": aggregate[
-                    "sign_agreement_with_base_rate"
-                ],
+                "positiveNetSharpeRate": aggregate["positive_net_sharpe_rate"],
+                "signAgreementWithBaseRate": aggregate["sign_agreement_with_base_rate"],
                 "minimumNetSharpe": aggregate["minimum_net_sharpe"],
                 "medianNetSharpe": aggregate["median_net_sharpe"],
                 "maximumNetSharpe": aggregate["maximum_net_sharpe"],
                 "netSharpeStd": aggregate["net_sharpe_std"],
-                "worstNetSharpeDelta": aggregate[
-                    "worst_net_sharpe_delta"
-                ],
-                "bestNetSharpeDelta": aggregate[
-                    "best_net_sharpe_delta"
-                ],
+                "worstNetSharpeDelta": aggregate["worst_net_sharpe_delta"],
+                "bestNetSharpeDelta": aggregate["best_net_sharpe_delta"],
                 "minimumAnnualizedOneWayTurnover": aggregate[
                     "minimum_annualized_one_way_turnover"
                 ],
                 "maximumAnnualizedOneWayTurnover": aggregate[
                     "maximum_annualized_one_way_turnover"
                 ],
-                "minimumTotalCostDrag": aggregate[
-                    "minimum_total_cost_drag"
-                ],
-                "maximumTotalCostDrag": aggregate[
-                    "maximum_total_cost_drag"
-                ],
-                "minimumSignalTransitions": aggregate[
-                    "minimum_signal_transitions"
-                ],
-                "maximumSignalTransitions": aggregate[
-                    "maximum_signal_transitions"
-                ],
+                "minimumTotalCostDrag": aggregate["minimum_total_cost_drag"],
+                "maximumTotalCostDrag": aggregate["maximum_total_cost_drag"],
+                "minimumSignalTransitions": aggregate["minimum_signal_transitions"],
+                "maximumSignalTransitions": aggregate["maximum_signal_transitions"],
             },
             "configurations": [
                 {
                     "id": configuration_id,
-                    "signalProfile": profile_by_configuration[
-                        configuration_id
-                    ][0],
-                    "noTradeOneWay": profile_by_configuration[
-                        configuration_id
-                    ][1],
-                    "isBase": (
-                        configuration_id
-                        == base_configuration_id
-                    ),
-                    "netSharpe": reconstructed[split][configuration_id][
-                        "performance"
-                    ]["sharpe"],
+                    "signalProfile": profile_by_configuration[configuration_id][0],
+                    "noTradeOneWay": profile_by_configuration[configuration_id][1],
+                    "isBase": (configuration_id == base_configuration_id),
+                    "netSharpe": reconstructed[split][configuration_id]["performance"][
+                        "sharpe"
+                    ],
                     "totalReturn": reconstructed[split][configuration_id][
                         "performance"
                     ]["total_return"],
-                    "annualizedOneWayTurnover": reconstructed[split][
-                        configuration_id
-                    ]["implementation"]["annualized_one_way_turnover"],
+                    "annualizedOneWayTurnover": reconstructed[split][configuration_id][
+                        "implementation"
+                    ]["annualized_one_way_turnover"],
                     "totalCostDrag": reconstructed[split][configuration_id][
                         "implementation"
                     ]["total_cost_drag"],
                     "rebalanceRate": reconstructed[split][configuration_id][
                         "implementation"
                     ]["rebalance_rate"],
-                    "signalTransitions": reconstructed[split][
-                        configuration_id
-                    ]["signal"]["signal_transitions"],
-                    "netSharpeDeltaVsBase": reconstructed[split][
-                        configuration_id
-                    ]["delta_vs_base"]["net_sharpe"],
+                    "signalTransitions": reconstructed[split][configuration_id][
+                        "signal"
+                    ]["signal_transitions"],
+                    "netSharpeDeltaVsBase": reconstructed[split][configuration_id][
+                        "delta_vs_base"
+                    ]["net_sharpe"],
                 }
                 for configuration_id in configuration_ids
             ],
@@ -2546,12 +2331,8 @@ def _translation_robustness_projection(
         "base_profile_id": "base",
         "profiles": [dict(profile) for profile in TRANSLATION_ROBUSTNESS_PROFILES],
         "stability_thresholds": {
-            "minimum_active_state_agreement_rate": (
-                TRANSLATION_ACTIVE_AGREEMENT_FLOOR
-            ),
-            "maximum_mean_absolute_target_delta": (
-                TRANSLATION_TARGET_MAE_CEILING
-            ),
+            "minimum_active_state_agreement_rate": (TRANSLATION_ACTIVE_AGREEMENT_FLOOR),
+            "maximum_mean_absolute_target_delta": (TRANSLATION_TARGET_MAE_CEILING),
         },
     }
     if mode not in TEMPORAL_EVALUATION_MODES:
@@ -2646,8 +2427,7 @@ def _translation_robustness_projection(
     if (
         not isinstance(asset_rows, list)
         or not isinstance(daily_rows, list)
-        or len(asset_rows) + len(daily_rows)
-        > MAX_TRANSLATION_ROBUSTNESS_ROWS
+        or len(asset_rows) + len(daily_rows) > MAX_TRANSLATION_ROBUSTNESS_ROWS
     ):
         _fail(
             artifact_path,
@@ -2656,9 +2436,7 @@ def _translation_robustness_projection(
         )
 
     dates = list(dict.fromkeys(row["timestamp"] for row in ordered_decisions))
-    decisions = {
-        (row["timestamp"], row["asset"]): row for row in ordered_decisions
-    }
+    decisions = {(row["timestamp"], row["asset"]): row for row in ordered_decisions}
     factor_panel = pd.DataFrame(
         math.nan,
         index=dates,
@@ -2735,9 +2513,7 @@ def _translation_robustness_projection(
                 )
                 expected_score = scores.loc[timestamp, asset]
                 actual_score = row["score"]
-                score_matches = (
-                    actual_score is None and pd.isna(expected_score)
-                ) or (
+                score_matches = (actual_score is None and pd.isna(expected_score)) or (
                     actual_score is not None
                     and math.isclose(
                         _finite(actual_score, f"{path}/score"),
@@ -2746,10 +2522,8 @@ def _translation_robustness_projection(
                         abs_tol=1e-12,
                     )
                 )
-                if (
-                    not score_matches
-                    or row["observations"]
-                    != int(observations.loc[timestamp, asset])
+                if not score_matches or row["observations"] != int(
+                    observations.loc[timestamp, asset]
                 ):
                     _fail(
                         path,
@@ -2900,20 +2674,24 @@ def _translation_robustness_projection(
             )
         if identity[0] == "base":
             expected_base = base_daily.get(identity[2])
-            if expected_base is None or any(
-                not math.isclose(
-                    numeric[key],
-                    float(expected_base[expected_key]),
-                    rel_tol=1e-9,
-                    abs_tol=1e-11,
+            if (
+                expected_base is None
+                or any(
+                    not math.isclose(
+                        numeric[key],
+                        float(expected_base[expected_key]),
+                        rel_tol=1e-9,
+                        abs_tol=1e-11,
+                    )
+                    for key, expected_key in (
+                        ("netReturn", "net_return"),
+                        ("benchmarkReturn", "benchmark_return"),
+                        ("oneWayTurnover", "one_way_turnover"),
+                        ("cost", "cost"),
+                    )
                 )
-                for key, expected_key in (
-                    ("netReturn", "net_return"),
-                    ("benchmarkReturn", "benchmark_return"),
-                    ("oneWayTurnover", "one_way_turnover"),
-                    ("cost", "cost"),
-                )
-            ) or row["rebalanced"] != bool(expected_base["rebalanced"]):
+                or row["rebalanced"] != bool(expected_base["rebalanced"])
+            ):
                 _fail(
                     path,
                     "portfolio.translation-robustness-base-accounting",
@@ -2959,12 +2737,18 @@ def _translation_robustness_projection(
                             current["signal_state"] == base["signal_state"]
                         )
                         current_sign = (
-                            1 if current["target_weight"] > 0 else -1
-                            if current["target_weight"] < 0 else 0
+                            1
+                            if current["target_weight"] > 0
+                            else -1
+                            if current["target_weight"] < 0
+                            else 0
                         )
                         base_sign = (
-                            1 if base["target_weight"] > 0 else -1
-                            if base["target_weight"] < 0 else 0
+                            1
+                            if base["target_weight"] > 0
+                            else -1
+                            if base["target_weight"] < 0
+                            else 0
                         )
                         direction_equal.append(current_sign == base_sign)
             frame = pd.DataFrame(parsed_daily[(profile_id, split)]).set_index(
@@ -3011,8 +2795,7 @@ def _translation_robustness_projection(
         if profile["active_state_agreement_with_base_rate"] is not None
     ]
     maximum_target_delta = max(
-        float(profile["mean_absolute_target_delta_vs_base"])
-        for profile in non_base
+        float(profile["mean_absolute_target_delta_vs_base"]) for profile in non_base
     )
     if not agreements:
         status = "insufficient-active-targets"
@@ -3063,8 +2846,12 @@ def _translation_robustness_projection(
                 {
                     "asset": asset,
                     "score": parsed_assets[str(profile["id"])][latest][asset]["score"],
-                    "signal_state": parsed_assets[str(profile["id"])][latest][asset]["signal_state"],
-                    "target_weight": parsed_assets[str(profile["id"])][latest][asset]["target_weight"],
+                    "signal_state": parsed_assets[str(profile["id"])][latest][asset][
+                        "signal_state"
+                    ],
+                    "target_weight": parsed_assets[str(profile["id"])][latest][asset][
+                        "target_weight"
+                    ],
                 }
                 for asset in prediction_assets
             ]
@@ -3104,9 +2891,11 @@ def _translation_robustness_projection(
                     "activeStateAgreementWithBaseRate": split_output[split]["profiles"][
                         str(profile["id"])
                     ]["active_state_agreement_with_base_rate"],
-                    "activeTargetDirectionAgreementWithBaseRate": split_output[split]["profiles"][
-                        str(profile["id"])
-                    ]["active_target_direction_agreement_with_base_rate"],
+                    "activeTargetDirectionAgreementWithBaseRate": split_output[split][
+                        "profiles"
+                    ][str(profile["id"])][
+                        "active_target_direction_agreement_with_base_rate"
+                    ],
                     "meanAbsoluteTargetDeltaVsBase": split_output[split]["profiles"][
                         str(profile["id"])
                     ]["mean_absolute_target_delta_vs_base"],
@@ -3119,9 +2908,9 @@ def _translation_robustness_projection(
                     "annualizedOneWayTurnover": split_output[split]["profiles"][
                         str(profile["id"])
                     ]["implementation"]["annualized_one_way_turnover"],
-                    "totalCostDrag": split_output[split]["profiles"][str(profile["id"])][
-                        "implementation"
-                    ]["total_cost_drag"],
+                    "totalCostDrag": split_output[split]["profiles"][
+                        str(profile["id"])
+                    ]["implementation"]["total_cost_drag"],
                 }
                 for profile in TRANSLATION_ROBUSTNESS_PROFILES
             ]
@@ -3190,8 +2979,7 @@ def _signal_monetization_projection(
     evaluation_mode = str(prediction_population["evaluation_mode"])
     relative_value_pair = prediction_population["relative_value_pair"]
     relative_value_intent = (
-        family == "dollar-neutral"
-        and evaluation_mode == TWO_ASSET_RELATIVE_VALUE_MODE
+        family == "dollar-neutral" and evaluation_mode == TWO_ASSET_RELATIVE_VALUE_MODE
     )
     if relative_value_intent and not isinstance(relative_value_pair, dict):
         _fail(
@@ -3206,8 +2994,7 @@ def _signal_monetization_projection(
     )
     gross_limit = float(mandate["grossLimit"])
     asset_caps = {
-        asset: float(mandate["assetMaxAbsWeights"][asset])
-        for asset in universe
+        asset: float(mandate["assetMaxAbsWeights"][asset]) for asset in universe
     }
     daily_by_date = {row["timestamp"]: row for row in daily.rows}
     by_date: dict[str, list[dict[str, Any]]] = {}
@@ -3274,9 +3061,8 @@ def _signal_monetization_projection(
                 weights[right] = right_state * pair_budget
         elif family == "dollar-neutral":
             side_budget = gross_limit / 2.0
-            if (
-                not capped_equal_side(longs, side_budget, 1.0)
-                or not capped_equal_side(shorts, side_budget, -1.0)
+            if not capped_equal_side(longs, side_budget, 1.0) or not capped_equal_side(
+                shorts, side_budget, -1.0
             ):
                 return {asset: 0.0 for asset in universe}
         elif family == "long-cash" and longs:
@@ -3362,10 +3148,7 @@ def _signal_monetization_projection(
             )
         totals = {stage_id: 0.0 for stage_id in stage_ids}
         asset_totals = {
-            asset: {
-                stage_id: 0.0 for stage_id in stage_ids
-            }
-            for asset in universe
+            asset: {stage_id: 0.0 for stage_id in stage_ids} for asset in universe
         }
         asset_costs = {asset: 0.0 for asset in universe}
         coverage = {
@@ -3430,10 +3213,7 @@ def _signal_monetization_projection(
                     default=0.0,
                 ),
             )
-            raw_gross = sum(
-                abs(item["pre_governor_target_weight"])
-                for item in rows
-            )
+            raw_gross = sum(abs(item["pre_governor_target_weight"]) for item in rows)
             coverage["rawTargetActiveDates"] += int(raw_gross > 1e-12)
             coverage["riskLimitedDates"] += int(
                 rows[0]["risk_governor_scale"] < 1.0 - 1e-12
@@ -3449,9 +3229,7 @@ def _signal_monetization_projection(
             )
             traded = any(abs(item["trade_weight"]) > 1e-12 for item in rows)
             coverage["targetExecutionMismatchDates"] += int(target_mismatch)
-            coverage["noTradeRetentionDates"] += int(
-                target_mismatch and not traded
-            )
+            coverage["noTradeRetentionDates"] += int(target_mismatch and not traded)
             coverage["rebalancedDates"] += int(traded)
             daily_stage = {stage_id: 0.0 for stage_id in stage_ids}
             daily_cost = 0.0
@@ -3461,9 +3239,7 @@ def _signal_monetization_projection(
                 coverage["scoreAvailableObservations"] += int(
                     item["percentile_score"] is not None
                 )
-                coverage["contextOnlyObservations"] += int(
-                    not item["tradable"]
-                )
+                coverage["contextOnlyObservations"] += int(not item["tradable"])
                 coverage["directionalIntentObservations"] += int(
                     item["tradable"] and item["signal_state"] != 0
                 )
@@ -3472,28 +3248,18 @@ def _signal_monetization_projection(
                 )
                 forward_return = item["asset_forward_return"]
                 contribution = {
-                    "equalIntent": (
-                        intent_weights[asset] * forward_return
-                    ),
+                    "equalIntent": (intent_weights[asset] * forward_return),
                     "preGovernorSizing": (
-                        item["pre_governor_target_weight"]
-                        * forward_return
+                        item["pre_governor_target_weight"] * forward_return
                     ),
-                    "governedTarget": (
-                        item["proposed_target_weight"] * forward_return
-                    ),
-                    "executedGross": (
-                        item["executed_weight"] * forward_return
-                    ),
+                    "governedTarget": (item["proposed_target_weight"] * forward_return),
+                    "executedGross": (item["executed_weight"] * forward_return),
                     "executedNet": item["net_return_contribution"],
                 }
                 if relative_value_intent:
                     errors["maximumRelativeValueIntentTargetError"] = max(
                         errors["maximumRelativeValueIntentTargetError"],
-                        abs(
-                            intent_weights[asset]
-                            - item["pre_governor_target_weight"]
-                        ),
+                        abs(intent_weights[asset] - item["pre_governor_target_weight"]),
                     )
                 errors["maximumGrossFormulaError"] = max(
                     errors["maximumGrossFormulaError"],
@@ -3549,9 +3315,7 @@ def _signal_monetization_projection(
                 "label": label,
                 "fromStage": from_stage,
                 "toStage": to_stage,
-                "totalContributionDelta": (
-                    totals[to_stage] - totals[from_stage]
-                ),
+                "totalContributionDelta": (totals[to_stage] - totals[from_stage]),
                 "annualizedContributionDelta": annualize(
                     totals[to_stage] - totals[from_stage]
                 ),
@@ -3562,9 +3326,7 @@ def _signal_monetization_projection(
         reconciliation = {
             "passed": all(value <= tolerance for value in errors.values()),
             "tolerance": tolerance,
-            "relativeValueIntentTargetParityApplicable": (
-                relative_value_intent
-            ),
+            "relativeValueIntentTargetParityApplicable": (relative_value_intent),
             **errors,
         }
         if not reconciliation["passed"]:
@@ -3594,8 +3356,7 @@ def _signal_monetization_projection(
 
     validation = split_outputs["validation"]
     validation_totals = {
-        item["id"]: item["totalContribution"]
-        for item in validation["stages"]
+        item["id"]: item["totalContribution"] for item in validation["stages"]
     }
     worst_delta = min(
         validation["deltas"],
@@ -3643,8 +3404,7 @@ def _signal_monetization_projection(
             "evaluationMode": evaluation_mode,
             "intentConstruction": intent_construction,
             "equalIntent": (
-                "prediction-mode-aware-mandate-constrained-"
-                "signal-state-diagnostic"
+                "prediction-mode-aware-mandate-constrained-signal-state-diagnostic"
             ),
             "counterfactualCompounding": False,
             "entersSelection": False,
@@ -3655,9 +3415,7 @@ def _signal_monetization_projection(
             "outcome": outcome,
             "iterationFocus": focus,
             "largestAdverseStage": worst_delta["id"],
-            "largestAdverseAnnualizedDelta": worst_delta[
-                "annualizedContributionDelta"
-            ],
+            "largestAdverseAnnualizedDelta": worst_delta["annualizedContributionDelta"],
             "explanation": explanation,
         },
         "validation": validation,
@@ -3682,9 +3440,7 @@ def _attribution_projection(
         "averageAbsoluteWeight": "average_absolute_executed_weight",
         "meanVarianceContributionShare": "mean_variance_contribution_share",
         "totalCostContribution": "total_cost_contribution",
-        "totalOneWayTurnoverContribution": (
-            "total_one_way_turnover_contribution"
-        ),
+        "totalOneWayTurnoverContribution": ("total_one_way_turnover_contribution"),
     }
     for split_name in ("validation", "test"):
         split = attribution.get(split_name)
@@ -3905,9 +3661,7 @@ def _mechanical_decision_projection(
             if available_candidates
             else None
         )
-        proposed_trade = (
-            item["proposed_target_weight"] - item["pretrade_weight"]
-        )
+        proposed_trade = item["proposed_target_weight"] - item["pretrade_weight"]
         pre_governor_gross += abs(item["pre_governor_target_weight"])
         governed_target_gross += abs(item["proposed_target_weight"])
         pretrade_gross += abs(item["pretrade_weight"])
@@ -3928,9 +3682,7 @@ def _mechanical_decision_projection(
                 "signalEvent": item["signal_event"],
                 "nextTriggers": trigger_candidates,
                 "nearestTrigger": nearest,
-                "preGovernorTargetWeight": item[
-                    "pre_governor_target_weight"
-                ],
+                "preGovernorTargetWeight": item["pre_governor_target_weight"],
                 "targetWeight": item["proposed_target_weight"],
                 "pretradeWeight": item["pretrade_weight"],
                 "proposedTradeWeight": proposed_trade,
@@ -3940,9 +3692,7 @@ def _mechanical_decision_projection(
                 "executionReason": item["execution_reason"],
             }
         )
-    execution_available = (
-        daily_row["execution_risk_status"] != "legacy_unavailable"
-    )
+    execution_available = daily_row["execution_risk_status"] != "legacy_unavailable"
     if len(position_execution_reasons) != 1:
         _fail(
             "mechanicalDecision/executionGate/reason",
@@ -3973,9 +3723,7 @@ def _mechanical_decision_projection(
         )
     no_trade_one_way = parameters["no_trade_one_way"]
     proposed_one_way = (
-        recorded_proposed_one_way
-        if execution_available
-        else computed_proposed_one_way
+        recorded_proposed_one_way if execution_available else computed_proposed_one_way
     )
     return {
         "method": MECHANICAL_DECISION_METHOD,
@@ -3988,32 +3736,22 @@ def _mechanical_decision_projection(
             "stateChanges": state_changes,
             "unavailableScores": unavailable_scores,
             "contextAssets": context_assets,
-            "longEntryPercentile": parameters[
-                "long_entry_percentile"
-            ],
-            "longExitPercentile": parameters[
-                "long_exit_percentile"
-            ],
-            "shortExitPercentile": parameters[
-                "short_exit_percentile"
-            ],
-            "shortEntryPercentile": parameters[
-                "short_entry_percentile"
-            ],
+            "longEntryPercentile": parameters["long_entry_percentile"],
+            "longExitPercentile": parameters["long_exit_percentile"],
+            "shortExitPercentile": parameters["short_exit_percentile"],
+            "shortEntryPercentile": parameters["short_entry_percentile"],
         },
         "targetGate": {
             "preGovernorGross": pre_governor_gross,
             "governedTargetGross": governed_target_gross,
             "pretradeGross": pretrade_gross,
-            "riskGovernorStatus": decisions[
-                (timestamp, universe[0])
-            ]["risk_governor_status"],
-            "riskGovernorScale": decisions[
-                (timestamp, universe[0])
-            ]["risk_governor_scale"],
-            "riskLimited": decisions[
-                (timestamp, universe[0])
-            ]["risk_governor_scale"]
+            "riskGovernorStatus": decisions[(timestamp, universe[0])][
+                "risk_governor_status"
+            ],
+            "riskGovernorScale": decisions[(timestamp, universe[0])][
+                "risk_governor_scale"
+            ],
+            "riskLimited": decisions[(timestamp, universe[0])]["risk_governor_scale"]
             < 1.0 - 1e-12,
         },
         "executionGate": {
@@ -4021,22 +3759,18 @@ def _mechanical_decision_projection(
             "decisionEligible": daily_row["decision_eligible"],
             "decisionSchedule": daily_row["decision_schedule"],
             "decisionSession": daily_row["decision_session"],
-            "decisionSource": mandate["implementationPolicy"][
-                "decisionPolicy"
-            ]["source"],
+            "decisionSource": mandate["implementationPolicy"]["decisionPolicy"][
+                "source"
+            ],
             "noTradeOneWay": no_trade_one_way,
             "proposedOneWayTurnover": proposed_one_way,
             "bandShortfall": max(0.0, no_trade_one_way - proposed_one_way),
             "bandExcess": max(0.0, proposed_one_way - no_trade_one_way),
             "ordinaryRebalance": (
-                daily_row["ordinary_rebalance"]
-                if execution_available
-                else None
+                daily_row["ordinary_rebalance"] if execution_available else None
             ),
             "riskOverride": (
-                daily_row["risk_rebalance_override"]
-                if execution_available
-                else None
+                daily_row["risk_rebalance_override"] if execution_available else None
             ),
             "rebalanced": daily_row["rebalanced"],
             "finalOneWayTurnover": daily_row["one_way_turnover"],
@@ -4066,16 +3800,14 @@ def _sizing_anatomy_projection(
     gross_limit = float(mandate["grossLimit"])
     cap = float(mandate["maxAbsWeight"])
     asset_caps = {
-        asset: float(mandate["assetMaxAbsWeights"][asset])
-        for asset in universe
+        asset: float(mandate["assetMaxAbsWeights"][asset]) for asset in universe
     }
     risk_scale = mechanical_decision["targetGate"]["riskGovernorScale"]
     side_budgets = {
         "long": (
             float(mandate["longGrossLimit"])
             if family == "asset-role"
-            else
-            gross_limit / 2.0
+            else gross_limit / 2.0
             if family == "dollar-neutral"
             else gross_limit
             if family == "long-cash"
@@ -4084,8 +3816,7 @@ def _sizing_anatomy_projection(
         "short": (
             float(mandate["shortGrossLimit"])
             if family == "asset-role"
-            else
-            gross_limit / 2.0
+            else gross_limit / 2.0
             if family == "dollar-neutral"
             else gross_limit
             if family == "short-cash"
@@ -4093,9 +3824,7 @@ def _sizing_anatomy_projection(
         ),
     }
     raw_by_asset = {
-        asset: decisions[(timestamp, asset)][
-            "pre_governor_target_weight"
-        ]
+        asset: decisions[(timestamp, asset)]["pre_governor_target_weight"]
         for asset in universe
     }
     side_rows: dict[str, dict[str, Any]] = {}
@@ -4112,8 +3841,7 @@ def _sizing_anatomy_projection(
             )
         ]
         strength_total = sum(
-            decisions[(timestamp, asset)]["risk_strength"]
-            for asset in active
+            decisions[(timestamp, asset)]["risk_strength"] for asset in active
         )
         configured_budget = side_budgets[side]
         cap_capacity = sum(asset_caps[asset] for asset in active)
@@ -4230,21 +3958,11 @@ def _sizing_anatomy_projection(
                 "Risk strength differs from conviction / trailing volatility",
             )
         active_side = side if side in {"long", "short"} else None
-        strength_total = (
-            side_strengths[active_side]
-            if active_side is not None
-            else 0.0
-        )
-        strength_share = (
-            strength / strength_total
-            if strength_total > 1e-18
-            else 0.0
-        )
+        strength_total = side_strengths[active_side] if active_side is not None else 0.0
+        strength_share = strength / strength_total if strength_total > 1e-18 else 0.0
         sign = 1.0 if active_side == "long" else -1.0
         proportional_weight = (
-            sign
-            * proportional_budgets[active_side]
-            * strength_share
+            sign * proportional_budgets[active_side] * strength_share
             if active_side is not None
             else 0.0
         )
@@ -4263,9 +3981,7 @@ def _sizing_anatomy_projection(
                 "Governed target does not equal raw weight times risk scale",
             )
         component_share = (
-            item["variance_contribution_share"]
-            if component_risk_available
-            else 0.0
+            item["variance_contribution_share"] if component_risk_available else 0.0
         )
         component_shares[asset] = component_share
         positions.append(
@@ -4286,30 +4002,21 @@ def _sizing_anatomy_projection(
                 ),
                 "rawWeight": raw_weight,
                 "atCap": (
-                    abs(raw_weight) > 1e-12
-                    and abs(raw_weight) >= asset_cap - 1e-9
+                    abs(raw_weight) > 1e-12 and abs(raw_weight) >= asset_cap - 1e-9
                 ),
-                "allocationDeltaFromProportional": (
-                    raw_weight - proportional_weight
-                ),
+                "allocationDeltaFromProportional": (raw_weight - proportional_weight),
                 "riskGovernorScale": risk_scale,
                 "governedWeight": governed_weight,
                 "executedWeight": item["executed_weight"],
-                "diagonalRiskBudgetShare": item[
-                    "diagonal_risk_budget_share"
-                ],
+                "diagonalRiskBudgetShare": item["diagonal_risk_budget_share"],
                 "componentRiskAvailable": component_risk_available,
                 "componentRiskShare": component_share,
             }
         )
 
     raw_gross = sum(abs(item["rawWeight"]) for item in positions)
-    governed_gross = sum(
-        abs(item["governedWeight"]) for item in positions
-    )
-    executed_gross = sum(
-        abs(item["executedWeight"]) for item in positions
-    )
+    governed_gross = sum(abs(item["governedWeight"]) for item in positions)
+    executed_gross = sum(abs(item["executedWeight"]) for item in positions)
     if not math.isclose(
         raw_gross,
         mechanical_decision["targetGate"]["preGovernorGross"],
@@ -4338,9 +4045,7 @@ def _sizing_anatomy_projection(
             "portfolio.sizing-component-risk",
             "Executed component-risk shares do not sum to one",
         )
-    absolute_component_total = sum(
-        abs(value) for value in component_shares.values()
-    )
+    absolute_component_total = sum(abs(value) for value in component_shares.values())
     normalized_absolute_component = {
         asset: (
             abs(value) / absolute_component_total
@@ -4386,8 +4091,7 @@ def _sizing_anatomy_projection(
             "available": component_risk_available,
             "shareSum": component_sum if component_risk_available else 0.0,
             "absoluteConcentrationHhi": sum(
-                value * value
-                for value in normalized_absolute_component.values()
+                value * value for value in normalized_absolute_component.values()
             ),
             "largestAbsoluteContributor": largest_component_asset,
         },
@@ -4414,9 +4118,7 @@ def _current_book(
                 "allocationStatus": item["allocation_status"],
                 "conviction": item["conviction"],
                 "riskStrength": item["risk_strength"],
-                "preGovernorTargetWeight": item[
-                    "pre_governor_target_weight"
-                ],
+                "preGovernorTargetWeight": item["pre_governor_target_weight"],
                 "targetWeight": item["proposed_target_weight"],
                 "pretradeWeight": item["pretrade_weight"],
                 "executedWeight": item["executed_weight"],
@@ -4426,9 +4128,7 @@ def _current_book(
                 "executionReason": item["execution_reason"],
                 "regime": item["regime"],
                 "netReturnContribution": item["net_return_contribution"],
-                "varianceContributionShare": item[
-                    "variance_contribution_share"
-                ],
+                "varianceContributionShare": item["variance_contribution_share"],
             }
         )
     daily_row = daily.rows[-1]
@@ -4454,29 +4154,23 @@ def _current_book(
         "executionRiskCeilingAnnualized": daily_row[
             "execution_risk_ceiling_annualized"
         ],
-        "riskRebalanceOverride": daily_row[
-            "risk_rebalance_override"
-        ],
+        "riskRebalanceOverride": daily_row["risk_rebalance_override"],
         "executionReason": daily_row["execution_reason"],
-        "riskGovernorStatus": decisions[
-            (timestamp, universe[0])
-        ]["risk_governor_status"],
-        "riskGovernorScale": decisions[
-            (timestamp, universe[0])
-        ]["risk_governor_scale"],
-        "riskForecastPreAnnualized": decisions[
-            (timestamp, universe[0])
-        ]["risk_forecast_pre_annualized"],
-        "riskForecastPostAnnualized": decisions[
-            (timestamp, universe[0])
-        ]["risk_forecast_post_annualized"],
-        "riskVolatilityCeilingAnnualized": decisions[
-            (timestamp, universe[0])
-        ]["risk_volatility_ceiling_annualized"],
+        "riskGovernorStatus": decisions[(timestamp, universe[0])][
+            "risk_governor_status"
+        ],
+        "riskGovernorScale": decisions[(timestamp, universe[0])]["risk_governor_scale"],
+        "riskForecastPreAnnualized": decisions[(timestamp, universe[0])][
+            "risk_forecast_pre_annualized"
+        ],
+        "riskForecastPostAnnualized": decisions[(timestamp, universe[0])][
+            "risk_forecast_post_annualized"
+        ],
+        "riskVolatilityCeilingAnnualized": decisions[(timestamp, universe[0])][
+            "risk_volatility_ceiling_annualized"
+        ],
         "riskEstimationObservations": int(
-            decisions[(timestamp, universe[0])][
-                "risk_estimation_observations"
-            ]
+            decisions[(timestamp, universe[0])]["risk_estimation_observations"]
         ),
         "positions": positions,
     }
@@ -4521,9 +4215,7 @@ def _recent_transitions(
             "allocationStatus": item["allocation_status"],
             "riskGovernorStatus": item["risk_governor_status"],
             "riskGovernorScale": item["risk_governor_scale"],
-            "preGovernorTargetWeight": item[
-                "pre_governor_target_weight"
-            ],
+            "preGovernorTargetWeight": item["pre_governor_target_weight"],
             "priorSignalState": item["prior_signal_state"],
             "signalState": item["signal_state"],
             "targetWeight": item["proposed_target_weight"],
@@ -4568,9 +4260,7 @@ def _signal_policy_projection(
             "portfolio.signal-policy",
             "Signal-policy parameters must be an object",
         )
-    required_parameters = set(EXPECTED_SIGNAL_PARAMETERS) | {
-        "decision_schedule"
-    }
+    required_parameters = set(EXPECTED_SIGNAL_PARAMETERS) | {"decision_schedule"}
     if set(parameters) != required_parameters:
         _fail(
             "RunResult/metrics/signal_policy/parameters",
@@ -4587,8 +4277,7 @@ def _signal_policy_projection(
     decision_schedule = parameters["decision_schedule"]
     if (
         not isinstance(decision_schedule, dict)
-        or decision_schedule
-        != mandate["implementationPolicy"]["decisionPolicy"]
+        or decision_schedule != mandate["implementationPolicy"]["decisionPolicy"]
     ):
         _fail(
             "RunResult/metrics/signal_policy/parameters/decision_schedule",
@@ -4628,12 +4317,8 @@ def _signal_policy_projection(
         **EXPECTED_SIGNAL_PARAMETERS,
         "gross_target": mandate["grossLimit"],
         "max_abs_weight": mandate["maxAbsWeight"],
-        "no_trade_one_way": mandate["implementationPolicy"][
-            "noTradeOneWay"
-        ],
-        "decision_schedule": mandate["implementationPolicy"][
-            "decisionPolicy"
-        ],
+        "no_trade_one_way": mandate["implementationPolicy"]["noTradeOneWay"],
+        "decision_schedule": mandate["implementationPolicy"]["decisionPolicy"],
     }
     if normalized_parameters != expected_parameters:
         _fail(
@@ -4676,15 +4361,11 @@ def _signal_policy_projection(
             ),
             "signalEventCounts": split.get("signal_event_counts"),
             "targetActionCounts": split.get("target_action_counts"),
-            "riskGovernorStatusCounts": split.get(
-                "risk_governor_status_counts"
-            ),
+            "riskGovernorStatusCounts": split.get("risk_governor_status_counts"),
             "riskLimitedDates": split.get("risk_limited_dates"),
             "riskLimitedRate": split.get("risk_limited_rate"),
             "riskUnavailableDates": split.get("risk_unavailable_dates"),
-            "averageActiveRiskScale": split.get(
-                "average_active_risk_scale"
-            ),
+            "averageActiveRiskScale": split.get("average_active_risk_scale"),
             "maximumPreGovernorAnnualizedVolatility": split.get(
                 "maximum_pre_governor_annualized_volatility"
             ),
@@ -4811,9 +4492,7 @@ def _verify_signal_translation(
         translated_score = scores.loc[timestamp, asset]
         translation_value = values.loc[timestamp, asset]
         expected_decision_score = (
-            translated_score
-            if row["trailing_volatility"] is not None
-            else math.nan
+            translated_score if row["trailing_volatility"] is not None else math.nan
         )
         if (
             not matches(row["translation_score"], translated_score)
@@ -4854,12 +4533,8 @@ def _mandate_projection(
             "contextAssets": [],
             "grossLimit": 1.0,
             "maxAbsWeight": 0.30,
-            "assetMaxAbsWeights": {
-                asset: 0.30 for asset in universe
-            },
-            "assetPositionRoles": {
-                asset: "two-sided" for asset in universe
-            },
+            "assetMaxAbsWeights": {asset: 0.30 for asset in universe},
+            "assetPositionRoles": {asset: "two-sided" for asset in universe},
             "longGrossLimit": 0.5,
             "shortGrossLimit": 0.5,
             "cashAllowed": True,
@@ -4868,10 +4543,7 @@ def _mandate_projection(
                 "source": "direction-default",
                 "kind": "equal-weight-long-research-universe",
                 "asset": None,
-                "weights": {
-                    asset: 1.0 / len(universe)
-                    for asset in universe
-                },
+                "weights": {asset: 1.0 / len(universe) for asset in universe},
             },
             "riskPolicy": None,
             "policySource": "legacy-implicit",
@@ -4886,9 +4558,7 @@ def _mandate_projection(
                     "anchor": "dataset-start",
                 },
                 "costModel": "linear-traded-notional-v1",
-                "capacityModel": (
-                    "trailing-dollar-volume-participation-v1"
-                ),
+                "capacityModel": ("trailing-dollar-volume-participation-v1"),
             },
         }
     if not isinstance(raw, dict) or not isinstance(report_raw, dict):
@@ -4918,9 +4588,7 @@ def _mandate_projection(
         )
     dependencies = run.result.get("dependencies")
     source_hashes = (
-        dependencies.get("sourceHashes")
-        if isinstance(dependencies, dict)
-        else None
+        dependencies.get("sourceHashes") if isinstance(dependencies, dict) else None
     )
     mandate_hash = (
         source_hashes.get(PORTFOLIO_MANDATE)
@@ -4981,8 +4649,7 @@ def _research_horizon_projection(
     if (
         not isinstance(dependencies, dict)
         or RESEARCH_HORIZON not in dependencies.get("paths", [])
-        or RESEARCH_HORIZON
-        not in dependencies.get("sourceHashes", {})
+        or RESEARCH_HORIZON not in dependencies.get("sourceHashes", {})
     ):
         _fail(
             "RunResult/dependencies",
@@ -5024,9 +4691,7 @@ def _risk_governor_projection(
         split = raw.get(split_name)
         governed = split.get("governed") if isinstance(split, dict) else None
         ungoverned = (
-            split.get("ungoverned_diagnostic")
-            if isinstance(split, dict)
-            else None
+            split.get("ungoverned_diagnostic") if isinstance(split, dict) else None
         )
         if not isinstance(governed, dict) or not isinstance(ungoverned, dict):
             _fail(
@@ -5092,8 +4757,7 @@ def _executed_book_risk_projection(
 ) -> dict[str, Any]:
     raw = result["metrics"].get("execution_risk")
     has_daily = any(
-        row["execution_risk_status"] != "legacy_unavailable"
-        for row in daily.rows
+        row["execution_risk_status"] != "legacy_unavailable" for row in daily.rows
     )
     if raw is None and not has_daily:
         return {
@@ -5112,9 +4776,7 @@ def _executed_book_risk_projection(
         )
     policy = raw.get("policy")
     expected_policy = {
-        "method": (
-            "post-drift-executed-book-volatility-compliance-v1"
-        ),
+        "method": ("post-drift-executed-book-volatility-compliance-v1"),
         "risk_policy": mandate["riskPolicy"],
         "no_trade_priority": "risk-compliance-first",
         "repair": "minimum-proportional-scale-down",
@@ -5133,9 +4795,7 @@ def _executed_book_risk_projection(
         dated = [
             row
             for row in daily.rows
-            if split["start"]
-            <= row["timestamp"]
-            <= split["signalEnd"]
+            if split["start"] <= row["timestamp"] <= split["signalEnd"]
         ]
         active = [
             row
@@ -5147,15 +4807,9 @@ def _executed_book_risk_projection(
                 or row["constraint_rebalance_override"]
             )
         ]
-        available = [
-            row
-            for row in active
-            if row["execution_risk_forecast_available"]
-        ]
+        available = [row for row in active if row["execution_risk_forecast_available"]]
         unavailable = [
-            row
-            for row in active
-            if not row["execution_risk_forecast_available"]
+            row for row in active if not row["execution_risk_forecast_available"]
         ]
         pretrade_breach = [
             row
@@ -5169,9 +4823,7 @@ def _executed_book_risk_projection(
             if row["executed_risk_forecast_annualized"]
             > row["execution_risk_ceiling_annualized"] + 1e-10
         ]
-        overrides = [
-            row for row in active if row["risk_rebalance_override"]
-        ]
+        overrides = [row for row in active if row["risk_rebalance_override"]]
         constraint_overrides = [
             row for row in active if row["constraint_rebalance_override"]
         ]
@@ -5202,14 +4854,10 @@ def _executed_book_risk_projection(
             "active_dates": len(active),
             "forecast_available_dates": len(available),
             "forecast_unavailable_dates": len(unavailable),
-            "forecast_coverage": (
-                len(available) / len(active) if active else 0.0
-            ),
+            "forecast_coverage": (len(available) / len(active) if active else 0.0),
             "pretrade_breach_dates": len(pretrade_breach),
             "pretrade_breach_rate": (
-                len(pretrade_breach) / len(available)
-                if available
-                else 0.0
+                len(pretrade_breach) / len(available) if available else 0.0
             ),
             "risk_rebalance_override_dates": len(overrides),
             "risk_rebalance_override_rate": (
@@ -5217,55 +4865,40 @@ def _executed_book_risk_projection(
             ),
             "executed_breach_dates": len(executed_breach),
             "executed_breach_rate": (
-                len(executed_breach) / len(available)
-                if available
-                else 0.0
+                len(executed_breach) / len(available) if available else 0.0
             ),
             "mean_executed_forecast_annualized": (
-                sum(
-                    row["executed_risk_forecast_annualized"]
-                    for row in available
-                )
+                sum(row["executed_risk_forecast_annualized"] for row in available)
                 / len(available)
                 if available
                 else 0.0
             ),
             "maximum_executed_forecast_annualized": (
-                max(
-                    row["executed_risk_forecast_annualized"]
-                    for row in available
-                )
+                max(row["executed_risk_forecast_annualized"] for row in available)
                 if available
                 else 0.0
             ),
             "maximum_ceiling_error": max(errors) if errors else 0.0,
             "status_counts": status_counts,
             "execution_reason_counts": reason_counts,
-            "constraint_rebalance_override_dates": len(
-                constraint_overrides
-            ),
+            "constraint_rebalance_override_dates": len(constraint_overrides),
             "constraint_only_override_dates": sum(
                 row["constraint_rebalance_override"]
                 and not row["risk_rebalance_override"]
                 for row in active
             ),
             "joint_constraint_risk_override_dates": sum(
-                row["constraint_rebalance_override"]
-                and row["risk_rebalance_override"]
+                row["constraint_rebalance_override"] and row["risk_rebalance_override"]
                 for row in active
             ),
             "constraint_repair_one_way": sum(
                 row["constraint_repair_one_way"] for row in dated
             ),
             "executed_constraint_breach_dates": sum(
-                row["executed_constraint_maximum_error"] > 1e-10
-                for row in dated
+                row["executed_constraint_maximum_error"] > 1e-10 for row in dated
             ),
             "maximum_executed_constraint_error": max(
-                (
-                    row["executed_constraint_maximum_error"]
-                    for row in dated
-                ),
+                (row["executed_constraint_maximum_error"] for row in dated),
                 default=0.0,
             ),
         }
@@ -5320,20 +4953,12 @@ def _executed_book_risk_projection(
         "forecastCoverage": "forecast_coverage",
         "pretradeBreachDates": "pretrade_breach_dates",
         "pretradeBreachRate": "pretrade_breach_rate",
-        "riskRebalanceOverrideDates": (
-            "risk_rebalance_override_dates"
-        ),
-        "riskRebalanceOverrideRate": (
-            "risk_rebalance_override_rate"
-        ),
+        "riskRebalanceOverrideDates": ("risk_rebalance_override_dates"),
+        "riskRebalanceOverrideRate": ("risk_rebalance_override_rate"),
         "executedBreachDates": "executed_breach_dates",
         "executedBreachRate": "executed_breach_rate",
-        "meanExecutedForecastAnnualized": (
-            "mean_executed_forecast_annualized"
-        ),
-        "maximumExecutedForecastAnnualized": (
-            "maximum_executed_forecast_annualized"
-        ),
+        "meanExecutedForecastAnnualized": ("mean_executed_forecast_annualized"),
+        "maximumExecutedForecastAnnualized": ("maximum_executed_forecast_annualized"),
         "maximumCeilingError": "maximum_ceiling_error",
         "statusCounts": "status_counts",
         "executionReasonCounts": "execution_reason_counts",
@@ -5342,15 +4967,11 @@ def _executed_book_risk_projection(
         derived = derive(split_name)
         compare(
             raw.get(split_name),
-            {
-                source: derived[source]
-                for source in fields.values()
-            },
+            {source: derived[source] for source in fields.values()},
             f"RunResult/metrics/execution_risk/{split_name}",
         )
         projection[split_name] = {
-            output: derived[source]
-            for output, source in fields.items()
+            output: derived[source] for output, source in fields.items()
         }
         projection[split_name].update(
             {
@@ -5363,9 +4984,7 @@ def _executed_book_risk_projection(
                 "jointConstraintRiskOverrideDates": derived[
                     "joint_constraint_risk_override_dates"
                 ],
-                "constraintRepairOneWay": derived[
-                    "constraint_repair_one_way"
-                ],
+                "constraintRepairOneWay": derived["constraint_repair_one_way"],
                 "executedConstraintBreachDates": derived[
                     "executed_constraint_breach_dates"
                 ],
@@ -5378,30 +4997,14 @@ def _executed_book_risk_projection(
     projection["latest"] = {
         "timestamp": latest["timestamp"],
         "status": latest["execution_risk_status"],
-        "forecastAvailable": latest[
-            "execution_risk_forecast_available"
-        ],
-        "pretradeForecastAnnualized": latest[
-            "pretrade_risk_forecast_annualized"
-        ],
-        "executedForecastAnnualized": latest[
-            "executed_risk_forecast_annualized"
-        ],
-        "ceilingAnnualized": latest[
-            "execution_risk_ceiling_annualized"
-        ],
-        "riskRebalanceOverride": latest[
-            "risk_rebalance_override"
-        ],
-        "constraintRebalanceOverride": latest[
-            "constraint_rebalance_override"
-        ],
-        "constraintRepairOneWay": latest[
-            "constraint_repair_one_way"
-        ],
-        "executedConstraintMaximumError": latest[
-            "executed_constraint_maximum_error"
-        ],
+        "forecastAvailable": latest["execution_risk_forecast_available"],
+        "pretradeForecastAnnualized": latest["pretrade_risk_forecast_annualized"],
+        "executedForecastAnnualized": latest["executed_risk_forecast_annualized"],
+        "ceilingAnnualized": latest["execution_risk_ceiling_annualized"],
+        "riskRebalanceOverride": latest["risk_rebalance_override"],
+        "constraintRebalanceOverride": latest["constraint_rebalance_override"],
+        "constraintRepairOneWay": latest["constraint_repair_one_way"],
+        "executedConstraintMaximumError": latest["executed_constraint_maximum_error"],
         "executionReason": latest["execution_reason"],
     }
     return projection
@@ -5441,14 +5044,10 @@ def _diversification_stress_projection(
         else None
     )
     covariance_window = (
-        int(risk_policy["covarianceWindow"])
-        if isinstance(risk_policy, dict)
-        else 60
+        int(risk_policy["covarianceWindow"]) if isinstance(risk_policy, dict) else 60
     )
     minimum_observations = (
-        int(risk_policy["minimumObservations"])
-        if isinstance(risk_policy, dict)
-        else 20
+        int(risk_policy["minimumObservations"]) if isinstance(risk_policy, dict) else 20
     )
     root_annualization = math.sqrt(annualization)
     reconstructed_returns = pd.DataFrame(
@@ -5460,13 +5059,12 @@ def _diversification_stress_projection(
         prior = daily.dates[index - 1]
         timestamp = daily.dates[index]
         reconstructed_returns.loc[pd.Timestamp(timestamp)] = [
-            decisions[(prior, asset)]["asset_forward_return"]
-            for asset in universe
+            decisions[(prior, asset)]["asset_forward_return"] for asset in universe
         ]
     covariance_by_date: dict[str, tuple[int, pd.DataFrame | None]] = {}
     for timestamp in daily.dates:
         history = (
-            reconstructed_returns.loc[:pd.Timestamp(timestamp)]
+            reconstructed_returns.loc[: pd.Timestamp(timestamp)]
             .tail(covariance_window)
             .dropna(how="any")
         )
@@ -5479,14 +5077,10 @@ def _diversification_stress_projection(
             if observations >= minimum_observations
             else None
         )
-        if (
-            covariance is not None
-            and (
-                covariance.isna().any().any()
-                or not all(
-                    math.isfinite(float(value))
-                    for value in covariance.to_numpy().flat
-                )
+        if covariance is not None and (
+            covariance.isna().any().any()
+            or not all(
+                math.isfinite(float(value)) for value in covariance.to_numpy().flat
             )
         ):
             covariance = None
@@ -5494,11 +5088,7 @@ def _diversification_stress_projection(
 
     def book(timestamp: str, *, include_positions: bool) -> dict[str, Any]:
         rows = [decisions[(timestamp, asset)] for asset in universe]
-        active = [
-            item
-            for item in rows
-            if abs(item["executed_weight"]) > 1e-12
-        ]
+        active = [item for item in rows if abs(item["executed_weight"]) > 1e-12]
         variances = {item["portfolio_variance"] for item in rows}
         if len(variances) != 1:
             _fail(
@@ -5530,10 +5120,7 @@ def _diversification_stress_projection(
         }
         if covariance is not None:
             weight_vector = pd.Series(
-                {
-                    item["asset"]: item["executed_weight"]
-                    for item in rows
-                },
+                {item["asset"]: item["executed_weight"] for item in rows},
                 index=universe,
                 dtype=float,
             )
@@ -5624,17 +5211,13 @@ def _diversification_stress_projection(
             else None
         )
         component_absolute_total = (
-            sum(
-                abs(item["variance_contribution_share"])
-                for item in rows
-            )
+            sum(abs(item["variance_contribution_share"]) for item in rows)
             if state == "available"
             else 0.0
         )
         absolute_component_shares = {
             item["asset"]: (
-                abs(item["variance_contribution_share"])
-                / component_absolute_total
+                abs(item["variance_contribution_share"]) / component_absolute_total
                 if component_absolute_total > 1e-18
                 else 0.0
             )
@@ -5646,9 +5229,7 @@ def _diversification_stress_projection(
             else None
         )
         effective_risk_bets = (
-            1.0 / risk_hhi
-            if risk_hhi is not None and risk_hhi > 1e-18
-            else None
+            1.0 / risk_hhi if risk_hhi is not None and risk_hhi > 1e-18 else None
         )
         largest_component = (
             max(
@@ -5671,14 +5252,12 @@ def _diversification_stress_projection(
         for scenario in DIVERSIFICATION_STRESS_SCENARIOS:
             blend = float(scenario["blendToPerfectCorrelation"])
             blended_variance = (
-                (1.0 - blend) * portfolio_variance
-                + blend * perfect_variance
+                (1.0 - blend) * portfolio_variance + blend * perfect_variance
                 if state == "available"
                 else 0.0
             )
             scenario_forecast = (
-                math.sqrt(max(blended_variance, 0.0))
-                * root_annualization
+                math.sqrt(max(blended_variance, 0.0)) * root_annualization
             )
             scenario_rows.append(
                 {
@@ -5687,8 +5266,7 @@ def _diversification_stress_projection(
                     "forecastAnnualized": scenario_forecast,
                     "multiplier": (
                         scenario_forecast / sample_forecast
-                        if state == "available"
-                        and sample_forecast > 1e-18
+                        if state == "available" and sample_forecast > 1e-18
                         else None
                     ),
                     "breachesCeiling": (
@@ -5719,19 +5297,14 @@ def _diversification_stress_projection(
                     "asset": item["asset"],
                     "active": item in active,
                     "executedWeight": item["executed_weight"],
-                    "causalOwnVolatility": (
-                        covariance_own_volatility[item["asset"]]
-                    ),
+                    "causalOwnVolatility": (covariance_own_volatility[item["asset"]]),
                     "componentVariance": item["component_variance"],
-                    "componentRiskShare": item[
-                        "variance_contribution_share"
-                    ],
+                    "componentRiskShare": item["variance_contribution_share"],
                     "absoluteComponentRiskShare": (
                         absolute_component_shares[item["asset"]]
                     ),
                     "standaloneRiskLoadAnnualized": (
-                        standalone_daily[item["asset"]]
-                        * root_annualization
+                        standalone_daily[item["asset"]] * root_annualization
                     ),
                     "stressRiskShare": (
                         standalone_daily[item["asset"]] / stress_daily
@@ -5743,8 +5316,7 @@ def _diversification_stress_projection(
             ]
             if state == "available":
                 stress_share_sum = sum(
-                    item["stressRiskShare"]
-                    for item in projection["positions"]
+                    item["stressRiskShare"] for item in projection["positions"]
                 )
                 if not math.isclose(
                     stress_share_sum,
@@ -5760,8 +5332,7 @@ def _diversification_stress_projection(
         return projection
 
     dated = {
-        timestamp: book(timestamp, include_positions=False)
-        for timestamp in daily.dates
+        timestamp: book(timestamp, include_positions=False) for timestamp in daily.dates
     }
 
     def split_projection(split_name: str) -> dict[str, Any]:
@@ -5774,16 +5345,10 @@ def _diversification_stress_projection(
         available = [item for item in rows if item["state"] == "available"]
         flat = [item for item in rows if item["state"] == "flat"]
         unavailable = [
-            item
-            for item in rows
-            if item["state"] == "risk-history-unavailable"
+            item for item in rows if item["state"] == "risk-history-unavailable"
         ]
-        multipliers = [
-            float(item["stressMultiplier"]) for item in available
-        ]
-        effective_bets = [
-            float(item["effectiveRiskBets"]) for item in available
-        ]
+        multipliers = [float(item["stressMultiplier"]) for item in available]
+        effective_bets = [float(item["effectiveRiskBets"]) for item in available]
         breach_count = (
             sum(item["stressBreachesCeiling"] is True for item in available)
             if ceiling is not None
@@ -5804,35 +5369,23 @@ def _diversification_stress_projection(
         for scenario in DIVERSIFICATION_STRESS_SCENARIOS:
             scenario_id = scenario["id"]
             scenario_rows = [
-                next(
-                    item
-                    for item in row["scenarios"]
-                    if item["id"] == scenario_id
-                )
+                next(item for item in row["scenarios"] if item["id"] == scenario_id)
                 for row in available
             ]
-            scenario_multipliers = [
-                float(item["multiplier"]) for item in scenario_rows
-            ]
+            scenario_multipliers = [float(item["multiplier"]) for item in scenario_rows]
             scenario_breaches = (
-                sum(
-                    item["breachesCeiling"] is True
-                    for item in scenario_rows
-                )
+                sum(item["breachesCeiling"] is True for item in scenario_rows)
                 if ceiling is not None
                 else None
             )
             scenario_summaries.append(
                 {
                     "id": scenario_id,
-                    "blendToPerfectCorrelation": scenario[
-                        "blendToPerfectCorrelation"
-                    ],
+                    "blendToPerfectCorrelation": scenario["blendToPerfectCorrelation"],
                     "stressBreachDates": scenario_breaches,
                     "stressBreachRate": (
                         scenario_breaches / len(scenario_rows)
-                        if scenario_breaches is not None
-                        and scenario_rows
+                        if scenario_breaches is not None and scenario_rows
                         else None
                     ),
                     "medianMultiplier": (
@@ -5846,9 +5399,7 @@ def _diversification_stress_projection(
                         else None
                     ),
                     "maximumMultiplier": (
-                        max(scenario_multipliers)
-                        if scenario_multipliers
-                        else None
+                        max(scenario_multipliers) if scenario_multipliers else None
                     ),
                 }
             )
@@ -5871,13 +5422,9 @@ def _diversification_stress_projection(
             "p95StressMultiplier": (
                 _quantile(multipliers, 0.95) if multipliers else None
             ),
-            "maximumStressMultiplier": (
-                max(multipliers) if multipliers else None
-            ),
+            "maximumStressMultiplier": (max(multipliers) if multipliers else None),
             "medianEffectiveRiskBets": (
-                _quantile(effective_bets, 0.50)
-                if effective_bets
-                else None
+                _quantile(effective_bets, 0.50) if effective_bets else None
             ),
             "minimumEffectiveRiskBets": (
                 min(effective_bets) if effective_bets else None
@@ -5907,9 +5454,7 @@ def _diversification_stress_projection(
 
     return {
         "method": DIVERSIFICATION_STRESS_METHOD,
-        "available": any(
-            item["state"] == "available" for item in dated.values()
-        ),
+        "available": any(item["state"] == "available" for item in dated.values()),
         "authority": "context-only",
         "selectionAuthority": "none",
         "testEntersSelection": False,
@@ -5924,8 +5469,7 @@ def _diversification_stress_projection(
             "ceilingAnnualized": ceiling,
             "probabilityAssigned": False,
             "scenarios": [
-                dict(scenario)
-                for scenario in DIVERSIFICATION_STRESS_SCENARIOS
+                dict(scenario) for scenario in DIVERSIFICATION_STRESS_SCENARIOS
             ],
         },
         "current": book(daily.dates[-1], include_positions=True),
@@ -6000,25 +5544,20 @@ def _liquidity_capacity_projection(
         unavailable = [
             (timestamp, rows)
             for timestamp, rows in trade_dates
-            if rows[0]["liquidity_capacity_status"]
-            == "insufficient_adv_history"
+            if rows[0]["liquidity_capacity_status"] == "insufficient_adv_history"
         ]
         capacities = {
             "capacity_1pct": [
-                rows[0]["portfolio_capacity_nav_1pct"]
-                for _, rows in available
+                rows[0]["portfolio_capacity_nav_1pct"] for _, rows in available
             ],
             "capacity_5pct": [
-                rows[0]["portfolio_capacity_nav_5pct"]
-                for _, rows in available
+                rows[0]["portfolio_capacity_nav_5pct"] for _, rows in available
             ],
         }
         binding_counts: dict[str, int] = {}
         for _, rows in available:
             binding = next(
-                row["asset"]
-                for row in rows
-                if row["capacity_binding_asset"]
+                row["asset"] for row in rows if row["capacity_binding_asset"]
             )
             binding_counts[binding] = binding_counts.get(binding, 0) + 1
 
@@ -6031,11 +5570,7 @@ def _liquidity_capacity_projection(
                 "tenth_percentile_nav": _quantile(values, 0.10),
                 "median_nav": _quantile(values, 0.50),
                 "reference_nav_breach_rate": (
-                    sum(
-                        value + 1e-12 < reference_nav
-                        for value in values
-                    )
-                    / len(values)
+                    sum(value + 1e-12 < reference_nav for value in values) / len(values)
                     if values
                     else 0.0
                 ),
@@ -6053,9 +5588,7 @@ def _liquidity_capacity_projection(
             "available_trade_dates": len(available),
             "unavailable_trade_dates": len(unavailable),
             "trade_date_coverage": (
-                len(available) / len(trade_dates)
-                if trade_dates
-                else 0.0
+                len(available) / len(trade_dates) if trade_dates else 0.0
             ),
             "binding_asset_counts_1pct": binding_counts,
             "capacity_1pct": summary("capacity_1pct"),
@@ -6114,20 +5647,14 @@ def _liquidity_capacity_projection(
             "status": derived["status"],
             "tradeDates": derived["trade_dates"],
             "availableTradeDates": derived["available_trade_dates"],
-            "unavailableTradeDates": derived[
-                "unavailable_trade_dates"
-            ],
+            "unavailableTradeDates": derived["unavailable_trade_dates"],
             "tradeDateCoverage": derived["trade_date_coverage"],
-            "bindingAssetCounts1Pct": derived[
-                "binding_asset_counts_1pct"
-            ],
+            "bindingAssetCounts1Pct": derived["binding_asset_counts_1pct"],
             "capacity1Pct": {
                 "status": derived["capacity_1pct"]["status"],
                 "observations": derived["capacity_1pct"]["observations"],
                 "minimumNav": derived["capacity_1pct"]["minimum_nav"],
-                "tenthPercentileNav": derived["capacity_1pct"][
-                    "tenth_percentile_nav"
-                ],
+                "tenthPercentileNav": derived["capacity_1pct"]["tenth_percentile_nav"],
                 "medianNav": derived["capacity_1pct"]["median_nav"],
                 "referenceNavBreachRate": derived["capacity_1pct"][
                     "reference_nav_breach_rate"
@@ -6137,9 +5664,7 @@ def _liquidity_capacity_projection(
                 "status": derived["capacity_5pct"]["status"],
                 "observations": derived["capacity_5pct"]["observations"],
                 "minimumNav": derived["capacity_5pct"]["minimum_nav"],
-                "tenthPercentileNav": derived["capacity_5pct"][
-                    "tenth_percentile_nav"
-                ],
+                "tenthPercentileNav": derived["capacity_5pct"]["tenth_percentile_nav"],
                 "medianNav": derived["capacity_5pct"]["median_nav"],
                 "referenceNavBreachRate": derived["capacity_5pct"][
                     "reference_nav_breach_rate"
@@ -6158,32 +5683,21 @@ def _liquidity_capacity_projection(
         timestamp, rows = trades[-1]
         available = rows[0]["liquidity_capacity_status"] == "available"
         binding = next(
-            (
-                row["asset"]
-                for row in rows
-                if row["capacity_binding_asset"]
-            ),
+            (row["asset"] for row in rows if row["capacity_binding_asset"]),
             None,
         )
         projection["latestTrade"] = {
             "timestamp": timestamp,
             "status": rows[0]["liquidity_capacity_status"],
             "capacity1Pct": (
-                rows[0]["portfolio_capacity_nav_1pct"]
-                if available
-                else None
+                rows[0]["portfolio_capacity_nav_1pct"] if available else None
             ),
             "capacity5Pct": (
-                rows[0]["portfolio_capacity_nav_5pct"]
-                if available
-                else None
+                rows[0]["portfolio_capacity_nav_5pct"] if available else None
             ),
             "bindingAsset": binding,
             "maximumReferenceNavParticipation": (
-                max(
-                    row["reference_nav_adv_participation"]
-                    for row in rows
-                )
+                max(row["reference_nav_adv_participation"] for row in rows)
                 if available
                 else None
             ),
@@ -6254,9 +5768,7 @@ def _parse_position_episodes(path: Path) -> pd.DataFrame:
             row[field] = (
                 pd.NaT
                 if raw[field] == ""
-                else pd.Timestamp(
-                    _session_date(raw[field], f"{row_path}/{field}")
-                )
+                else pd.Timestamp(_session_date(raw[field], f"{row_path}/{field}"))
             )
         for field in EPISODE_BOOLEAN_COLUMNS:
             if raw[field] not in {"True", "False"}:
@@ -6286,28 +5798,16 @@ def _parse_position_episodes(path: Path) -> pd.DataFrame:
             row[field] = _finite(raw[field], f"{row_path}/{field}")
         if (
             row["split"] not in {"train", "validation", "test"}
-            or row["role"]
-            not in {"training", "selection", "visible-audit"}
+            or row["role"] not in {"training", "selection", "visible-audit"}
             or row["side"] not in {"long", "short"}
             or row["episode_id"]
-            != (
-                f"{row['split']}:{row['asset']}:"
-                f"{row['episode_number']:04d}"
-            )
-            or row["complete"]
-            != (not (row["left_censored"] or row["right_censored"]))
+            != (f"{row['split']}:{row['asset']}:{row['episode_number']:04d}")
+            or row["complete"] != (not (row["left_censored"] or row["right_censored"]))
             or (
-                row["decision_bars"] == 0
-                and not pd.isna(row["last_earning_timestamp"])
+                row["decision_bars"] == 0 and not pd.isna(row["last_earning_timestamp"])
             )
-            or (
-                row["decision_bars"] > 0
-                and pd.isna(row["last_earning_timestamp"])
-            )
-            or (
-                row["right_censored"]
-                != pd.isna(row["exit_timestamp"])
-            )
+            or (row["decision_bars"] > 0 and pd.isna(row["last_earning_timestamp"]))
+            or (row["right_censored"] != pd.isna(row["exit_timestamp"]))
             or row["intent_mismatch_bars"] > row["decision_bars"]
             or row["no_trade_bars"] > row["decision_bars"]
             or row["risk_override_bars"] > row["decision_bars"]
@@ -6324,9 +5824,7 @@ def _parse_position_episodes(path: Path) -> pd.DataFrame:
             or row["maximum_adverse_excursion"] > 1e-12
             or not math.isclose(
                 row["total_cost"],
-                row["entry_cost"]
-                + row["holding_cost"]
-                + row["exit_cost"],
+                row["entry_cost"] + row["holding_cost"] + row["exit_cost"],
                 rel_tol=0.0,
                 abs_tol=1e-10,
             )
@@ -6336,14 +5834,8 @@ def _parse_position_episodes(path: Path) -> pd.DataFrame:
                 rel_tol=0.0,
                 abs_tol=1e-10,
             )
-            or (
-                row["side"] == "long"
-                and row["entry_weight"] < -1e-12
-            )
-            or (
-                row["side"] == "short"
-                and row["entry_weight"] > 1e-12
-            )
+            or (row["side"] == "long" and row["entry_weight"] < -1e-12)
+            or (row["side"] == "short" and row["entry_weight"] > 1e-12)
         ):
             _fail(
                 row_path,
@@ -6383,13 +5875,10 @@ def _compare_position_episode_frames(
                     abs_tol=1e-10,
                 )
             elif field in EPISODE_DATE_COLUMNS:
-                matches = (
-                    pd.isna(actual_value) and pd.isna(expected_value)
-                ) or (
+                matches = (pd.isna(actual_value) and pd.isna(expected_value)) or (
                     not pd.isna(actual_value)
                     and not pd.isna(expected_value)
-                    and pd.Timestamp(actual_value)
-                    == pd.Timestamp(expected_value)
+                    and pd.Timestamp(actual_value) == pd.Timestamp(expected_value)
                 )
             else:
                 matches = actual_value == expected_value
@@ -6473,13 +5962,8 @@ def _position_lifecycle_projection(
         "method": "split-bounded-executed-position-episodes-v1",
         "state": "sign-of-executed-weight",
         "boundary": "split-clipped-left-right-censored",
-        "pnl": (
-            "additive-portfolio-return-contribution-after-"
-            "proportional-trade-cost"
-        ),
-        "excursion": (
-            "cumulative-net-contribution-from-split-segment-start"
-        ),
+        "pnl": ("additive-portfolio-return-contribution-after-proportional-trade-cost"),
+        "excursion": ("cumulative-net-contribution-from-split-segment-start"),
         "selection_authority": "context-only",
         "trading_authority": "none",
     }
@@ -6565,15 +6049,9 @@ def _position_lifecycle_projection(
             "shortSegments": value["short_segments"],
             "decisionBars": value["decision_bars"],
             "segmentPositiveRate": value["segment_positive_rate"],
-            "completeEpisodeWinRate": value[
-                "complete_episode_win_rate"
-            ],
-            "averageCompleteHoldingBars": value[
-                "average_complete_holding_bars"
-            ],
-            "medianCompleteHoldingBars": value[
-                "median_complete_holding_bars"
-            ],
+            "completeEpisodeWinRate": value["complete_episode_win_rate"],
+            "averageCompleteHoldingBars": value["average_complete_holding_bars"],
+            "medianCompleteHoldingBars": value["median_complete_holding_bars"],
             "averageCompleteWinContribution": value[
                 "average_complete_win_contribution"
             ],
@@ -6589,13 +6067,9 @@ def _position_lifecycle_projection(
             "noTradeBars": value["no_trade_bars"],
             "noTradeBarRate": value["no_trade_bar_rate"],
             "riskOverrideBars": value["risk_override_bars"],
-            "totalGrossContribution": value[
-                "total_gross_contribution"
-            ],
+            "totalGrossContribution": value["total_gross_contribution"],
             "totalCost": value["total_cost"],
-            "totalNetContribution": value[
-                "total_net_contribution"
-            ],
+            "totalNetContribution": value["total_net_contribution"],
             "byAsset": [
                 {
                     "asset": asset,
@@ -6603,13 +6077,9 @@ def _position_lifecycle_projection(
                     "activeSegments": metrics["active_segments"],
                     "completeEpisodes": metrics["complete_episodes"],
                     "decisionBars": metrics["decision_bars"],
-                    "totalNetContribution": metrics[
-                        "total_net_contribution"
-                    ],
+                    "totalNetContribution": metrics["total_net_contribution"],
                     "totalCost": metrics["total_cost"],
-                    "completeEpisodeWinRate": metrics[
-                        "complete_episode_win_rate"
-                    ],
+                    "completeEpisodeWinRate": metrics["complete_episode_win_rate"],
                 }
                 for asset, metrics in value["by_asset"].items()
             ],
@@ -6671,15 +6141,9 @@ def _position_lifecycle_projection(
                 "decisionBars": int(row["decision_bars"]),
                 "netContribution": float(row["net_contribution"]),
                 "totalCost": float(row["total_cost"]),
-                "maximumFavorableExcursion": float(
-                    row["maximum_favorable_excursion"]
-                ),
-                "maximumAdverseExcursion": float(
-                    row["maximum_adverse_excursion"]
-                ),
-                "intentMismatchBars": int(
-                    row["intent_mismatch_bars"]
-                ),
+                "maximumFavorableExcursion": float(row["maximum_favorable_excursion"]),
+                "maximumAdverseExcursion": float(row["maximum_adverse_excursion"]),
+                "intentMismatchBars": int(row["intent_mismatch_bars"]),
             }
             for row in recent.to_dict("records")
         ],
@@ -6744,23 +6208,14 @@ def load_portfolio_diagnostics(
     )
     mandate = _mandate_projection(run, report, universe)
     research_horizon = _research_horizon_projection(run, report)
-    reference_nav = float(
-        mandate["implementationPolicy"]["referenceNav"]
-    )
+    reference_nav = float(mandate["implementationPolicy"]["referenceNav"])
 
     daily = _parse_daily(paths["portfolio-daily"])
-    locked_decision_policy = mandate["implementationPolicy"][
-        "decisionPolicy"
-    ]
+    locked_decision_policy = mandate["implementationPolicy"]["decisionPolicy"]
     flat_decision_policy = {
-        key: value
-        for key, value in locked_decision_policy.items()
-        if key != "source"
+        key: value for key, value in locked_decision_policy.items() if key != "source"
     }
-    if any(
-        row["decision_schedule"] != flat_decision_policy
-        for row in daily.rows
-    ):
+    if any(row["decision_schedule"] != flat_decision_policy for row in daily.rows):
         _fail(
             paths["portfolio-daily"],
             "portfolio.decision-policy",
@@ -6804,10 +6259,10 @@ def load_portfolio_diagnostics(
             "portfolio.weight-panel",
             "Executed weights must exactly match daily timestamp panel",
         )
-    if (
-        target_dates[: len(daily.dates)] != daily.dates
-        or len(target_dates) not in {len(daily.dates), len(daily.dates) + 1}
-    ):
+    if target_dates[: len(daily.dates)] != daily.dates or len(target_dates) not in {
+        len(daily.dates),
+        len(daily.dates) + 1,
+    }:
         _fail(
             paths["portfolio-targets"],
             "portfolio.target-panel",
@@ -6860,9 +6315,7 @@ def load_portfolio_diagnostics(
             "inputHash": run.result["inputHash"],
             "datasetHash": run.result["dataset"]["hash"],
             "primaryMetric": run.result["objective"]["metric"],
-            "primaryValue": run.result["metrics"][
-                run.result["objective"]["metric"]
-            ],
+            "primaryValue": run.result["metrics"][run.result["objective"]["metric"]],
         },
         "universe": universe,
         "predictionUniverse": prediction_population_projection,
@@ -6871,15 +6324,10 @@ def load_portfolio_diagnostics(
         "decisionCadence": {
             **mandate["implementationPolicy"]["decisionPolicy"],
             "observations": len(daily.rows),
-            "scheduleGroups": len(
-                {row["decision_session"] for row in daily.rows}
-            ),
-            "eligibleBars": sum(
-                row["decision_eligible"] for row in daily.rows
-            ),
+            "scheduleGroups": len({row["decision_session"] for row in daily.rows}),
+            "eligibleBars": sum(row["decision_eligible"] for row in daily.rows),
             "eligibleRate": (
-                sum(row["decision_eligible"] for row in daily.rows)
-                / len(daily.rows)
+                sum(row["decision_eligible"] for row in daily.rows) / len(daily.rows)
             ),
             "scheduledHoldBars": sum(
                 not row["decision_eligible"]
@@ -6909,12 +6357,8 @@ def load_portfolio_diagnostics(
         "selection": {
             "selectionSplit": research_integrity.get("selection_split"),
             "testRole": research_integrity.get("test_role"),
-            "testEntersSelection": research_integrity.get(
-                "test_enters_selection"
-            ),
-            "externalHoldoutRule": research_integrity.get(
-                "external_holdout_rule"
-            ),
+            "testEntersSelection": research_integrity.get("test_enters_selection"),
+            "externalHoldoutRule": research_integrity.get("external_holdout_rule"),
             "splits": splits,
         },
         "artifacts": artifact_identities,
@@ -7362,9 +6806,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                     ]
                 },
                 "label": {"type": "string", "minLength": 1},
-                "blendToPerfectCorrelation": {
-                    "enum": [0.25, 0.5, 1.0]
-                },
+                "blendToPerfectCorrelation": {"enum": [0.25, 0.5, 1.0]},
             },
         },
         "diversificationScenarioEvidence": {
@@ -7385,9 +6827,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                         "perfect-aligned",
                     ]
                 },
-                "blendToPerfectCorrelation": {
-                    "enum": [0.25, 0.5, 1.0]
-                },
+                "blendToPerfectCorrelation": {"enum": [0.25, 0.5, 1.0]},
                 "forecastAnnualized": {
                     "type": "number",
                     "minimum": 0,
@@ -7396,9 +6836,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                     "type": ["number", "null"],
                     "minimum": 1,
                 },
-                "breachesCeiling": {
-                    "type": ["boolean", "null"]
-                },
+                "breachesCeiling": {"type": ["boolean", "null"]},
             },
         },
         "diversificationScenarioSummary": {
@@ -7421,9 +6859,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                         "perfect-aligned",
                     ]
                 },
-                "blendToPerfectCorrelation": {
-                    "enum": [0.25, 0.5, 1.0]
-                },
+                "blendToPerfectCorrelation": {"enum": [0.25, 0.5, 1.0]},
                 "stressBreachDates": {
                     "type": ["integer", "null"],
                     "minimum": 0,
@@ -7486,9 +6922,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                     "type": ["number", "null"],
                     "exclusiveMinimum": 0,
                 },
-                "stressBreachesCeiling": {
-                    "type": ["boolean", "null"]
-                },
+                "stressBreachesCeiling": {"type": ["boolean", "null"]},
                 "absoluteComponentRiskHhi": {
                     "type": "number",
                     "exclusiveMinimum": 0,
@@ -7568,9 +7002,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 },
                 "maximumStressBook": {
                     "anyOf": [
-                        {
-                            "$ref": "#/$defs/diversificationStressBook"
-                        },
+                        {"$ref": "#/$defs/diversificationStressBook"},
                         {"type": "null"},
                     ]
                 },
@@ -7578,9 +7010,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                     "type": "array",
                     "minItems": 3,
                     "maxItems": 3,
-                    "items": {
-                        "$ref": "#/$defs/diversificationScenarioSummary"
-                    },
+                    "items": {"$ref": "#/$defs/diversificationScenarioSummary"},
                 },
             },
         },
@@ -7655,9 +7085,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
             "properties": {
                 "asset": {"type": "string", "minLength": 1},
                 "tradable": {"type": "boolean"},
-                "side": {
-                    "enum": ["long", "short", "flat", "context"]
-                },
+                "side": {"enum": ["long", "short", "flat", "context"]},
                 "signalState": {"enum": [-1, 0, 1]},
                 "score": {
                     "anyOf": [
@@ -7786,19 +7214,11 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                             "type": "number",
                             "minimum": 0,
                         },
-                        "grossToNetTotalReturnWedge": {
-                            "type": "number"
-                        },
-                        "grossToNetAnnualReturnWedge": {
-                            "type": "number"
-                        },
+                        "grossToNetTotalReturnWedge": {"type": "number"},
+                        "grossToNetAnnualReturnWedge": {"type": "number"},
                         "grossToNetSharpeDelta": {"type": "number"},
-                        "grossReturnPerOneWayTurnoverBps": {
-                            "type": ["number", "null"]
-                        },
-                        "netReturnPerOneWayTurnoverBps": {
-                            "type": ["number", "null"]
-                        },
+                        "grossReturnPerOneWayTurnoverBps": {"type": ["number", "null"]},
+                        "netReturnPerOneWayTurnoverBps": {"type": ["number", "null"]},
                         "breakEvenCost": {
                             "type": "object",
                             "additionalProperties": False,
@@ -7918,12 +7338,8 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                             "type": "integer",
                             "minimum": 0,
                         },
-                        "maximumUnderwaterStart": (
-                            NULLABLE_TIMESTAMP_JSON_SCHEMA
-                        ),
-                        "maximumUnderwaterEnd": (
-                            NULLABLE_TIMESTAMP_JSON_SCHEMA
-                        ),
+                        "maximumUnderwaterStart": (NULLABLE_TIMESTAMP_JSON_SCHEMA),
+                        "maximumUnderwaterEnd": (NULLABLE_TIMESTAMP_JSON_SCHEMA),
                         "currentUnderwaterBars": {
                             "type": "integer",
                             "minimum": 0,
@@ -7938,9 +7354,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                             "minimum": 0,
                             "maximum": 1,
                         },
-                        "netTotalReturnWithoutBestDays": {
-                            "type": "number"
-                        },
+                        "netTotalReturnWithoutBestDays": {"type": "number"},
                     },
                 },
             },
@@ -8247,16 +7661,10 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 "jointConstraintRiskOverrideBars",
             ],
             "properties": {
-                "source": {
-                    "enum": ["caller-supplied", "reference-default"]
-                },
-                "kind": {
-                    "enum": ["every-bars", "calendar-month-end"]
-                },
+                "source": {"enum": ["caller-supplied", "reference-default"]},
+                "kind": {"enum": ["every-bars", "calendar-month-end"]},
                 "bars": {"type": "integer", "minimum": 1, "maximum": 252},
-                "anchor": {
-                    "enum": ["dataset-start", "session-start"]
-                },
+                "anchor": {"enum": ["dataset-start", "session-start"]},
                 "observations": {"type": "integer", "minimum": 1},
                 "scheduleGroups": {"type": "integer", "minimum": 1},
                 "eligibleBars": {"type": "integer", "minimum": 0},
@@ -8278,11 +7686,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
             },
             "allOf": [
                 {
-                    "if": {
-                        "properties": {
-                            "kind": {"const": "every-bars"}
-                        }
-                    },
+                    "if": {"properties": {"kind": {"const": "every-bars"}}},
                     "then": {"required": ["bars", "anchor"]},
                 }
             ],
@@ -8430,16 +7834,12 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                                 "target_contrast": {
                                     "const": "forward_return(left_asset)-forward_return(right_asset)"
                                 },
-                                "portfolio_construction_authority": {
-                                    "const": "none"
-                                },
+                                "portfolio_construction_authority": {"const": "none"},
                             },
                         },
                     ]
                 },
-                "evaluationAuthority": {
-                    "const": "factor-evaluation-only"
-                },
+                "evaluationAuthority": {"const": "factor-evaluation-only"},
                 "portfolioAuthority": {"const": "none"},
                 "tradingAuthority": {"const": "none"},
             },
@@ -8724,13 +8124,9 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                                 },
                             },
                         },
-                        "costModel": {
-                            "const": "linear-traded-notional-v1"
-                        },
+                        "costModel": {"const": "linear-traded-notional-v1"},
                         "capacityModel": {
-                            "const": (
-                                "trailing-dollar-volume-participation-v1"
-                            )
+                            "const": ("trailing-dollar-volume-participation-v1")
                         },
                     },
                 },
@@ -8795,9 +8191,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                     "minimum": MIN_PORTFOLIO_POINTS,
                     "maximum": MAX_PORTFOLIO_POINTS,
                 },
-                "sampling": {
-                    "const": "deterministic-even-with-accounting-anchors"
-                },
+                "sampling": {"const": "deterministic-even-with-accounting-anchors"},
                 "summary": {
                     "type": "object",
                     "additionalProperties": False,
@@ -8880,9 +8274,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                     "type": "string",
                     "minLength": 1,
                 },
-                "executionRiskForecastAvailable": {
-                    "type": "boolean"
-                },
+                "executionRiskForecastAvailable": {"type": "boolean"},
                 "pretradeRiskForecastAnnualized": {
                     "type": "number",
                     "minimum": 0,
@@ -8950,13 +8342,9 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
             "properties": {
                 "method": {"const": MECHANICAL_DECISION_METHOD},
                 "timestamp": TIMESTAMP_JSON_SCHEMA,
-                "authority": {
-                    "const": "quantitative-decision-support"
-                },
+                "authority": {"const": "quantitative-decision-support"},
                 "tradingAuthority": {"const": "none"},
-                "distanceSemantics": {
-                    "const": PERCENTILE_DISTANCE_SEMANTICS
-                },
+                "distanceSemantics": {"const": PERCENTILE_DISTANCE_SEMANTICS},
                 "signalGate": {
                     "type": "object",
                     "additionalProperties": False,
@@ -9103,9 +8491,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                                     "additionalProperties": False,
                                     "required": ["kind"],
                                     "properties": {
-                                        "kind": {
-                                            "const": "calendar-month-end"
-                                        }
+                                        "kind": {"const": "calendar-month-end"}
                                     },
                                 },
                             ]
@@ -9136,12 +8522,8 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                             "type": "number",
                             "minimum": 0,
                         },
-                        "ordinaryRebalance": {
-                            "type": ["boolean", "null"]
-                        },
-                        "riskOverride": {
-                            "type": ["boolean", "null"]
-                        },
+                        "ordinaryRebalance": {"type": ["boolean", "null"]},
+                        "riskOverride": {"type": ["boolean", "null"]},
                         "rebalanced": {"type": "boolean"},
                         "finalOneWayTurnover": {
                             "type": "number",
@@ -9187,9 +8569,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 "method": {"const": SIZING_ANATOMY_METHOD},
                 "timestamp": TIMESTAMP_JSON_SCHEMA,
                 "historicalResearchWeights": {"const": True},
-                "authority": {
-                    "const": "quantitative-decision-support"
-                },
+                "authority": {"const": "quantitative-decision-support"},
                 "tradingAuthority": {"const": "none"},
                 "construction": {
                     "type": "object",
@@ -9220,8 +8600,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                         },
                         "rule": {
                             "const": (
-                                "percentile-conviction-divided-by-"
-                                "trailing-volatility"
+                                "percentile-conviction-divided-by-trailing-volatility"
                             )
                         },
                         "grossLimit": {
@@ -9309,9 +8688,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                             "minimum": 0,
                             "maximum": 1,
                         },
-                        "largestAbsoluteContributor": {
-                            "type": ["string", "null"]
-                        },
+                        "largestAbsoluteContributor": {"type": ["string", "null"]},
                     },
                 },
                 "positions": {
@@ -9359,12 +8736,8 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                         "scenarios",
                     ],
                     "properties": {
-                        "method": {
-                            "const": DIVERSIFICATION_SHOCK_METHOD
-                        },
-                        "pairwiseCorrelationMagnitude": {
-                            "const": 1.0
-                        },
+                        "method": {"const": DIVERSIFICATION_SHOCK_METHOD},
+                        "pairwiseCorrelationMagnitude": {"const": 1.0},
                         "positionSignsAlignRisk": {"const": True},
                         "annualizationPeriods": {
                             "type": "integer",
@@ -9388,10 +8761,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                             "minItems": 3,
                             "maxItems": 3,
                             "items": {
-                                "$ref": (
-                                    "#/$defs/"
-                                    "diversificationScenarioDefinition"
-                                )
+                                "$ref": ("#/$defs/diversificationScenarioDefinition")
                             },
                         },
                     },
@@ -9448,9 +8818,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                             "type": ["number", "null"],
                             "exclusiveMinimum": 0,
                         },
-                        "stressBreachesCeiling": {
-                            "type": ["boolean", "null"]
-                        },
+                        "stressBreachesCeiling": {"type": ["boolean", "null"]},
                         "absoluteComponentRiskHhi": {
                             "type": ["number", "null"],
                             "exclusiveMinimum": 0,
@@ -9469,25 +8837,18 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                             "minItems": 3,
                             "maxItems": 3,
                             "items": {
-                                "$ref": (
-                                    "#/$defs/"
-                                    "diversificationScenarioEvidence"
-                                )
+                                "$ref": ("#/$defs/diversificationScenarioEvidence")
                             },
                         },
                         "positions": {
                             "type": "array",
                             "minItems": 1,
                             "maxItems": MAX_UNIVERSE,
-                            "items": {
-                                "$ref": "#/$defs/diversificationPosition"
-                            },
+                            "items": {"$ref": "#/$defs/diversificationPosition"},
                         },
                     },
                 },
-                "validation": {
-                    "$ref": "#/$defs/diversificationSplit"
-                },
+                "validation": {"$ref": "#/$defs/diversificationSplit"},
                 "test": {"$ref": "#/$defs/diversificationSplit"},
             },
         },
@@ -9504,9 +8865,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
             ],
             "properties": {
                 "method": {"const": STRATEGY_VIABILITY_METHOD},
-                "authority": {
-                    "const": "research-prioritization-only"
-                },
+                "authority": {"const": "research-prioritization-only"},
                 "tradingAuthority": {"const": "none"},
                 "diagnosis": {
                     "type": "object",
@@ -9561,9 +8920,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
             ],
             "properties": {
                 "method": {"const": SIGNAL_MONETIZATION_METHOD},
-                "authority": {
-                    "const": "research-prioritization-only"
-                },
+                "authority": {"const": "research-prioritization-only"},
                 "tradingAuthority": {"const": "none"},
                 "semantics": {
                     "type": "object",
@@ -9578,9 +8935,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                     ],
                     "properties": {
                         "contribution": {
-                            "const": (
-                                "additive-weight-times-next-bar-return"
-                            )
+                            "const": ("additive-weight-times-next-bar-return")
                         },
                         "evaluationMode": {
                             "enum": [
@@ -9645,9 +9000,7 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                                 "tradingCost",
                             ]
                         },
-                        "largestAdverseAnnualizedDelta": {
-                            "type": "number"
-                        },
+                        "largestAdverseAnnualizedDelta": {"type": "number"},
                         "explanation": {
                             "type": "string",
                             "minLength": 1,
@@ -9773,12 +9126,8 @@ PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                                 },
                             ]
                         },
-                        "contextScore": {
-                            "const": "unavailable-never-ranked"
-                        },
-                        "selectionAuthority": {
-                            "const": "fixed-mechanical-translation"
-                        },
+                        "contextScore": {"const": "unavailable-never-ranked"},
+                        "selectionAuthority": {"const": "fixed-mechanical-translation"},
                         "tradingAuthority": {"const": "none"},
                     },
                 },

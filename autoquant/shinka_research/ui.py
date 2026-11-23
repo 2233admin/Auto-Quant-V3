@@ -33,7 +33,6 @@ from .notebook import (
 from .skeptic import expected_max_sharpe
 
 
-
 def _confined(authority: Path, path: Path) -> Path:
     """``path`` resolved, refused unless it stays inside ``authority``."""
     target = path.resolve()

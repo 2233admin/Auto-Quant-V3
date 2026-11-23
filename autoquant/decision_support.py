@@ -99,9 +99,7 @@ def build_leader_decision_support(
         else None
     )
     rl_factor_fusion_diagnosis = (
-        rl_diagnostics["factorFusionDiagnosis"]
-        if rl_diagnostics is not None
-        else None
+        rl_diagnostics["factorFusionDiagnosis"] if rl_diagnostics is not None else None
     )
     return {
         "kind": LEADER_DECISION_SUPPORT_KIND,
@@ -114,9 +112,7 @@ def build_leader_decision_support(
         ),
         "factorQualification": factor_qualification,
         "factorComponentsHash": (
-            hash_json(factor_components)
-            if factor_components is not None
-            else None
+            hash_json(factor_components) if factor_components is not None else None
         ),
         "factorComponents": factor_components,
         "factorInputAvailabilityHash": (
@@ -126,15 +122,11 @@ def build_leader_decision_support(
         ),
         "factorInputAvailability": factor_input_availability,
         "portfolioMechanicalDecisionHash": (
-            hash_json(mechanical_decision)
-            if mechanical_decision is not None
-            else None
+            hash_json(mechanical_decision) if mechanical_decision is not None else None
         ),
         "portfolioMechanicalDecision": mechanical_decision,
         "portfolioSizingAnatomyHash": (
-            hash_json(sizing_anatomy)
-            if sizing_anatomy is not None
-            else None
+            hash_json(sizing_anatomy) if sizing_anatomy is not None else None
         ),
         "portfolioSizingAnatomy": sizing_anatomy,
         "portfolioDiversificationStressHash": (
@@ -144,15 +136,11 @@ def build_leader_decision_support(
         ),
         "portfolioDiversificationStress": diversification_stress,
         "portfolioStrategyViabilityHash": (
-            hash_json(strategy_viability)
-            if strategy_viability is not None
-            else None
+            hash_json(strategy_viability) if strategy_viability is not None else None
         ),
         "portfolioStrategyViability": strategy_viability,
         "portfolioSignalMonetizationHash": (
-            hash_json(signal_monetization)
-            if signal_monetization is not None
-            else None
+            hash_json(signal_monetization) if signal_monetization is not None else None
         ),
         "portfolioSignalMonetization": signal_monetization,
         "rlFactorFusionDiagnosisHash": (
@@ -268,14 +256,9 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
     factor_components = value.get("factorComponents")
     factor_input_availability = value.get("factorInputAvailability")
     factor_summary = None
-    if (
-        isinstance(factor_qualification, dict)
-        and factor_qualification.get("available")
-    ):
+    if isinstance(factor_qualification, dict) and factor_qualification.get("available"):
         validation = factor_qualification["validation"]
-        weakest_style_neutral_fold = validation[
-            "weakestStyleNeutralFold"
-        ]
+        weakest_style_neutral_fold = validation["weakestStyleNeutralFold"]
         factor_summary = {
             "method": factor_qualification["method"],
             "claim": factor_qualification["claim"]["claim"],
@@ -285,65 +268,57 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
             "qualifiesForPortfolio": factor_qualification["diagnosis"][
                 "qualifiesForPortfolio"
             ],
-            "iterationFocus": factor_qualification["diagnosis"][
-                "iterationFocus"
-            ],
-            "dominantStyle": factor_qualification["selection"][
-                "dominantStyle"
-            ],
+            "iterationFocus": factor_qualification["diagnosis"]["iterationFocus"],
+            "dominantStyle": factor_qualification["selection"]["dominantStyle"],
             "rawRankIc": validation["candidate"]["meanRankIc"],
             "styleRankIc": validation["dominantStyle"]["meanRankIc"],
-            "styleNeutralRankIc": validation[
-                "styleNeutralCandidate"
-            ]["meanRankIc"],
+            "styleNeutralRankIc": validation["styleNeutralCandidate"]["meanRankIc"],
             "blendRankIc": validation["equalRankBlend"]["meanRankIc"],
             "styleNeutralIcRetention": validation["incremental"][
                 "styleNeutralIcRetention"
             ],
-            "styleNeutralIcDelta": validation["incremental"][
-                "styleNeutralIcDelta"
-            ],
-            "blendUpliftVsStyle": validation["incremental"][
-                "blendUpliftVsStyle"
-            ],
-            "weakestStyleNeutralFold": validation[
-                "weakestStyleNeutralFold"
-            ]["id"] if weakest_style_neutral_fold is not None else None,
-            "weakestStyleNeutralFoldIc": validation[
-                "weakestStyleNeutralFold"
-            ]["meanRankIc"] if weakest_style_neutral_fold is not None else None,
+            "styleNeutralIcDelta": validation["incremental"]["styleNeutralIcDelta"],
+            "blendUpliftVsStyle": validation["incremental"]["blendUpliftVsStyle"],
+            "weakestStyleNeutralFold": validation["weakestStyleNeutralFold"]["id"]
+            if weakest_style_neutral_fold is not None
+            else None,
+            "weakestStyleNeutralFoldIc": validation["weakestStyleNeutralFold"][
+                "meanRankIc"
+            ]
+            if weakest_style_neutral_fold is not None
+            else None,
             "components": (
                 {
                     "count": factor_components["trialDisclosure"][
                         "materializedComponents"
                     ],
-                    "crossSectionalScoreCount": factor_components[
-                        "trialDisclosure"
-                    ]["crossSectionalScoreComponents"],
-                    "timestampContextCount": factor_components[
-                        "trialDisclosure"
-                    ]["timestampContextComponents"],
-                    "pairwiseComparisons": factor_components[
-                        "trialDisclosure"
-                    ]["pairwiseComparisons"],
-                    "strongestRawComponent": factor_components[
-                        "validationDiagnosis"
-                    ]["strongestRawComponent"],
-                    "strongestRawMeanIc": factor_components[
-                        "validationDiagnosis"
-                    ]["strongestRawMeanIc"],
+                    "crossSectionalScoreCount": factor_components["trialDisclosure"][
+                        "crossSectionalScoreComponents"
+                    ],
+                    "timestampContextCount": factor_components["trialDisclosure"][
+                        "timestampContextComponents"
+                    ],
+                    "pairwiseComparisons": factor_components["trialDisclosure"][
+                        "pairwiseComparisons"
+                    ],
+                    "strongestRawComponent": factor_components["validationDiagnosis"][
+                        "strongestRawComponent"
+                    ],
+                    "strongestRawMeanIc": factor_components["validationDiagnosis"][
+                        "strongestRawMeanIc"
+                    ],
                     "strongestResidualComponent": factor_components[
                         "validationDiagnosis"
                     ]["strongestResidualComponent"],
-                    "strongestResidualMeanIc": factor_components[
-                        "validationDiagnosis"
-                    ]["strongestResidualMeanIc"],
+                    "strongestResidualMeanIc": factor_components["validationDiagnosis"][
+                        "strongestResidualMeanIc"
+                    ],
                     "removalMostImprovesFixedBlend": factor_components[
                         "validationDiagnosis"
                     ]["removalMostImprovesFixedBlend"],
-                    "bestRemovalDeltaMeanIc": factor_components[
-                        "validationDiagnosis"
-                    ]["bestRemovalDeltaMeanIc"],
+                    "bestRemovalDeltaMeanIc": factor_components["validationDiagnosis"][
+                        "bestRemovalDeltaMeanIc"
+                    ],
                 }
                 if isinstance(factor_components, dict)
                 and factor_components.get("available")
@@ -357,9 +332,7 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
                     "completeTimestamps": factor_input_availability[
                         "completeTimestamps"
                     ],
-                    "timestamps": factor_input_availability[
-                        "timestamps"
-                    ],
+                    "timestamps": factor_input_availability["timestamps"],
                     "inputAssetsPerTimestamp": factor_input_availability[
                         "assetsPerTimestamp"
                     ]["input"],
@@ -382,9 +355,7 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
         rl_summary = {
             "method": rl_diagnosis["method"],
             "stage": rl_diagnosis["diagnosis"]["stage"],
-            "iterationFocus": rl_diagnosis["diagnosis"][
-                "iterationFocus"
-            ],
+            "iterationFocus": rl_diagnosis["diagnosis"]["iterationFocus"],
             "candidateAssessment": candidate["assessment"],
             "candidateFixedSharpeDeltaVsBalanced": candidate[
                 "fixedSleeveSharpeDeltaVsBalanced"
@@ -392,36 +363,16 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
             "candidateLocalRewardDeltaVsBalanced": candidate[
                 "meanLocalRewardDeltaVsBalanced"
             ],
-            "candidateSelectedFrequency": candidate[
-                "selectedFrequency"
-            ],
-            "candidateLocalBestFrequency": candidate[
-                "localBestFrequency"
-            ],
-            "candidateOracleCaptureRate": candidate[
-                "oracleCaptureRate"
-            ],
-            "grossActiveReturn": transmission[
-                "meanTrialGrossActiveReturn"
-            ],
-            "incrementalCost": transmission[
-                "meanTrialIncrementalCost"
-            ],
-            "netActiveReturn": transmission[
-                "meanTrialNetActiveReturn"
-            ],
-            "sharpeAdvantage": transmission[
-                "meanSharpeAdvantageVsSelectedBaseline"
-            ],
-            "positiveNetTrialRate": stability[
-                "positiveNetTrialRate"
-            ],
-            "worstRegime": validation["lossLocator"][
-                "worstRegime"
-            ]["key"],
-            "worstActionPair": validation["lossLocator"][
-                "worstActionPair"
-            ]["key"],
+            "candidateSelectedFrequency": candidate["selectedFrequency"],
+            "candidateLocalBestFrequency": candidate["localBestFrequency"],
+            "candidateOracleCaptureRate": candidate["oracleCaptureRate"],
+            "grossActiveReturn": transmission["meanTrialGrossActiveReturn"],
+            "incrementalCost": transmission["meanTrialIncrementalCost"],
+            "netActiveReturn": transmission["meanTrialNetActiveReturn"],
+            "sharpeAdvantage": transmission["meanSharpeAdvantageVsSelectedBaseline"],
+            "positiveNetTrialRate": stability["positiveNetTrialRate"],
+            "worstRegime": validation["lossLocator"]["worstRegime"]["key"],
+            "worstActionPair": validation["lossLocator"]["worstActionPair"]["key"],
         }
     if not isinstance(decision, dict):
         if factor_summary is not None or rl_summary is not None:
@@ -430,21 +381,13 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
                 "reason": None,
                 "runId": value["runId"],
                 "resultHash": value["resultHash"],
-                "factorQualificationHash": value.get(
-                    "factorQualificationHash"
-                ),
-                "factorComponentsHash": value.get(
-                    "factorComponentsHash"
-                ),
-                "factorInputAvailabilityHash": value.get(
-                    "factorInputAvailabilityHash"
-                ),
+                "factorQualificationHash": value.get("factorQualificationHash"),
+                "factorComponentsHash": value.get("factorComponentsHash"),
+                "factorInputAvailabilityHash": value.get("factorInputAvailabilityHash"),
                 "portfolioMechanicalDecisionHash": value.get(
                     "portfolioMechanicalDecisionHash"
                 ),
-                "portfolioSizingAnatomyHash": value.get(
-                    "portfolioSizingAnatomyHash"
-                ),
+                "portfolioSizingAnatomyHash": value.get("portfolioSizingAnatomyHash"),
                 "portfolioDiversificationStressHash": value.get(
                     "portfolioDiversificationStressHash"
                 ),
@@ -454,9 +397,7 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
                 "portfolioSignalMonetizationHash": value.get(
                     "portfolioSignalMonetizationHash"
                 ),
-                "rlFactorFusionDiagnosisHash": value.get(
-                    "rlFactorFusionDiagnosisHash"
-                ),
+                "rlFactorFusionDiagnosisHash": value.get("rlFactorFusionDiagnosisHash"),
                 "portfolio": None,
                 "factor": factor_summary,
                 "rl": rl_summary,
@@ -466,21 +407,13 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
             "reason": "no-supported-leader-diagnosis",
             "runId": value.get("runId"),
             "resultHash": value.get("resultHash"),
-            "factorQualificationHash": value.get(
-                "factorQualificationHash"
-            ),
-            "factorComponentsHash": value.get(
-                "factorComponentsHash"
-            ),
-            "factorInputAvailabilityHash": value.get(
-                "factorInputAvailabilityHash"
-            ),
+            "factorQualificationHash": value.get("factorQualificationHash"),
+            "factorComponentsHash": value.get("factorComponentsHash"),
+            "factorInputAvailabilityHash": value.get("factorInputAvailabilityHash"),
             "portfolioMechanicalDecisionHash": value.get(
                 "portfolioMechanicalDecisionHash"
             ),
-            "portfolioSizingAnatomyHash": value.get(
-                "portfolioSizingAnatomyHash"
-            ),
+            "portfolioSizingAnatomyHash": value.get("portfolioSizingAnatomyHash"),
             "portfolioDiversificationStressHash": value.get(
                 "portfolioDiversificationStressHash"
             ),
@@ -490,9 +423,7 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
             "portfolioSignalMonetizationHash": value.get(
                 "portfolioSignalMonetizationHash"
             ),
-            "rlFactorFusionDiagnosisHash": value.get(
-                "rlFactorFusionDiagnosisHash"
-            ),
+            "rlFactorFusionDiagnosisHash": value.get("rlFactorFusionDiagnosisHash"),
             "portfolio": None,
             "factor": None,
             "rl": None,
@@ -510,18 +441,14 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
             "governedGross": construction["governedGross"],
             "executedGross": construction["executedGross"],
             "unfundedGross": construction["unfundedGross"],
-            "atCapAssets": sum(
-                len(side["atCapAssets"]) for side in sizing["sides"]
-            ),
-            "componentRiskAvailable": sizing["componentRisk"][
-                "available"
-            ],
+            "atCapAssets": sum(len(side["atCapAssets"]) for side in sizing["sides"]),
+            "componentRiskAvailable": sizing["componentRisk"]["available"],
             "componentRiskConcentrationHhi": sizing["componentRisk"][
                 "absoluteConcentrationHhi"
             ],
-            "largestAbsoluteComponentRiskContributor": sizing[
-                "componentRisk"
-            ]["largestAbsoluteContributor"],
+            "largestAbsoluteComponentRiskContributor": sizing["componentRisk"][
+                "largestAbsoluteContributor"
+            ],
         }
     viability = value.get("portfolioStrategyViability")
     viability_summary = None
@@ -533,29 +460,17 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
         viability_summary = {
             "method": viability["method"],
             "stage": viability["diagnosis"]["stage"],
-            "iterationFocus": viability["diagnosis"][
-                "iterationFocus"
-            ],
+            "iterationFocus": viability["diagnosis"]["iterationFocus"],
             "factorRankIc": validation["factorRankIc"],
             "grossSharpe": validation["gross"]["sharpe"],
             "netSharpe": validation["net"]["sharpe"],
-            "grossToNetSharpeDelta": friction[
-                "grossToNetSharpeDelta"
-            ],
+            "grossToNetSharpeDelta": friction["grossToNetSharpeDelta"],
             "baseCostBps": friction["baseCostBps"],
             "breakEvenCost": friction["breakEvenCost"],
-            "annualizedOneWayTurnover": friction[
-                "annualizedOneWayTurnover"
-            ],
-            "positiveNetMonthRate": temporal[
-                "positiveNetMonthRate"
-            ],
-            "maximumUnderwaterBars": temporal[
-                "maximumUnderwaterBars"
-            ],
-            "netTotalReturnWithoutBestDays": temporal[
-                "netTotalReturnWithoutBestDays"
-            ],
+            "annualizedOneWayTurnover": friction["annualizedOneWayTurnover"],
+            "positiveNetMonthRate": temporal["positiveNetMonthRate"],
+            "maximumUnderwaterBars": temporal["maximumUnderwaterBars"],
+            "netTotalReturnWithoutBestDays": temporal["netTotalReturnWithoutBestDays"],
             "testNetSharpe": test["net"]["sharpe"],
         }
     diversification = value.get("portfolioDiversificationStress")
@@ -568,63 +483,45 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
             "method": diversification["method"],
             "state": current["state"],
             "activeAssets": current["activeAssets"],
-            "sampleForecastAnnualized": current[
-                "sampleForecastAnnualized"
-            ],
+            "sampleForecastAnnualized": current["sampleForecastAnnualized"],
             "perfectCorrelationForecastAnnualized": current[
                 "perfectCorrelationForecastAnnualized"
             ],
             "stressMultiplier": current["stressMultiplier"],
             "ceilingAnnualized": current["ceilingAnnualized"],
-            "stressBreachesCeiling": current[
-                "stressBreachesCeiling"
-            ],
-            "absoluteComponentRiskHhi": current[
-                "absoluteComponentRiskHhi"
-            ],
+            "stressBreachesCeiling": current["stressBreachesCeiling"],
+            "absoluteComponentRiskHhi": current["absoluteComponentRiskHhi"],
             "effectiveRiskBets": current["effectiveRiskBets"],
             "largestAbsoluteComponentRiskContributor": current[
                 "largestAbsoluteComponentRiskContributor"
             ],
-            "validationStressBreachRate": validation[
-                "stressBreachRate"
-            ],
-            "validationMedianEffectiveRiskBets": validation[
-                "medianEffectiveRiskBets"
-            ],
+            "validationStressBreachRate": validation["stressBreachRate"],
+            "validationMedianEffectiveRiskBets": validation["medianEffectiveRiskBets"],
             "testStressBreachRate": test["stressBreachRate"],
         }
     monetization = value.get("portfolioSignalMonetization")
     monetization_summary = None
     if isinstance(monetization, dict):
         validation = monetization["validation"]
-        stages = {
-            item["id"]: item for item in validation["stages"]
-        }
+        stages = {item["id"]: item for item in validation["stages"]}
         monetization_summary = {
             "method": monetization["method"],
             "outcome": monetization["diagnosis"]["outcome"],
-            "iterationFocus": monetization["diagnosis"][
-                "iterationFocus"
-            ],
-            "largestAdverseStage": monetization["diagnosis"][
-                "largestAdverseStage"
-            ],
+            "iterationFocus": monetization["diagnosis"]["iterationFocus"],
+            "largestAdverseStage": monetization["diagnosis"]["largestAdverseStage"],
             "largestAdverseAnnualizedDelta": monetization["diagnosis"][
                 "largestAdverseAnnualizedDelta"
             ],
-            "equalIntentAnnualizedContribution": stages[
-                "equalIntent"
-            ]["annualizedContribution"],
-            "executedGrossAnnualizedContribution": stages[
-                "executedGross"
-            ]["annualizedContribution"],
-            "executedNetAnnualizedContribution": stages[
-                "executedNet"
-            ]["annualizedContribution"],
-            "noTradeRetentionDates": validation["coverage"][
-                "noTradeRetentionDates"
+            "equalIntentAnnualizedContribution": stages["equalIntent"][
+                "annualizedContribution"
             ],
+            "executedGrossAnnualizedContribution": stages["executedGross"][
+                "annualizedContribution"
+            ],
+            "executedNetAnnualizedContribution": stages["executedNet"][
+                "annualizedContribution"
+            ],
+            "noTradeRetentionDates": validation["coverage"]["noTradeRetentionDates"],
             "decisionDates": validation["coverage"]["decisionDates"],
         }
     return {
@@ -632,39 +529,23 @@ def summarize_leader_decision_support(value: Any) -> dict[str, Any]:
         "reason": None,
         "runId": value["runId"],
         "resultHash": value["resultHash"],
-        "factorQualificationHash": value.get(
-            "factorQualificationHash"
-        ),
+        "factorQualificationHash": value.get("factorQualificationHash"),
         "factorComponentsHash": value.get("factorComponentsHash"),
-        "factorInputAvailabilityHash": value.get(
-            "factorInputAvailabilityHash"
-        ),
-        "portfolioMechanicalDecisionHash": value[
-            "portfolioMechanicalDecisionHash"
-        ],
-        "portfolioSizingAnatomyHash": value.get(
-            "portfolioSizingAnatomyHash"
-        ),
+        "factorInputAvailabilityHash": value.get("factorInputAvailabilityHash"),
+        "portfolioMechanicalDecisionHash": value["portfolioMechanicalDecisionHash"],
+        "portfolioSizingAnatomyHash": value.get("portfolioSizingAnatomyHash"),
         "portfolioDiversificationStressHash": value.get(
             "portfolioDiversificationStressHash"
         ),
-        "portfolioStrategyViabilityHash": value.get(
-            "portfolioStrategyViabilityHash"
-        ),
-        "portfolioSignalMonetizationHash": value.get(
-            "portfolioSignalMonetizationHash"
-        ),
-        "rlFactorFusionDiagnosisHash": value.get(
-            "rlFactorFusionDiagnosisHash"
-        ),
+        "portfolioStrategyViabilityHash": value.get("portfolioStrategyViabilityHash"),
+        "portfolioSignalMonetizationHash": value.get("portfolioSignalMonetizationHash"),
+        "rlFactorFusionDiagnosisHash": value.get("rlFactorFusionDiagnosisHash"),
         "portfolio": {
             "timestamp": decision["timestamp"],
             "family": signal["family"],
             "stateChanges": signal["stateChanges"],
             "riskGovernorScale": target["riskGovernorScale"],
-            "proposedOneWayTurnover": execution[
-                "proposedOneWayTurnover"
-            ],
+            "proposedOneWayTurnover": execution["proposedOneWayTurnover"],
             "decisionEligible": execution["decisionEligible"],
             "decisionSchedule": execution["decisionSchedule"],
             "decisionSession": execution["decisionSession"],
@@ -700,14 +581,9 @@ def _trigger_label(trigger: dict[str, Any]) -> str:
     threshold = trigger["threshold"] * 100.0
     distance = trigger["distance"]
     buffer = (
-        "rank unavailable"
-        if distance is None
-        else f"{distance * 100.0:.1f}pp buffer"
+        "rank unavailable" if distance is None else f"{distance * 100.0:.1f}pp buffer"
     )
-    return (
-        f"`{trigger['event']} {trigger['comparator']} P{threshold:.0f}` "
-        f"({buffer})"
-    )
+    return f"`{trigger['event']} {trigger['comparator']} P{threshold:.0f}` ({buffer})"
 
 
 def factor_input_availability_markdown_lines(
@@ -719,10 +595,7 @@ def factor_input_availability_markdown_lines(
     """Render frozen observed-only input breadth and coverage evidence."""
 
     availability = support.get("factorInputAvailability")
-    if (
-        not isinstance(availability, dict)
-        or not availability.get("available")
-    ):
+    if not isinstance(availability, dict) or not availability.get("available"):
         return []
     prefix = f"{lane_name}: " if lane_name else ""
     breadth = availability["assetsPerTimestamp"]["input"]
@@ -747,8 +620,7 @@ def factor_input_availability_markdown_lines(
         f"`{breadth['minimum']}` / `{breadth['median']}` / "
         f"`{breadth['maximum']}`.",
         f"- Eligible paired Factor timestamps: `{eligible}`.",
-        f"- Availability hash: "
-        f"`{support['factorInputAvailabilityHash']}`.",
+        f"- Availability hash: `{support['factorInputAvailabilityHash']}`.",
         "- Interpretation: absent rows remain absent; no forward fill, "
         "global timestamp intersection, or pre-listing history is inferred.",
         "",
@@ -764,10 +636,7 @@ def factor_qualification_markdown_lines(
     """Render the frozen raw-to-style-neutral qualification funnel."""
 
     qualification = support.get("factorQualification")
-    if (
-        not isinstance(qualification, dict)
-        or not qualification.get("available")
-    ):
+    if not isinstance(qualification, dict) or not qualification.get("available"):
         return []
     diagnosis = qualification["diagnosis"]
     selection = qualification["selection"]
@@ -1000,8 +869,7 @@ def mechanical_decision_markdown_lines(
         f"- Ordinary rebalance / risk override / final rebalance: "
         f"`{ordinary}` / `{risk_override}` / `{execution['rebalanced']}` "
         f"(`{execution['reason']}`)",
-        f"- Decision hash: "
-        f"`{support['portfolioMechanicalDecisionHash']}`",
+        f"- Decision hash: `{support['portfolioMechanicalDecisionHash']}`",
         "- Authority: `quantitative-decision-support`; trading authority: "
         "`none`. Percentile buffers hold peer ranks fixed and are not price "
         "targets, forecasts, probabilities, orders, or account positions.",
@@ -1012,10 +880,7 @@ def mechanical_decision_markdown_lines(
     ]
     for position in decision["positions"]:
         triggers = (
-            "; ".join(
-                _trigger_label(trigger)
-                for trigger in position["nextTriggers"]
-            )
+            "; ".join(_trigger_label(trigger) for trigger in position["nextTriggers"])
             if position["nextTriggers"]
             else "none — context-only, no position authority"
         )
@@ -1075,16 +940,12 @@ def sizing_anatomy_markdown_lines(
         "- Effective per-asset caps: "
         + ", ".join(
             f"`{asset}`=`{value}`"
-            for asset, value in sorted(
-                construction["assetMaxAbsWeights"].items()
-            )
+            for asset, value in sorted(construction["assetMaxAbsWeights"].items())
         ),
         "- Asset position roles: "
         + ", ".join(
             f"`{asset}`=`{role}`"
-            for asset, role in sorted(
-                construction["assetPositionRoles"].items()
-            )
+            for asset, role in sorted(construction["assetPositionRoles"].items())
         ),
         f"- Long / short gross-side limits: "
         f"`{construction['longGrossLimit']}` / "
@@ -1175,16 +1036,11 @@ def diversification_stress_markdown_lines(
     current = stress["current"]
     prefix = f"{lane_name}: " if lane_name else ""
     scenario_labels = {
-        item["id"]: item["label"]
-        for item in stress["shock"]["scenarios"]
+        item["id"]: item["label"] for item in stress["shock"]["scenarios"]
     }
 
     def value(number: float | None, suffix: str = "") -> str:
-        return (
-            "unavailable"
-            if number is None
-            else f"{number:.4f}{suffix}"
-        )
+        return "unavailable" if number is None else f"{number:.4f}{suffix}"
 
     lines = [
         heading,
@@ -1209,8 +1065,7 @@ def diversification_stress_markdown_lines(
         f"`{value(current['absoluteComponentRiskHhi'])}` / "
         f"`{value(current['effectiveRiskBets'])}` / "
         f"`{current['largestAbsoluteComponentRiskContributor'] or 'none'}`",
-        f"- Diversification hash: "
-        f"`{support['portfolioDiversificationStressHash']}`",
+        f"- Diversification hash: `{support['portfolioDiversificationStressHash']}`",
         "- Authority: `context-only`; validation and visible test do not "
         "enter selection or progression; trading authority: `none`.",
         "",
@@ -1229,10 +1084,10 @@ def diversification_stress_markdown_lines(
     lines.extend(
         [
             "",
-        "| Split / role | Available / active / total dates | "
-        "Perfect-endpoint breach | Stress multiplier median / p95 / max | "
-        "Effective risk bets median / min | Maximum-stress date |",
-        "| --- | --- | --- | --- | --- | --- |",
+            "| Split / role | Available / active / total dates | "
+            "Perfect-endpoint breach | Stress multiplier median / p95 / max | "
+            "Effective risk bets median / min | Maximum-stress date |",
+            "| --- | --- | --- | --- | --- | --- |",
         ]
     )
     for split_name in ("validation", "test"):
@@ -1241,10 +1096,7 @@ def diversification_stress_markdown_lines(
         breach = (
             "unavailable"
             if split["stressBreachRate"] is None
-            else (
-                f"{split['stressBreachDates']} / "
-                f"{split['stressBreachRate']:.2%}"
-            )
+            else (f"{split['stressBreachDates']} / {split['stressBreachRate']:.2%}")
         )
         lines.append(
             f"| `{split_name}` / `{split['role']}` | "
@@ -1256,8 +1108,7 @@ def diversification_stress_markdown_lines(
             f"`{value(split['medianEffectiveRiskBets'])}` / "
             f"`{value(split['minimumEffectiveRiskBets'])}` | "
             + (
-                f"`{maximum['timestamp']}` / "
-                f"{value(maximum['stressMultiplier'])}×"
+                f"`{maximum['timestamp']}` / {value(maximum['stressMultiplier'])}×"
                 if maximum is not None
                 else "unavailable"
             )
@@ -1340,8 +1191,7 @@ def strategy_viability_markdown_lines(
         "- Diagnosis authority: `research-prioritization-only`; selection "
         "split: `validation`; test enters diagnosis: `False`; trading "
         "authority: `none`.",
-        f"- Viability hash: "
-        f"`{support['portfolioStrategyViabilityHash']}`",
+        f"- Viability hash: `{support['portfolioStrategyViabilityHash']}`",
         "",
         "| Split / role | Factor rank IC | Gross Sharpe → net Sharpe | "
         "Annual turnover / cost | Break-even cost | Positive months / "
@@ -1423,8 +1273,7 @@ def signal_monetization_markdown_lines(
         "- Diagnosis authority: `research-prioritization-only`; selection "
         "split: `validation`; test enters diagnosis: `False`; trading "
         "authority: `none`.",
-        f"- Monetization hash: "
-        f"`{support['portfolioSignalMonetizationHash']}`",
+        f"- Monetization hash: `{support['portfolioSignalMonetizationHash']}`",
         "",
         "| Split / role | Normalized intent | Sized raw | Governed target | "
         "Executed gross | Executed net | No-trade retention |",
@@ -1509,8 +1358,7 @@ def rl_factor_fusion_diagnosis_markdown_lines(
         f"`{losses['worstActionPair']['key']}` / "
         f"`{losses['worstSwitchState']['key']}` / "
         f"`{losses['worstAssetGrossContribution']['asset']}`.",
-        f"- Fusion diagnosis hash: "
-        f"`{support['rlFactorFusionDiagnosisHash']}`",
+        f"- Fusion diagnosis hash: `{support['rlFactorFusionDiagnosisHash']}`",
         "- Local opportunity is a same-pretrade, one-step, ex-post audit. "
         "Adaptive transmission uses independent complete policy paths. "
         "Neither enters training, policy selection, KEEP/REVERT, or trading.",

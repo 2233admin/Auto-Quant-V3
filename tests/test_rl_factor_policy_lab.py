@@ -256,10 +256,7 @@ class RlEnvironmentTests(unittest.TestCase):
             array_rewards,
             np.asarray(
                 [
-                    [
-                        row["actions"][action]["reward"]
-                        for action in ACTIONS
-                    ]
+                    [row["actions"][action]["reward"] for action in ACTIONS]
                     for row in reference_opportunities
                 ],
                 dtype=float,
@@ -278,14 +275,7 @@ class RlEnvironmentTests(unittest.TestCase):
         )
         self.assertEqual(
             array_mean_regret,
-            float(
-                np.mean(
-                    [
-                        row["realizedRegret"]
-                        for row in reference_opportunities
-                    ]
-                )
-            ),
+            float(np.mean([row["realizedRegret"] for row in reference_opportunities])),
         )
 
         first = train_contextual_ridge(
@@ -345,11 +335,7 @@ class RlEnvironmentTests(unittest.TestCase):
                 asset: 100.0
                 * np.exp(
                     np.cumsum(
-                        0.001
-                        + 0.06
-                        * np.sin(
-                            time / (2.0 + number * 0.35) + number
-                        )
+                        0.001 + 0.06 * np.sin(time / (2.0 + number * 0.35) + number)
                     )
                 )
                 for number, asset in enumerate(columns)
@@ -442,13 +428,8 @@ class RlEnvironmentTests(unittest.TestCase):
         self.assertEqual(compliance["executed_breach_dates"], 0)
         self.assertTrue(
             (
-                rollout.simulation.daily[
-                    "executed_risk_forecast_annualized"
-                ]
-                <= rollout.simulation.daily[
-                    "execution_risk_ceiling_annualized"
-                ]
-                + 1e-12
+                rollout.simulation.daily["executed_risk_forecast_annualized"]
+                <= rollout.simulation.daily["execution_risk_ceiling_annualized"] + 1e-12
             ).all()
         )
         opportunities = one_step_action_opportunities(
@@ -467,19 +448,13 @@ class RlEnvironmentTests(unittest.TestCase):
             self.assertEqual(opportunity["selectedAction"], "candidate")
             self.assertEqual(set(opportunity["actions"]), set(ACTIONS))
             np.testing.assert_allclose(
-                list(
-                    opportunity["actions"]["candidate"][
-                        "executedWeights"
-                    ].values()
-                ),
+                list(opportunity["actions"]["candidate"]["executedWeights"].values()),
                 rollout.simulation.weights.loc[timestamp].to_numpy(),
                 rtol=0.0,
                 atol=1e-12,
             )
             np.testing.assert_allclose(
-                list(
-                    opportunity["actions"]["candidate"]["trades"].values()
-                ),
+                list(opportunity["actions"]["candidate"]["trades"].values()),
                 rollout.simulation.trades.loc[timestamp].to_numpy(),
                 rtol=0.0,
                 atol=1e-12,
@@ -531,13 +506,7 @@ class RlEnvironmentTests(unittest.TestCase):
         closes = pd.DataFrame(
             {
                 asset: 100.0
-                * np.exp(
-                    np.cumsum(
-                        0.001
-                        + 0.004
-                        * np.sin(time / (3.0 + number))
-                    )
-                )
+                * np.exp(np.cumsum(0.001 + 0.004 * np.sin(time / (3.0 + number))))
                 for number, asset in enumerate(columns)
             },
             index=dates,
@@ -629,11 +598,13 @@ class RlEnvironmentTests(unittest.TestCase):
             mandate=mandate,
         )
         expected_benchmark = (
-            (closes.shift(-1) / closes - 1.0)
-            * pd.Series(
-                {"A": 0.4, "B": 0.3, "C": 0.2, "D": 0.05, "E": 0.05}
+            (
+                (closes.shift(-1) / closes - 1.0)
+                * pd.Series({"A": 0.4, "B": 0.3, "C": 0.2, "D": 0.05, "E": 0.05})
             )
-        ).sum(axis=1, min_count=1).reindex(index)
+            .sum(axis=1, min_count=1)
+            .reindex(index)
+        )
         pd.testing.assert_series_equal(
             rollout.simulation.daily["benchmark_return"],
             expected_benchmark.rename("benchmark_return"),
@@ -660,8 +631,7 @@ class RlEnvironmentTests(unittest.TestCase):
 
         self.assertEqual(
             account.call_count,
-            int(eligible.sum()) * len(ACTIONS)
-            + int((~eligible).sum()),
+            int(eligible.sum()) * len(ACTIONS) + int((~eligible).sum()),
         )
         for is_eligible, row in zip(eligible, opportunities, strict=True):
             if is_eligible:
@@ -672,21 +642,11 @@ class RlEnvironmentTests(unittest.TestCase):
                 1,
             )
             self.assertEqual(
-                len(
-                    {
-                        tuple(item["executedWeights"].values())
-                        for item in actions
-                    }
-                ),
+                len({tuple(item["executedWeights"].values()) for item in actions}),
                 1,
             )
             self.assertGreater(
-                len(
-                    {
-                        tuple(item["proposedWeights"].values())
-                        for item in actions
-                    }
-                ),
+                len({tuple(item["proposedWeights"].values()) for item in actions}),
                 1,
             )
         compacted = compact_opportunity_rows(opportunities)
@@ -716,11 +676,7 @@ class RlEnvironmentTests(unittest.TestCase):
             {
                 asset: 100.0
                 * np.exp(
-                    np.cumsum(
-                        0.0005
-                        + 0.012
-                        * np.sin(time / (2.0 + number * 0.4))
-                    )
+                    np.cumsum(0.0005 + 0.012 * np.sin(time / (2.0 + number * 0.4)))
                 )
                 for number, asset in enumerate(columns)
             },
@@ -790,22 +746,16 @@ class RlEnvironmentTests(unittest.TestCase):
                     implementation=implementation,
                     pretrade=pretrade,
                 )
-                array_current, array_reward = (
-                    rl_core._learning_step_values(
-                        pretrade.to_numpy(dtype=float),
-                        proposed.to_numpy(dtype=float),
-                        timestamp,
-                        forward.to_numpy(dtype=float),
-                        ordinary_rebalance_allowed=decision_eligible,
-                        no_trade_one_way=float(
-                            implementation["no_trade_one_way"]
-                        ),
-                        base_cost_bps=float(
-                            implementation["base_cost_bps"]
-                        ),
-                        resolved_mandate=resolved,
-                        risk_covariance_cache=risk_cache,
-                    )
+                array_current, array_reward = rl_core._learning_step_values(
+                    pretrade.to_numpy(dtype=float),
+                    proposed.to_numpy(dtype=float),
+                    timestamp,
+                    forward.to_numpy(dtype=float),
+                    ordinary_rebalance_allowed=decision_eligible,
+                    no_trade_one_way=float(implementation["no_trade_one_way"]),
+                    base_cost_bps=float(implementation["base_cost_bps"]),
+                    resolved_mandate=resolved,
+                    risk_covariance_cache=risk_cache,
                 )
 
                 pd.testing.assert_series_equal(
@@ -889,24 +839,18 @@ class GovernedRlFactorPolicyLabTests(unittest.TestCase):
                 learning_contract,
             )
             self.assertEqual(
-                metrics["rl"]["aggregate"]["validation_net_sharpe"][
-                    "observations"
-                ],
+                metrics["rl"]["aggregate"]["validation_net_sharpe"]["observations"],
                 6,
             )
             self.assertEqual(metrics["rl"]["aggregate"]["failure_rate"], 0.0)
-            self.assertFalse(
-                metrics["research_integrity"]["test_enters_selection"]
-            )
+            self.assertFalse(metrics["research_integrity"]["test_enters_selection"])
             self.assertIn("candidate", metrics["configuration"]["actions"])
             self.assertEqual(
                 metrics["configuration"]["factorExperts"][0],
                 "candidate",
             )
             self.assertLess(
-                metrics["comparison"][
-                    "mean_validation_advantage_vs_best_baseline"
-                ],
+                metrics["comparison"]["mean_validation_advantage_vs_best_baseline"],
                 0.0,
             )
             self.assertEqual(
@@ -927,9 +871,9 @@ class GovernedRlFactorPolicyLabTests(unittest.TestCase):
                 if item["kind"] == "policy-opportunities"
             )
             opportunity_rows = json.loads(
-                (
-                    first.root_dir / opportunity_artifact["path"]
-                ).read_text(encoding="utf-8")
+                (first.root_dir / opportunity_artifact["path"]).read_text(
+                    encoding="utf-8"
+                )
             )["rows"]
             self.assertTrue(
                 all(
@@ -977,14 +921,10 @@ class GovernedRlFactorPolicyLabTests(unittest.TestCase):
                 360,
             )
             self.assertEqual(
-                opportunity["validation"]["reconciliation"][
-                    "action_evaluations"
-                ],
+                opportunity["validation"]["reconciliation"]["action_evaluations"],
                 1800,
             )
-            self.assertTrue(
-                opportunity["validation"]["reconciliation"]["passed"]
-            )
+            self.assertTrue(opportunity["validation"]["reconciliation"]["passed"])
             self.assertGreaterEqual(
                 opportunity["validation"]["mean_selected_rank"],
                 1.0,
@@ -1000,9 +940,7 @@ class GovernedRlFactorPolicyLabTests(unittest.TestCase):
             )
             self.assertEqual(incremental["validation"]["decisions"], 360)
             self.assertEqual(incremental["validation"]["trial_paths"], 6)
-            self.assertTrue(
-                incremental["validation"]["reconciliation"]["passed"]
-            )
+            self.assertTrue(incremental["validation"]["reconciliation"]["passed"])
             self.assertAlmostEqual(
                 incremental["validation"]["total_gross_active_return"]
                 - incremental["validation"]["total_incremental_cost"],
@@ -1023,12 +961,8 @@ class GovernedRlFactorPolicyLabTests(unittest.TestCase):
                 if item["kind"] == "policy-models"
             )
             self.assertEqual(
-                json.loads(
-                    (first.root_dir / first_models["path"]).read_text()
-                ),
-                json.loads(
-                    (second.root_dir / second_models["path"]).read_text()
-                ),
+                json.loads((first.root_dir / first_models["path"]).read_text()),
+                json.loads((second.root_dir / second_models["path"]).read_text()),
             )
             snapshot = build_studio_snapshot(workspace.root_dir)
             layers = snapshot["projects"][0]["runs"][0]["metricLayers"]
@@ -1044,15 +978,15 @@ class GovernedRlFactorPolicyLabTests(unittest.TestCase):
                 "context-only",
             )
             self.assertEqual(
-                snapshot["projects"][0]["rlExplorer"][
-                    "incrementalAttribution"
-                ]["selectionAuthority"],
+                snapshot["projects"][0]["rlExplorer"]["incrementalAttribution"][
+                    "selectionAuthority"
+                ],
                 "context-only",
             )
             self.assertEqual(
-                snapshot["projects"][0]["rlExplorer"]["protocol"][
-                    "configuration"
-                ]["learningContract"],
+                snapshot["projects"][0]["rlExplorer"]["protocol"]["configuration"][
+                    "learningContract"
+                ],
                 learning_contract,
             )
 
@@ -1120,9 +1054,7 @@ print(json.dumps({{
                 "aggregate-dependent-fold-seed-objective",
             )
 
-            candidate = (
-                session.worktree_project.root_dir / "models" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "models" / "candidate.py"
             candidate.write_text(NONDETERMINISTIC_ENCODER, encoding="utf-8")
             crashed = evaluate_experiment(
                 project,

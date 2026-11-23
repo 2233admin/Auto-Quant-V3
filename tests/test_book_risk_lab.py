@@ -305,9 +305,7 @@ class BookRiskLabTests(unittest.TestCase):
         unrecovered = _drawdown_analysis(
             pd.DataFrame(
                 {"AAPL": [0.10, -0.20, 0.05]},
-                index=pd.to_datetime(
-                    ["2024-01-02", "2024-01-03", "2024-01-04"]
-                ),
+                index=pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"]),
             ),
             weights,
             initial,
@@ -334,9 +332,7 @@ class BookRiskLabTests(unittest.TestCase):
         recovered = _drawdown_analysis(
             pd.DataFrame(
                 {"AAPL": [0.10, -0.20, 0.30]},
-                index=pd.to_datetime(
-                    ["2024-01-02", "2024-01-03", "2024-01-04"]
-                ),
+                index=pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"]),
             ),
             weights,
             initial,
@@ -490,9 +486,7 @@ class BookRiskLabTests(unittest.TestCase):
         )
         request = json.loads(request_path.read_text(encoding="utf-8"))
         request["assets"] = [
-            asset
-            for asset in request["assets"]
-            if asset["symbol"] in {"QQQ", "NVDA"}
+            asset for asset in request["assets"] if asset["symbol"] in {"QQQ", "NVDA"}
         ]
         request["positionSnapshot"]["weights"] = {"QQQ": 0.70}
         request["positionSnapshot"]["cashWeight"] = 0.30
@@ -512,9 +506,7 @@ class BookRiskLabTests(unittest.TestCase):
             template=prepared.template,
             template_intake=prepared,
         )
-        scenarios_path = (
-            project.root_dir / "strategies" / "book-risk-scenarios.json"
-        )
+        scenarios_path = project.root_dir / "strategies" / "book-risk-scenarios.json"
         scenarios = json.loads(scenarios_path.read_text(encoding="utf-8"))
         scenarios["minimumObservations"] = 126
         scenarios_path.write_text(
@@ -526,25 +518,19 @@ class BookRiskLabTests(unittest.TestCase):
     def test_position_sizing_freezes_one_bounded_caller_path(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = self._sizing_project(Path(directory))
-            snapshot = load_position_snapshot(
-                project.root_dir / POSITION_SNAPSHOT
-            )
+            snapshot = load_position_snapshot(project.root_dir / POSITION_SNAPSHOT)
             self.assertEqual(snapshot["scenarios"], [])
             self.assertEqual(
                 snapshot["sizingPolicy"],
                 {
-                    "kind": (
-                        "one-asset-against-cash-for-volatility-ceiling"
-                    ),
+                    "kind": ("one-asset-against-cash-for-volatility-ceiling"),
                     "asset": "NVDA",
                     "direction": "decrease",
                     "minimumWeight": 0.0,
                     "annualizedVolatilityCeiling": 0.15,
                     "lookbackBars": 252,
                     "authority": {
-                        "decisionPath": (
-                            "caller-bounded-historical-sizing"
-                        ),
+                        "decisionPath": ("caller-bounded-historical-sizing"),
                         "tradingAuthority": "none",
                     },
                 },
@@ -555,26 +541,20 @@ class BookRiskLabTests(unittest.TestCase):
     ) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = self._entry_sizing_project(Path(directory))
-            snapshot = load_position_snapshot(
-                project.root_dir / POSITION_SNAPSHOT
-            )
+            snapshot = load_position_snapshot(project.root_dir / POSITION_SNAPSHOT)
             self.assertNotIn("NVDA", snapshot["weights"])
             self.assertEqual(snapshot["cashWeight"], 0.5)
             self.assertEqual(
                 snapshot["sizingPolicy"],
                 {
-                    "kind": (
-                        "one-asset-against-cash-for-volatility-ceiling"
-                    ),
+                    "kind": ("one-asset-against-cash-for-volatility-ceiling"),
                     "asset": "NVDA",
                     "direction": "increase",
                     "maximumWeight": 0.5,
                     "annualizedVolatilityCeiling": 0.03,
                     "lookbackBars": 252,
                     "authority": {
-                        "decisionPath": (
-                            "caller-bounded-historical-sizing"
-                        ),
+                        "decisionPath": ("caller-bounded-historical-sizing"),
                         "tradingAuthority": "none",
                     },
                 },
@@ -597,15 +577,11 @@ class BookRiskLabTests(unittest.TestCase):
                 },
             )
             _book_sizing_request(request_path)
-            request = json.loads(
-                request_path.read_text(encoding="utf-8")
-            )
+            request = json.loads(request_path.read_text(encoding="utf-8"))
             request["positionSizing"]["asset"] = "UNREQUESTED"
             request["positionSizing"]["direction"] = "sideways"
             request["positionSizing"]["lookbackBars"] = 100
-            request["positionSizing"][
-                "annualizedVolatilityCeiling"
-            ] = 0
+            request["positionSizing"]["annualizedVolatilityCeiling"] = 0
             request_path.write_text(
                 json.dumps(request, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
@@ -622,9 +598,7 @@ class BookRiskLabTests(unittest.TestCase):
             self.assertIn("request.position-sizing-ceiling", codes)
 
             _book_sizing_request(request_path)
-            request = json.loads(
-                request_path.read_text(encoding="utf-8")
-            )
+            request = json.loads(request_path.read_text(encoding="utf-8"))
             request["positionSizing"]["asset"] = "UNREQUESTED"
             request_path.write_text(
                 json.dumps(request, indent=2, sort_keys=True) + "\n",
@@ -642,13 +616,9 @@ class BookRiskLabTests(unittest.TestCase):
             )
 
             _book_scenario_request(request_path)
-            request = json.loads(
-                request_path.read_text(encoding="utf-8")
-            )
+            request = json.loads(request_path.read_text(encoding="utf-8"))
             request["positionSizing"] = {
-                "kind": (
-                    "one-asset-against-cash-for-volatility-ceiling"
-                ),
+                "kind": ("one-asset-against-cash-for-volatility-ceiling"),
                 "asset": "NVDA",
                 "direction": "decrease",
                 "minimumWeight": 0.0,
@@ -671,9 +641,7 @@ class BookRiskLabTests(unittest.TestCase):
             )
 
             _book_entry_sizing_request(request_path)
-            request = json.loads(
-                request_path.read_text(encoding="utf-8")
-            )
+            request = json.loads(request_path.read_text(encoding="utf-8"))
             request["positionSnapshot"]["cashWeight"] = 0.0
             request["positionSnapshot"]["weights"]["AAPL"] = 0.65
             request_path.write_text(
@@ -692,9 +660,7 @@ class BookRiskLabTests(unittest.TestCase):
             )
 
             _book_entry_sizing_request(request_path)
-            request = json.loads(
-                request_path.read_text(encoding="utf-8")
-            )
+            request = json.loads(request_path.read_text(encoding="utf-8"))
             del request["positionSizing"]["maximumWeight"]
             request_path.write_text(
                 json.dumps(request, indent=2, sort_keys=True) + "\n",
@@ -712,9 +678,7 @@ class BookRiskLabTests(unittest.TestCase):
             )
 
             _book_entry_sizing_request(request_path)
-            request = json.loads(
-                request_path.read_text(encoding="utf-8")
-            )
+            request = json.loads(request_path.read_text(encoding="utf-8"))
             request["positionSizing"]["maximumWeight"] = 0.0
             request_path.write_text(
                 json.dumps(request, indent=2, sort_keys=True) + "\n",
@@ -796,9 +760,7 @@ class BookRiskLabTests(unittest.TestCase):
     ) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = self._single_holding_entry_project(Path(directory))
-            snapshot = load_position_snapshot(
-                project.root_dir / POSITION_SNAPSHOT
-            )
+            snapshot = load_position_snapshot(project.root_dir / POSITION_SNAPSHOT)
             self.assertEqual(snapshot["weights"], {"QQQ": 0.70})
             self.assertNotIn("NVDA", snapshot["weights"])
             self.assertEqual(
@@ -995,14 +957,10 @@ class BookRiskLabTests(unittest.TestCase):
                 project,
                 run.result["id"],
             )
-            report_path = (
-                run.root_dir / "artifacts" / "book-risk-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "book-risk-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             governing = next(
-                row
-                for row in diagnostics["lookbacks"]
-                if row["lookbackBars"] == 126
+                row for row in diagnostics["lookbacks"] if row["lookbackBars"] == 126
             )
 
             self.assertEqual(report["method"]["primaryLookbackBars"], 126)
@@ -1055,13 +1013,9 @@ class BookRiskLabTests(unittest.TestCase):
                 ceiling=0.027,
             )
             run = execute_study(project, BOOK_RISK_STUDY_ID)
-            report_path = (
-                run.root_dir / "artifacts" / "book-risk-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "book-risk-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
-            report["positionSizing"]["quadratic"][
-                "coefficientB"
-            ] += 0.001
+            report["positionSizing"]["quadratic"]["coefficientB"] += 0.001
             report_path.write_text(
                 json.dumps(report, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
@@ -1108,12 +1062,8 @@ class BookRiskLabTests(unittest.TestCase):
             with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
                 project = self._entry_sizing_project(Path(directory))
                 run = execute_study(project, BOOK_RISK_STUDY_ID)
-                report_path = (
-                    run.root_dir / "artifacts" / "book-risk-report.json"
-                )
-                report = json.loads(
-                    report_path.read_text(encoding="utf-8")
-                )
+                report_path = run.root_dir / "artifacts" / "book-risk-report.json"
+                report = json.loads(report_path.read_text(encoding="utf-8"))
                 report["positionSizing"][field] = value
                 report_path.write_text(
                     json.dumps(report, indent=2, sort_keys=True) + "\n",
@@ -1136,9 +1086,7 @@ class BookRiskLabTests(unittest.TestCase):
             assert intake is not None
             self.assertTrue(intake["study"]["current"])
             self.assertEqual(intake["manifest"]["status"], "ready-for-run")
-            snapshot = load_position_snapshot(
-                project.root_dir / POSITION_SNAPSHOT
-            )
+            snapshot = load_position_snapshot(project.root_dir / POSITION_SNAPSHOT)
             self.assertEqual(snapshot["weights"]["NVDA"], 0.30)
             self.assertEqual(
                 snapshot["authority"]["tradingAuthority"],
@@ -1167,30 +1115,26 @@ class BookRiskLabTests(unittest.TestCase):
             self.assertEqual(len(diagnostics["lookbacks"]), 3)
             self.assertTrue(
                 all(
-                    row["firstReductionAsset"]
-                    in {"AAPL", "MSFT", "NVDA", "QQQ"}
+                    row["firstReductionAsset"] in {"AAPL", "MSFT", "NVDA", "QQQ"}
                     for row in diagnostics["lookbacks"]
                 )
             )
             self.assertTrue(
                 all(
-                    [item["rank"] for item in row["reductionRanking"]]
-                    == [1, 2, 3, 4]
+                    [item["rank"] for item in row["reductionRanking"]] == [1, 2, 3, 4]
                     for row in diagnostics["lookbacks"]
                 )
             )
             self.assertTrue(
                 all(
-                    row["reductionRanking"][0]["asset"]
-                    == row["firstReductionAsset"]
+                    row["reductionRanking"][0]["asset"] == row["firstReductionAsset"]
                     for row in diagnostics["lookbacks"]
                 )
             )
             primary_lookback = next(
                 row
                 for row in diagnostics["lookbacks"]
-                if row["lookbackBars"]
-                == diagnostics["current"]["lookbackBars"]
+                if row["lookbackBars"] == diagnostics["current"]["lookbackBars"]
             )
             self.assertEqual(
                 primary_lookback["reductionRanking"],
@@ -1294,9 +1238,7 @@ class BookRiskLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = self._real_project(Path(directory))
             run = execute_study(project, BOOK_RISK_STUDY_ID)
-            report_path = (
-                run.root_dir / "artifacts" / "book-risk-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "book-risk-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             report.pop("drawdown")
             report["authority"].pop("drawdownMeaning")
@@ -1308,9 +1250,7 @@ class BookRiskLabTests(unittest.TestCase):
                 json.dumps(report, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
-            equity_path = (
-                run.root_dir / "artifacts" / "book-risk-equity-path.csv"
-            )
+            equity_path = run.root_dir / "artifacts" / "book-risk-equity-path.csv"
             equity_path.unlink()
             result_path = run.root_dir / "result.json"
             result = json.loads(result_path.read_text(encoding="utf-8"))
@@ -1338,10 +1278,7 @@ class BookRiskLabTests(unittest.TestCase):
             self.assertFalse(diagnostics["drawdown"]["available"])
             self.assertFalse(diagnostics["equityPath"]["available"])
             self.assertTrue(
-                all(
-                    "reductionRanking" not in row
-                    for row in diagnostics["lookbacks"]
-                )
+                all("reductionRanking" not in row for row in diagnostics["lookbacks"])
             )
             self.assertNotIn(
                 "book-risk-equity-path",
@@ -1443,9 +1380,7 @@ class BookRiskLabTests(unittest.TestCase):
                 path.relative_to(project.root_dir).as_posix(): hash_file(path)
                 for root_path in fixed_roots
                 for path in (
-                    sorted(root_path.rglob("*"))
-                    if root_path.is_dir()
-                    else [root_path]
+                    sorted(root_path.rglob("*")) if root_path.is_dir() else [root_path]
                 )
                 if path.is_file()
             }
@@ -1515,9 +1450,7 @@ class BookRiskLabTests(unittest.TestCase):
             self.assertEqual(
                 [
                     item["id"]
-                    for item in follow_up_report.report["request"][
-                        "positionScenarios"
-                    ]
+                    for item in follow_up_report.report["request"]["positionScenarios"]
                 ],
                 ["fund-aapl-from-nvda", "fund-msft-from-nvda"],
             )
@@ -1580,9 +1513,7 @@ class BookRiskLabTests(unittest.TestCase):
                 envelope["error"]["issues"][0]["code"],
                 "study-intake.dataset-assets",
             )
-            self.assertFalse(
-                (project.root_dir / "studies" / "dataset-drift").exists()
-            )
+            self.assertFalse((project.root_dir / "studies" / "dataset-drift").exists())
             self.assertFalse(
                 (project.root_dir / "strategies" / "book-risk-studies").exists()
             )
@@ -1628,12 +1559,8 @@ class BookRiskLabTests(unittest.TestCase):
                 },
             )
             _book_request(request_path)
-            refreshed_request = json.loads(
-                request_path.read_text(encoding="utf-8")
-            )
-            refreshed_request["positionSnapshot"]["asOf"] = (
-                "2024-12-31T21:00:00Z"
-            )
+            refreshed_request = json.loads(request_path.read_text(encoding="utf-8"))
+            refreshed_request["positionSnapshot"]["asOf"] = "2024-12-31T21:00:00Z"
             request_path.write_text(
                 json.dumps(refreshed_request, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
@@ -1777,8 +1704,7 @@ class BookRiskLabTests(unittest.TestCase):
                 dataset_version="2024-v2",
                 request_assets=("AAPL", "MSFT", "NVDA", "QQQ"),
                 asset_position_roles={
-                    symbol: "long-only"
-                    for symbol in ("AAPL", "MSFT", "NVDA", "QQQ")
+                    symbol: "long-only" for symbol in ("AAPL", "MSFT", "NVDA", "QQQ")
                 },
             )
             _book_request(same_request)
@@ -1817,8 +1743,7 @@ class BookRiskLabTests(unittest.TestCase):
                 dataset_version="2024-v3",
                 request_assets=("AAPL", "MSFT", "NVDA", "QQQ"),
                 asset_position_roles={
-                    symbol: "long-only"
-                    for symbol in ("AAPL", "MSFT", "NVDA", "QQQ")
+                    symbol: "long-only" for symbol in ("AAPL", "MSFT", "NVDA", "QQQ")
                 },
             )
             _book_request(refresh_request)
@@ -1861,18 +1786,13 @@ class BookRiskLabTests(unittest.TestCase):
     ) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = self._scenario_project(Path(directory))
-            snapshot = load_position_snapshot(
-                project.root_dir / POSITION_SNAPSHOT
-            )
+            snapshot = load_position_snapshot(project.root_dir / POSITION_SNAPSHOT)
             self.assertEqual(
                 [item["id"] for item in snapshot["scenarios"]],
                 ["fund-tsla-from-nvda", "fund-tsla-from-qqq"],
             )
             self.assertEqual(
-                {
-                    item["authority"]["positionTruth"]
-                    for item in snapshot["scenarios"]
-                },
+                {item["authority"]["positionTruth"] for item in snapshot["scenarios"]},
                 {"caller-hypothetical-not-authenticated"},
             )
             run = execute_study(project, BOOK_RISK_STUDY_ID)
@@ -1897,9 +1817,7 @@ class BookRiskLabTests(unittest.TestCase):
             for lookback_index in range(3):
                 self.assertEqual(
                     sorted(
-                        int(scenario["lookbacks"][lookback_index][
-                            "volatilityRank"
-                        ])
+                        int(scenario["lookbacks"][lookback_index]["volatilityRank"])
                         for scenario in comparison["scenarios"]
                     ),
                     [1, 2],
@@ -1918,11 +1836,7 @@ class BookRiskLabTests(unittest.TestCase):
                 )
             observed = build_studio_snapshot(project.root_dir)["projects"][0]
             self.assertEqual(
-                len(
-                    observed["bookRiskExplorer"][
-                        "scenarioComparison"
-                    ]["scenarios"]
-                ),
+                len(observed["bookRiskExplorer"]["scenarioComparison"]["scenarios"]),
                 2,
             )
             brief = build_agent_work_brief(project)
@@ -1951,12 +1865,10 @@ class BookRiskLabTests(unittest.TestCase):
             )
             _book_scenario_request(request_path)
             request = json.loads(request_path.read_text(encoding="utf-8"))
-            request["positionScenarios"][1]["id"] = request[
-                "positionScenarios"
-            ][0]["id"]
-            request["positionScenarios"][1]["asOf"] = (
-                "2024-12-29T21:00:00Z"
-            )
+            request["positionScenarios"][1]["id"] = request["positionScenarios"][0][
+                "id"
+            ]
+            request["positionScenarios"][1]["asOf"] = "2024-12-29T21:00:00Z"
             request["positionScenarios"][1]["weights"] = dict(
                 request["positionSnapshot"]["weights"]
             )
@@ -2074,9 +1986,7 @@ class BookRiskLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = self._real_project(Path(directory))
             run = execute_study(project, BOOK_RISK_STUDY_ID)
-            report_path = (
-                run.root_dir / "artifacts" / "book-risk-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "book-risk-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             report["contributions"][0]["absoluteRiskShare"] += 0.01
             report_path.write_text(
@@ -2094,9 +2004,7 @@ class BookRiskLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = self._real_project(Path(directory))
             run = execute_study(project, BOOK_RISK_STUDY_ID)
-            path = (
-                run.root_dir / "artifacts" / "book-risk-equity-path.csv"
-            )
+            path = run.root_dir / "artifacts" / "book-risk-equity-path.csv"
             with path.open("r", encoding="utf-8", newline="") as handle:
                 reader = csv.DictReader(handle)
                 rows = list(reader)
@@ -2120,9 +2028,7 @@ class BookRiskLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = self._real_project(Path(directory))
             run = execute_study(project, BOOK_RISK_STUDY_ID)
-            report_path = (
-                run.root_dir / "artifacts" / "book-risk-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "book-risk-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             frozen_path = (
                 run.root_dir
@@ -2153,9 +2059,7 @@ class BookRiskLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = self._real_project(Path(directory))
             run = execute_study(project, BOOK_RISK_STUDY_ID)
-            report_path = (
-                run.root_dir / "artifacts" / "book-risk-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "book-risk-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             report["method"]["selectionAuthority"] = "invented"
             report_path.write_text(
@@ -2176,9 +2080,7 @@ class BookRiskLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = self._scenario_project(Path(directory))
             run = execute_study(project, BOOK_RISK_STUDY_ID)
-            report_path = (
-                run.root_dir / "artifacts" / "book-risk-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "book-risk-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             report["scenarioComparison"]["scenarios"][0]["lookbacks"][0][
                 "annualizedVolatilityDelta"
@@ -2198,11 +2100,7 @@ class BookRiskLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = self._scenario_project(Path(directory))
             run = execute_study(project, BOOK_RISK_STUDY_ID)
-            csv_path = (
-                run.root_dir
-                / "artifacts"
-                / "book-risk-scenario-comparisons.csv"
-            )
+            csv_path = run.root_dir / "artifacts" / "book-risk-scenario-comparisons.csv"
             with csv_path.open(
                 "r",
                 encoding="utf-8",
@@ -2233,31 +2131,21 @@ class BookRiskLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = self._scenario_project(Path(directory))
             run = execute_study(project, BOOK_RISK_STUDY_ID)
-            report_path = (
-                run.root_dir / "artifacts" / "book-risk-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "book-risk-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             primary = next(
                 row
-                for row in report["scenarioComparison"]["scenarios"][0][
-                    "lookbacks"
-                ]
-                if row["lookbackBars"]
-                == report["method"]["primaryLookbackBars"]
+                for row in report["scenarioComparison"]["scenarios"][0]["lookbacks"]
+                if row["lookbackBars"] == report["method"]["primaryLookbackBars"]
             )
             replacement = next(
                 asset
-                for asset in report["scenarioComparison"][
-                    "comparisonUniverse"
-                ]
-                if asset
-                != primary["largestAbsoluteRiskContributor"]
+                for asset in report["scenarioComparison"]["comparisonUniverse"]
+                if asset != primary["largestAbsoluteRiskContributor"]
             )
             primary["largestAbsoluteRiskContributor"] = replacement
             comparison_path = (
-                run.root_dir
-                / "artifacts"
-                / "book-risk-scenario-comparisons.csv"
+                run.root_dir / "artifacts" / "book-risk-scenario-comparisons.csv"
             )
             with comparison_path.open(
                 "r",

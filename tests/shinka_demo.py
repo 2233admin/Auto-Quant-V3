@@ -25,8 +25,12 @@ def build(target: str | Path) -> Path:
     initialize_workspace(root, name="Shinka research demo (synthetic)")
     for source in sorted((FIXTURE / "projects").iterdir()):
         meta = json.loads((source / "project.json").read_text(encoding="utf-8"))
-        create_project(root, source.name, name=meta["name"], description=meta["description"])
-        shutil.copytree(source / "research", root / "projects" / source.name / "research")
+        create_project(
+            root, source.name, name=meta["name"], description=meta["description"]
+        )
+        shutil.copytree(
+            source / "research", root / "projects" / source.name / "research"
+        )
     shutil.copytree(FIXTURE / "library", root / "library")
     return root
 

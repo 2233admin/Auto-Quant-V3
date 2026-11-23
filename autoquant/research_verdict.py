@@ -36,20 +36,35 @@ def factor_development_verdict(
     if run_status != "succeeded":
         reasons.append(f"run-status-{run_status}")
     if not qualification.get("available"):
-        reasons.append(qualification.get("reason") or "factor-qualification-unavailable")
+        reasons.append(
+            qualification.get("reason") or "factor-qualification-unavailable"
+        )
     elif not diagnosis:
         reasons.append("factor-diagnosis-unavailable")
-    if claim.get("claim") != "decision-signal" or claim.get("outcome") != "forward-return":
+    if (
+        claim.get("claim") != "decision-signal"
+        or claim.get("outcome") != "forward-return"
+    ):
         reasons.append("claim-outside-development-policy")
     if reasons:
         return {"word": "Could not be tested", "reasons": reasons}
     stage = diagnosis.get("stage")
     passes = (adjustment or {}).get("passes")
     if stage == "decision-signal-positive" and passes is True:
-        return {"word": "Supported", "reasons": ["decision-signal-positive", "selection-adjustment-passes"]}
-    reasons = [f"diagnosis-{stage}" if stage != "decision-signal-positive" else "decision-signal-positive"]
+        return {
+            "word": "Supported",
+            "reasons": ["decision-signal-positive", "selection-adjustment-passes"],
+        }
+    reasons = [
+        f"diagnosis-{stage}"
+        if stage != "decision-signal-positive"
+        else "decision-signal-positive"
+    ]
     if passes is not True:
         status = (adjustment or {}).get("status")
-        reasons.append("selection-adjustment-does-not-pass" if status == "available" else
-                       f"selection-adjustment-{(adjustment or {}).get('reason') or 'unavailable'}")
+        reasons.append(
+            "selection-adjustment-does-not-pass"
+            if status == "available"
+            else f"selection-adjustment-{(adjustment or {}).get('reason') or 'unavailable'}"
+        )
     return {"word": "Inconclusive", "reasons": reasons}

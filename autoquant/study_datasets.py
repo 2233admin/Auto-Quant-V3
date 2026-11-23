@@ -240,9 +240,7 @@ def create_study_with_owned_dataset(
             )
         )
     declared_dependencies = (
-        definition.dependencies["paths"]
-        if definition.dependencies is not None
-        else []
+        definition.dependencies["paths"] if definition.dependencies is not None else []
     )
     missing = [
         path
@@ -273,8 +271,7 @@ def create_study_with_owned_dataset(
         if binding.position_snapshot is not None:
             assert binding.research_request.position_snapshot_path is not None
             _write_json(
-                project.root_dir
-                / binding.research_request.position_snapshot_path,
+                project.root_dir / binding.research_request.position_snapshot_path,
                 binding.position_snapshot,
             )
         return create_study(project, definition)

@@ -253,7 +253,13 @@ from .workspace import (
 from .version import current_version
 from .trial_gate import TRIAL_COMMANDS, gated
 from .handoff import RESEARCH_HANDOFF_JSON_SCHEMA
-from .desk_commands import CREATION_COMMANDS, DESK_COMMANDS, add_desk_parsers, run_desk_command, with_family_summary
+from .desk_commands import (
+    CREATION_COMMANDS,
+    DESK_COMMANDS,
+    add_desk_parsers,
+    run_desk_command,
+    with_family_summary,
+)
 
 
 class CliUsageError(ValueError):
@@ -333,11 +339,13 @@ def build_parser() -> RaisingArgumentParser:
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     from .data_commands import add_data_parser
+
     add_data_parser(subcommands, _json_argument)
     add_desk_parsers(subcommands, _json_argument)
 
-
-    candidate = subcommands.add_parser("candidate", help="inspect or save confined candidate source")
+    candidate = subcommands.add_parser(
+        "candidate", help="inspect or save confined candidate source"
+    )
     candidate_actions = candidate.add_subparsers(dest="candidate_action", required=True)
     for verb in ("show", "save"):
         candidate_action = candidate_actions.add_parser(verb)
@@ -346,7 +354,9 @@ def build_parser() -> RaisingArgumentParser:
         candidate_action.add_argument("--session", required=True)
         if verb == "save":
             candidate_action.add_argument("--base-sha256", required=True)
-            candidate_action.add_argument("--source-stdin", required=True, action="store_true")
+            candidate_action.add_argument(
+                "--source-stdin", required=True, action="store_true"
+            )
         candidate_action.set_defaults(command_id="candidate." + verb)
         _json_argument(candidate_action)
 
@@ -673,7 +683,12 @@ def build_parser() -> RaisingArgumentParser:
     study_create.add_argument("--judge", required=True)
     study_create.add_argument("--judge-path", action="append")
     study_create.add_argument("--judge-arg", action="append", default=[])
-    study_create.add_argument("--quantiles", type=int, choices=(3, 5, 10), help="Freeze Factor tear-sheet group count (default 3).")
+    study_create.add_argument(
+        "--quantiles",
+        type=int,
+        choices=(3, 5, 10),
+        help="Freeze Factor tear-sheet group count (default 3).",
+    )
     editable_surface = study_create.add_mutually_exclusive_group(required=True)
     editable_surface.add_argument(
         "--editable",
@@ -1019,9 +1034,7 @@ def build_parser() -> RaisingArgumentParser:
     session_promote.add_argument("--session", required=True)
     session_promote.add_argument(
         "--report",
-        help=(
-            "exact current Report required when promoting a delegated KEEP"
-        ),
+        help=("exact current Report required when promoting a delegated KEEP"),
     )
     session_promote.set_defaults(command_id="session.promote")
     _json_argument(session_promote)
@@ -1238,7 +1251,9 @@ def build_parser() -> RaisingArgumentParser:
     report_list.add_argument("path")
     report_list.add_argument("--project")
     report_list.add_argument("--session")
-    report_list.add_argument("--study", help="filter Project-owned Run Reports by Study")
+    report_list.add_argument(
+        "--study", help="filter Project-owned Run Reports by Study"
+    )
     report_list.set_defaults(command_id="report.list")
     _json_argument(report_list)
 
@@ -1516,9 +1531,7 @@ def _workspace_init(args: argparse.Namespace) -> CommandResult:
                 "harnessVersion": skill_bundle["harnessVersion"],
                 "bundleSha256": skill_bundle["bundleSha256"],
                 "discoveryRoots": skill_bundle["discoveryRoots"],
-                "skillIds": [
-                    skill["id"] for skill in skill_bundle["skills"]
-                ],
+                "skillIds": [skill["id"] for skill in skill_bundle["skills"]],
             },
         },
         (
@@ -1620,8 +1633,7 @@ def _project_create(args: argparse.Namespace) -> CommandResult:
             ),
             next_action(
                 "run.execute",
-                "After clarifying research.md, execute the bounded reference "
-                "baseline.",
+                "After clarifying research.md, execute the bounded reference baseline.",
                 [
                     "aq",
                     "run",
@@ -1833,8 +1845,7 @@ def _project_intake(args: argparse.Namespace) -> CommandResult:
             ),
             next_action(
                 "run.execute",
-                "After updating research.md, execute the bounded real-data "
-                "baseline.",
+                "After updating research.md, execute the bounded real-data baseline.",
                 [
                     "aq",
                     "run",
@@ -1990,10 +2001,30 @@ def _project_from_factor(args: argparse.Namespace) -> CommandResult:
         ),
         project_context(project),
         [
-            artifact("project", project.manifest.id, project.root_dir / PROJECT_MANIFEST, immutable=False),
-            artifact("factor-lineage", lineage["source"]["projectId"], project.root_dir / FACTOR_LINEAGE, immutable=False),
-            artifact("research-request", intake["manifest"]["requestHash"], project.root_dir / PROJECT_REQUEST, immutable=False),
-            artifact("research-program", project.manifest.id, project.root_dir / RESEARCH_PROGRAM_MANIFEST, immutable=False),
+            artifact(
+                "project",
+                project.manifest.id,
+                project.root_dir / PROJECT_MANIFEST,
+                immutable=False,
+            ),
+            artifact(
+                "factor-lineage",
+                lineage["source"]["projectId"],
+                project.root_dir / FACTOR_LINEAGE,
+                immutable=False,
+            ),
+            artifact(
+                "research-request",
+                intake["manifest"]["requestHash"],
+                project.root_dir / PROJECT_REQUEST,
+                immutable=False,
+            ),
+            artifact(
+                "research-program",
+                project.manifest.id,
+                project.root_dir / RESEARCH_PROGRAM_MANIFEST,
+                immutable=False,
+            ),
         ],
         [
             next_action(
@@ -2006,9 +2037,14 @@ def _project_from_factor(args: argparse.Namespace) -> CommandResult:
                 "session.start",
                 "Start the first governed Portfolio evaluation of the inherited Factor; its baseline Run is a counted trial.",
                 [
-                    "aq", "session", "start", str(project.root_dir),
-                    "--study", portfolio_study,
-                    "--request", str(project.root_dir / PROJECT_REQUEST),
+                    "aq",
+                    "session",
+                    "start",
+                    str(project.root_dir),
+                    "--study",
+                    portfolio_study,
+                    "--request",
+                    str(project.root_dir / PROJECT_REQUEST),
                     "--json",
                 ],
                 "creates-artifact",
@@ -2022,8 +2058,7 @@ def _project_program(args: argparse.Namespace) -> CommandResult:
     program = load_research_program(project)
     assert program is not None
     lane_lines = [
-        f"  {lane['id']}: {lane['phase']} · "
-        f"{lane['study']['objective']['metric']}"
+        f"  {lane['id']}: {lane['phase']} · {lane['study']['objective']['metric']}"
         for lane in program["lanes"]
     ]
     gate_lines = [
@@ -2076,10 +2111,7 @@ def _project_list(args: argparse.Namespace) -> CommandResult:
     projects = list_workspace_projects(workspace.root_dir)
     lines = [
         f"AutoQuant Workspace: {workspace.manifest.name}",
-        (
-            f"Projects: {workspace.projects_dir} "
-            f"({workspace.configuration_source})"
-        ),
+        (f"Projects: {workspace.projects_dir} ({workspace.configuration_source})"),
     ]
     if projects:
         lines.extend(
@@ -2232,21 +2264,14 @@ def _project_selection_human(args: argparse.Namespace) -> str:
     if resolved is None:
         return ""
     selection = resolved["selection"]
-    method = (
-        "explicit --project"
-        if selection["explicit"]
-        else "Workspace default"
-    )
+    method = "explicit --project" if selection["explicit"] else "Workspace default"
     line = (
         f"Workspace selection: {method} → "
         f"{selection['selectedProject']} · "
         f"{selection['projectCount']} Project"
         f"{'s' if selection['projectCount'] != 1 else ''}\n"
     )
-    if (
-        selection["stateChangeRequiresExplicitProject"]
-        and not selection["explicit"]
-    ):
+    if selection["stateChangeRequiresExplicitProject"] and not selection["explicit"]:
         line += (
             "Available Projects: "
             + ", ".join(selection["availableProjects"])
@@ -2274,9 +2299,7 @@ def _selected_project(args: argparse.Namespace):
     )
     if (
         selection is not None
-        and selection["selection"][
-            "stateChangeRequiresExplicitProject"
-        ]
+        and selection["selection"]["stateChangeRequiresExplicitProject"]
         and not selection["selection"]["explicit"]
         and command_effect in {"creates-artifact", "mutates-project"}
     ):
@@ -2440,11 +2463,7 @@ def _study_create(args: argparse.Namespace) -> CommandResult:
             args.minimum_improvement,
         ),
         dataset=dataset,
-        dependencies=(
-            {"paths": dependency_paths}
-            if dependency_paths
-            else None
-        ),
+        dependencies=({"paths": dependency_paths} if dependency_paths else None),
         research_request=research_request,
         upstream_evidence=(
             bind_upstream_evidence(
@@ -2728,8 +2747,7 @@ def _study_inspect(args: argparse.Namespace) -> CommandResult:
                 else ""
             )
             + (
-                "Study request: "
-                f"{study.definition.research_request.path}\n"
+                f"Study request: {study.definition.research_request.path}\n"
                 if study.definition.research_request is not None
                 else ""
             )
@@ -2806,10 +2824,7 @@ def _run_execute(args: argparse.Namespace) -> CommandResult:
             "read-only",
         ),
     ]
-    if (
-        run.result["status"] == "succeeded"
-        and metric == "validation_mean_ic"
-    ):
+    if run.result["status"] == "succeeded" and metric == "validation_mean_ic":
         actions.append(
             next_action(
                 "run.factor",
@@ -2826,10 +2841,7 @@ def _run_execute(args: argparse.Namespace) -> CommandResult:
                 "read-only",
             )
         )
-    if (
-        run.result["status"] == "succeeded"
-        and metric == "validation_mean_net_sharpe"
-    ):
+    if run.result["status"] == "succeeded" and metric == "validation_mean_net_sharpe":
         actions.append(
             next_action(
                 "run.rl",
@@ -2935,8 +2947,7 @@ def _run_show(args: argparse.Namespace) -> CommandResult:
         f"Failure disposition: {failure_disposition or 'repair-required'}\n"
         + "Errors: "
         + "; ".join(
-            f"{item['code']} — {item['message']}"
-            for item in run.result["errors"]
+            f"{item['code']} — {item['message']}" for item in run.result["errors"]
         )
         + "\n"
         if run.result["status"] == "failed"
@@ -2965,7 +2976,9 @@ def _run_factor(args: argparse.Namespace) -> CommandResult:
         project,
         args.run,
         point_limit=args.points,
-        workspace_root=Path(args.path) if (Path(args.path) / WORKSPACE_MANIFEST).is_file() else None,
+        workspace_root=Path(args.path)
+        if (Path(args.path) / WORKSPACE_MANIFEST).is_file()
+        else None,
     )
     summary = diagnostics["summary"]
     validation = summary["validation"]
@@ -3102,10 +3115,7 @@ def _run_portfolio(args: argparse.Namespace) -> CommandResult:
         for scenario in diversification_current["scenarios"]
     )
     validation_ladder = "/".join(
-        (
-            f"{scenario['blendToPerfectCorrelation']:.0%}:"
-            f"{scenario['stressBreachRate']}"
-        )
+        (f"{scenario['blendToPerfectCorrelation']:.0%}:{scenario['stressBreachRate']}")
         for scenario in diversification_validation["scenarios"]
     )
     diversification_summary = (
@@ -3175,9 +3185,7 @@ def _run_portfolio(args: argparse.Namespace) -> CommandResult:
     )
     executed_risk = diagnostics["executedBookRisk"]
     validation_execution_risk = (
-        executed_risk["validation"]
-        if executed_risk["available"]
-        else None
+        executed_risk["validation"] if executed_risk["available"] else None
     )
     execution_risk_summary = (
         "Executed-book risk: legacy evidence unavailable\n"
@@ -3192,9 +3200,7 @@ def _run_portfolio(args: argparse.Namespace) -> CommandResult:
         )
     )
     lifecycle = diagnostics["positionLifecycle"]
-    validation_lifecycle = (
-        lifecycle["validation"] if lifecycle["available"] else None
-    )
+    validation_lifecycle = lifecycle["validation"] if lifecycle["available"] else None
     lifecycle_summary = (
         "Mechanical position lifecycle: legacy evidence unavailable\n"
         if validation_lifecycle is None
@@ -3235,8 +3241,7 @@ def _run_portfolio(args: argparse.Namespace) -> CommandResult:
         )
     elif not translation["applicable"]:
         translation_summary = (
-            "Target translation robustness: not applicable to "
-            "cross-sectional scores\n"
+            "Target translation robustness: not applicable to cross-sectional scores\n"
         )
     else:
         translation_summary = (
@@ -3424,7 +3429,9 @@ def _format_envelope_rate(value: dict[str, Any]) -> str:
 
     count = f"N={value['n']}"
     if value["estimate"] is None:
-        return f"withheld ({count}, {value['successes']} hits, below the minimum sample)"
+        return (
+            f"withheld ({count}, {value['successes']} hits, below the minimum sample)"
+        )
     low, high = value["ci95"]
     flag = " small sample" if value["guard"] == "small-sample" else ""
     return (
@@ -3530,7 +3537,10 @@ def _run_book_path_stress(args: argparse.Namespace) -> CommandResult:
             artifact(
                 kind,
                 f"{diagnostics['run']['id']}:{kind}",
-                project.root_dir / project.manifest.directories["runs"] / diagnostics["run"]["id"] / item["path"],
+                project.root_dir
+                / project.manifest.directories["runs"]
+                / diagnostics["run"]["id"]
+                / item["path"],
                 immutable=True,
             )
             for kind, item in diagnostics["artifacts"].items()
@@ -3549,15 +3559,11 @@ def _run_allocation(args: argparse.Namespace) -> CommandResult:
     current = diagnostics["currentState"]
     conclusion = diagnostics["conclusion"]
     validation = diagnostics["splits"]["validation"]
-    validation_fidelity = diagnostics["constructionFidelity"]["bySplit"][
-        "validation"
-    ]
+    validation_fidelity = diagnostics["constructionFidelity"]["bySplit"]["validation"]
     validation_latest = validation_fidelity["latestEligibleDecision"]
     validation_rate = validation_fidelity["withinToleranceRate"]
     validation_rate_label = (
-        f"{validation_rate:.3f}"
-        if validation_rate is not None
-        else "unavailable"
+        f"{validation_rate:.3f}" if validation_rate is not None else "unavailable"
     )
     validation_latest_line = (
         "Latest validation decision: "
@@ -3622,9 +3628,7 @@ def _run_rl(args: argparse.Namespace) -> CommandResult:
     summary = diagnostics["summary"]
     execution_risk = diagnostics["executedBookRisk"]
     validation_execution_risk = (
-        execution_risk["validation"]
-        if execution_risk["available"]
-        else None
+        execution_risk["validation"] if execution_risk["available"] else None
     )
     execution_risk_line = (
         "Executed-book risk: legacy evidence unavailable\n"
@@ -3638,9 +3642,7 @@ def _run_rl(args: argparse.Namespace) -> CommandResult:
     )
     policy_behavior = diagnostics["policyBehavior"]
     validation_behavior = (
-        policy_behavior["validation"]
-        if policy_behavior["available"]
-        else None
+        policy_behavior["validation"] if policy_behavior["available"] else None
     )
     policy_behavior_line = (
         "Policy behavior: legacy rationale evidence unavailable\n"
@@ -3657,9 +3659,7 @@ def _run_rl(args: argparse.Namespace) -> CommandResult:
     )
     factor_opportunity = diagnostics["factorOpportunity"]
     validation_opportunity = (
-        factor_opportunity["validation"]
-        if factor_opportunity["available"]
-        else None
+        factor_opportunity["validation"] if factor_opportunity["available"] else None
     )
     factor_opportunity_line = (
         "Factor opportunity: legacy evidence unavailable\n"
@@ -3680,8 +3680,7 @@ def _run_rl(args: argparse.Namespace) -> CommandResult:
     contextual = diagnostics["contextualBaselines"]
     contextual_line = (
         "Contextual challenger: legacy fixed-path labels\n"
-        if not contextual
-        or not all(item["available"] for item in contextual)
+        if not contextual or not all(item["available"] for item in contextual)
         else (
             "Contextual challenger: same-pretrade train-only labels · "
             f"{contextual[0]['iterations']} fixed iterations · "
@@ -3712,9 +3711,7 @@ def _run_rl(args: argparse.Namespace) -> CommandResult:
     )
     fusion_diagnosis = diagnostics["factorFusionDiagnosis"]
     validation_fusion = (
-        fusion_diagnosis["validation"]
-        if fusion_diagnosis["available"]
-        else None
+        fusion_diagnosis["validation"] if fusion_diagnosis["available"] else None
     )
     fusion_diagnosis_line = (
         "RL factor-fusion diagnosis: legacy evidence unavailable\n"
@@ -3804,11 +3801,7 @@ def _session_next_actions(project, session) -> list[dict[str, Any]]:
             "read-only",
         ),
     ]
-    reports = (
-        list_reports(project, session)
-        if session.delegation is not None
-        else []
-    )
+    reports = list_reports(project, session) if session.delegation is not None else []
     current_report = next(
         (
             report
@@ -3858,10 +3851,7 @@ def _session_next_actions(project, session) -> list[dict[str, Any]]:
                     "creates-artifact",
                 )
             )
-        if (
-            session.manifest["leader"]["runId"]
-            != session.manifest["baseline"]["runId"]
-        ):
+        if session.manifest["leader"]["runId"] != session.manifest["baseline"]["runId"]:
             if session.delegation is None or current_report is not None:
                 promote_argv = [
                     "aq",
@@ -3872,9 +3862,7 @@ def _session_next_actions(project, session) -> list[dict[str, Any]]:
                     session.manifest["id"],
                 ]
                 if current_report is not None:
-                    promote_argv.extend(
-                        ["--report", current_report.id]
-                    )
+                    promote_argv.extend(["--report", current_report.id])
                 promote_argv.append("--json")
                 actions.append(
                     next_action(
@@ -3919,10 +3907,7 @@ def _session_next_actions(project, session) -> list[dict[str, Any]]:
                     "creates-artifact",
                 )
             )
-    if (
-        session.delegation is not None
-        and session.manifest["status"] == "active"
-    ):
+    if session.delegation is not None and session.manifest["status"] == "active":
         actions.append(
             next_action(
                 "report.publish",
@@ -4078,9 +4063,7 @@ def _session_show(args: argparse.Namespace) -> CommandResult:
     integrity = data["selectionIntegrity"]
     baseline_guard = session.manifest.get("baselineGuard")
     guard_mode = (
-        baseline_guard["mode"]
-        if baseline_guard is not None
-        else "legacy-session"
+        baseline_guard["mode"] if baseline_guard is not None else "legacy-session"
     )
     return CommandResult(
         "session.show",
@@ -4239,10 +4222,7 @@ def _session_promote(args: argparse.Namespace) -> CommandResult:
                 if receipt.get("report") is not None
                 else ""
             )
-            + (
-                f"Post-promotion: {disposition['code']} — "
-                f"{disposition['message']}\n"
-            )
+            + (f"Post-promotion: {disposition['code']} — {disposition['message']}\n")
         ),
         project_context(project),
         [
@@ -4283,10 +4263,7 @@ def _session_complete(args: argparse.Namespace) -> CommandResult:
             artifact(
                 "research-report",
                 receipt["report"]["id"],
-                session.root_dir
-                / "reports"
-                / receipt["report"]["id"]
-                / "report.json",
+                session.root_dir / "reports" / receipt["report"]["id"] / "report.json",
                 immutable=True,
             ),
         ],
@@ -4697,7 +4674,9 @@ def _report_publish(args: argparse.Namespace) -> CommandResult:
             "--study ID together with --run ID"
         )
     if run_mode and (args.study is None or args.run is None):
-        raise CliUsageError("Run-bound report publication requires both --study and --run")
+        raise CliUsageError(
+            "Run-bound report publication requires both --study and --run"
+        )
     correction_requested = any(
         value is not None
         for value in (args.corrects, args.correction_review, args.correction_reason)
@@ -4738,11 +4717,7 @@ def _report_publish(args: argparse.Namespace) -> CommandResult:
                 "report",
                 "show",
                 str(project.root_dir),
-                *(
-                    ["--session", report.report["sessionId"]]
-                    if session_mode
-                    else []
-                ),
+                *(["--session", report.report["sessionId"]] if session_mode else []),
                 "--report",
                 report.report["id"],
                 "--json",
@@ -4754,7 +4729,10 @@ def _report_publish(args: argparse.Namespace) -> CommandResult:
         session = load_session(project, args.session)
     else:
         session = None
-    if session is not None and session.manifest["leader"] == session.manifest["baseline"]:
+    if (
+        session is not None
+        and session.manifest["leader"] == session.manifest["baseline"]
+    ):
         actions.append(
             next_action(
                 "session.complete",
@@ -4831,10 +4809,14 @@ def _report_list(args: argparse.Namespace) -> CommandResult:
         if session is not None
         else list_run_reports(project, args.study)
     )
-    scope = session.manifest["id"] if session is not None else (
-        f"Project Run anchors for Study {args.study}"
-        if args.study is not None
-        else "Project Run anchors"
+    scope = (
+        session.manifest["id"]
+        if session is not None
+        else (
+            f"Project Run anchors for Study {args.study}"
+            if args.study is not None
+            else "Project Run anchors"
+        )
     )
     lines = [f"Research Reports in {scope}:"]
     lines.extend(
@@ -4911,9 +4893,7 @@ def _report_show(args: argparse.Namespace) -> CommandResult:
     lineage = None
     if args.session is None:
         summary = next(
-            item
-            for item in list_run_reports(project)
-            if item.id == report.report["id"]
+            item for item in list_run_reports(project) if item.id == report.report["id"]
         )
         lineage = {
             "current": summary.current,
@@ -5007,8 +4987,13 @@ def _review_publish(args: argparse.Namespace) -> CommandResult:
         ["aq", "review", "show", str(review.root_dir), "--json"]
         if detached
         else [
-            "aq", "review", "show", str(project.root_dir),
-            "--review", review.review["id"], "--json",
+            "aq",
+            "review",
+            "show",
+            str(project.root_dir),
+            "--review",
+            review.review["id"],
+            "--json",
         ]
     )
     return CommandResult(
@@ -5048,8 +5033,7 @@ def _review_list(args: argparse.Namespace) -> CommandResult:
     reviews = list_reviews(project, args.report)
     lines = ["Attached Independent Research Reviews:"]
     lines.extend(
-        f"  {item.id}  {item.conclusion}  {item.title}  "
-        f"target={item.report_id}"
+        f"  {item.id}  {item.conclusion}  {item.title}  target={item.report_id}"
         for item in reviews
     )
     if not reviews:
@@ -5061,8 +5045,13 @@ def _review_list(args: argparse.Namespace) -> CommandResult:
                 "review.show",
                 "Verify and inspect the latest attached Review.",
                 [
-                    "aq", "review", "show", str(project.root_dir),
-                    "--review", reviews[-1].id, "--json",
+                    "aq",
+                    "review",
+                    "show",
+                    str(project.root_dir),
+                    "--review",
+                    reviews[-1].id,
+                    "--json",
                 ],
                 "read-only",
             )
@@ -5088,7 +5077,9 @@ def _review_show(args: argparse.Namespace) -> CommandResult:
         review = load_review(project, args.review)
         context = _project_result_context(args, project)
         detached = False
-    counts = {key: 0 for key in ("verified", "declared", "observed-unbound", "unverified")}
+    counts = {
+        key: 0 for key in ("verified", "declared", "observed-unbound", "unverified")
+    }
     for claim in review.analysis["claims"]:
         counts[claim["classification"]] += 1
     target = review.manifest["target"]
@@ -5188,9 +5179,7 @@ def _dossier_publish(args: argparse.Namespace) -> CommandResult:
             f"Research Dossier: {dossier.dossier['id']}\n"
             f"Title: {dossier.analysis['title']}\n"
             f"Included lanes: "
-            + ", ".join(
-                lane["id"] for lane in dossier.dossier["evidence"]["lanes"]
-            )
+            + ", ".join(lane["id"] for lane in dossier.dossier["evidence"]["lanes"])
             + "\n"
             f"Markdown: {dossier.root_dir / 'dossier.md'}\n"
             "Authority: quantitative decision support; trading authority: none\n"
@@ -5283,9 +5272,7 @@ def _dossier_show(args: argparse.Namespace) -> CommandResult:
             f"Immutable Research Dossier: {dossier.dossier['id']}\n"
             f"Title: {dossier.analysis['title']}\n"
             f"Included lanes: "
-            + ", ".join(
-                lane["id"] for lane in dossier.dossier["evidence"]["lanes"]
-            )
+            + ", ".join(lane["id"] for lane in dossier.dossier["evidence"]["lanes"])
             + "\n"
             f"Findings: {len(dossier.analysis['findings'])}\n"
             f"Markdown: {dossier.root_dir / 'dossier.md'}\n"
@@ -5369,9 +5356,7 @@ def _holdout_create_target(args: argparse.Namespace) -> CommandResult:
         args.source_project,
         "--source-project",
     )
-    source = load_project(
-        resolve_project_directory(args.source, args.source_project)
-    )
+    source = load_project(resolve_project_directory(args.source, args.source_project))
     target, binding = create_holdout_target(
         source,
         args.dossier,
@@ -5398,9 +5383,7 @@ def _holdout_create_target(args: argparse.Namespace) -> CommandResult:
             f"Period: {binding.binding['nonOverlap']['sourceEnd']} → "
             f"{binding.binding['nonOverlap']['targetStart']}\n"
             f"Lanes: "
-            + ", ".join(
-                lane["id"] for lane in binding.binding["source"]["lanes"]
-            )
+            + ", ".join(lane["id"] for lane in binding.binding["source"]["lanes"])
             + "\nCanonical source request: reused · candidate: frozen · "
             "selection: disabled · trading: none\n"
         ),
@@ -5438,12 +5421,8 @@ def _holdout_bind(args: argparse.Namespace) -> CommandResult:
         args.target_project,
         "--target-project",
     )
-    source = load_project(
-        resolve_project_directory(args.source, args.source_project)
-    )
-    target = load_project(
-        resolve_project_directory(args.target, args.target_project)
-    )
+    source = load_project(resolve_project_directory(args.source, args.source_project))
+    target = load_project(resolve_project_directory(args.target, args.target_project))
     binding = bind_holdout(source, args.dossier, target)
     return CommandResult(
         "holdout.bind",
@@ -5458,9 +5437,7 @@ def _holdout_bind(args: argparse.Namespace) -> CommandResult:
             f"Period: {binding.binding['nonOverlap']['sourceEnd']} → "
             f"{binding.binding['nonOverlap']['targetStart']}\n"
             f"Lanes: "
-            + ", ".join(
-                lane["id"] for lane in binding.binding["source"]["lanes"]
-            )
+            + ", ".join(lane["id"] for lane in binding.binding["source"]["lanes"])
             + "\nCandidate frozen: yes · selection: disabled · trading: none\n"
         ),
         project_context(target),
@@ -5494,8 +5471,7 @@ def _holdout_status(args: argparse.Namespace) -> CommandResult:
                 else "No frozen binding\n"
             )
             + (
-                f"Result: {status['result']['id']} · "
-                f"{status['result']['status']}\n"
+                f"Result: {status['result']['id']} · {status['result']['status']}\n"
                 if status["result"] is not None
                 else ""
             )
@@ -5535,7 +5511,9 @@ def _holdout_run(args: argparse.Namespace) -> CommandResult:
             f"  {lane['id']}  source={lane['source']['value']}  "
             f"holdout={lane['holdout']['value']}  delta={lane['delta']}"
         )
-    lines.append("Authority: external temporal audit · no production threshold · trading none")
+    lines.append(
+        "Authority: external temporal audit · no production threshold · trading none"
+    )
     return CommandResult(
         "holdout.run",
         {
@@ -5650,8 +5628,7 @@ def _holdout_show(args: argparse.Namespace) -> CommandResult:
                 if assessment is not None
                 else "Assessment: not yet published\n"
             )
-            +
-            "Interpretation: frozen later-period audit; no universal pass "
+            + "Interpretation: frozen later-period audit; no universal pass "
             "threshold or trading authority\n"
         ),
         project_context(project),
@@ -5700,11 +5677,7 @@ def _studio_snapshot(args: argparse.Namespace) -> CommandResult:
                     "studio",
                     "serve",
                     source["rootDir"],
-                    *(
-                        ["--project", args.project]
-                        if args.project is not None
-                        else []
-                    ),
+                    *(["--project", args.project] if args.project is not None else []),
                 ],
                 "long-running-server",
             )
@@ -5795,13 +5768,10 @@ def _inspect(args: argparse.Namespace) -> CommandResult:
     ]
     human = (
         _project_selection_human(args)
-        +
-        f"AutoQuant Project: {project.manifest.name} ({project.manifest.id})\n"
+        + f"AutoQuant Project: {project.manifest.name} ({project.manifest.id})\n"
         f"Root: {project.root_dir}\n"
         f"Research: {project.manifest.research_program}\n"
-        f"Workbench needs: {FRAMEWORK_NEEDS}\n"
-        + "\n".join(directory_lines)
-        + "\n"
+        f"Workbench needs: {FRAMEWORK_NEEDS}\n" + "\n".join(directory_lines) + "\n"
     )
     return CommandResult(
         "inspect",
@@ -5874,14 +5844,11 @@ def _orient(args: argparse.Namespace) -> CommandResult:
         validation_fidelity = construction_fidelity["bySplit"]["validation"]
         validation_rate = validation_fidelity["withinToleranceRate"]
         validation_rate_label = (
-            f"{validation_rate:.3f}"
-            if validation_rate is not None
-            else "unavailable"
+            f"{validation_rate:.3f}" if validation_rate is not None else "unavailable"
         )
         validation_latest = validation_fidelity["latestEligibleDecision"]
         validation_latest_label = (
-            f" · latest {validation_latest['asOf']} "
-            f"{validation_latest['status']}"
+            f" · latest {validation_latest['asOf']} {validation_latest['status']}"
             if validation_latest is not None
             else ""
         )
@@ -5926,8 +5893,7 @@ def _orient(args: argparse.Namespace) -> CommandResult:
         question = question[:319].rstrip() + "…"
     human = (
         _project_selection_human(args)
-        +
-        f"AutoQuant Agent Work Brief: {brief['project']['name']}\n"
+        + f"AutoQuant Agent Work Brief: {brief['project']['name']}\n"
         f"Project root: {brief['project']['rootDir']}\n"
         f"Question: {question}\n"
         + (
@@ -5948,8 +5914,7 @@ def _orient(args: argparse.Namespace) -> CommandResult:
             if candidate_contract is not None
             else ""
         )
-        +
-        f"Focus: {focus['laneName'] or 'single Study'} · "
+        + f"Focus: {focus['laneName'] or 'single Study'} · "
         f"{focus['studyId'] or 'no Study'}\n"
         f"{continuation_line}"
         f"State: {focus['coordinationPhase']} · "
@@ -6046,10 +6011,12 @@ def _orient(args: argparse.Namespace) -> CommandResult:
 def dispatch(args: argparse.Namespace) -> CommandResult:
     if args.command_id == "data.check":
         from .data_commands import run_data_check
+
         data = run_data_check(args)
         return CommandResult("data.check", data, json.dumps(data, indent=2) + "\n")
     if args.command_id in {"candidate.show", "candidate.save"}:
         from .candidate_commands import candidate_access
+
         source = None
         if args.command_id == "candidate.save":
             raw = sys.stdin.buffer.read(200001)
@@ -6057,8 +6024,12 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
                 raise CliUsageError("Candidate source exceeds 200000 bytes")
             source = raw.decode("utf-8")
         data = candidate_access(
-            args.directory, args.project, args.session,
-            source=source, base_sha256=getattr(args, "base_sha256", None))
+            args.directory,
+            args.project,
+            args.session,
+            source=source,
+            base_sha256=getattr(args, "base_sha256", None),
+        )
         return CommandResult(args.command_id, data, json.dumps(data, indent=2) + "\n")
     if args.command_id == "version":
         harness = harness_identity()
@@ -6196,8 +6167,7 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
             return CommandResult(
                 "schema",
                 {"kinds": kinds},
-                "AutoQuant schema kinds:\n"
-                + "".join(f"  {kind}\n" for kind in kinds),
+                "AutoQuant schema kinds:\n" + "".join(f"  {kind}\n" for kind in kinds),
             )
         schemas = {
             "agent-work-brief": AGENT_WORK_BRIEF_JSON_SCHEMA,
@@ -6252,12 +6222,15 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
             {"kind": args.kind, "schema": schema},
             json.dumps(schema, indent=2, sort_keys=True) + "\n",
         )
-    if args.command_id in TRIAL_COMMANDS and not getattr(args, "_trial_gate_passed", False):
+    if args.command_id in TRIAL_COMMANDS and not getattr(
+        args, "_trial_gate_passed", False
+    ):
         args._trial_gate_passed = True
         return gated(args, _selected_project, dispatch, _session_study_id)
     if args.command_id in {"report.publish", "dossier.publish"}:
         # Freeze a complete desk family: register every Project's trials first.
         from .trial_family_ledger import register_owning_workspace
+
         register_owning_workspace(_selected_project(args))
     if args.command_id in DESK_COMMANDS:
         return run_desk_command(args, _selected_project, CommandResult)
@@ -6390,22 +6363,26 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
 def _command_id(argv: Sequence[str]) -> str:
     if not argv:
         return "help"
-    if argv[0] in {
-        "data",
-        "family",
-        "workspace",
-        "candidate",
-        "project",
-        "study",
-        "run",
-        "session",
-        "experiment",
-        "research",
-        "report",
-        "review",
-        "dossier",
-        "studio",
-    } and len(argv) > 1:
+    if (
+        argv[0]
+        in {
+            "data",
+            "family",
+            "workspace",
+            "candidate",
+            "project",
+            "study",
+            "run",
+            "session",
+            "experiment",
+            "research",
+            "report",
+            "review",
+            "dossier",
+            "studio",
+        }
+        and len(argv) > 1
+    ):
         return f"{argv[0]}.{argv[1]}"
     return argv[0]
 

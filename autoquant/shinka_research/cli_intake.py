@@ -127,7 +127,9 @@ def add_intake_parser(sub: Any) -> None:
     )
     isub = s.add_subparsers(dest="action", required=True)
 
-    a = isub.add_parser("templates", help="List the quant templates and their seed programs")
+    a = isub.add_parser(
+        "templates", help="List the quant templates and their seed programs"
+    )
     a.add_argument("--json", action="store_true")
     a.set_defaults(func=cmd_templates, resolve="none")
 
@@ -136,7 +138,9 @@ def add_intake_parser(sub: Any) -> None:
     )
     which = a.add_mutually_exclusive_group(required=True)
     which.add_argument("--template", help="A template id from `intake templates`")
-    which.add_argument("--spec", help="A JSON draft (its `template` names the template)")
+    which.add_argument(
+        "--spec", help="A JSON draft (its `template` names the template)"
+    )
     a.add_argument("--json", action="store_true")
     a.set_defaults(func=cmd_questions, resolve="none")
 
@@ -146,7 +150,11 @@ def add_intake_parser(sub: Any) -> None:
         f"(the owner's, never from the agent environment {grants.AGENT_ENV})",
     )
     _add_dir(a)
-    a.add_argument("--spec", required=True, help="JSON draft with every open question answered")
-    a.add_argument("--data", required=True, help="CSV with the columns the template reads")
+    a.add_argument(
+        "--spec", required=True, help="JSON draft with every open question answered"
+    )
+    a.add_argument(
+        "--data", required=True, help="CSV with the columns the template reads"
+    )
     a.add_argument("--json", action="store_true")
     a.set_defaults(func=cmd_apply)

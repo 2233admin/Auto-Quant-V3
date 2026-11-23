@@ -50,16 +50,12 @@ def factor_contract(evaluation: FactorEvaluation) -> dict[str, Any]:
         "kind": FACTOR_API_KIND,
         "input": "long-form-observed-universe",
         "shape": (
-            "rectangular"
-            if observed_rows == possible_rows
-            else "ragged-observed-only"
+            "rectangular" if observed_rows == possible_rows else "ragged-observed-only"
         ),
         "rows": observed_rows,
         "possible_rows": possible_rows,
         "observation_coverage": (
-            float(observed_rows / possible_rows)
-            if possible_rows
-            else 0.0
+            float(observed_rows / possible_rows) if possible_rows else 0.0
         ),
         "assets": assets,
         "timestamps": timestamps,

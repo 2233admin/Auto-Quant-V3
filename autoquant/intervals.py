@@ -46,9 +46,7 @@ SUPPORTED_BASE_INTERVALS = tuple(
 )
 SESSION_BASE_INTERVALS = ("1m", "5m", "15m", "30m", "1h")
 SESSION_FEATURE_INTERVALS = ("5m", "15m", "30m", "1h", "3h", "4h", "6h", "1d")
-CONTINUOUS_AGGREGATION_METHOD = (
-    "complete-continuous-utc-midnight-bar-close-v2"
-)
+CONTINUOUS_AGGREGATION_METHOD = "complete-continuous-utc-midnight-bar-close-v2"
 XNYS_AGGREGATION_METHOD = "complete-xnys-regular-session-bar-close-v1"
 CONTINUOUS_TERMINAL_POLICY = "omit-incomplete"
 SESSION_TERMINAL_POLICY = "complete-at-session-close"
@@ -149,13 +147,11 @@ class ObservedIntervalSurface:
 def _normalize_interval_ids(values: Iterable[str]) -> tuple[str, ...]:
     raw = list(values)
     if not all(
-        isinstance(value, str) and INTERVAL_ID.fullmatch(value)
-        for value in raw
+        isinstance(value, str) and INTERVAL_ID.fullmatch(value) for value in raw
     ):
         raise IntervalContractError(
             "interval.unsupported",
-            "Intervals must be selected from: "
-            + ", ".join(SUPPORTED_INTERVALS),
+            "Intervals must be selected from: " + ", ".join(SUPPORTED_INTERVALS),
         )
     if len(raw) != len(set(raw)):
         raise IntervalContractError(
@@ -617,8 +613,7 @@ def _covered_session_schedule(
     for timestamp in timestamps:
         matches = np.flatnonzero(
             (
-                (schedule["open"] < timestamp)
-                & (timestamp <= schedule["close"])
+                (schedule["open"] < timestamp) & (timestamp <= schedule["close"])
             ).to_numpy()
         )
         if len(matches) != 1:
@@ -792,8 +787,7 @@ def aggregate_xnys_session_ohlcv(
     rows: list[dict[str, Any]] = []
     for session in schedule.itertuples():
         session_frame = base[
-            (base["timestamp"] > session.open)
-            & (base["timestamp"] <= session.close)
+            (base["timestamp"] > session.open) & (base["timestamp"] <= session.close)
         ]
         previous = session.open
         for bucket_close in _session_bucket_closes(
@@ -858,10 +852,7 @@ def _align_validated_intervals(
         renamed = high.rename(
             columns={
                 "timestamp": f"bar_close{suffix}",
-                **{
-                    column: f"{column}{suffix}"
-                    for column in OHLCV_COLUMNS[1:]
-                },
+                **{column: f"{column}{suffix}" for column in OHLCV_COLUMNS[1:]},
             }
         )
         result = pd.merge_asof(
@@ -927,8 +918,7 @@ def build_multi_interval_frame(
     intervals = normalize_feature_intervals(feature_intervals)
     base = validate_continuous_hourly_ohlcv(base_frame)
     derived = {
-        interval: aggregate_completed_ohlcv(base, interval)
-        for interval in intervals
+        interval: aggregate_completed_ohlcv(base, interval) for interval in intervals
     }
     return _align_validated_intervals(base, derived, intervals)
 
@@ -1048,8 +1038,7 @@ def load_multi_interval_asset(
             else end_at.tz_convert("UTC")
         )
         return base[
-            (base["timestamp"] >= start_at)
-            & (base["timestamp"] <= end_at)
+            (base["timestamp"] >= start_at) & (base["timestamp"] <= end_at)
         ].reset_index(drop=True)
     frames: dict[str, pd.DataFrame] = {}
     base_interval = expected_surface["baseInterval"]
@@ -1070,8 +1059,7 @@ def load_multi_interval_asset(
                 raise
             raise IntervalContractError(
                 "interval.reconciliation",
-                f"{asset} {interval} OHLCV does not reconcile to "
-                f"{base_interval} bars",
+                f"{asset} {interval} OHLCV does not reconcile to {base_interval} bars",
             ) from error
     base = (
         validate_continuous_hourly_ohlcv(
@@ -1105,20 +1093,21 @@ def load_multi_interval_asset(
                 f"{asset} {interval} timestamps do not reconcile to "
                 f"{base_interval} bars",
             )
-        if actual.shape != expected.shape or not np.isclose(
-            actual[list(OHLCV_COLUMNS[1:])].to_numpy(dtype=float),
-            expected[list(OHLCV_COLUMNS[1:])].to_numpy(dtype=float),
-            rtol=1e-9,
-            atol=1e-9,
-        ).all():
+        if (
+            actual.shape != expected.shape
+            or not np.isclose(
+                actual[list(OHLCV_COLUMNS[1:])].to_numpy(dtype=float),
+                expected[list(OHLCV_COLUMNS[1:])].to_numpy(dtype=float),
+                rtol=1e-9,
+                atol=1e-9,
+            ).all()
+        ):
             raise IntervalContractError(
                 "interval.reconciliation",
-                f"{asset} {interval} OHLCV does not reconcile to "
-                f"{base_interval} bars",
+                f"{asset} {interval} OHLCV does not reconcile to {base_interval} bars",
             )
     derived = {
-        interval: frames[interval]
-        for interval in expected_surface["featureIntervals"]
+        interval: frames[interval] for interval in expected_surface["featureIntervals"]
     }
     aligned = (
         align_completed_intervals(base, derived)
@@ -1137,11 +1126,8 @@ def load_multi_interval_asset(
         else start_at.tz_convert("UTC")
     )
     end_at = (
-        end_at.tz_localize("UTC")
-        if end_at.tzinfo is None
-        else end_at.tz_convert("UTC")
+        end_at.tz_localize("UTC") if end_at.tzinfo is None else end_at.tz_convert("UTC")
     )
     return aligned[
-        (aligned["timestamp"] >= start_at)
-        & (aligned["timestamp"] <= end_at)
+        (aligned["timestamp"] >= start_at) & (aligned["timestamp"] <= end_at)
     ].reset_index(drop=True)

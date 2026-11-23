@@ -72,9 +72,7 @@ def _event_inputs(
         path = root / "external-data" / "NVDA.csv"
         frame = pd.read_csv(path)
         for position in (30, 34, 80, 130, 200, 256):
-            frame.loc[position, "open"] = (
-                float(frame.loc[position - 1, "close"]) * 0.94
-            )
+            frame.loc[position, "open"] = float(frame.loc[position - 1, "close"]) * 0.94
             frame.loc[position, "low"] = min(
                 float(frame.loc[position, "low"]),
                 float(frame.loc[position, "open"]) * 0.99,
@@ -109,9 +107,7 @@ class EventStudyLabTests(unittest.TestCase):
                 "event-study",
                 template="ohlcv-event-study-lab",
             )
-            study_path = (
-                project.root_dir / "studies" / EVENT_STUDY_ID / "study.json"
-            )
+            study_path = project.root_dir / "studies" / EVENT_STUDY_ID / "study.json"
             study = json.loads(study_path.read_text(encoding="utf-8"))
             self.assertEqual(study["editable"]["paths"], [])
             self.assertEqual(
@@ -223,10 +219,7 @@ class EventStudyLabTests(unittest.TestCase):
             self.assertEqual(projected["envelope"], envelope)
             self.assertIn(
                 "run.event-study",
-                {
-                    command["id"]
-                    for command in snapshot["projects"][0]["commands"]
-                },
+                {command["id"] for command in snapshot["projects"][0]["commands"]},
             )
 
     def test_external_intake_binds_policy_and_runs_without_session(self) -> None:
@@ -247,9 +240,7 @@ class EventStudyLabTests(unittest.TestCase):
             loaded = load_project_intake(project)
             self.assertEqual(loaded["manifest"]["status"], "ready-for-run")
             self.assertTrue(loaded["study"]["current"])
-            policy = load_event_study_policy(
-                project.root_dir / EVENT_STUDY_POLICY
-            )
+            policy = load_event_study_policy(project.root_dir / EVENT_STUDY_POLICY)
             self.assertEqual(policy["event"]["asset"], "NVDA")
             self.assertEqual(policy["references"]["matchedAsset"], "SPY")
             with self.assertRaises(AutoQuantValidationError) as captured:
@@ -378,9 +369,7 @@ class EventStudyLabTests(unittest.TestCase):
                 template="ohlcv-event-study-lab",
             )
             run = execute_study(project, EVENT_STUDY_ID)
-            event_path = (
-                run.root_dir / "artifacts" / "event-study-events.csv"
-            )
+            event_path = run.root_dir / "artifacts" / "event-study-events.csv"
             with event_path.open("r", encoding="utf-8", newline="") as handle:
                 rows = list(csv.DictReader(handle))
                 columns = tuple(rows[0])

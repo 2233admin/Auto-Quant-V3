@@ -108,9 +108,7 @@ def fully_rehash_report(report, forged: dict, session_id: str) -> tuple[Path, st
             "publishedAt": forged["publishedAt"],
         }
     )
-    stamp = datetime.fromisoformat(forged["publishedAt"]).strftime(
-        "%Y%m%dT%H%M%S%fZ"
-    )
+    stamp = datetime.fromisoformat(forged["publishedAt"]).strftime("%Y%m%dT%H%M%S%fZ")
     forged_id = f"report-{stamp}-{identity[:12]}"
     forged["id"] = forged_id
     forged_root = report.root_dir.with_name(forged_id)
@@ -192,8 +190,7 @@ class ResearchHandoffTests(unittest.TestCase):
             ),
         )
         self.assertIn(
-            "Effective per-asset caps: `IWM`=`0.3`, `QQQ`=`0.3`, "
-            "`SPY`=`0.3`",
+            "Effective per-asset caps: `IWM`=`0.3`, `QQQ`=`0.3`, `SPY`=`0.3`",
             "\n".join(rendered),
         )
 
@@ -243,16 +240,18 @@ class ResearchHandoffTests(unittest.TestCase):
                 turn_timeout_seconds=5,
             )
             turn_input = json.loads(
-                (
-                    campaign.root_dir / "turns" / "turn-0001" / "input.json"
-                ).read_text(encoding="utf-8")
+                (campaign.root_dir / "turns" / "turn-0001" / "input.json").read_text(
+                    encoding="utf-8"
+                )
             )
             self.assertEqual(
                 turn_input["delegation"]["request"]["question"],
                 research_request()["question"],
             )
 
-    def test_session_report_draft_prefills_exact_evidence_and_cannot_publish(self) -> None:
+    def test_session_report_draft_prefills_exact_evidence_and_cannot_publish(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = self._project(directory)
             session = start_session(
@@ -299,10 +298,7 @@ class ResearchHandoffTests(unittest.TestCase):
             )
             self.assertEqual(blocked.returncode, 1)
             self.assertEqual(
-                {
-                    item["code"]
-                    for item in json_output(blocked)["error"]["issues"]
-                },
+                {item["code"] for item in json_output(blocked)["error"]["issues"]},
                 {"report.draft-incomplete", "report.draft-placeholder"},
             )
             duplicate = run_cli(
@@ -327,11 +323,7 @@ class ResearchHandoffTests(unittest.TestCase):
                 "factor-quality",
                 request=research_request(),
             )
-            candidate = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text("SCORE = 2.0\n", encoding="utf-8")
             experiment = evaluate_experiment(
                 project,
@@ -357,9 +349,7 @@ class ResearchHandoffTests(unittest.TestCase):
             )
             self.assertEqual(receipt["report"]["id"], report.report["id"])
             self.assertEqual(
-                load_session(project, session.manifest["id"]).manifest[
-                    "status"
-                ],
+                load_session(project, session.manifest["id"]).manifest["status"],
                 "promoted",
             )
             with self.assertRaises(AutoQuantValidationError) as captured:
@@ -420,9 +410,7 @@ class ResearchHandoffTests(unittest.TestCase):
 
             self.assertEqual(report.report["tradingAuthority"], "none")
             self.assertEqual(report.report["request"], research_request())
-            decision_support = report.report["evidence"][
-                "leaderDecisionSupport"
-            ]
+            decision_support = report.report["evidence"]["leaderDecisionSupport"]
             self.assertEqual(
                 decision_support["runId"],
                 baseline_id,
@@ -431,52 +419,28 @@ class ResearchHandoffTests(unittest.TestCase):
                 decision_support["resultHash"],
                 report.report["evidence"]["runs"][0]["resultHash"],
             )
-            self.assertIsNone(
-                decision_support["portfolioMechanicalDecisionHash"]
-            )
-            self.assertIsNone(
-                decision_support["portfolioMechanicalDecision"]
-            )
-            self.assertIsNone(
-                decision_support["portfolioSizingAnatomyHash"]
-            )
-            self.assertIsNone(
-                decision_support["portfolioSizingAnatomy"]
-            )
-            self.assertIsNone(
-                decision_support["portfolioDiversificationStressHash"]
-            )
-            self.assertIsNone(
-                decision_support["portfolioDiversificationStress"]
-            )
-            self.assertIsNone(
-                decision_support["portfolioStrategyViabilityHash"]
-            )
-            self.assertIsNone(
-                decision_support["portfolioStrategyViability"]
-            )
-            self.assertIsNone(
-                decision_support["portfolioSignalMonetizationHash"]
-            )
-            self.assertIsNone(
-                decision_support["portfolioSignalMonetization"]
-            )
+            self.assertIsNone(decision_support["portfolioMechanicalDecisionHash"])
+            self.assertIsNone(decision_support["portfolioMechanicalDecision"])
+            self.assertIsNone(decision_support["portfolioSizingAnatomyHash"])
+            self.assertIsNone(decision_support["portfolioSizingAnatomy"])
+            self.assertIsNone(decision_support["portfolioDiversificationStressHash"])
+            self.assertIsNone(decision_support["portfolioDiversificationStress"])
+            self.assertIsNone(decision_support["portfolioStrategyViabilityHash"])
+            self.assertIsNone(decision_support["portfolioStrategyViability"])
+            self.assertIsNone(decision_support["portfolioSignalMonetizationHash"])
+            self.assertIsNone(decision_support["portfolioSignalMonetization"])
             self.assertEqual(
-                report.report["evidence"]["selectionIntegrity"][
-                    "selectionSplit"
-                ],
+                report.report["evidence"]["selectionIntegrity"]["selectionSplit"],
                 "unspecified",
             )
             self.assertEqual(
-                report.report["evidence"]["selectionIntegrity"][
-                    "candidateTrials"
-                ],
+                report.report["evidence"]["selectionIntegrity"]["candidateTrials"],
                 0,
             )
             self.assertEqual(
-                report.report["evidence"]["selectionIntegrity"][
-                    "researchFamily"
-                ]["uniqueSourceTrials"],
+                report.report["evidence"]["selectionIntegrity"]["researchFamily"][
+                    "uniqueSourceTrials"
+                ],
                 1,
             )
             self.assertIn(
@@ -550,15 +514,13 @@ class ResearchHandoffTests(unittest.TestCase):
                 baseline_id,
             )
             self.assertEqual(
-                loaded.report["evidence"]["selectionIntegrity"][
-                    "candidateTrials"
-                ],
+                loaded.report["evidence"]["selectionIntegrity"]["candidateTrials"],
                 0,
             )
             self.assertEqual(
-                loaded.report["evidence"]["selectionIntegrity"][
-                    "researchFamily"
-                ]["uniqueSourceTrials"],
+                loaded.report["evidence"]["selectionIntegrity"]["researchFamily"][
+                    "uniqueSourceTrials"
+                ],
                 1,
             )
             self.assertNotEqual(later.manifest["leader"]["runId"], baseline_id)
@@ -894,12 +856,15 @@ class ResearchHandoffTests(unittest.TestCase):
                 report_analysis(session.manifest["baseline"]["runId"]),
             )
 
-            with mock.patch(
-                "autoquant.research.list_campaign_progress",
-                return_value=[{"phase": "researcher"}],
-            ), self.assertRaisesRegex(
-                AutoQuantValidationError,
-                "Campaign is running",
+            with (
+                mock.patch(
+                    "autoquant.research.list_campaign_progress",
+                    return_value=[{"phase": "researcher"}],
+                ),
+                self.assertRaisesRegex(
+                    AutoQuantValidationError,
+                    "Campaign is running",
+                ),
             ):
                 complete_session(
                     project,
@@ -962,11 +927,7 @@ class ResearchHandoffTests(unittest.TestCase):
                 session.manifest["id"],
                 report_analysis(session.manifest["baseline"]["runId"]),
             )
-            candidate = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text("SCORE = 1.0\n", encoding="utf-8")
             evaluate_experiment(
                 project,
@@ -1013,11 +974,7 @@ class ResearchHandoffTests(unittest.TestCase):
                 "factor-quality",
                 request=research_request(),
             )
-            candidate = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text("SCORE = 2.0\n", encoding="utf-8")
             evaluate_experiment(
                 project,
@@ -1107,9 +1064,7 @@ class ResearchHandoffTests(unittest.TestCase):
                 session.manifest["id"],
                 report_analysis(session.manifest["baseline"]["runId"]),
             )
-            forged = json.loads(
-                json.dumps(report.report)
-            )
+            forged = json.loads(json.dumps(report.report))
             forged["evidence"]["runs"][0]["metrics"]["score"] = 999.0
             _, forged_id = fully_rehash_report(
                 report,

@@ -9,7 +9,9 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
+pytest.importorskip(
+    "shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)"
+)
 from autoquant.shinka_research import rundb
 from autoquant.shinka_research.notebook import Notebook, experiment_dir
 

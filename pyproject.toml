@@ -48,3 +48,20 @@ package = true
 # shinka.database.cost); upstream SakanaAI/shinka-evolve on PyPI does not have it.
 [tool.uv.sources]
 shinka-evolve = { git = "https://github.com/2233admin/ShinkaEvolve", rev = "a43eb89b01432d19c95f35c3f24a4576e8ed3a53" }
+
+# Formatting applies to maintained source only. Project data, the bundled
+# Skill sources and their materialized copies, and the Project templates are
+# distributed artifacts whose bytes are pinned by Runs or compared
+# byte-for-byte by the workspace tests, so they stay out of the formatter.
+[tool.ruff]
+required-version = "0.15.21"
+line-length = 88
+target-version = "py311"
+force-exclude = true
+extend-exclude = [
+    "projects",
+    "autoquant/project_templates",
+    "autoquant/workspace_skills",
+    ".agents",
+    ".claude",
+]

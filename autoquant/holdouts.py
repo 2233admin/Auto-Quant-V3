@@ -275,7 +275,11 @@ def _binding_files(root: Path) -> dict[str, str]:
     for path in paths:
         if path.is_symlink():
             raise AutoQuantValidationError(
-                [_issue(path, "holdout.symlink", "Holdout evidence cannot be a symlink")]
+                [
+                    _issue(
+                        path, "holdout.symlink", "Holdout evidence cannot be a symlink"
+                    )
+                ]
             )
         if path.is_file():
             result[path.relative_to(root).as_posix()] = hash_file(path)
@@ -344,11 +348,7 @@ def _dataset_projection(
         "timeRange": dataset["timeRange"],
         "market": dataset["market"],
         "priceAdjustment": dataset["priceAdjustment"],
-        **(
-            {"frequency": dataset["frequency"]}
-            if "frequency" in dataset
-            else {}
-        ),
+        **({"frequency": dataset["frequency"]} if "frequency" in dataset else {}),
         **(
             {"intervalSurface": dataset["intervalSurface"]}
             if "intervalSurface" in dataset
@@ -409,8 +409,7 @@ def _portable_source_evidence_issues(
     evidence = source_dossier.get("evidence")
     if (
         source_dossier.get("id") != dossier_identity.get("id")
-        or source_dossier.get("evidenceHash")
-        != dossier_identity.get("evidenceHash")
+        or source_dossier.get("evidenceHash") != dossier_identity.get("evidenceHash")
         or source_dossier_hash != dossier_identity.get("dossierHash")
         or not isinstance(evidence, dict)
         or hash_json(evidence) != source_dossier.get("evidenceHash")
@@ -462,10 +461,8 @@ def _portable_source_evidence_issues(
             or lane.get("resultHash") != leader.get("resultHash")
             or lane.get("studyInputHash") != leader.get("studyInputHash")
             or lane.get("objective") != leader.get("objective")
-            or lane.get("sourceHash")
-            != leader.get("subject", {}).get("sourceHash")
-            or hash_json(lane.get("sourceHashes", {}))
-            != lane.get("sourceHash")
+            or lane.get("sourceHash") != leader.get("subject", {}).get("sourceHash")
+            or hash_json(lane.get("sourceHashes", {})) != lane.get("sourceHash")
         ):
             issues.append(
                 _issue(
@@ -510,7 +507,9 @@ def _target_history_issues(project: ProjectContext) -> list[ValidationIssue]:
     return issues
 
 
-def _lane_projection(source_project: ProjectContext, lane: dict[str, Any]) -> dict[str, Any]:
+def _lane_projection(
+    source_project: ProjectContext, lane: dict[str, Any]
+) -> dict[str, Any]:
     lane_id = lane["id"]
     expected_study = LANE_STUDIES.get(lane_id)
     if expected_study is None or lane["study"]["id"] != expected_study:
@@ -542,9 +541,7 @@ def _lane_projection(source_project: ProjectContext, lane: dict[str, Any]) -> di
         **(
             {
                 "dependencyHash": run.result["dependencies"]["hash"],
-                "dependencySourceHashes": run.result["dependencies"][
-                    "sourceHashes"
-                ],
+                "dependencySourceHashes": run.result["dependencies"]["sourceHashes"],
             }
             if "dependencies" in run.result
             else {}
@@ -559,7 +556,11 @@ def _validate_lane_source_consistency(
     factor = by_id.get("factor")
     if factor is None:
         raise AutoQuantValidationError(
-            [_issue("source/lanes", "holdout.factor-required", "Factor lane is required")]
+            [
+                _issue(
+                    "source/lanes", "holdout.factor-required", "Factor lane is required"
+                )
+            ]
         )
     portfolio = by_id.get("portfolio")
     if portfolio is not None and (
@@ -966,9 +967,7 @@ def create_holdout_target(
             ]
         )
     dossier = load_dossier(source_project, dossier_id)
-    lane_ids = [
-        lane["id"] for lane in dossier.dossier["evidence"]["lanes"]
-    ]
+    lane_ids = [lane["id"] for lane in dossier.dossier["evidence"]["lanes"]]
     unknown = [
         lane_id
         for lane_id in lane_ids
@@ -986,8 +985,7 @@ def create_holdout_target(
             ]
         )
     minimum_observations = max(
-        HOLDOUT_LANE_MINIMUM_OBSERVATIONS[lane_id]
-        for lane_id in lane_ids
+        HOLDOUT_LANE_MINIMUM_OBSERVATIONS[lane_id] for lane_id in lane_ids
     )
     with tempfile.TemporaryDirectory(prefix="aq-holdout-request-") as directory:
         request_path = Path(directory) / "request.json"
@@ -1070,11 +1068,15 @@ def _validate_binding_shape(
         or binding.get("kind") != HOLDOUT_BINDING_KIND
         or binding.get("method") != HOLDOUT_METHOD
     ):
-        issues.append(_issue(path, "holdout.binding-contract", "Invalid binding contract"))
+        issues.append(
+            _issue(path, "holdout.binding-contract", "Invalid binding contract")
+        )
     imported = binding.get("importedSources")
     if not isinstance(imported, list) or not imported:
         issues.append(
-            _issue(f"{path}/importedSources", "schema.array", "Imported sources required")
+            _issue(
+                f"{path}/importedSources", "schema.array", "Imported sources required"
+            )
         )
     lanes = (
         binding.get("source", {}).get("lanes")
@@ -1088,9 +1090,7 @@ def _validate_binding_shape(
         and all(isinstance(lane, dict) for lane in lanes)
         else []
     )
-    expected_lane_ids = [
-        lane_id for lane_id in LANE_ORDER if lane_id in lane_ids
-    ]
+    expected_lane_ids = [lane_id for lane_id in LANE_ORDER if lane_id in lane_ids]
     if not lane_ids or lane_ids != expected_lane_ids:
         issues.append(
             _issue(f"{path}/source/lanes", "holdout.lanes", "Invalid lane sequence")
@@ -1129,7 +1129,9 @@ def load_holdout_binding(project: ProjectContext) -> HoldoutBindingContext:
         or manifest.get("id") != binding.get("id")
     ):
         issues.append(
-            _issue(manifest_path, "holdout.binding-manifest", "Invalid binding manifest")
+            _issue(
+                manifest_path, "holdout.binding-manifest", "Invalid binding manifest"
+            )
         )
     issues.extend(_validate_binding_shape(binding, binding_path))
     try:
@@ -1163,7 +1165,11 @@ def load_holdout_binding(project: ProjectContext) -> HoldoutBindingContext:
     )
     if binding.get("target", {}).get("project", {}).get("id") != project.manifest.id:
         issues.append(
-            _issue(binding_path, "holdout.target-project", "Binding target Project mismatch")
+            _issue(
+                binding_path,
+                "holdout.target-project",
+                "Binding target Project mismatch",
+            )
         )
     intake = None
     try:
@@ -1203,10 +1209,14 @@ def load_holdout_binding(project: ProjectContext) -> HoldoutBindingContext:
             digest = item.get("hash")
             if not isinstance(relative, str) or not isinstance(digest, str):
                 issues.append(
-                    _issue(binding_path, "holdout.import-shape", "Invalid import identity")
+                    _issue(
+                        binding_path, "holdout.import-shape", "Invalid import identity"
+                    )
                 )
                 continue
-            actual = confined_path(project.root_dir, relative, f"holdout/import/{relative}")
+            actual = confined_path(
+                project.root_dir, relative, f"holdout/import/{relative}"
+            )
             frozen = confined_path(
                 root / HOLDOUT_IMPORTED_SOURCES,
                 relative,
@@ -1299,12 +1309,9 @@ def run_holdout(project: ProjectContext) -> HoldoutResultContext:
     if result_root.exists() or result_root.is_symlink():
         return load_holdout_result(project)
     expected_studies = {
-        item["laneId"]: item
-        for item in binding.binding["target"]["studies"]
+        item["laneId"]: item for item in binding.binding["target"]["studies"]
     }
-    expected_by_study = {
-        item["studyId"]: item for item in expected_studies.values()
-    }
+    expected_by_study = {item["studyId"]: item for item in expected_studies.values()}
     existing_runs = list_runs(project)
     unrelated = []
     for summary in existing_runs:
@@ -1322,8 +1329,7 @@ def run_holdout(project: ProjectContext) -> HoldoutResultContext:
                     project.root_dir,
                     "holdout.unrelated-run",
                     "Bound Project contains Runs outside the exact challenge "
-                    "identity: "
-                    + ", ".join(unrelated),
+                    "identity: " + ", ".join(unrelated),
                 )
             ]
         )
@@ -1479,7 +1485,9 @@ def _validate_result_shape(
         or result.get("method") != HOLDOUT_METHOD
         or result.get("status") not in {"succeeded", "failed"}
     ):
-        issues.append(_issue(path, "holdout.result-contract", "Invalid result contract"))
+        issues.append(
+            _issue(path, "holdout.result-contract", "Invalid result contract")
+        )
     lanes = result.get("lanes")
     if not isinstance(lanes, list) or not lanes:
         issues.append(_issue(f"{path}/lanes", "schema.array", "Result lanes required"))
@@ -1561,19 +1569,14 @@ def load_holdout_result(project: ProjectContext) -> HoldoutResultContext:
         issues.append(
             _issue(result_path, "holdout.result-id", "Result identity is incomplete")
         )
-    if (
-        result.get("source")
-        != {
-            "project": binding.binding["source"]["project"],
-            "dossier": binding.binding["source"]["dossier"],
-            "dataset": binding.binding["source"]["dataset"],
-        }
-        or result.get("target")
-        != {
-            "project": binding.binding["target"]["project"],
-            "dataset": binding.binding["target"]["dataset"],
-        }
-    ):
+    if result.get("source") != {
+        "project": binding.binding["source"]["project"],
+        "dossier": binding.binding["source"]["dossier"],
+        "dataset": binding.binding["source"]["dataset"],
+    } or result.get("target") != {
+        "project": binding.binding["target"]["project"],
+        "dataset": binding.binding["target"]["dataset"],
+    }:
         issues.append(
             _issue(
                 result_path,
@@ -1581,9 +1584,7 @@ def load_holdout_result(project: ProjectContext) -> HoldoutResultContext:
                 "Result source or target differs from the binding",
             )
         )
-    source_lanes = {
-        lane["id"]: lane for lane in binding.binding["source"]["lanes"]
-    }
+    source_lanes = {lane["id"]: lane for lane in binding.binding["source"]["lanes"]}
     expected_run_ids: set[str] = set()
     lanes = result.get("lanes", [])
     if isinstance(lanes, list):
@@ -1647,7 +1648,9 @@ def load_holdout_result(project: ProjectContext) -> HoldoutResultContext:
                     issues.extend(error.issues)
                 else:
                     issues.append(
-                        _issue(result_path, "holdout.result-lane", "Invalid result lane")
+                        _issue(
+                            result_path, "holdout.result-lane", "Invalid result lane"
+                        )
                     )
     actual_run_ids = {summary.id for summary in list_runs(project)}
     if expected_run_ids != actual_run_ids:
@@ -1713,11 +1716,7 @@ def _source_dossier_lane_support(
     if lane is None:
         return None
     report = lane.get("report")
-    support = (
-        report.get("leaderDecisionSupport")
-        if isinstance(report, dict)
-        else None
-    )
+    support = report.get("leaderDecisionSupport") if isinstance(report, dict) else None
     return summarize_leader_decision_support(support)
 
 
@@ -1891,7 +1890,9 @@ def validate_holdout_assessment_analysis(
     raw_lanes = value.get("lanes")
     normalized_lanes = []
     if not isinstance(raw_lanes, list):
-        issues.append(_issue(f"{path}/lanes", "schema.array", "Expected lane assessments"))
+        issues.append(
+            _issue(f"{path}/lanes", "schema.array", "Expected lane assessments")
+        )
         raw_lanes = []
     for index, lane in enumerate(raw_lanes):
         lane_path = f"{path}/lanes/{index}"
@@ -1913,7 +1914,9 @@ def validate_holdout_assessment_analysis(
         summary = lane.get("summary")
         if not isinstance(summary, str) or not summary.strip():
             issues.append(
-                _issue(f"{lane_path}/summary", "schema.string", "Expected non-empty text")
+                _issue(
+                    f"{lane_path}/summary", "schema.string", "Expected non-empty text"
+                )
             )
         normalized_lanes.append(
             {
@@ -1963,14 +1966,17 @@ def _assessment_identity(
     evidence_hash: str,
     published_at: str,
 ) -> str:
-    return "holdout-assessment-" + hash_json(
-        {
-            "resultHash": result_hash,
-            "analysisHash": analysis_hash,
-            "evidenceHash": evidence_hash,
-            "publishedAt": published_at,
-        }
-    )[:16]
+    return (
+        "holdout-assessment-"
+        + hash_json(
+            {
+                "resultHash": result_hash,
+                "analysisHash": analysis_hash,
+                "evidenceHash": evidence_hash,
+                "publishedAt": published_at,
+            }
+        )[:16]
+    )
 
 
 def _render_holdout_assessment_markdown(
@@ -2019,8 +2025,7 @@ def _render_holdout_assessment_markdown(
     lines.extend(f"- {item}" for item in analysis["interpretation"])
     lines.extend(["", "## Limitations", ""])
     lines.extend(
-        [*(f"- {item}" for item in analysis["limitations"])]
-        or ["- None declared."]
+        [*(f"- {item}" for item in analysis["limitations"])] or ["- None declared."]
     )
     lines.extend(["", "## Recommendations", ""])
     lines.extend(
@@ -2057,7 +2062,13 @@ def _assessment_files(root: Path) -> dict[str, str]:
         path = root / name
         if path.is_symlink() or not path.is_file():
             raise AutoQuantValidationError(
-                [_issue(path, "holdout.assessment-file", f"Missing assessment file {name}")]
+                [
+                    _issue(
+                        path,
+                        "holdout.assessment-file",
+                        f"Missing assessment file {name}",
+                    )
+                ]
             )
         files[name] = hash_file(path)
     return files
@@ -2074,7 +2085,13 @@ def publish_holdout_assessment(
     root = binding.root_dir / HOLDOUT_ASSESSMENT_DIRECTORY
     if root.exists() or root.is_symlink():
         raise AutoQuantValidationError(
-            [_issue(root, "holdout.assessment-exists", "Holdout already has an Assessment")]
+            [
+                _issue(
+                    root,
+                    "holdout.assessment-exists",
+                    "Holdout already has an Assessment",
+                )
+            ]
         )
     lane_ids = [lane["id"] for lane in result.result["lanes"]]
     normalized = validate_holdout_assessment_analysis(analysis, lane_ids)
@@ -2162,7 +2179,11 @@ def load_holdout_assessment(
         )
     if root.is_symlink() or not root.is_dir():
         raise AutoQuantValidationError(
-            [_issue(root, "holdout.assessment-directory", "Invalid Assessment directory")]
+            [
+                _issue(
+                    root, "holdout.assessment-directory", "Invalid Assessment directory"
+                )
+            ]
         )
     evidence = (
         verified_evidence
@@ -2293,7 +2314,11 @@ def load_holdout_assessment(
         or manifest.get("files") != files
     ):
         issues.append(
-            _issue(manifest_path, "holdout.assessment-manifest", "Invalid Assessment manifest")
+            _issue(
+                manifest_path,
+                "holdout.assessment-manifest",
+                "Invalid Assessment manifest",
+            )
         )
     if issues:
         raise AutoQuantValidationError(issues)
@@ -2336,9 +2361,7 @@ def load_holdout_status(
         if result_context is not None
         and (
             include_evidence
-            or (
-                binding.root_dir / HOLDOUT_ASSESSMENT_DIRECTORY
-            ).exists()
+            or (binding.root_dir / HOLDOUT_ASSESSMENT_DIRECTORY).exists()
         )
         else None
     )
@@ -2369,9 +2392,7 @@ def load_holdout_status(
             "sourceDossierId": binding.binding["source"]["dossier"]["id"],
             "sourceDataset": binding.binding["source"]["dataset"],
             "targetDataset": binding.binding["target"]["dataset"],
-            "laneIds": [
-                lane["id"] for lane in binding.binding["source"]["lanes"]
-            ],
+            "laneIds": [lane["id"] for lane in binding.binding["source"]["lanes"]],
             "nonOverlap": binding.binding["nonOverlap"],
             "policy": binding.binding["policy"],
         },
@@ -2397,12 +2418,8 @@ def load_holdout_status(
                 "id": assessment_context.assessment["id"],
                 "publishedAt": assessment_context.assessment["publishedAt"],
                 "title": assessment_context.assessment["title"],
-                "executiveSummary": assessment_context.assessment[
-                    "executiveSummary"
-                ],
-                "overallAssessment": assessment_context.assessment[
-                    "overallAssessment"
-                ],
+                "executiveSummary": assessment_context.assessment["executiveSummary"],
+                "overallAssessment": assessment_context.assessment["overallAssessment"],
                 "lanes": assessment_context.assessment["lanes"],
                 "markdownPath": str(
                     assessment_context.root_dir / HOLDOUT_ASSESSMENT_MARKDOWN

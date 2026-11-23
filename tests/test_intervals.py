@@ -166,9 +166,7 @@ class MultiIntervalCoreTests(unittest.TestCase):
         )
         observed = hourly_fixture(6).drop(index=[1, 4]).reset_index(drop=True)
         observed.loc[:, "volume"] = 0.0
-        observed.loc[1, "timestamp"] = pd.Timestamp(
-            "2026-01-01T03:30:00Z"
-        )
+        observed.loc[1, "timestamp"] = pd.Timestamp("2026-01-01T03:30:00Z")
         validated = validate_observed_ohlcv(observed)
         self.assertEqual(len(validated), 4)
         self.assertTrue(validated["volume"].eq(0).all())

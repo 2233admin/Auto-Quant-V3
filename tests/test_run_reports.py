@@ -81,9 +81,7 @@ class RunBoundResearchReportTests(unittest.TestCase):
                 project,
                 study_definition(
                     dependencies=["requests/recovery.json"],
-                    research_request=StudyResearchRequest(
-                        "requests/recovery.json"
-                    ),
+                    research_request=StudyResearchRequest("requests/recovery.json"),
                 ),
             )
             run = execute_study(project, "factor-quality")
@@ -272,10 +270,7 @@ class RunBoundResearchReportTests(unittest.TestCase):
             jsonschema.validate(draft, REPORT_ANALYSIS_JSON_SCHEMA)
             self.assertEqual(draft["authoringState"], "draft")
             self.assertEqual(
-                {
-                    item["artifactPath"]
-                    for item in draft["findings"][0]["evidenceRefs"]
-                },
+                {item["artifactPath"] for item in draft["findings"][0]["evidenceRefs"]},
                 {item["path"] for item in run.result["artifacts"]},
             )
             escaped = run_cli(
@@ -472,7 +467,9 @@ class RunBoundResearchReportTests(unittest.TestCase):
                 review.review["id"],
             )
             embedded = loaded.root_dir / correction["governingReview"]["packagePath"]
-            self.assertEqual(load_review_package(embedded, project=project).review, review.review)
+            self.assertEqual(
+                load_review_package(embedded, project=project).review, review.review
+            )
             summaries = list_run_reports(project)
             self.assertFalse(summaries[0].current)
             self.assertEqual(summaries[0].superseded_by, corrected.report["id"])
@@ -482,7 +479,9 @@ class RunBoundResearchReportTests(unittest.TestCase):
                 summaries[1].to_dict()["correction"]["governingReview"]["id"],
                 review.review["id"],
             )
-            markdown = (corrected.root_dir / REPORT_MARKDOWN).read_text(encoding="utf-8")
+            markdown = (corrected.root_dir / REPORT_MARKDOWN).read_text(
+                encoding="utf-8"
+            )
             self.assertIn("## Immutable correction lineage", markdown)
             self.assertIn(prior.report["id"], markdown)
             self.assertIn(review.review["id"], markdown)
@@ -619,7 +618,9 @@ class RunBoundResearchReportTests(unittest.TestCase):
             self.assertEqual(factor["phase"], "researching")
             status = load_dossier_status(project)
             self.assertFalse(status["ready"])
-            self.assertEqual(status["lanes"][0]["session"]["id"], session.manifest["id"])
+            self.assertEqual(
+                status["lanes"][0]["session"]["id"], session.manifest["id"]
+            )
             self.assertIsNone(status["lanes"][0]["report"])
             self.assertIn(
                 "dossier.report-missing",
@@ -686,7 +687,11 @@ class RunBoundResearchReportTests(unittest.TestCase):
 
             invalid_analysis = analysis(run.result["id"])
             invalid_analysis["findings"][0]["evidenceRefs"] = [
-                {"kind": "experiment", "id": "exp-0001-unavailable", "artifactPath": None}
+                {
+                    "kind": "experiment",
+                    "id": "exp-0001-unavailable",
+                    "artifactPath": None,
+                }
             ]
             with self.assertRaises(AutoQuantValidationError) as unknown:
                 publish_run_report(
@@ -701,7 +706,9 @@ class RunBoundResearchReportTests(unittest.TestCase):
             )
 
             candidate = project.root_dir / "factors" / "candidate.py"
-            candidate.write_text(candidate.read_text() + "\n# changed\n", encoding="utf-8")
+            candidate.write_text(
+                candidate.read_text() + "\n# changed\n", encoding="utf-8"
+            )
             with self.assertRaises(AutoQuantValidationError) as stale:
                 publish_run_report(
                     project,
@@ -709,7 +716,9 @@ class RunBoundResearchReportTests(unittest.TestCase):
                     run.result["id"],
                     analysis(run.result["id"]),
                 )
-            self.assertIn("report.run-stale", {item.code for item in stale.exception.issues})
+            self.assertIn(
+                "report.run-stale", {item.code for item in stale.exception.issues}
+            )
 
             unbound = create_project(
                 workspace.root_dir,
@@ -739,7 +748,9 @@ class RunBoundResearchReportTests(unittest.TestCase):
                 {item.code for item in symlinked.exception.issues},
             )
 
-    def test_template_route_catalog_prevents_single_lane_composition_guess(self) -> None:
+    def test_template_route_catalog_prevents_single_lane_composition_guess(
+        self,
+    ) -> None:
         machine = run_cli("project", "templates", "--json")
         self.assertEqual(machine.returncode, 0, machine.stderr)
         data = json_output(machine)["data"]
@@ -753,7 +764,9 @@ class RunBoundResearchReportTests(unittest.TestCase):
             },
         )
         routes = {item["id"]: item for item in data["routes"]}
-        self.assertEqual(routes["ohlcv-research-desk"]["lanes"], ["factor", "portfolio", "rl"])
+        self.assertEqual(
+            routes["ohlcv-research-desk"]["lanes"], ["factor", "portfolio", "rl"]
+        )
         self.assertIn(
             "Factor evidence must be established",
             routes["ohlcv-portfolio-lab"]["doesNotFit"][0],

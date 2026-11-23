@@ -53,7 +53,9 @@ class WatchdogResult(unittest.TextTestResult):
         """Restart the countdown; faulthandler replaces a pending timer on every call."""
 
         if cls.watchdog_seconds > 0:
-            faulthandler.dump_traceback_later(cls.watchdog_seconds, repeat=True, file=sys.__stderr__ or sys.stderr)
+            faulthandler.dump_traceback_later(
+                cls.watchdog_seconds, repeat=True, file=sys.__stderr__ or sys.stderr
+            )
 
     def startTest(self, test: unittest.TestCase) -> None:
         self._started = time.monotonic()
@@ -75,7 +77,9 @@ class WatchdogRunner(unittest.TextTestRunner):
 
 
 def main(argv: list[str] | None = None) -> int:
-    WatchdogResult.watchdog_seconds = seconds_from_env(WATCHDOG_ENV, DEFAULT_WATCHDOG_SECONDS)
+    WatchdogResult.watchdog_seconds = seconds_from_env(
+        WATCHDOG_ENV, DEFAULT_WATCHDOG_SECONDS
+    )
     WatchdogResult.slow_seconds = seconds_from_env(SLOW_ENV, DEFAULT_SLOW_SECONDS)
     arguments = list(sys.argv[1:] if argv is None else argv)
     # Output goes to a pipe: make print() lines from tests arrive while the test runs.
@@ -84,7 +88,12 @@ def main(argv: list[str] | None = None) -> int:
     sys.path[0] = os.getcwd()
     WatchdogResult.arm()  # covers discovery and imports before the first test
     try:
-        program = unittest.main(module=None, argv=["python -m unittest", *arguments], testRunner=WatchdogRunner, exit=False)
+        program = unittest.main(
+            module=None,
+            argv=["python -m unittest", *arguments],
+            testRunner=WatchdogRunner,
+            exit=False,
+        )
     finally:
         faulthandler.cancel_dump_traceback_later()
     return 0 if program.result.wasSuccessful() else 1

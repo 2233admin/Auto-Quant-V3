@@ -170,9 +170,7 @@ class PortfolioMandateTests(unittest.TestCase):
             mandate=mandate,
             apply_risk_governor=False,
         )
-        active = construction.targets[
-            construction.targets.abs().sum(axis=1) > 1e-12
-        ]
+        active = construction.targets[construction.targets.abs().sum(axis=1) > 1e-12]
         self.assertFalse(active.empty)
         self.assertTrue((active[["A", "B"]] >= -1e-12).all().all())
         self.assertTrue((active[["D", "E"]] <= 1e-12).all().all())
@@ -196,8 +194,7 @@ class PortfolioMandateTests(unittest.TestCase):
         self.assertTrue(audit["passed"])
         self.assertEqual(audit["asset_position_roles"], roles)
         latest = construction.ledger[
-            construction.ledger["timestamp"]
-            == construction.ledger["timestamp"].max()
+            construction.ledger["timestamp"] == construction.ledger["timestamp"].max()
         ].set_index("asset")
         self.assertEqual(latest.loc["A", "position_role"], "long-only")
         self.assertEqual(latest.loc["D", "position_role"], "short-only")
@@ -265,11 +262,7 @@ class PortfolioMandateTests(unittest.TestCase):
             [position % 4 == 0 for position in range(len(factors))],
             index=factors.index,
         )
-        observed = (
-            construction.ledger.groupby("timestamp")[
-                "decision_eligible"
-            ].first()
-        )
+        observed = construction.ledger.groupby("timestamp")["decision_eligible"].first()
         pd.testing.assert_series_equal(
             observed,
             expected,
@@ -282,18 +275,12 @@ class PortfolioMandateTests(unittest.TestCase):
         ]
         self.assertTrue(
             (
-                scheduled_holds["prior_signal_state"]
-                == scheduled_holds["signal_state"]
+                scheduled_holds["prior_signal_state"] == scheduled_holds["signal_state"]
             ).all()
         )
+        self.assertTrue(np.allclose(scheduled_holds["target_delta"], 0.0))
         self.assertTrue(
-            np.allclose(scheduled_holds["target_delta"], 0.0)
-        )
-        self.assertTrue(
-            (
-                scheduled_holds["signal_event"]
-                == "decision_schedule_hold"
-            ).all()
+            (scheduled_holds["signal_event"] == "decision_schedule_hold").all()
         )
 
         volumes = pd.DataFrame(
@@ -307,9 +294,7 @@ class PortfolioMandateTests(unittest.TestCase):
             volumes,
             mandate=mandate,
         )
-        off_schedule = simulation.daily[
-            ~simulation.daily["decision_eligible"]
-        ]
+        off_schedule = simulation.daily[~simulation.daily["decision_eligible"]]
         self.assertTrue((~off_schedule["ordinary_rebalance"]).all())
         self.assertTrue(
             (
@@ -336,9 +321,7 @@ class PortfolioMandateTests(unittest.TestCase):
         with self.assertRaises(AutoQuantValidationError):
             validate_portfolio_mandate(tampered)
         tampered = copy.deepcopy(mandate)
-        tampered["implementationPolicy"]["decisionPolicy"][
-            "anchor"
-        ] = "session-start"
+        tampered["implementationPolicy"]["decisionPolicy"]["anchor"] = "session-start"
         with self.assertRaises(AutoQuantValidationError):
             validate_portfolio_mandate(tampered)
 
@@ -441,9 +424,7 @@ class PortfolioMandateTests(unittest.TestCase):
             )
 
         self.assertEqual(allocate.call_count, int(eligible.sum()))
-        observed = construction.ledger.groupby("timestamp")[
-            "decision_eligible"
-        ].first()
+        observed = construction.ledger.groupby("timestamp")["decision_eligible"].first()
         pd.testing.assert_series_equal(
             observed,
             eligible,
@@ -454,9 +435,7 @@ class PortfolioMandateTests(unittest.TestCase):
             (~construction.ledger["decision_eligible"])
             & construction.ledger["tradable"]
         ]
-        self.assertTrue(
-            (held["signal_event"] == "decision_schedule_hold").all()
-        )
+        self.assertTrue((held["signal_event"] == "decision_schedule_hold").all())
         self.assertTrue(np.allclose(held["target_delta"], 0.0))
 
     def test_caller_policy_is_strict_and_content_locked_into_mandate(self) -> None:
@@ -490,9 +469,7 @@ class PortfolioMandateTests(unittest.TestCase):
             {"A": 0.1, "B": 0.15, "C": 0.0, "D": 0.0, "E": 0.0},
         )
         self.assertEqual(
-            mandate["construction"]["riskPolicy"][
-                "annualizedVolatilityCeiling"
-            ],
+            mandate["construction"]["riskPolicy"]["annualizedVolatilityCeiling"],
             0.12,
         )
         self.assertEqual(
@@ -508,9 +485,7 @@ class PortfolioMandateTests(unittest.TestCase):
                     "anchor": "dataset-start",
                 },
                 "costModel": "linear-traded-notional-v1",
-                "capacityModel": (
-                    "trailing-dollar-volume-participation-v1"
-                ),
+                "capacityModel": ("trailing-dollar-volume-participation-v1"),
             },
         )
         self.assertEqual(validate_portfolio_mandate(mandate), mandate)
@@ -615,16 +590,18 @@ class PortfolioMandateTests(unittest.TestCase):
             validate_portfolio_mandate(tampered)
 
         risk_tampered = copy.deepcopy(mandate)
-        risk_tampered["construction"]["riskPolicy"][
-            "annualizedVolatilityCeiling"
-        ] = 0.20
+        risk_tampered["construction"]["riskPolicy"]["annualizedVolatilityCeiling"] = (
+            0.20
+        )
         with self.assertRaisesRegex(
             AutoQuantValidationError,
             "fixed direction contract|derived",
         ):
             validate_portfolio_mandate(risk_tampered)
 
-    def test_directional_policy_trades_only_requested_sign_and_retains_cash(self) -> None:
+    def test_directional_policy_trades_only_requested_sign_and_retains_cash(
+        self,
+    ) -> None:
         factors, closes = panels()
         for direction, assets, sign in (
             ("long", ["A", "B"], 1),
@@ -645,9 +622,7 @@ class PortfolioMandateTests(unittest.TestCase):
                 ]
                 self.assertFalse(active.empty)
                 self.assertTrue(
-                    (active[mandate["contextAssets"]].abs() <= 1e-12)
-                    .all()
-                    .all()
+                    (active[mandate["contextAssets"]].abs() <= 1e-12).all().all()
                 )
                 self.assertTrue((active[assets] * sign >= -1e-12).all().all())
                 self.assertLessEqual(
@@ -662,14 +637,10 @@ class PortfolioMandateTests(unittest.TestCase):
                 self.assertEqual(audit["maximum_context_weight"], 0.0)
                 self.assertEqual(audit["maximum_opposite_exposure"], 0.0)
                 context_rows = construction.ledger[
-                    construction.ledger["asset"].isin(
-                        mandate["contextAssets"]
-                    )
+                    construction.ledger["asset"].isin(mandate["contextAssets"])
                 ]
                 self.assertTrue((~context_rows["tradable"]).all())
-                self.assertTrue(
-                    (context_rows["signal_event"] == "context_only").all()
-                )
+                self.assertTrue((context_rows["signal_event"] == "context_only").all())
                 self.assertTrue(
                     (context_rows["allocation_status"] == "context_only").all()
                 )
@@ -705,9 +676,7 @@ class PortfolioMandateTests(unittest.TestCase):
             closes,
             mandate=mandate,
         )
-        active = construction.targets[
-            construction.targets.abs().sum(axis=1) > 1e-12
-        ]
+        active = construction.targets[construction.targets.abs().sum(axis=1) > 1e-12]
 
         self.assertFalse(active.empty)
         self.assertLessEqual(float(active["A"].abs().max()), 0.1 + 1e-9)
@@ -830,9 +799,9 @@ class PortfolioMandateTests(unittest.TestCase):
             default_simulation.daily["net_return"],
             named_simulation.daily["net_return"],
         )
-        expected = (
-            closes["E"].shift(-1) / closes["E"] - 1.0
-        ).reindex(named_simulation.daily.index)
+        expected = (closes["E"].shift(-1) / closes["E"] - 1.0).reindex(
+            named_simulation.daily.index
+        )
         pd.testing.assert_series_equal(
             named_simulation.daily["benchmark_return"],
             expected.rename("benchmark_return"),
@@ -862,9 +831,7 @@ class PortfolioMandateTests(unittest.TestCase):
                 "source": "caller-supplied",
                 "kind": "cash",
                 "asset": None,
-                "weights": {
-                    asset: 0.0 for asset in UNIVERSE
-                },
+                "weights": {asset: 0.0 for asset in UNIVERSE},
             },
         )
 
@@ -917,11 +884,13 @@ class PortfolioMandateTests(unittest.TestCase):
             mandate=mandate,
         )
         expected = (
-            closes.pct_change().shift(-1)
-            * pd.Series(
-                {"A": 0.5, "B": 0.3, "C": 0.2, "D": 0.0, "E": 0.0}
+            (
+                closes.pct_change().shift(-1)
+                * pd.Series({"A": 0.5, "B": 0.3, "C": 0.2, "D": 0.0, "E": 0.0})
             )
-        ).sum(axis=1, min_count=1).reindex(simulation.daily.index)
+            .sum(axis=1, min_count=1)
+            .reindex(simulation.daily.index)
+        )
         pd.testing.assert_series_equal(
             simulation.daily["benchmark_return"],
             expected.rename("benchmark_return"),
@@ -944,7 +913,9 @@ class PortfolioMandateTests(unittest.TestCase):
         ):
             validate_research_request(unknown)
 
-    def test_underfunded_relative_value_stays_flat_instead_of_trading_peers(self) -> None:
+    def test_underfunded_relative_value_stays_flat_instead_of_trading_peers(
+        self,
+    ) -> None:
         factors, closes = panels()
         mandate = build_portfolio_mandate(
             request("relative-value", ["A", "E"]),
@@ -956,14 +927,10 @@ class PortfolioMandateTests(unittest.TestCase):
             mandate=mandate,
         )
 
-        self.assertTrue(
-            (construction.targets.abs().sum(axis=1) <= 1e-12).all()
-        )
+        self.assertTrue((construction.targets.abs().sum(axis=1) <= 1e-12).all())
         with self.assertRaisesRegex(PortfolioFailure, "No active targets"):
             constraint_audit(construction.targets, mandate=mandate)
-        tradable_rows = construction.ledger[
-            construction.ledger["tradable"]
-        ]
+        tradable_rows = construction.ledger[construction.ledger["tradable"]]
         self.assertIn(
             "insufficient_side_breadth",
             set(tradable_rows["allocation_status"]),
@@ -987,7 +954,9 @@ class PortfolioMandateTests(unittest.TestCase):
         self.assertEqual(audit["maximum_gross_exposure"], 0.0)
         self.assertEqual(audit["maximum_context_weight"], 0.0)
 
-    def test_template_default_explicitly_preserves_research_neutral_behavior(self) -> None:
+    def test_template_default_explicitly_preserves_research_neutral_behavior(
+        self,
+    ) -> None:
         mandate = build_portfolio_mandate(None, UNIVERSE)
 
         self.assertEqual(mandate["source"]["kind"], "template-default")
@@ -1001,9 +970,7 @@ class PortfolioMandateTests(unittest.TestCase):
                 "source": "direction-default",
                 "kind": "equal-weight-long-research-universe",
                 "asset": None,
-                "weights": {
-                    asset: 0.2 for asset in UNIVERSE
-                },
+                "weights": {asset: 0.2 for asset in UNIVERSE},
             },
         )
 

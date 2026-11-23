@@ -253,9 +253,7 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 OHLCV_STUDY_ID,
             )
 
-            factor_support = factor_report.report["evidence"][
-                "leaderDecisionSupport"
-            ]
+            factor_support = factor_report.report["evidence"]["leaderDecisionSupport"]
             qualification = factor_support["factorQualification"]
             assert qualification is not None
             self.assertTrue(qualification["available"])
@@ -276,19 +274,15 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 factor_support["factorInputAvailabilityHash"],
                 hash_json(availability),
             )
-            self.assertFalse(
-                components["declaration"]["sourceInference"]
-            )
+            self.assertFalse(components["declaration"]["sourceInference"])
             self.assertEqual(
                 qualification["selection"]["split"],
                 "train",
             )
-            self.assertFalse(
-                qualification["diagnosis"]["testEntersDiagnosis"]
+            self.assertFalse(qualification["diagnosis"]["testEntersDiagnosis"])
+            factor_markdown = (factor_report.root_dir / "report.md").read_text(
+                encoding="utf-8"
             )
-            factor_markdown = (
-                factor_report.root_dir / "report.md"
-            ).read_text(encoding="utf-8")
             self.assertIn(
                 "## Frozen leader-Run factor qualification",
                 factor_markdown,
@@ -311,12 +305,10 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 "factor": factor_report.report["id"],
                 "portfolio": portfolio_report.report["id"],
             }
-            portfolio_markdown = (
-                portfolio_report.root_dir / "report.md"
-            ).read_text(encoding="utf-8")
-            support = portfolio_report.report["evidence"][
-                "leaderDecisionSupport"
-            ]
+            portfolio_markdown = (portfolio_report.root_dir / "report.md").read_text(
+                encoding="utf-8"
+            )
+            support = portfolio_report.report["evidence"]["leaderDecisionSupport"]
             decision = support["portfolioMechanicalDecision"]
             assert decision is not None
             self.assertEqual(
@@ -346,9 +338,7 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 sizing["construction"]["family"],
                 "long-cash",
             )
-            diversification = support[
-                "portfolioDiversificationStress"
-            ]
+            diversification = support["portfolioDiversificationStress"]
             assert diversification is not None
             self.assertEqual(
                 support["portfolioDiversificationStressHash"],
@@ -358,15 +348,10 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 diversification["authority"],
                 "context-only",
             )
-            self.assertFalse(
-                diversification["testEntersSelection"]
-            )
+            self.assertFalse(diversification["testEntersSelection"])
             self.assertEqual(
                 diversification["shock"]["method"],
-                (
-                    "observed-to-perfect-position-aligned-"
-                    "covariance-blend-ladder"
-                ),
+                ("observed-to-perfect-position-aligned-covariance-blend-ladder"),
             )
             viability = support["portfolioStrategyViability"]
             assert viability is not None
@@ -379,9 +364,7 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 "research-prioritization-only",
             )
             self.assertEqual(viability["tradingAuthority"], "none")
-            self.assertFalse(
-                viability["diagnosis"]["testEntersDiagnosis"]
-            )
+            self.assertFalse(viability["diagnosis"]["testEntersDiagnosis"])
             monetization = support["portfolioSignalMonetization"]
             assert monetization is not None
             self.assertEqual(
@@ -396,9 +379,7 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 monetization["tradingAuthority"],
                 "none",
             )
-            self.assertTrue(
-                monetization["validation"]["reconciliation"]["passed"]
-            )
+            self.assertTrue(monetization["validation"]["reconciliation"]["passed"])
             self.assertEqual(
                 {item["asset"] for item in decision["positions"]},
                 {"AAPL", "MSFT", "NVDA", "QQQ", "SPY"},
@@ -549,14 +530,10 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 if lane["id"] == "portfolio"
             )
             self.assertEqual(
-                dossier_portfolio_lane["report"][
-                    "leaderDecisionSupport"
-                ],
+                dossier_portfolio_lane["report"]["leaderDecisionSupport"],
                 support,
             )
-            markdown = (dossier.root_dir / "dossier.md").read_text(
-                encoding="utf-8"
-            )
+            markdown = (dossier.root_dir / "dossier.md").read_text(encoding="utf-8")
             self.assertIn("Program evidence", markdown)
             self.assertIn("## Portfolio mandate", markdown)
             self.assertIn("- Benchmark: `SPY long`", markdown)
@@ -692,9 +669,9 @@ class ProgramResearchDossierTests(unittest.TestCase):
             )
 
             forged = json.loads(json.dumps(portfolio_report.report))
-            forged["evidence"]["leaderDecisionSupport"][
-                "portfolioSizingAnatomy"
-            ]["positions"][0]["riskStrength"] += 1.0
+            forged["evidence"]["leaderDecisionSupport"]["portfolioSizingAnatomy"][
+                "positions"
+            ][0]["riskStrength"] += 1.0
             _, forged_id = fully_rehash_report(
                 portfolio_report,
                 forged,
@@ -710,7 +687,9 @@ class ProgramResearchDossierTests(unittest.TestCase):
                     forged_id,
                 )
 
-    def test_current_factor_and_portfolio_runs_need_no_report_only_sessions(self) -> None:
+    def test_current_factor_and_portfolio_runs_need_no_report_only_sessions(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             request_path, package_path = write_intake_inputs(
@@ -737,10 +716,7 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 PORTFOLIO_STUDY_ID,
             ):
                 execute_study(project, study_id)
-            run_ids = {
-                summary.study_id: summary.id
-                for summary in list_runs(project)
-            }
+            run_ids = {summary.study_id: summary.id for summary in list_runs(project)}
             brief = build_agent_work_brief(project)
             self.assertEqual(brief["primaryAction"]["id"], "report.publish")
             self.assertEqual(brief["focus"]["operatingMode"], "publish-evidence")
@@ -815,9 +791,7 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 )
                 reports[lane_id] = report.report["id"]
                 if lane_id == "rl":
-                    support = report.report["evidence"][
-                        "leaderDecisionSupport"
-                    ]
+                    support = report.report["evidence"]["leaderDecisionSupport"]
                     fusion = support["rlFactorFusionDiagnosis"]
                     assert fusion is not None
                     self.assertEqual(
@@ -833,12 +807,10 @@ class ProgramResearchDossierTests(unittest.TestCase):
                         fusion["testAudit"]["role"],
                         "visible-audit",
                     )
-                    self.assertFalse(
-                        fusion["diagnosis"]["testEntersDiagnosis"]
+                    self.assertFalse(fusion["diagnosis"]["testEntersDiagnosis"])
+                    rl_markdown = (report.root_dir / "report.md").read_text(
+                        encoding="utf-8"
                     )
-                    rl_markdown = (
-                        report.root_dir / "report.md"
-                    ).read_text(encoding="utf-8")
                     self.assertIn(
                         "## Frozen leader-Run RL factor-fusion diagnosis",
                         rl_markdown,
@@ -867,13 +839,9 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 ["factor", "portfolio", "rl"],
             )
             self.assertEqual(status["omittedOptionalLanes"], [])
-            status_by_lane = {
-                lane["id"]: lane for lane in status["lanes"]
-            }
+            status_by_lane = {lane["id"]: lane for lane in status["lanes"]}
             self.assertEqual(
-                status_by_lane["portfolio"]["leaderRun"][
-                    "portfolioMandateId"
-                ],
+                status_by_lane["portfolio"]["leaderRun"]["portfolioMandateId"],
                 status_by_lane["rl"]["leaderRun"]["portfolioMandateId"],
             )
 
@@ -899,9 +867,7 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 loaded.dossier["evidenceHash"],
                 dossier.dossier["evidenceHash"],
             )
-            markdown = (loaded.root_dir / "dossier.md").read_text(
-                encoding="utf-8"
-            )
+            markdown = (loaded.root_dir / "dossier.md").read_text(encoding="utf-8")
             self.assertEqual(markdown.count("## Portfolio mandate"), 1)
             self.assertIn("`long` / `long-cash`", markdown)
             self.assertIn(
@@ -971,10 +937,7 @@ class ProgramResearchDossierTests(unittest.TestCase):
                 "factor-evidence-required",
             )
             self.assertEqual(
-                {
-                    item["id"]
-                    for item in status["omittedOptionalLanes"]
-                },
+                {item["id"] for item in status["omittedOptionalLanes"]},
                 {"portfolio", "rl"},
             )
             self.assertEqual(status["nextAction"]["id"], "dossier.publish")
@@ -993,9 +956,7 @@ class ProgramResearchDossierTests(unittest.TestCase):
             self.assertEqual(
                 {
                     item["id"]
-                    for item in loaded.dossier["evidence"][
-                        "omittedOptionalLanes"
-                    ]
+                    for item in loaded.dossier["evidence"]["omittedOptionalLanes"]
                 },
                 {"portfolio", "rl"},
             )

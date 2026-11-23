@@ -38,10 +38,19 @@ class Market:
 MARKETS: Dict[str, Market] = {
     m.id: m
     for m in (
-        Market("cn_equity", "China A-share (daily)", 252.0, 10.0, "long_only", "600519.SH"),
+        Market(
+            "cn_equity", "China A-share (daily)", 252.0, 10.0, "long_only", "600519.SH"
+        ),
         Market("us_equity", "US equity (daily)", 252.0, 2.0, "long_short", "SPY"),
         Market("futures", "Futures (daily)", 252.0, 3.0, "long_short", "ES"),
-        Market("crypto", "Crypto spot or perpetual (daily)", 365.0, 10.0, "long_short", "BTCUSDT"),
+        Market(
+            "crypto",
+            "Crypto spot or perpetual (daily)",
+            365.0,
+            10.0,
+            "long_short",
+            "BTCUSDT",
+        ),
     )
 }
 
@@ -220,7 +229,13 @@ SCENARIOS: Dict[str, Scenario] = {
                 _int("entry_window", 20, "Bars in the entry channel.", 5, 250),
                 _int("exit_window", 10, "Bars in the exit channel.", 2, 250),
                 _int("atr_window", 14, "Bars in the average true range.", 2, 100),
-                _float("atr_stop_mult", 2.0, "ATR multiples between entry and stop.", 0.5, 10.0),
+                _float(
+                    "atr_stop_mult",
+                    2.0,
+                    "ATR multiples between entry and stop.",
+                    0.5,
+                    10.0,
+                ),
             ),
             DONCHIAN_BLOCK,
             _exit_within_entry,
@@ -239,8 +254,16 @@ SCENARIOS: Dict[str, Scenario] = {
             "Fade a close that is far from its rolling average, measured in standard deviations.",
             ("close",),
             (
-                _int("window", 20, "Bars in the rolling average and deviation.", 5, 250),
-                _float("entry_z", 1.5, "Standard deviations from the average that trigger a trade.", 0.5, 4.0),
+                _int(
+                    "window", 20, "Bars in the rolling average and deviation.", 5, 250
+                ),
+                _float(
+                    "entry_z",
+                    1.5,
+                    "Standard deviations from the average that trigger a trade.",
+                    0.5,
+                    4.0,
+                ),
             ),
             MEAN_REVERSION_BLOCK,
         ),

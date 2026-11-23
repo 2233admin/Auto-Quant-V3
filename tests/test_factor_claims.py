@@ -16,7 +16,9 @@ from autoquant.workspace import AutoQuantValidationError
 
 
 class KnownStyleCandidateTests(unittest.TestCase):
-    def test_explicit_outcome_is_hashed_and_legacy_policy_remains_implicit(self) -> None:
+    def test_explicit_outcome_is_hashed_and_legacy_policy_remains_implicit(
+        self,
+    ) -> None:
         legacy = normalize_factor_policy(
             {"claim": "decision-signal", "knownStyle": None}
         )
@@ -68,9 +70,7 @@ class KnownStyleCandidateTests(unittest.TestCase):
         assets = panel["asset"]
         close = panel["close"]
         volume = panel["volume"]
-        returns = close.groupby(assets, sort=False).pct_change(
-            fill_method=None
-        )
+        returns = close.groupby(assets, sort=False).pct_change(fill_method=None)
         expected = {
             "momentum_20": close.groupby(
                 assets,
@@ -83,10 +83,14 @@ class KnownStyleCandidateTests(unittest.TestCase):
             "realized_volatility_20": returns.groupby(
                 assets,
                 sort=False,
-            ).rolling(20, min_periods=20).std(ddof=0).reset_index(
+            )
+            .rolling(20, min_periods=20)
+            .std(ddof=0)
+            .reset_index(
                 level=0,
                 drop=True,
-            ).reindex(panel.index),
+            )
+            .reindex(panel.index),
             "relative_volume_20": (
                 volume
                 / volume.groupby(assets, sort=False)
@@ -118,9 +122,9 @@ class KnownStyleCandidateTests(unittest.TestCase):
                 )
                 self.assertTrue(
                     np.array_equal(
-                        namespace["compute_factor_components"](
-                            panel.copy()
-                        )[style].isna().to_numpy(),
+                        namespace["compute_factor_components"](panel.copy())[style]
+                        .isna()
+                        .to_numpy(),
                         observed.isna().to_numpy(),
                     )
                 )

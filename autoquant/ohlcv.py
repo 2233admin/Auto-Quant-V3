@@ -45,9 +45,13 @@ def coerce_ohlcv(frame: pd.DataFrame, *, source: str = "<dataframe>") -> pd.Data
     return frame.loc[:, list(OHLCV_COLUMNS)].reset_index(drop=True)
 
 
-def normalize_ohlcv(frame: pd.DataFrame, *, source: str = "<dataframe>") -> pd.DataFrame:
+def normalize_ohlcv(
+    frame: pd.DataFrame, *, source: str = "<dataframe>"
+) -> pd.DataFrame:
     """Normalize one conventional OHLCV table to the V2 intake surface."""
-    frame = coerce_ohlcv(frame, source=source).sort_values("date").reset_index(drop=True)
+    frame = (
+        coerce_ohlcv(frame, source=source).sort_values("date").reset_index(drop=True)
+    )
     if frame.empty:
         raise OhlcvValidationError(f"{source}: OHLCV table is empty")
     if frame.isna().any().any():

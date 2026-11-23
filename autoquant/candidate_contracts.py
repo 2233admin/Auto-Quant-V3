@@ -59,11 +59,7 @@ def _snapshot_surface(
     relative = "ohlcv/snapshot.json"
     if relative not in study.dataset_hashes:
         return None
-    path = (
-        project.root_dir
-        / project.manifest.directories["data"]
-        / relative
-    )
+    path = project.root_dir / project.manifest.directories["data"] / relative
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
@@ -123,11 +119,7 @@ def _legacy_base_interval(
     ]
     if not candidates:
         return None
-    path = (
-        project.root_dir
-        / project.manifest.directories["data"]
-        / candidates[0]
-    )
+    path = project.root_dir / project.manifest.directories["data"] / candidates[0]
     try:
         with path.open(encoding="utf-8", newline="") as handle:
             row = next(csv.DictReader(handle), None)
@@ -177,7 +169,8 @@ def _observation_semantics(surface_source: str) -> dict[str, str]:
     return {
         "timestampMeaning": (
             "completed-bar-close"
-            if surface_source in {
+            if surface_source
+            in {
                 "content-locked-snapshot-v2",
                 "content-locked-snapshot-v3",
             }
@@ -197,8 +190,7 @@ def build_candidate_contract(
     """Describe the exact factor edit surface without inventing data columns."""
 
     if not any(
-        path == "factors"
-        or path.startswith("factors/")
+        path == "factors" or path.startswith("factors/")
         for path in study.definition.editable["paths"]
     ):
         return None
@@ -250,9 +242,7 @@ FACTOR_CANDIDATE_CONTRACT_JSON_SCHEMA: dict[str, Any] = {
             "required": ["kind", "function", "identityColumns"],
             "properties": {
                 "kind": {"const": FACTOR_PANEL_API},
-                "function": {
-                    "const": "compute_factor(panel) -> pandas.Series"
-                },
+                "function": {"const": "compute_factor(panel) -> pandas.Series"},
                 "identityColumns": {
                     "const": ["asset", "timestamp"],
                 },
@@ -302,9 +292,7 @@ FACTOR_CANDIDATE_CONTRACT_JSON_SCHEMA: dict[str, Any] = {
                         "timestampMeaning": {
                             "enum": ["session-date", "completed-bar-close"]
                         },
-                        "panelShape": {
-                            "enum": ["rectangular", "ragged-observed-only"]
-                        },
+                        "panelShape": {"enum": ["rectangular", "ragged-observed-only"]},
                         "missingObservation": {
                             "enum": [
                                 "not-applicable-rectangular",

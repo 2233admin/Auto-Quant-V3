@@ -71,8 +71,7 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
             self.assertTrue(
                 all(
                     item["available"]
-                    and item["method"]
-                    == "iterative-same-pretrade-contextual-ridge-v1"
+                    and item["method"] == "iterative-same-pretrade-contextual-ridge-v1"
                     and item["labelScope"] == "train-only"
                     and item["anchorAction"] == "balanced"
                     and item["iterations"] == 4
@@ -99,14 +98,10 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
             self.assertEqual(diagnostics["actionPath"]["totalRows"], 780)
             self.assertFalse(diagnostics["protocol"]["testEntersSelection"])
             self.assertEqual(
-                diagnostics["protocol"]["configuration"]["learningContract"][
-                    "method"
-                ],
+                diagnostics["protocol"]["configuration"]["learningContract"]["method"],
                 "fixed-after-train-only-blocked-stability-audit-v1",
             )
-            seed_stability = diagnostics["summary"][
-                "withinFoldSeedStability"
-            ]
+            seed_stability = diagnostics["summary"]["withinFoldSeedStability"]
             self.assertEqual(seed_stability["folds"], 2)
             self.assertGreaterEqual(
                 seed_stability["maximumStandardDeviation"],
@@ -150,22 +145,16 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
                 "context-only",
             )
             self.assertEqual(
-                diagnostics["executedBookRisk"]["validation"][
-                    "executedBreachDates"
-                ],
+                diagnostics["executedBookRisk"]["validation"]["executedBreachDates"],
                 0,
             )
             self.assertEqual(
-                diagnostics["executedBookRisk"]["validation"][
-                    "trialPaths"
-                ],
+                diagnostics["executedBookRisk"]["validation"]["trialPaths"],
                 6,
             )
             self.assertTrue(diagnostics["factorFusion"]["available"])
             self.assertEqual(
-                diagnostics["factorFusion"][
-                    "meanValidationAdvantageVsCandidateFactor"
-                ],
+                diagnostics["factorFusion"]["meanValidationAdvantageVsCandidateFactor"],
                 run.result["metrics"]["comparison"][
                     "mean_validation_advantage_vs_candidate_factor"
                 ],
@@ -194,20 +183,12 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
             self.assertEqual(behavior["validation"]["trialPaths"], 6)
             self.assertEqual(len(behavior["validation"]["byAction"]), 5)
             self.assertEqual(
-                {
-                    item["feature"]
-                    for item in behavior["validation"]["byFeature"]
-                },
+                {item["feature"] for item in behavior["validation"]["byFeature"]},
                 set(diagnostics["protocol"]["featureNames"]),
             )
-            self.assertTrue(
-                behavior["validation"]["reconciliation"]["passed"]
-            )
+            self.assertTrue(behavior["validation"]["reconciliation"]["passed"])
             self.assertEqual(
-                {
-                    item["split"]
-                    for item in behavior["representativeDecisions"]
-                },
+                {item["split"] for item in behavior["representativeDecisions"]},
                 {"validation", "test"},
             )
             opportunity = diagnostics["factorOpportunity"]
@@ -223,19 +204,12 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
             self.assertEqual(opportunity["validation"]["decisions"], 360)
             self.assertEqual(opportunity["validation"]["trialPaths"], 6)
             self.assertEqual(
-                opportunity["validation"]["reconciliation"][
-                    "action_evaluations"
-                ],
+                opportunity["validation"]["reconciliation"]["action_evaluations"],
                 1800,
             )
-            self.assertTrue(
-                opportunity["validation"]["reconciliation"]["passed"]
-            )
+            self.assertTrue(opportunity["validation"]["reconciliation"]["passed"])
             self.assertEqual(
-                {
-                    item["split"]
-                    for item in opportunity["representativeDecisions"]
-                },
+                {item["split"] for item in opportunity["representativeDecisions"]},
                 {"validation", "test"},
             )
             self.assertTrue(
@@ -252,32 +226,18 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
             )
             self.assertEqual(incremental["validation"]["decisions"], 360)
             self.assertEqual(incremental["validation"]["trialPaths"], 6)
-            self.assertTrue(
-                incremental["validation"]["reconciliation"]["passed"]
-            )
+            self.assertTrue(incremental["validation"]["reconciliation"]["passed"])
             self.assertAlmostEqual(
-                incremental["validation"][
-                    "meanTrialTotalGrossActiveReturn"
-                ]
-                - incremental["validation"][
-                    "meanTrialTotalIncrementalCost"
-                ],
-                incremental["validation"][
-                    "meanTrialTotalNetActiveReturn"
-                ],
+                incremental["validation"]["meanTrialTotalGrossActiveReturn"]
+                - incremental["validation"]["meanTrialTotalIncrementalCost"],
+                incremental["validation"]["meanTrialTotalNetActiveReturn"],
             )
             self.assertEqual(
-                {
-                    item["asset"]
-                    for item in incremental["validation"]["byAsset"]
-                },
+                {item["asset"] for item in incremental["validation"]["byAsset"]},
                 set(diagnostics["dataset"]["universe"]),
             )
             self.assertEqual(
-                {
-                    item["split"]
-                    for item in incremental["representativeDays"]
-                },
+                {item["split"] for item in incremental["representativeDays"]},
                 {"validation", "test"},
             )
             self.assertTrue(
@@ -307,9 +267,7 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
                 fusion_diagnosis["testAudit"]["role"],
                 "visible-audit",
             )
-            self.assertFalse(
-                fusion_diagnosis["semantics"]["testEntersDiagnosis"]
-            )
+            self.assertFalse(fusion_diagnosis["semantics"]["testEntersDiagnosis"])
             validation_diagnosis = fusion_diagnosis["validation"]
             candidate = validation_diagnosis["candidateFactor"]
             balanced_validation = [
@@ -357,25 +315,17 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
             result_path = run.root_dir / "result.json"
             report_path = run.root_dir / "artifacts" / "rl-report.json"
             models_path = run.root_dir / "artifacts" / "policy-models.json"
-            rationale_path = (
-                run.root_dir / "artifacts" / "policy-rationales.json"
-            )
-            opportunity_path = (
-                run.root_dir / "artifacts" / "policy-opportunities.json"
-            )
+            rationale_path = run.root_dir / "artifacts" / "policy-rationales.json"
+            opportunity_path = run.root_dir / "artifacts" / "policy-opportunities.json"
             incremental_path = (
-                run.root_dir
-                / "artifacts"
-                / "policy-incremental-attribution.json"
+                run.root_dir / "artifacts" / "policy-incremental-attribution.json"
             )
             legacy_result = json.loads(result_path.read_text(encoding="utf-8"))
             legacy_report = json.loads(report_path.read_text(encoding="utf-8"))
             legacy_models = json.loads(models_path.read_text(encoding="utf-8"))
             for value in (legacy_result, legacy_report):
                 value["metrics"]["configuration"].pop("learningContract")
-                value["metrics"]["research_integrity"].pop(
-                    "learning_configuration"
-                )
+                value["metrics"]["research_integrity"].pop("learning_configuration")
             legacy_report["semantics"].pop("learningConfiguration")
             legacy_models["configuration"].pop("learningContract")
             legacy_result["metrics"].pop("policy_rationale")
@@ -428,19 +378,20 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
                 "point_limit must be 40..400",
             ):
                 load_rl_diagnostics(project, run.result["id"], point_limit=39)
-            with patch(
-                "autoquant.rl_explorer.MAX_ARTIFACT_BYTES",
-                1,
-            ), self.assertRaisesRegex(
-                AutoQuantValidationError,
-                "exceeds 1 bytes",
+            with (
+                patch(
+                    "autoquant.rl_explorer.MAX_ARTIFACT_BYTES",
+                    1,
+                ),
+                self.assertRaisesRegex(
+                    AutoQuantValidationError,
+                    "exceeds 1 bytes",
+                ),
             ):
                 load_rl_diagnostics(project, run.result["id"])
 
             actions_path = run.root_dir / "artifacts" / "policy-actions.csv"
-            models_path = (
-                run.root_dir / "artifacts" / "policy-models.json"
-            )
+            models_path = run.root_dir / "artifacts" / "policy-models.json"
             result_path = run.root_dir / "result.json"
             report_path = run.root_dir / "artifacts" / "rl-report.json"
             original_result = result_path.read_text(encoding="utf-8")
@@ -451,9 +402,9 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
                 value["metrics"]["configuration"]["learningContract"][
                     "development_selection_scope"
                 ] = "validation-guided"
-                value["metrics"]["research_integrity"][
-                    "learning_configuration"
-                ]["development_selection_scope"] = "validation-guided"
+                value["metrics"]["research_integrity"]["learning_configuration"][
+                    "development_selection_scope"
+                ] = "validation-guided"
             result_path.write_text(
                 json.dumps(result_value, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
@@ -474,9 +425,9 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
 
             original_models = models_path.read_text(encoding="utf-8")
             models = json.loads(original_models)
-            models["models"]["fold-1"]["contextualRidgeBaseline"][
-                "history"
-            ][0]["sharedPretradeActionEvaluations"] += 1
+            models["models"]["fold-1"]["contextualRidgeBaseline"]["history"][0][
+                "sharedPretradeActionEvaluations"
+            ] += 1
             models_path.write_text(
                 json.dumps(models, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
@@ -490,14 +441,10 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
             models_path.write_text(original_models, encoding="utf-8")
             rehash_run(run.root_dir)
 
-            rationale_path = (
-                run.root_dir / "artifacts" / "policy-rationales.json"
-            )
+            rationale_path = run.root_dir / "artifacts" / "policy-rationales.json"
             original_rationale = rationale_path.read_text(encoding="utf-8")
             rationale = json.loads(original_rationale)
-            rationale["rows"][0]["qValues"][
-                rationale["actions"][0]
-            ] += 0.125
+            rationale["rows"][0]["qValues"][rationale["actions"][0]] += 0.125
             rationale_path.write_text(
                 json.dumps(rationale, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
@@ -514,21 +461,15 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
             opportunities_path = (
                 run.root_dir / "artifacts" / "policy-opportunities.json"
             )
-            original_opportunities = opportunities_path.read_text(
-                encoding="utf-8"
-            )
+            original_opportunities = opportunities_path.read_text(encoding="utf-8")
             opportunities = json.loads(original_opportunities)
             first_row = opportunities["rows"][0]
             first_asset = opportunities["assets"][0]
             if first_row["sharedExecution"] is None:
                 selected = first_row["selectedAction"]
-                executed = first_row["actions"][selected][
-                    "executedWeights"
-                ]
+                executed = first_row["actions"][selected]["executedWeights"]
             else:
-                executed = first_row["sharedExecution"][
-                    "executedWeights"
-                ]
+                executed = first_row["sharedExecution"]["executedWeights"]
             executed[first_asset] += 0.01
             opportunities_path.write_text(
                 json.dumps(opportunities, indent=2, sort_keys=True) + "\n",
@@ -547,13 +488,9 @@ class RlPolicyEvidenceExplorerTests(unittest.TestCase):
             rehash_run(run.root_dir)
 
             incremental_path = (
-                run.root_dir
-                / "artifacts"
-                / "policy-incremental-attribution.json"
+                run.root_dir / "artifacts" / "policy-incremental-attribution.json"
             )
-            original_incremental = incremental_path.read_text(
-                encoding="utf-8"
-            )
+            original_incremental = incremental_path.read_text(encoding="utf-8")
             incremental = json.loads(original_incremental)
             incremental["rows"][0]["assetGrossContribution"][
                 incremental["assets"][0]

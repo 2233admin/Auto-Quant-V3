@@ -23,10 +23,20 @@ import yaml
 
 from autoquant.shinka_research import cli
 from autoquant.shinka_research.grants import AGENT_ENV, LEDGER
-from autoquant.shinka_research.notebook import RESULTS_LOG, Notebook, Status, experiment_dir
+from autoquant.shinka_research.notebook import (
+    RESULTS_LOG,
+    Notebook,
+    Status,
+    experiment_dir,
+)
 from autoquant.shinka_research.rundb import has_programs
 from autoquant.shinka_research.runs import watch
-from autoquant.shinka_research.state import hand_over, live_work, register_work, work_entries
+from autoquant.shinka_research.state import (
+    hand_over,
+    live_work,
+    register_work,
+    work_entries,
+)
 
 FAKE_SHINKA_RUN = """
 import json, os, sqlite3, sys, time

@@ -110,22 +110,15 @@ def build_research_family(
     failed_sources = 0
     metric = anchor.result["objective"]["metric"]
     for source_hash, executions in sorted(by_source.items()):
-        successes = [
-            run for run in executions if run.result["status"] == "succeeded"
-        ]
+        successes = [run for run in executions if run.result["status"] == "succeeded"]
         values = [
             value
             for run in successes
-            if (value := _finite_number(run.result["metrics"].get(metric)))
-            is not None
+            if (value := _finite_number(run.result["metrics"].get(metric))) is not None
         ]
         statuses = {run.result["status"] for run in executions}
-        reproducible = (
-            len(statuses) == 1
-            and (
-                not values
-                or max(values) - min(values) <= 1e-12
-            )
+        reproducible = len(statuses) == 1 and (
+            not values or max(values) - min(values) <= 1e-12
         )
         if not reproducible:
             inconsistent += 1
@@ -240,9 +233,7 @@ def probabilistic_sharpe_probability(
     ):
         raise ValueError("Invalid Probabilistic Sharpe inputs")
     variance_term = (
-        1.0
-        - skewness * observed_sharpe
-        + ((kurtosis - 1.0) / 4.0) * observed_sharpe**2
+        1.0 - skewness * observed_sharpe + ((kurtosis - 1.0) / 4.0) * observed_sharpe**2
     )
     if variance_term <= 0.0:
         raise ValueError("Probabilistic Sharpe variance term is non-positive")
@@ -267,12 +258,9 @@ def expected_maximum_sharpe(
     dispersion = float(statistics.pstdev(successful_sharpes))
     if unique_trials == 1 or dispersion <= 1e-15:
         return 0.0, dispersion
-    maximum_z = (
-        (1.0 - EULER_MASCHERONI)
-        * NORMAL.inv_cdf(1.0 - 1.0 / unique_trials)
-        + EULER_MASCHERONI
-        * NORMAL.inv_cdf(1.0 - 1.0 / (unique_trials * math.e))
-    )
+    maximum_z = (1.0 - EULER_MASCHERONI) * NORMAL.inv_cdf(
+        1.0 - 1.0 / unique_trials
+    ) + EULER_MASCHERONI * NORMAL.inv_cdf(1.0 - 1.0 / (unique_trials * math.e))
     return dispersion * maximum_z, dispersion
 
 
@@ -321,8 +309,7 @@ def _factor_adjustment(
         "method": "bonferroni-hac-v1",
         "reason": None,
         "interpretation": (
-            "Selected validation mean IC survives the 95% family-wise HAC "
-            "threshold."
+            "Selected validation mean IC survives the 95% family-wise HAC threshold."
             if passes
             else "Selected validation mean IC does not survive the 95% "
             "family-wise HAC threshold."
@@ -346,9 +333,7 @@ def _portfolio_adjustment(
     family: ResearchFamily,
 ) -> dict[str, Any]:
     portfolio = leader.result["metrics"].get("portfolio")
-    validation = (
-        portfolio.get("validation") if isinstance(portfolio, dict) else None
-    )
+    validation = portfolio.get("validation") if isinstance(portfolio, dict) else None
     net = validation.get("net") if isinstance(validation, dict) else None
     required = {
         "observations",
@@ -385,8 +370,7 @@ def _portfolio_adjustment(
             family,
         )
     successful_period_sharpes = [
-        value / math.sqrt(annualization)
-        for value in family.successful_values
+        value / math.sqrt(annualization) for value in family.successful_values
     ]
     try:
         expected_maximum, dispersion = expected_maximum_sharpe(
@@ -411,9 +395,7 @@ def _portfolio_adjustment(
         return _unsupported("invalid-probabilistic-sharpe-domain", family)
 
     variance_term = (
-        1.0
-        - skewness * period_sharpe
-        + ((kurtosis - 1.0) / 4.0) * period_sharpe**2
+        1.0 - skewness * period_sharpe + ((kurtosis - 1.0) / 4.0) * period_sharpe**2
     )
     difference = period_sharpe - expected_maximum
     minimum_observations = None
@@ -421,17 +403,11 @@ def _portfolio_adjustment(
         minimum_observations = int(
             math.ceil(
                 1.0
-                + variance_term
-                * (
-                    NORMAL.inv_cdf(CONFIDENCE_LEVEL)
-                    / difference
-                )
-                ** 2
+                + variance_term * (NORMAL.inv_cdf(CONFIDENCE_LEVEL) / difference) ** 2
             )
         )
     record_sufficient = (
-        minimum_observations is not None
-        and observations >= minimum_observations
+        minimum_observations is not None and observations >= minimum_observations
     )
     passes = dsr >= CONFIDENCE_LEVEL and record_sufficient
     return {
@@ -454,15 +430,13 @@ def _portfolio_adjustment(
             "observations": observations,
             "annualizationPeriods": annualization,
             "observedPeriodSharpe": period_sharpe,
-            "observedAnnualizedSharpe": period_sharpe
-            * math.sqrt(annualization),
+            "observedAnnualizedSharpe": period_sharpe * math.sqrt(annualization),
             "returnSkewness": skewness,
             "returnKurtosis": kurtosis,
             "successfulSharpeTrials": len(successful_period_sharpes),
             "uniqueTrials": trials,
             "trialSharpeDispersionPeriod": dispersion,
-            "trialSharpeDispersionAnnualized": dispersion
-            * math.sqrt(annualization),
+            "trialSharpeDispersionAnnualized": dispersion * math.sqrt(annualization),
             "expectedMaximumPeriodSharpe": expected_maximum,
             "expectedMaximumAnnualizedSharpe": expected_maximum
             * math.sqrt(annualization),

@@ -59,7 +59,11 @@ def pytest_runtest_makereport(item, call):
     report = outcome.get_result()
     if call.excinfo is not None and call.excinfo.typename == "EngineNotInstalled":
         report.outcome = "skipped"
-        report.longrepr = (str(item.path), item.location[1] or 0, "Skipped: needs the ShinkaEvolve engine")
+        report.longrepr = (
+            str(item.path),
+            item.location[1] or 0,
+            "Skipped: needs the ShinkaEvolve engine",
+        )
 
 
 # These evaluate or launch programs through the engine's ``run_shinka_eval`` in
@@ -77,7 +81,9 @@ _ENGINE_TESTS = {
 def pytest_collection_modifyitems(config, items):
     if importlib.util.find_spec("shinka") is not None:
         return
-    skip = pytest.mark.skip(reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
+    skip = pytest.mark.skip(
+        reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)"
+    )
     for item in items:
         if item.path.stem in _ENGINE_MODULES or item.originalname in _ENGINE_TESTS:
             item.add_marker(skip)

@@ -59,7 +59,9 @@ class StudioRunReadMemoTests(unittest.TestCase):
             self.assertEqual(len(before["projects"][0]["runs"]), run_count)
             self.assertIsNone(runs_module._READ_MEMO.get())
 
-            result_path = sorted((project.root_dir / "runs").iterdir())[0] / "result.json"
+            result_path = (
+                sorted((project.root_dir / "runs").iterdir())[0] / "result.json"
+            )
             value = json.loads(result_path.read_text())
             value["summary"] = "tampered"
             result_path.write_text(json.dumps(value))
@@ -71,7 +73,9 @@ class StudioRunReadMemoTests(unittest.TestCase):
     def test_validation_failure_is_memoized_only_inside_the_block(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = self._project(directory)
-            result_path = sorted((project.root_dir / "runs").iterdir())[0] / "result.json"
+            result_path = (
+                sorted((project.root_dir / "runs").iterdir())[0] / "result.json"
+            )
             run_id = result_path.parent.name
             value = json.loads(result_path.read_text())
             value["summary"] = "tampered"

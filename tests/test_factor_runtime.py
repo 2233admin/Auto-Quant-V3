@@ -247,27 +247,17 @@ class PanelFactorRuntimeTests(unittest.TestCase):
                 "value": context,
             }
         ).dropna()
-        self.assertTrue(
-            observed.groupby("timestamp")["value"].nunique().eq(1).all()
-        )
+        self.assertTrue(observed.groupby("timestamp")["value"].nunique().eq(1).all())
 
         with self.assertRaises(FactorRuntimeError) as caught:
             evaluate_factor(
                 SimpleNamespace(
                     FACTOR_COMPONENTS=metadata,
-                    compute_factor_components=lambda candidate_panel: (
-                        pd.DataFrame(
-                            {
-                                "market_return_context": candidate_panel[
-                                    "close"
-                                ]
-                            },
-                            index=candidate_panel.index,
-                        )
+                    compute_factor_components=lambda candidate_panel: pd.DataFrame(
+                        {"market_return_context": candidate_panel["close"]},
+                        index=candidate_panel.index,
                     ),
-                    compute_factor=lambda candidate_panel: candidate_panel[
-                        "close"
-                    ],
+                    compute_factor=lambda candidate_panel: candidate_panel["close"],
                 ),
                 panel,
             )

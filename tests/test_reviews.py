@@ -100,7 +100,11 @@ def review_analysis(
                 "classification": "observed-unbound",
                 "rationale": "Core records its digest without promoting it to Run authority.",
                 "evidenceRefs": [
-                    {"kind": "report", "id": report_id, "artifactPath": "analysis.json"},
+                    {
+                        "kind": "report",
+                        "id": report_id,
+                        "artifactPath": "analysis.json",
+                    },
                     {
                         "kind": "observed-file",
                         "id": "staging/comparison.json",
@@ -168,10 +172,16 @@ class IndependentReviewTests(unittest.TestCase):
             )
 
             self.assertEqual(review.root_dir.parent, project.root_dir / "reviews")
-            self.assertEqual(load_review(project, review.review["id"]).review, review.review)
-            self.assertEqual(list_reviews(project)[0].conclusion, "accepted-with-reservations")
+            self.assertEqual(
+                load_review(project, review.review["id"]).review, review.review
+            )
+            self.assertEqual(
+                list_reviews(project)[0].conclusion, "accepted-with-reservations"
+            )
             resolved = review.evidence["resolvedRefs"]
-            observed = next(item for item in resolved if item["kind"] == "observed-file")
+            observed = next(
+                item for item in resolved if item["kind"] == "observed-file"
+            )
             self.assertEqual(observed["authority"], "observed-unbound")
             self.assertEqual(observed["scope"], "workspace")
             self.assertEqual(len(observed["sha256"]), 64)
@@ -184,10 +194,14 @@ class IndependentReviewTests(unittest.TestCase):
             self.assertEqual(projected["counts"]["reviews"], 1)
             self.assertEqual(projected["reviews"][0]["id"], review.review["id"])
 
-            (review.root_dir / REVIEW_MARKDOWN).write_text("tampered\n", encoding="utf-8")
+            (review.root_dir / REVIEW_MARKDOWN).write_text(
+                "tampered\n", encoding="utf-8"
+            )
             with self.assertRaises(AutoQuantValidationError) as tampered:
                 load_review(project, review.review["id"])
-            self.assertIn("review.tampered", {item.code for item in tampered.exception.issues})
+            self.assertIn(
+                "review.tampered", {item.code for item in tampered.exception.issues}
+            )
 
     def test_detached_review_preserves_workspace_and_verifies_portably(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -263,7 +277,9 @@ class IndependentReviewTests(unittest.TestCase):
                     observation_root=workspace.root_dir,
                     observation_scope="workspace",
                 )
-            self.assertIn("review.target-run", {item.code for item in target.exception.issues})
+            self.assertIn(
+                "review.target-run", {item.code for item in target.exception.issues}
+            )
 
             with self.assertRaisesRegex(
                 AutoQuantValidationError,
@@ -308,7 +324,9 @@ class IndependentReviewTests(unittest.TestCase):
                 observation_root=workspace.root_dir,
                 observation_scope="workspace",
             )
-            self.assertEqual(review.manifest["target"]["sessionId"], session.manifest["id"])
+            self.assertEqual(
+                review.manifest["target"]["sessionId"], session.manifest["id"]
+            )
             self.assertEqual(
                 review.evidence["target"]["anchor"]["kind"],
                 "session",
@@ -328,31 +346,52 @@ class IndependentReviewTests(unittest.TestCase):
                 encoding="utf-8",
             )
             published = run_cli(
-                "review", "publish", str(workspace.root_dir),
-                "--project", "review-desk",
-                "--report", report.report["id"],
-                "--analysis", str(analysis_path),
+                "review",
+                "publish",
+                str(workspace.root_dir),
+                "--project",
+                "review-desk",
+                "--report",
+                report.report["id"],
+                "--analysis",
+                str(analysis_path),
                 "--json",
             )
             self.assertEqual(published.returncode, 0, published.stderr)
             review_id = json_output(published)["data"]["review"]["id"]
             listed = run_cli(
-                "review", "list", str(workspace.root_dir),
-                "--project", "review-desk", "--json",
+                "review",
+                "list",
+                str(workspace.root_dir),
+                "--project",
+                "review-desk",
+                "--json",
             )
             self.assertEqual(json_output(listed)["data"]["reviews"][0]["id"], review_id)
             shown = run_cli(
-                "review", "show", str(workspace.root_dir),
-                "--project", "review-desk", "--review", review_id, "--json",
+                "review",
+                "show",
+                str(workspace.root_dir),
+                "--project",
+                "review-desk",
+                "--review",
+                review_id,
+                "--json",
             )
             self.assertEqual(json_output(shown)["data"]["review"]["id"], review_id)
 
             detached = run_cli(
-                "review", "publish", str(workspace.root_dir),
-                "--project", "review-desk",
-                "--report", report.report["id"],
-                "--analysis", str(analysis_path),
-                "--output", str(root / "detached"),
+                "review",
+                "publish",
+                str(workspace.root_dir),
+                "--project",
+                "review-desk",
+                "--report",
+                report.report["id"],
+                "--analysis",
+                str(analysis_path),
+                "--output",
+                str(root / "detached"),
                 "--json",
             )
             self.assertEqual(detached.returncode, 0, detached.stderr)

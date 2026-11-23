@@ -24,9 +24,7 @@ def request(
         "title": "Medium-term equity leadership",
         "question": "Does leadership persist over the intended horizon?",
         "decisionContext": "OpenAlice is reviewing an equity allocation.",
-        "assets": [
-            {"symbol": "AAPL", "assetClass": "equity", "venue": "XNYS"}
-        ],
+        "assets": [{"symbol": "AAPL", "assetClass": "equity", "venue": "XNYS"}],
         "direction": "long",
         "horizon": "one to three months",
         "hypotheses": ["Leadership persists out of sample."],

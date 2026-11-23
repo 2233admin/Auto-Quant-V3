@@ -17,9 +17,7 @@ from .workspace import (
 RESEARCH_HORIZON = "strategies/research-horizon.json"
 RESEARCH_HORIZON_KIND = "autoquant-research-horizon"
 RESEARCH_HORIZON_AUTHORITY = "quantitative-decision-support"
-RESEARCH_HORIZON_TARGET = (
-    "close-t-to-close-t-plus-n-decision-bars"
-)
+RESEARCH_HORIZON_TARGET = "close-t-to-close-t-plus-n-decision-bars"
 DEFAULT_HORIZON_POLICY = {
     "primaryForwardBars": 1,
     "diagnosticForwardBars": [1, 5, 10],
@@ -48,9 +46,7 @@ def _valid_policy(value: Any) -> bool:
         or isinstance(primary, bool)
         or not MIN_FORWARD_BARS <= primary <= MAX_FORWARD_BARS
         or not isinstance(diagnostics, list)
-        or not MIN_DIAGNOSTIC_HORIZONS
-        <= len(diagnostics)
-        <= MAX_DIAGNOSTIC_HORIZONS
+        or not MIN_DIAGNOSTIC_HORIZONS <= len(diagnostics) <= MAX_DIAGNOSTIC_HORIZONS
         or any(
             not isinstance(item, int)
             or isinstance(item, bool)
@@ -74,9 +70,7 @@ def normalize_horizon_policy(value: Any) -> dict[str, Any]:
 
     if value is None:
         return {
-            "primaryForwardBars": DEFAULT_HORIZON_POLICY[
-                "primaryForwardBars"
-            ],
+            "primaryForwardBars": DEFAULT_HORIZON_POLICY["primaryForwardBars"],
             "diagnosticForwardBars": list(
                 DEFAULT_HORIZON_POLICY["diagnosticForwardBars"]
             ),
@@ -101,9 +95,7 @@ def normalize_horizon_policy(value: Any) -> dict[str, Any]:
         or isinstance(primary, bool)
         or not MIN_FORWARD_BARS <= primary <= MAX_FORWARD_BARS
         or not isinstance(diagnostics, list)
-        or not MIN_DIAGNOSTIC_HORIZONS
-        <= len(diagnostics)
-        <= MAX_DIAGNOSTIC_HORIZONS
+        or not MIN_DIAGNOSTIC_HORIZONS <= len(diagnostics) <= MAX_DIAGNOSTIC_HORIZONS
         or any(
             not isinstance(item, int)
             or isinstance(item, bool)
@@ -240,33 +232,21 @@ def build_research_horizon(
 ) -> dict[str, Any]:
     """Derive one content-addressed Horizon Mandate."""
 
-    supplied = (
-        request.get("horizonPolicy")
-        if isinstance(request, dict)
-        else None
-    )
+    supplied = request.get("horizonPolicy") if isinstance(request, dict) else None
     policy = normalize_horizon_policy(supplied)
     payload = {
         "schemaVersion": SCHEMA_VERSION,
         "kind": RESEARCH_HORIZON_KIND,
         "source": {
-            "kind": (
-                "research-request"
-                if request is not None
-                else "template-default"
-            ),
-            "requestHash": (
-                hash_json(request) if request is not None else None
-            ),
+            "kind": ("research-request" if request is not None else "template-default"),
+            "requestHash": (hash_json(request) if request is not None else None),
             "horizon": (
                 request["horizon"]
                 if request is not None
                 else "reference decision-bar horizon"
             ),
             "horizonPolicy": (
-                "caller-supplied"
-                if supplied is not None
-                else "reference-default"
+                "caller-supplied" if supplied is not None else "reference-default"
             ),
         },
         "primaryForwardBars": policy["primaryForwardBars"],
@@ -322,22 +302,16 @@ def validate_research_horizon(
     source = value.get("source")
     selection = value.get("selectionAuthority")
     if value.get("schemaVersion") != SCHEMA_VERSION:
-        issues.append(
-            _issue(f"{path}/schemaVersion", "schema.version", "Expected V1")
-        )
+        issues.append(_issue(f"{path}/schemaVersion", "schema.version", "Expected V1"))
     if value.get("kind") != RESEARCH_HORIZON_KIND:
-        issues.append(
-            _issue(f"{path}/kind", "horizon.kind", "Invalid horizon kind")
-        )
+        issues.append(_issue(f"{path}/kind", "horizon.kind", "Invalid horizon kind"))
     if (
         not isinstance(source, dict)
-        or set(source)
-        != {"kind", "requestHash", "horizon", "horizonPolicy"}
+        or set(source) != {"kind", "requestHash", "horizon", "horizonPolicy"}
         or source.get("kind") not in {"research-request", "template-default"}
         or not isinstance(source.get("horizon"), str)
         or not source["horizon"].strip()
-        or source.get("horizonPolicy")
-        not in {"caller-supplied", "reference-default"}
+        or source.get("horizonPolicy") not in {"caller-supplied", "reference-default"}
         or (
             source.get("kind") == "research-request"
             and (
@@ -483,9 +457,7 @@ RESEARCH_HORIZON_JSON_SCHEMA: dict[str, Any] = {
                 "horizonPolicy",
             ],
             "properties": {
-                "kind": {
-                    "enum": ["research-request", "template-default"]
-                },
+                "kind": {"enum": ["research-request", "template-default"]},
                 "requestHash": {
                     "anyOf": [
                         {"type": "null"},
@@ -493,9 +465,7 @@ RESEARCH_HORIZON_JSON_SCHEMA: dict[str, Any] = {
                     ]
                 },
                 "horizon": {"type": "string", "minLength": 1},
-                "horizonPolicy": {
-                    "enum": ["caller-supplied", "reference-default"]
-                },
+                "horizonPolicy": {"enum": ["caller-supplied", "reference-default"]},
             },
         },
         "primaryForwardBars": {

@@ -355,7 +355,9 @@ class JobRunner:
         self,
         audit: ActionAudit,
         *,
-        spawn: Callable[[list[str], dict[str, str], str], ProcessHandle] = default_spawn,
+        spawn: Callable[
+            [list[str], dict[str, str], str], ProcessHandle
+        ] = default_spawn,
         output_cap: int = OUTPUT_CAP_BYTES,
         poll_interval: float = 0.05,
         environment: Callable[[], dict[str, str]] = scrubbed_environment,
@@ -516,10 +518,14 @@ class JobRunner:
             handle = self._spawn(job.argv, self._environment(), cwd)
             pumps = [
                 threading.Thread(
-                    target=self._pump, args=(handle.stdout, job.stdout, job), daemon=True
+                    target=self._pump,
+                    args=(handle.stdout, job.stdout, job),
+                    daemon=True,
                 ),
                 threading.Thread(
-                    target=self._pump, args=(handle.stderr, job.stderr, job), daemon=True
+                    target=self._pump,
+                    args=(handle.stderr, job.stderr, job),
+                    daemon=True,
                 ),
             ]
             for pump in pumps:
@@ -651,7 +657,9 @@ def validate_evaluate_params(params: Any) -> dict[str, str]:
     unknown = sorted(set(params) - {"session", "hypothesis"})
     if unknown:
         raise _validation(
-            f"params/{unknown[0]}", "schema.unknown-field", f"Unknown parameter: {unknown[0]}"
+            f"params/{unknown[0]}",
+            "schema.unknown-field",
+            f"Unknown parameter: {unknown[0]}",
         )
     session = params.get("session")
     if not isinstance(session, str) or not SESSION_ID.match(session):
@@ -704,10 +712,16 @@ START_NOTICE = (
     "starting a Session opens a trial family; the baseline Run counts as one "
     "source trial unless an identical successful one is reused"
 )
-SAVE_CONFLICT = "The candidate on disk changed since it was loaded; reload before saving"
-STAGES_BY_ACTION = {START_ID: START_STAGES, BUILD_ID: START_STAGES, CHECK_ID: CHECK_STAGES,
-                    "project.create": (("project-created", "Project created"),),
-                    "project.intake": (("dataset-bound", "Dataset bound"),)}
+SAVE_CONFLICT = (
+    "The candidate on disk changed since it was loaded; reload before saving"
+)
+STAGES_BY_ACTION = {
+    START_ID: START_STAGES,
+    BUILD_ID: START_STAGES,
+    CHECK_ID: CHECK_STAGES,
+    "project.create": (("project-created", "Project created"),),
+    "project.intake": (("dataset-bound", "Dataset bound"),),
+}
 ACTION_ORDER = (EVALUATE_ID, START_ID, CHECK_ID, SAVE_ID)
 ACTION_SPECS: dict[str, dict[str, Any]] = {
     BUILD_ID: {
@@ -899,7 +913,9 @@ def session_gate(
     known = {item.id: item for item in list_sessions(project)}
     summary = known.get(session_id)
     if summary is None:
-        raise _validation("params/session", "session.missing", f"Unknown Session: {session_id}")
+        raise _validation(
+            "params/session", "session.missing", f"Unknown Session: {session_id}"
+        )
     if summary.status != "active":
         raise ActionError(
             409,
@@ -944,18 +960,37 @@ def candidate_view(
     if session_id == "canonical":
         # Inspect a Project with retained Runs but no Session; this never opens a write path.
         path = confine_workspace_path(project.root_dir, CANDIDATE_RELATIVE, "candidate")
-        if _is_link(project.root_dir / "factors") or _is_link(path) or not path.is_file():
-            raise ActionError(404, "studio.candidate-missing", "Canonical candidate is missing or linked")
+        if (
+            _is_link(project.root_dir / "factors")
+            or _is_link(path)
+            or not path.is_file()
+        ):
+            raise ActionError(
+                404,
+                "studio.candidate-missing",
+                "Canonical candidate is missing or linked",
+            )
         if path.stat().st_size > CANDIDATE_READ_MAX_BYTES:
-            raise ActionError(413, "candidate.too-large", "Canonical candidate exceeds the read limit")
+            raise ActionError(
+                413, "candidate.too-large", "Canonical candidate exceeds the read limit"
+            )
         raw = path.read_bytes()
         try:
             source = raw.decode("utf-8")
         except UnicodeDecodeError:
-            raise ActionError(422, "candidate.not-utf8", "Canonical candidate is not valid UTF-8") from None
-        return {"project": project.manifest.id, "session": None, "path": _display_path(path, root, project),
-                "source": source, "sha256": _sha256(raw), "bytes": len(raw), "editable": False,
-                "blockedReason": "Canonical candidate is read-only after retained Runs; start a Session to edit."}
+            raise ActionError(
+                422, "candidate.not-utf8", "Canonical candidate is not valid UTF-8"
+            ) from None
+        return {
+            "project": project.manifest.id,
+            "session": None,
+            "path": _display_path(path, root, project),
+            "source": source,
+            "sha256": _sha256(raw),
+            "bytes": len(raw),
+            "editable": False,
+            "blockedReason": "Canonical candidate is read-only after retained Runs; start a Session to edit.",
+        }
     if not isinstance(session_id, str) or not SESSION_ID.match(session_id):
         raise _validation(
             "session",
@@ -965,7 +1000,9 @@ def candidate_view(
     known = {item.id: item for item in list_sessions(project)}
     summary = known.get(session_id)
     if summary is None:
-        raise _validation("session", "session.missing", f"Unknown Session: {session_id}")
+        raise _validation(
+            "session", "session.missing", f"Unknown Session: {session_id}"
+        )
     session = load_session(project, session_id)
     path, problem = locate_candidate(session)
     if problem is not None:
@@ -1004,9 +1041,7 @@ def candidate_view(
         if blocked is None:
             active = service.runner.active_job(project.manifest.id)
             if active is not None:
-                blocked = (
-                    f"Blocked: Project {project.manifest.id} already has active job {active}"
-                )
+                blocked = f"Blocked: Project {project.manifest.id} already has active job {active}"
     return {
         "project": project.manifest.id,
         "session": session_id,
@@ -1046,7 +1081,9 @@ class ActionService:
         scope: str,
         load_projects: Callable[[], dict[str, ProjectContext]],
         fingerprint: Callable[[ProjectContext], str],
-        spawn: Callable[[list[str], dict[str, str], str], ProcessHandle] = default_spawn,
+        spawn: Callable[
+            [list[str], dict[str, str], str], ProcessHandle
+        ] = default_spawn,
         timeouts: dict[str, float] | None = None,
         output_cap: int = OUTPUT_CAP_BYTES,
         poll_interval: float = 0.05,
@@ -1079,13 +1116,19 @@ class ActionService:
 
     def _project_lease(self, identity: str):
         from .project_leases import LeaseBusy, acquire_file_lease
+
         project = self._load_projects().get(identity)
         root = project.root_dir if project is not None else self.root
         try:
-            return acquire_file_lease(root / ".autoquant" / "studio-research.lock", root)
+            return acquire_file_lease(
+                root / ".autoquant" / "studio-research.lock", root
+            )
         except LeaseBusy:
-            raise ActionError(409, "studio.busy",
-                              "Another Studio job or candidate writer owns this Project") from None
+            raise ActionError(
+                409,
+                "studio.busy",
+                "Another Studio job or candidate writer owns this Project",
+            ) from None
 
     @staticmethod
     def _strategy():
@@ -1124,7 +1167,9 @@ class ActionService:
 
     def _project(self, project_id: Any) -> ProjectContext:
         if not isinstance(project_id, str):
-            raise _validation("project", "schema.string", "project must be a Project id")
+            raise _validation(
+                "project", "schema.string", "project must be a Project id"
+            )
         projects = self._load_projects()
         project = projects.get(project_id)
         if project is None:
@@ -1136,10 +1181,13 @@ class ActionService:
     def candidate(self, project_id: Any, session_id: Any) -> dict[str, Any]:
         if session_id == "initial":
             from .studio_ideas import initial_candidate
+
             return initial_candidate(self, self._project(project_id))
         return candidate_view(self._project(project_id), session_id, self.root, self)
 
-    def _evaluate(self, project: ProjectContext, session_id: str, check_only: bool = False) -> Evaluation:
+    def _evaluate(
+        self, project: ProjectContext, session_id: str, check_only: bool = False
+    ) -> Evaluation:
         session_id_ = session_id
         _, snapshot = session_gate(project, session_id_)
         return self._evaluation_from(project, session_id_, snapshot)
@@ -1170,7 +1218,9 @@ class ActionService:
         }
         return Evaluation([], trial, self._fingerprint(project))
 
-    def _argv(self, project_id: str, params: dict[str, str], confirm_trial: bool = False) -> list[str]:
+    def _argv(
+        self, project_id: str, params: dict[str, str], confirm_trial: bool = False
+    ) -> list[str]:
         argv = [
             sys.executable,
             "-m",
@@ -1201,7 +1251,9 @@ class ActionService:
         return argv
 
     @staticmethod
-    def command_hash(action_id: str, project: str, argv: list[str], fingerprint: str) -> str:
+    def command_hash(
+        action_id: str, project: str, argv: list[str], fingerprint: str
+    ) -> str:
         canonical = json.dumps(
             {
                 "actionId": action_id,
@@ -1270,7 +1322,9 @@ class ActionService:
     def catalog(self, project_id: str | None = None) -> dict[str, Any]:
         projects = self._load_projects()
         if project_id is not None and project_id not in projects:
-            raise _validation("project", "project.unknown", f"Unknown Project: {project_id}")
+            raise _validation(
+                "project", "project.unknown", f"Unknown Project: {project_id}"
+            )
         targets: dict[str, list[dict[str, Any]]] = {key: [] for key in ACTION_ORDER}
         for pid, project in projects.items():
             if project_id is not None and pid != project_id:
@@ -1308,7 +1362,9 @@ class ActionService:
                     except ActionError as error:
                         blocked = error.message
                     if blocked is None and active is not None:
-                        blocked = f"Blocked: Project {pid} already has active job {active}"
+                        blocked = (
+                            f"Blocked: Project {pid} already has active job {active}"
+                        )
                     if blocked is not None:
                         entries[SAVE_ID]["available"] = False
                         entries[SAVE_ID]["blockedBy"] = blocked
@@ -1331,17 +1387,29 @@ class ActionService:
                     entry["available"] = False
                     entry["blockedBy"] = str(error)
                 studies.append(entry)
-            targets[EVALUATE_ID].append({"project": pid, "activeJob": active, "sessions": evaluate})
-            targets[CHECK_ID].append({"project": pid, "activeJob": active, "sessions": check})
-            targets[SAVE_ID].append({"project": pid, "activeJob": active, "sessions": save})
-            targets[START_ID].append({"project": pid, "activeJob": active, "studies": studies})
+            targets[EVALUATE_ID].append(
+                {"project": pid, "activeJob": active, "sessions": evaluate}
+            )
+            targets[CHECK_ID].append(
+                {"project": pid, "activeJob": active, "sessions": check}
+            )
+            targets[SAVE_ID].append(
+                {"project": pid, "activeJob": active, "sessions": save}
+            )
+            targets[START_ID].append(
+                {"project": pid, "activeJob": active, "studies": studies}
+            )
         schemas: dict[str, dict[str, Any]] = {
             EVALUATE_ID: {
                 "session": {"type": "string", "pattern": SESSION_ID.pattern},
                 "hypothesis": {"type": "string", "minLength": 8, "maxLength": 500},
             },
             START_ID: {
-                "study": {"type": "string", "pattern": STUDY_ID.pattern, "maxLength": 64},
+                "study": {
+                    "type": "string",
+                    "pattern": STUDY_ID.pattern,
+                    "maxLength": 64,
+                },
                 "request": {"type": "string", "optional": True, "maxLength": 1024},
             },
             CHECK_ID: {"session": {"type": "string", "pattern": SESSION_ID.pattern}},
@@ -1371,26 +1439,73 @@ class ActionService:
                     "targets": targets[action_id],
                 }
             )
-        actions.append(self._strategy().catalog_entry(self, {pid: project for pid, project in projects.items()
-                                           if project_id is None or pid == project_id}))
+        actions.append(
+            self._strategy().catalog_entry(
+                self,
+                {
+                    pid: project
+                    for pid, project in projects.items()
+                    if project_id is None or pid == project_id
+                },
+            )
+        )
         if self.scope == "workspace" and project_id is None:
-            actions.extend([
-                {"id": "project.create", "label": "New idea", "command": "aq project create",
-                 "classification": "writes-working-file", "writes": "Creates a dedicated Project with its question.",
-                 "requiresSecondConfirm": False, "timeoutSeconds": 120, "targets": [],
-                 "params": {"id": {"type": "string"}, "name": {"type": "string"},
-                            "description": {"type": "string", "minLength": 8, "maxLength": 500},
-                            "template": {"enum": ["blank", "ohlcv-factor-lab"]}}},
-                {"id": "project.intake", "label": "Bind staged dataset", "command": "aq project intake",
-                 "classification": "writes-working-file", "writes": "Binds staged data through strict Core intake; raw CSV packaging is V1.",
-                 "requiresSecondConfirm": True, "timeoutSeconds": 120, "targets": [],
-                 "params": {"source": {"type": "string"}, "options": {"type": "object"}, "dataset": {"type": "string"}, "horizon": {"type": "integer", "minimum": 1, "maximum": 60},
-                            "predictionAssets": {"type": "array"}}},
-                {"id": "data.check", "label": "Check staged data", "command": "aq data check",
-                 "classification": "read-only", "writes": "None", "requiresSecondConfirm": False,
-                 "confirmationRequired": False, "timeoutSeconds": 120, "targets": [],
-                 "params": {"source": {"type": "string"}, "options": {"type": "object"}}},
-            ])
+            actions.extend(
+                [
+                    {
+                        "id": "project.create",
+                        "label": "New idea",
+                        "command": "aq project create",
+                        "classification": "writes-working-file",
+                        "writes": "Creates a dedicated Project with its question.",
+                        "requiresSecondConfirm": False,
+                        "timeoutSeconds": 120,
+                        "targets": [],
+                        "params": {
+                            "id": {"type": "string"},
+                            "name": {"type": "string"},
+                            "description": {
+                                "type": "string",
+                                "minLength": 8,
+                                "maxLength": 500,
+                            },
+                            "template": {"enum": ["blank", "ohlcv-factor-lab"]},
+                        },
+                    },
+                    {
+                        "id": "project.intake",
+                        "label": "Bind staged dataset",
+                        "command": "aq project intake",
+                        "classification": "writes-working-file",
+                        "writes": "Binds staged data through strict Core intake; raw CSV packaging is V1.",
+                        "requiresSecondConfirm": True,
+                        "timeoutSeconds": 120,
+                        "targets": [],
+                        "params": {
+                            "source": {"type": "string"},
+                            "options": {"type": "object"},
+                            "dataset": {"type": "string"},
+                            "horizon": {"type": "integer", "minimum": 1, "maximum": 60},
+                            "predictionAssets": {"type": "array"},
+                        },
+                    },
+                    {
+                        "id": "data.check",
+                        "label": "Check staged data",
+                        "command": "aq data check",
+                        "classification": "read-only",
+                        "writes": "None",
+                        "requiresSecondConfirm": False,
+                        "confirmationRequired": False,
+                        "timeoutSeconds": 120,
+                        "targets": [],
+                        "params": {
+                            "source": {"type": "string"},
+                            "options": {"type": "object"},
+                        },
+                    },
+                ]
+            )
         return {"actions": actions}
 
     # -- preview / create ----------------------------------------------------
@@ -1402,25 +1517,37 @@ class ActionService:
         if action_id == BUILD_ID:
             return self._strategy().prepare_build(self, body)
         if action_id not in {EVALUATE_ID, START_ID, CHECK_ID}:
-            raise ActionError(404, "studio.unknown-action", f"Unknown action: {action_id!r}")
+            raise ActionError(
+                404, "studio.unknown-action", f"Unknown action: {action_id!r}"
+            )
         project = self._project(body.get("project"))
         pid = project.manifest.id
         if action_id == EVALUATE_ID:
             params = validate_evaluate_params(body.get("params"))
             evaluation = self._evaluate(project, params["session"])
-            confirm_trial = _studio_trial_gate(project, load_session(project, params["session"]).manifest["studyId"])
+            confirm_trial = _studio_trial_gate(
+                project, load_session(project, params["session"]).manifest["studyId"]
+            )
             return Prepared(
-                project, action_id, params, self._argv(pid, params, confirm_trial),
-                evaluation.fingerprint, evaluation.trial,
+                project,
+                action_id,
+                params,
+                self._argv(pid, params, confirm_trial),
+                evaluation.fingerprint,
+                evaluation.trial,
             )
         if action_id == CHECK_ID:
             params = validate_check_params(body.get("params"))
             session_gate_result = session_gate(project, params["session"])
             self._evaluation_from(project, params["session"], session_gate_result[1])
             argv = self._base_argv("session", "check", pid) + [
-                "--session", params["session"], "--json",
+                "--session",
+                params["session"],
+                "--json",
             ]
-            return Prepared(project, action_id, params, argv, self._fingerprint(project), None)
+            return Prepared(
+                project, action_id, params, argv, self._fingerprint(project), None
+            )
         params = validate_start_params(body.get("params"))
         if params["study"] not in self._study_ids(project):
             raise _validation(
@@ -1432,7 +1559,9 @@ class ActionService:
         if confirm_trial:
             argv.append("--confirm-trial")
         if "request" in params:
-            request = confine_workspace_path(self.root, params["request"], "params/request")
+            request = confine_workspace_path(
+                self.root, params["request"], "params/request"
+            )
             if not request.is_file():
                 raise _validation(
                     "params/request", "path.missing", "request must be an existing file"
@@ -1440,7 +1569,11 @@ class ActionService:
             argv += ["--request", str(request)]
         argv.append("--json")
         return Prepared(
-            project, action_id, params, argv, self._fingerprint(project),
+            project,
+            action_id,
+            params,
+            argv,
+            self._fingerprint(project),
             self._start_trial(project, params["study"]),
         )
 
@@ -1450,12 +1583,23 @@ class ActionService:
             return strategy.preview_conversion(self, body)
         if isinstance(body, dict) and body.get("actionId") == "data.check":
             from .studio_data import check_preview
+
             return check_preview(self, body)
-        if isinstance(body, dict) and body.get("actionId") == "project.intake" and isinstance(body.get("params"), dict) and "source" in body["params"]:
+        if (
+            isinstance(body, dict)
+            and body.get("actionId") == "project.intake"
+            and isinstance(body.get("params"), dict)
+            and "source" in body["params"]
+        ):
             from .studio_data import prepare_intake
+
             return prepare_intake(self, body)
-        if isinstance(body, dict) and body.get("actionId") in {"project.create", "project.intake"}:
+        if isinstance(body, dict) and body.get("actionId") in {
+            "project.create",
+            "project.intake",
+        }:
             from .studio_ideas import prepare
+
             return prepare(self, body)
         if isinstance(body, dict) and body.get("actionId") == SAVE_ID:
             return self._save_preview(body)
@@ -1488,26 +1632,44 @@ class ActionService:
                 return strategy.launch_conversion(self, body)
         if isinstance(body, dict) and body.get("actionId") == "data.check":
             from .studio_data import data_check
+
             return data_check(self, body)
-        if isinstance(body, dict) and body.get("actionId") == "project.intake" and isinstance(body.get("params"), dict) and "source" in body["params"]:
+        if (
+            isinstance(body, dict)
+            and body.get("actionId") == "project.intake"
+            and isinstance(body.get("params"), dict)
+            and "source" in body["params"]
+        ):
             from .studio_data import launch_intake
+
             with self._idea_launch_lock:
                 return launch_intake(self, body)
-        if isinstance(body, dict) and body.get("actionId") in {"project.create", "project.intake"}:
+        if isinstance(body, dict) and body.get("actionId") in {
+            "project.create",
+            "project.intake",
+        }:
             from .studio_ideas import launch
+
             with self._idea_launch_lock:
                 return launch(self, body)
         if isinstance(body, dict) and body.get("actionId") == SAVE_ID:
-            if isinstance(body.get("params"), dict) and body["params"].get("session") == "initial":
+            if (
+                isinstance(body.get("params"), dict)
+                and body["params"].get("session") == "initial"
+            ):
                 from .studio_ideas import save_initial
+
                 return save_initial(self, body)
             return self.save_candidate(body)
         prepared = self._prepare(body)
         project, action_id, argv = prepared.project, prepared.action_id, prepared.argv
         active = self.runner.active_job(project.manifest.id)
         if active is not None:
-            raise ActionError(409, "studio.busy",
-                              f"Project {project.manifest.id} already has active job {active}")
+            raise ActionError(
+                409,
+                "studio.busy",
+                f"Project {project.manifest.id} already has active job {active}",
+            )
         if body.get("confirm") is not True:
             raise ActionError(400, "studio.confirm-required", "confirm must be true")
         expected = self.command_hash(
@@ -1531,6 +1693,7 @@ class ActionService:
         from shlex import join
 
         from .studio_ideas import binding
+
         job = self.runner.create(
             action_id=action_id,
             project=project.manifest.id,
@@ -1717,8 +1880,11 @@ def _studio_trial_gate(project: ProjectContext, study_id: str) -> bool:
     except CliCommandError as error:
         raise ActionError(409, error.code, str(error)) from error
     if state is not None and state["refusal"] is not None:
-        raise ActionError(409, state["refusal"],
-                          f"Core trial gate refused {study_id}: {state['refusal']} "
-                          f"(family {state['familyId']}, {state['budget']['usedInWindow']}/"
-                          f"{state['budget']['maxCountedTrialsPerFamily']} in {state['budget']['windowDays']} days)")
+        raise ActionError(
+            409,
+            state["refusal"],
+            f"Core trial gate refused {study_id}: {state['refusal']} "
+            f"(family {state['familyId']}, {state['budget']['usedInWindow']}/"
+            f"{state['budget']['maxCountedTrialsPerFamily']} in {state['budget']['windowDays']} days)",
+        )
     return bool(state and state["confirmationRequired"])

@@ -61,9 +61,7 @@ def build_position_snapshot(request: dict[str, Any]) -> dict[str, Any]:
             "requestHash": request_hash,
             "requestSystem": request["source"]["system"],
             "requestArtifactPath": request["source"]["artifactPath"],
-            "requestArtifactRevision": request["source"][
-                "artifactRevision"
-            ],
+            "requestArtifactRevision": request["source"]["artifactRevision"],
         },
         "snapshotKind": source["kind"],
         "asOf": source["asOf"],
@@ -114,8 +112,7 @@ def _valid_funded_weights(weights: Any, cash: Any) -> bool:
         and not isinstance(cash, bool)
         and math.isfinite(float(cash))
         and -3 <= float(cash) <= 3
-        and sum(abs(float(weight)) for weight in weights.values())
-        <= 4 + 1e-12
+        and sum(abs(float(weight)) for weight in weights.values()) <= 4 + 1e-12
         and math.isclose(
             sum(float(weight) for weight in weights.values()) + float(cash),
             1.0,
@@ -180,9 +177,8 @@ def validate_position_snapshot(
             _issue(path, "position-snapshot.schema", "Invalid position snapshot")
         )
     identifier = value.get("id")
-    if (
-        not isinstance(identifier, str)
-        or not re.fullmatch(r"position-[0-9a-f]{16}", identifier)
+    if not isinstance(identifier, str) or not re.fullmatch(
+        r"position-[0-9a-f]{16}", identifier
     ):
         issues.append(
             _issue(f"{path}/id", "position-snapshot.id", "Invalid snapshot id")
@@ -394,8 +390,7 @@ def validate_position_snapshot(
         if (
             not isinstance(sizing, dict)
             or set(sizing) != sizing_keys
-            or sizing.get("kind")
-            != "one-asset-against-cash-for-volatility-ceiling"
+            or sizing.get("kind") != "one-asset-against-cash-for-volatility-ceiling"
             or sizing.get("direction") not in {"increase", "decrease"}
             or sizing.get("authority") != SIZING_AUTHORITY
             or not isinstance(sizing.get("asset"), str)
@@ -408,12 +403,8 @@ def validate_position_snapshot(
                 sizing.get("annualizedVolatilityCeiling"),
                 bool,
             )
-            or not math.isfinite(
-                float(sizing.get("annualizedVolatilityCeiling", 0.0))
-            )
-            or not 0
-            < float(sizing.get("annualizedVolatilityCeiling", 0.0))
-            <= 10
+            or not math.isfinite(float(sizing.get("annualizedVolatilityCeiling", 0.0)))
+            or not 0 < float(sizing.get("annualizedVolatilityCeiling", 0.0)) <= 10
             or sizing.get("lookbackBars") not in {63, 126, 252}
             or not isinstance(directional_bound, (int, float))
             or isinstance(directional_bound, bool)
@@ -421,8 +412,7 @@ def validate_position_snapshot(
             or (
                 direction == "decrease"
                 and (
-                    sizing_asset
-                    not in (weights if isinstance(weights, dict) else {})
+                    sizing_asset not in (weights if isinstance(weights, dict) else {})
                     or starting_weight <= 0
                     or not 0 <= float(directional_bound) < starting_weight
                 )
@@ -443,8 +433,7 @@ def validate_position_snapshot(
                 _issue(
                     f"{path}/sizingPolicy",
                     "position-snapshot.sizing-policy",
-                    "Sizing policy differs from the bounded caller-authority "
-                    "contract",
+                    "Sizing policy differs from the bounded caller-authority contract",
                 )
             )
     if issues:

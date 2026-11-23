@@ -29,16 +29,10 @@ ARTIFACTS = {
     "book-risk-correlations": "book-risk-correlations.csv",
     "book-risk-path": "book-risk-path.csv",
     "book-risk-equity-path": "book-risk-equity-path.csv",
-    "book-risk-scenario-comparisons": (
-        "book-risk-scenario-comparisons.csv"
-    ),
-    "book-risk-scenario-contributions": (
-        "book-risk-scenario-contributions.csv"
-    ),
+    "book-risk-scenario-comparisons": ("book-risk-scenario-comparisons.csv"),
+    "book-risk-scenario-contributions": ("book-risk-scenario-contributions.csv"),
     "book-risk-sizing-lookbacks": "book-risk-sizing-lookbacks.csv",
-    "book-risk-sizing-contributions": (
-        "book-risk-sizing-contributions.csv"
-    ),
+    "book-risk-sizing-contributions": ("book-risk-sizing-contributions.csv"),
 }
 CONTRIBUTION_COLUMNS = (
     "asset",
@@ -198,21 +192,14 @@ def _frozen_book_risk_dependency(
     ):
         _fail(frozen_study_path, code, "Frozen Study Judge arguments are invalid")
     positions = [index for index, item in enumerate(arguments) if item == flag]
-    if len(positions) > 1 or (
-        positions and positions[0] + 1 >= len(arguments)
-    ):
+    if len(positions) > 1 or (positions and positions[0] + 1 >= len(arguments)):
         _fail(frozen_study_path, code, f"Frozen Study {flag} binding is invalid")
     relative = arguments[positions[0] + 1] if positions else default
     dependencies = run.result.get("dependencies")
     dependency_hashes = (
-        dependencies.get("sourceHashes")
-        if isinstance(dependencies, dict)
-        else None
+        dependencies.get("sourceHashes") if isinstance(dependencies, dict) else None
     )
-    if (
-        not isinstance(dependency_hashes, dict)
-        or relative not in dependency_hashes
-    ):
+    if not isinstance(dependency_hashes, dict) or relative not in dependency_hashes:
         _fail(
             run.root_dir / "inputs" / "dependency-sources",
             code,
@@ -240,8 +227,7 @@ def _csv_rows(
     except OSError as error:
         _fail(path, "book-risk.csv", f"Cannot read CSV evidence: {error}")
     if (not allow_empty and not rows) or any(
-        None in row or any(value is None for value in row.values())
-        for row in rows
+        None in row or any(value is None for value in row.values()) for row in rows
     ):
         _fail(path, "book-risk.csv-width", "CSV evidence is empty or malformed")
     return rows
@@ -258,18 +244,13 @@ def _supports_drawdown_evidence(version: Any) -> bool:
 
 
 def _artifact_paths(run) -> tuple[dict[str, Path], bool]:
-    legacy = not _supports_drawdown_evidence(
-        run.result["harness"].get("version")
-    )
+    legacy = not _supports_drawdown_evidence(run.result["harness"].get("version"))
     expected = {
         kind: filename
         for kind, filename in ARTIFACTS.items()
         if not legacy or kind != "book-risk-equity-path"
     }
-    declared = {
-        item["kind"]: item["path"]
-        for item in run.result["artifacts"]
-    }
+    declared = {item["kind"]: item["path"] for item in run.result["artifacts"]}
     if set(declared) != set(expected):
         _fail(
             run.root_dir,
@@ -292,10 +273,7 @@ def _artifact_paths(run) -> tuple[dict[str, Path], bool]:
 def _sample(rows: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
     if len(rows) <= limit:
         return rows
-    indices = {
-        round(index * (len(rows) - 1) / (limit - 1))
-        for index in range(limit)
-    }
+    indices = {round(index * (len(rows) - 1) / (limit - 1)) for index in range(limit)}
     return [rows[index] for index in sorted(indices)]
 
 
@@ -369,12 +347,8 @@ def _validate_position_sizing(
             if direction == "decrease"
             else {
                 "sized": "largest-compliant-increase",
-                "fully-funded-compliant": (
-                    "full-cash-allocation-compliant"
-                ),
-                "maximum-weight-compliant": (
-                    "caller-maximum-weight-compliant"
-                ),
+                "fully-funded-compliant": ("full-cash-allocation-compliant"),
+                "maximum-weight-compliant": ("caller-maximum-weight-compliant"),
             }
         ),
     }
@@ -411,9 +385,7 @@ def _validate_position_sizing(
     baseline_cash = float(frozen_snapshot["cashWeight"])
     funding_maximum = starting_weight + baseline_cash
     domain_minimum = (
-        float(policy["minimumWeight"])
-        if direction == "decrease"
-        else starting_weight
+        float(policy["minimumWeight"]) if direction == "decrease" else starting_weight
     )
     domain_maximum = (
         starting_weight
@@ -513,8 +485,7 @@ def _validate_position_sizing(
         if (
             direction != "increase"
             or domain_maximum < funding_maximum - 1e-12
-            or variance_at(domain_maximum)
-            > q["targetVariance"] + tolerance
+            or variance_at(domain_maximum) > q["targetVariance"] + tolerance
         ):
             _fail(
                 "positionSizing/status",
@@ -527,8 +498,7 @@ def _validate_position_sizing(
         if (
             direction != "increase"
             or domain_maximum >= funding_maximum - 1e-12
-            or variance_at(domain_maximum)
-            > q["targetVariance"] + tolerance
+            or variance_at(domain_maximum) > q["targetVariance"] + tolerance
         ):
             _fail(
                 "positionSizing/status",
@@ -541,13 +511,11 @@ def _validate_position_sizing(
         if (
             (
                 direction == "decrease"
-                and q["startingVariance"]
-                <= q["targetVariance"] + tolerance
+                and q["startingVariance"] <= q["targetVariance"] + tolerance
             )
             or (
                 direction == "increase"
-                and variance_at(domain_maximum)
-                <= q["targetVariance"] + tolerance
+                and variance_at(domain_maximum) <= q["targetVariance"] + tolerance
             )
             or q["minimumVariance"] > q["targetVariance"] + tolerance
         ):
@@ -556,15 +524,11 @@ def _validate_position_sizing(
                 "book-risk.position-sizing-status",
                 "Sized status does not straddle the variance ceiling",
             )
-        discriminant = (
-            q["coefficientB"] ** 2
-            - 4
-            * q["coefficientA"]
-            * (q["coefficientC"] - q["targetVariance"])
+        discriminant = q["coefficientB"] ** 2 - 4 * q["coefficientA"] * (
+            q["coefficientC"] - q["targetVariance"]
         )
         if (
-            q["coefficientA"] <= 1e-18
-            and abs(q["coefficientB"]) <= 1e-18
+            q["coefficientA"] <= 1e-18 and abs(q["coefficientB"]) <= 1e-18
         ) or discriminant < -tolerance:
             _fail(
                 "positionSizing/quadratic",
@@ -572,14 +536,10 @@ def _validate_position_sizing(
                 "Sizing boundary cannot be rederived",
             )
         expected_weight = (
-            (q["targetVariance"] - q["coefficientC"])
-            / q["coefficientB"]
+            (q["targetVariance"] - q["coefficientC"]) / q["coefficientB"]
             if q["coefficientA"] <= 1e-18
             else (
-                (
-                    -q["coefficientB"]
-                    + math.sqrt(max(discriminant, 0.0))
-                )
+                (-q["coefficientB"] + math.sqrt(max(discriminant, 0.0)))
                 / (2 * q["coefficientA"])
             )
         )
@@ -592,12 +552,8 @@ def _validate_position_sizing(
             q["targetVariance"],
             "positionSizing/sizedBoundary",
         )
-        if (
-            direction == "increase"
-            and expected_weight <= starting_weight + 1e-12
-        ) or (
-            direction == "decrease"
-            and expected_weight >= starting_weight - 1e-12
+        if (direction == "increase" and expected_weight <= starting_weight + 1e-12) or (
+            direction == "decrease" and expected_weight >= starting_weight - 1e-12
         ):
             _fail(
                 "positionSizing/status",
@@ -724,9 +680,8 @@ def _validate_position_sizing(
             "Sizing ceiling flag is invalid",
         )
     raw_lookbacks = value["lookbacks"]
-    if (
-        not isinstance(raw_lookbacks, list)
-        or len(raw_lookbacks) != len(method["lookbackBars"])
+    if not isinstance(raw_lookbacks, list) or len(raw_lookbacks) != len(
+        method["lookbackBars"]
     ):
         _fail(
             "positionSizing/lookbacks",
@@ -755,8 +710,7 @@ def _validate_position_sizing(
         if (
             parsed["lookbackBars"] != method["lookbackBars"][index]
             or parsed["observations"] != parsed["lookbackBars"]
-            or parsed["governing"]
-            != (parsed["lookbackBars"] == policy["lookbackBars"])
+            or parsed["governing"] != (parsed["lookbackBars"] == policy["lookbackBars"])
             or parsed["ceilingSatisfied"]
             != (parsed["annualizedVolatility"] <= ceiling + 1e-12)
         ):
@@ -829,9 +783,8 @@ def _validate_position_sizing(
             "Sizing lookback CSV differs from the report",
         )
     raw_contributions = value["contributions"]
-    if (
-        not isinstance(raw_contributions, list)
-        or len(raw_contributions) != len(expected_assets)
+    if not isinstance(raw_contributions, list) or len(raw_contributions) != len(
+        expected_assets
     ):
         _fail(
             "positionSizing/contributions",
@@ -941,9 +894,8 @@ def _validate_position_sizing(
         for left in range(len(expected_assets))
         for right in range(left + 1, len(expected_assets))
     ]
-    if (
-        not isinstance(raw_correlations, list)
-        or len(raw_correlations) != len(expected_pairs)
+    if not isinstance(raw_correlations, list) or len(raw_correlations) != len(
+        expected_pairs
     ):
         _fail(
             "positionSizing/pairwiseCorrelations",
@@ -963,19 +915,15 @@ def _validate_position_sizing(
             parsed["correlation"],
             f"positionSizing/pairwiseCorrelations/{index}/correlation",
         )
-        if (
-            (parsed["leftAsset"], parsed["rightAsset"])
-            != expected_pair
-            or abs(correlation) > 1 + 1e-12
-        ):
+        if (parsed["leftAsset"], parsed["rightAsset"]) != expected_pair or abs(
+            correlation
+        ) > 1 + 1e-12:
             _fail(
                 f"positionSizing/pairwiseCorrelations/{index}",
                 "book-risk.position-sizing-correlations",
                 "Sizing correlation identity or value is invalid",
             )
-        pairwise_correlations.append(
-            {**parsed, "correlation": correlation}
-        )
+        pairwise_correlations.append({**parsed, "correlation": correlation})
     drawdown = _strict(
         value["drawdown"],
         {
@@ -1015,8 +963,7 @@ def _validate_position_sizing(
             )
         )
         or not isinstance(drawdown["recovered"], bool)
-        or drawdown["recovered"]
-        != (drawdown["recoveryTimestamp"] is not None)
+        or drawdown["recovered"] != (drawdown["recoveryTimestamp"] is not None)
     ):
         _fail(
             "positionSizing/drawdown",
@@ -1054,8 +1001,7 @@ def _validate_drawdown_evidence(
         unavailable = {
             "available": False,
             "reason": (
-                "Run predates AutoQuant 0.8.19 fixed Book Risk drawdown "
-                "evidence."
+                "Run predates AutoQuant 0.8.19 fixed Book Risk drawdown evidence."
             ),
         }
         return unavailable, {
@@ -1098,8 +1044,7 @@ def _validate_drawdown_evidence(
             )
         )
         or not isinstance(drawdown["recovered"], bool)
-        or drawdown["recovered"]
-        != (drawdown["recoveryTimestamp"] is not None)
+        or drawdown["recovered"] != (drawdown["recoveryTimestamp"] is not None)
     ):
         _fail(
             f"{paths['book-risk-report']}/drawdown",
@@ -1253,8 +1198,7 @@ def _validate_drawdown_evidence(
     )
     if (
         drawdown["peakTimestamp"] != primary_rows[peak_index]["timestamp"]
-        or drawdown["troughTimestamp"]
-        != primary_rows[trough_index]["timestamp"]
+        or drawdown["troughTimestamp"] != primary_rows[trough_index]["timestamp"]
         or drawdown["recoveryTimestamp"] != expected_recovery
     ):
         _fail(
@@ -1362,9 +1306,7 @@ def load_book_risk_diagnostics(
             "book-risk.position-snapshot",
             "Report position snapshot differs from the frozen dependency",
         )
-    if report["requestHash"] != frozen_snapshot.get("source", {}).get(
-        "requestHash"
-    ):
+    if report["requestHash"] != frozen_snapshot.get("source", {}).get("requestHash"):
         _fail(
             paths["book-risk-report"],
             "book-risk.request-hash",
@@ -1379,9 +1321,7 @@ def load_book_risk_diagnostics(
         "sizingMeaning": "caller-bounded-historical-target-position",
     }
     if not legacy:
-        authority["drawdownMeaning"] = (
-            "static-weight-close-to-close-research-path"
-        )
+        authority["drawdownMeaning"] = "static-weight-close-to-close-research-path"
     if report["authority"] != authority:
         _fail(
             paths["book-risk-report"],
@@ -1417,12 +1357,8 @@ def load_book_risk_diagnostics(
         or current_numeric["annualizedVolatility"] <= 0
         or not 0 < current_numeric["componentRiskHhi"] <= 1
         or current_numeric["effectiveRiskBets"] < 1
-        or not 0
-        <= current_numeric["firstPrincipalComponentVarianceShare"]
-        <= 1
-        or not 0
-        <= current_numeric["largestAbsoluteRiskContributorShare"]
-        <= 1
+        or not 0 <= current_numeric["firstPrincipalComponentVarianceShare"] <= 1
+        or not 0 <= current_numeric["largestAbsoluteRiskContributorShare"] <= 1
     ):
         _fail(
             f"{paths['book-risk-report']}/current",
@@ -1443,12 +1379,8 @@ def load_book_risk_diagnostics(
         "current_component_risk_hhi": "componentRiskHhi",
         "current_effective_risk_bets": "effectiveRiskBets",
         "current_annualized_volatility": "annualizedVolatility",
-        "current_first_pc_variance_share": (
-            "firstPrincipalComponentVarianceShare"
-        ),
-        "largest_risk_contributor_share": (
-            "largestAbsoluteRiskContributorShare"
-        ),
+        "current_first_pc_variance_share": ("firstPrincipalComponentVarianceShare"),
+        "largest_risk_contributor_share": ("largestAbsoluteRiskContributorShare"),
         "primary_lookback_bars": "lookbackBars",
     }
     if not legacy:
@@ -1483,7 +1415,9 @@ def load_book_risk_diagnostics(
             else False
         ),
         "sizing_weight_change": float(
-            report["positionSizing"].get("result", {}).get(
+            report["positionSizing"]
+            .get("result", {})
+            .get(
                 "weightChange",
                 0.0,
             )
@@ -1516,9 +1450,7 @@ def load_book_risk_diagnostics(
         or not isinstance(method["lookbackBars"], list)
         or not method["lookbackBars"]
         or not all(
-            isinstance(item, int)
-            and not isinstance(item, bool)
-            and 20 <= item <= 2520
+            isinstance(item, int) and not isinstance(item, bool) and 20 <= item <= 2520
             for item in method["lookbackBars"]
         )
         or method["lookbackBars"] != sorted(set(method["lookbackBars"]))
@@ -1529,10 +1461,12 @@ def load_book_risk_diagnostics(
         or isinstance(method["rollingStepBars"], bool)
         or not 20 <= method["minimumObservations"] <= max(method["lookbackBars"])
         or not 1 <= method["rollingStepBars"] <= 252
-        or not 0 < _finite(
+        or not 0
+        < _finite(
             method["reductionWeight"],
             f"{paths['book-risk-report']}/method/reductionWeight",
-        ) <= 0.25
+        )
+        <= 0.25
     ):
         _fail(
             f"{paths['book-risk-report']}/method",
@@ -1603,9 +1537,7 @@ def load_book_risk_diagnostics(
             "Lookback evidence differs from the declared method",
         )
     lookbacks: list[dict[str, Any]] = []
-    lookback_ranking_flags = [
-        "reductionRanking" in item for item in raw_lookbacks
-    ]
+    lookback_ranking_flags = ["reductionRanking" in item for item in raw_lookbacks]
     if any(lookback_ranking_flags) and not all(lookback_ranking_flags):
         _fail(
             f"{paths['book-risk-report']}/lookbacks",
@@ -1660,10 +1592,7 @@ def load_book_risk_diagnostics(
                 or not all(isinstance(row, dict) for row in raw_ranking)
             ):
                 _fail(
-                    (
-                        f"{paths['book-risk-report']}/lookbacks/{index}/"
-                        "reductionRanking"
-                    ),
+                    (f"{paths['book-risk-report']}/lookbacks/{index}/reductionRanking"),
                     "book-risk.lookback-reduction-ranking",
                     "Lookback reduction ranking must be a non-empty list",
                 )
@@ -1696,24 +1625,17 @@ def load_book_risk_diagnostics(
                     }
                 )
             if (
-                [row["rank"] for row in ranking]
-                != list(range(1, len(ranking) + 1))
+                [row["rank"] for row in ranking] != list(range(1, len(ranking) + 1))
                 or len({row["asset"] for row in ranking}) != len(ranking)
                 or any(
                     ranking[position]["volatilityReductionPerWeight"]
-                    < ranking[position + 1][
-                        "volatilityReductionPerWeight"
-                    ]
-                    - 1e-12
+                    < ranking[position + 1]["volatilityReductionPerWeight"] - 1e-12
                     for position in range(len(ranking) - 1)
                 )
                 or ranking[0]["asset"] != parsed["firstReductionAsset"]
             ):
                 _fail(
-                    (
-                        f"{paths['book-risk-report']}/lookbacks/{index}/"
-                        "reductionRanking"
-                    ),
+                    (f"{paths['book-risk-report']}/lookbacks/{index}/reductionRanking"),
                     "book-risk.lookback-reduction-order",
                     "Lookback reduction ranking is invalid",
                 )
@@ -1723,16 +1645,9 @@ def load_book_risk_diagnostics(
             or parsed["annualizedVolatility"] <= 0
             or not 0 < parsed["componentRiskHhi"] <= 1
             or parsed["effectiveRiskBets"] < 1
-            or not 0
-            <= parsed["firstPrincipalComponentVarianceShare"]
-            <= 1
-            or not 0
-            <= parsed["largestAbsoluteRiskContributorShare"]
-            <= 1
-            or (
-                not legacy
-                and parsed["maximumDrawdown"] > 1e-12
-            )
+            or not 0 <= parsed["firstPrincipalComponentVarianceShare"] <= 1
+            or not 0 <= parsed["largestAbsoluteRiskContributorShare"] <= 1
+            or (not legacy and parsed["maximumDrawdown"] > 1e-12)
             or not isinstance(
                 parsed["largestAbsoluteRiskContributor"],
                 str,
@@ -1820,8 +1735,7 @@ def load_book_risk_diagnostics(
             "Reduction CSV differs from the report",
         )
     if (
-        [row["rank"] for row in reductions]
-        != list(range(1, len(reductions) + 1))
+        [row["rank"] for row in reductions] != list(range(1, len(reductions) + 1))
         or [row["asset"] for row in reductions]
         != [row["asset"] for row in contributions]
         and set(row["asset"] for row in reductions)
@@ -1855,8 +1769,7 @@ def load_book_risk_diagnostics(
     ]
     if (
         correlations != report["pairwiseCorrelations"]
-        or len(correlations)
-        != len(contributions) * (len(contributions) - 1) // 2
+        or len(correlations) != len(contributions) * (len(contributions) - 1) // 2
         or any(abs(row["correlation"]) > 1 + 1e-12 for row in correlations)
     ):
         _fail(
@@ -1924,8 +1837,7 @@ def load_book_risk_diagnostics(
         raw = _strict(
             raw,
             baseline_keys,
-            f"{paths['book-risk-report']}/scenarioComparison/"
-            f"baselineLookbacks/{index}",
+            f"{paths['book-risk-report']}/scenarioComparison/baselineLookbacks/{index}",
         )
         parsed = {
             key: _finite(
@@ -1951,13 +1863,10 @@ def load_book_risk_diagnostics(
         _close(
             1.0 / parsed["componentRiskHhi"],
             parsed["effectiveRiskBets"],
-            f"{paths['book-risk-report']}/scenarioComparison/"
-            f"baselineLookbacks/{index}",
+            f"{paths['book-risk-report']}/scenarioComparison/baselineLookbacks/{index}",
         )
         matching = next(
-            row
-            for row in lookbacks
-            if row["lookbackBars"] == parsed["lookbackBars"]
+            row for row in lookbacks if row["lookbackBars"] == parsed["lookbackBars"]
         )
         for key in (
             "annualizedVolatility",
@@ -1971,9 +1880,7 @@ def load_book_risk_diagnostics(
                 f"baselineLookbacks/{index}/{key}",
             )
         baseline_lookbacks.append(parsed)
-    baseline_by_lookback = {
-        int(row["lookbackBars"]): row for row in baseline_lookbacks
-    }
+    baseline_by_lookback = {int(row["lookbackBars"]): row for row in baseline_lookbacks}
     scenario_lookback_keys = {
         "volatilityRank",
         "lookbackBars",
@@ -2005,8 +1912,7 @@ def load_book_risk_diagnostics(
             or len(raw["lookbacks"]) != len(method["lookbackBars"])
         ):
             _fail(
-                f"{paths['book-risk-report']}/scenarioComparison/"
-                f"scenarios/{index}",
+                f"{paths['book-risk-report']}/scenarioComparison/scenarios/{index}",
                 "book-risk.scenario-identity",
                 "Scenario result differs from the frozen hypothetical book",
             )
@@ -2047,9 +1953,7 @@ def load_book_risk_diagnostics(
                 or parsed["annualizedVolatility"] <= 0
                 or not 0 < parsed["componentRiskHhi"] <= 1
                 or parsed["effectiveRiskBets"] < 1
-                or not 0
-                <= parsed["largestAbsoluteRiskContributorShare"]
-                <= 1
+                or not 0 <= parsed["largestAbsoluteRiskContributorShare"] <= 1
                 or parsed["largestAbsoluteRiskContributor"]
                 not in expected_comparison_universe
             ):
@@ -2088,24 +1992,16 @@ def load_book_risk_diagnostics(
             }
         )
     for lookback_index, lookback in enumerate(method["lookbackBars"]):
-        rows = [
-            scenario["lookbacks"][lookback_index]
-            for scenario in parsed_scenarios
-        ]
-        if (
-            sorted(int(row["volatilityRank"]) for row in rows)
-            != list(range(1, len(rows) + 1))
-            or [
-                row["annualizedVolatilityDelta"]
-                for row in sorted(
-                    rows,
-                    key=lambda item: item["volatilityRank"],
-                )
-            ]
-            != sorted(
-                row["annualizedVolatilityDelta"] for row in rows
+        rows = [scenario["lookbacks"][lookback_index] for scenario in parsed_scenarios]
+        if sorted(int(row["volatilityRank"]) for row in rows) != list(
+            range(1, len(rows) + 1)
+        ) or [
+            row["annualizedVolatilityDelta"]
+            for row in sorted(
+                rows,
+                key=lambda item: item["volatilityRank"],
             )
-        ):
+        ] != sorted(row["annualizedVolatilityDelta"] for row in rows):
             _fail(
                 f"{paths['book-risk-report']}/scenarioComparison/"
                 f"scenarios/*/lookbacks/{lookback_index}",
@@ -2188,21 +2084,15 @@ def load_book_risk_diagnostics(
         asset: float(frozen_snapshot["weights"].get(asset, 0.0))
         for asset in expected_comparison_universe
     }
-    baseline_contributions = {
-        row["asset"]: row for row in contributions
-    }
-    primary_index = method["lookbackBars"].index(
-        method["primaryLookbackBars"]
-    )
+    baseline_contributions = {row["asset"]: row for row in contributions}
+    primary_index = method["lookbackBars"].index(method["primaryLookbackBars"])
     for scenario, frozen in zip(
         parsed_scenarios,
         frozen_scenarios,
         strict=True,
     ):
         rows = [
-            row
-            for row in scenario_contributions
-            if row["scenarioId"] == scenario["id"]
+            row for row in scenario_contributions if row["scenarioId"] == scenario["id"]
         ]
         if [row["asset"] for row in rows] != expected_comparison_universe:
             _fail(
@@ -2276,18 +2166,12 @@ def load_book_risk_diagnostics(
         primary_row = scenario["lookbacks"][primary_index]
         primary_baseline = baseline_lookbacks[primary_index]
         _close(
-            sum(
-                row["baselineAbsoluteRiskShare"] ** 2
-                for row in rows
-            ),
+            sum(row["baselineAbsoluteRiskShare"] ** 2 for row in rows),
             primary_baseline["componentRiskHhi"],
             paths["book-risk-scenario-contributions"],
         )
         _close(
-            sum(
-                row["scenarioAbsoluteRiskShare"] ** 2
-                for row in rows
-            ),
+            sum(row["scenarioAbsoluteRiskShare"] ** 2 for row in rows),
             primary_row["componentRiskHhi"],
             paths["book-risk-scenario-contributions"],
         )
@@ -2305,10 +2189,7 @@ def load_book_risk_diagnostics(
             rows,
             key=lambda row: row["scenarioAbsoluteRiskShare"],
         )
-        if (
-            primary_row["largestAbsoluteRiskContributor"]
-            != largest["asset"]
-        ):
+        if primary_row["largestAbsoluteRiskContributor"] != largest["asset"]:
             _fail(
                 paths["book-risk-scenario-contributions"],
                 "book-risk.scenario-contributor",
@@ -2442,11 +2323,9 @@ def load_book_risk_diagnostics(
         primary_lookback is None
         or primary_lookback["largestAbsoluteRiskContributor"]
         != contributions[0]["asset"]
-        or primary_lookback["firstReductionAsset"]
-        != reductions[0]["asset"]
+        or primary_lookback["firstReductionAsset"] != reductions[0]["asset"]
         or (
-            has_lookback_rankings
-            and primary_lookback["reductionRanking"] != reductions
+            has_lookback_rankings and primary_lookback["reductionRanking"] != reductions
         )
     ):
         _fail(
@@ -2463,9 +2342,7 @@ def load_book_risk_diagnostics(
             "status": run.result["status"],
             "harness": run.result["harness"],
             "primaryMetric": run.result["objective"]["metric"],
-            "primaryValue": run.result["metrics"][
-                run.result["objective"]["metric"]
-            ],
+            "primaryValue": run.result["metrics"][run.result["objective"]["metric"]],
         },
         "positionSnapshot": frozen_snapshot,
         "authority": authority,
@@ -2494,10 +2371,7 @@ def load_book_risk_diagnostics(
                 "path": f"artifacts/{filename}",
                 "immutable": True,
             }
-            for kind, filename in (
-                (kind, path.name)
-                for kind, path in paths.items()
-            )
+            for kind, filename in ((kind, path.name) for kind, path in paths.items())
         },
     }
 

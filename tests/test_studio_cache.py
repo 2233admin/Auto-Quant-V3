@@ -99,9 +99,7 @@ class StudioSnapshotCacheTests(unittest.TestCase):
         with self._get(f"/api/v1/project?id={project_id}") as response:
             body = json.loads(response.read())
         self.assertEqual([item["id"] for item in body["projects"]], [project_id])
-        self.assertEqual(
-            self.builds.call_args.kwargs.get("project_id"), project_id
-        )
+        self.assertEqual(self.builds.call_args.kwargs.get("project_id"), project_id)
         for _ in range(2):
             with self.assertRaises(HTTPError) as caught:
                 self._get("/api/v1/project?id=nope")

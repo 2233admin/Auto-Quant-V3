@@ -26,9 +26,7 @@ REPORT_KIND = "autoquant-event-study-report"
 ARTIFACTS = {
     "event-study-report": "event-study-report.json",
     "event-study-events": "event-study-events.csv",
-    "event-study-reference-distribution": (
-        "event-study-reference-distribution.csv"
-    ),
+    "event-study-reference-distribution": ("event-study-reference-distribution.csv"),
 }
 EVENT_COLUMNS = (
     "eventIndex",
@@ -130,8 +128,7 @@ def _rows(
     except OSError as error:
         _fail(path, "event-study.csv", f"Cannot read CSV evidence: {error}")
     if (not allow_empty and not rows) or any(
-        None in row or any(value is None for value in row.values())
-        for row in rows
+        None in row or any(value is None for value in row.values()) for row in rows
     ):
         _fail(path, "event-study.csv-width", "CSV evidence is empty or malformed")
     return rows
@@ -156,9 +153,7 @@ def _distribution(values: list[float]) -> dict[str, Any]:
         "count": count,
         "mean": float(array.mean()),
         "median": float(np.median(array)),
-        "sampleStandardDeviation": (
-            float(array.std(ddof=1)) if count > 1 else None
-        ),
+        "sampleStandardDeviation": (float(array.std(ddof=1)) if count > 1 else None),
         "minimum": float(array.min()),
         "quartile25": float(np.quantile(array, 0.25)),
         "quartile75": float(np.quantile(array, 0.75)),
@@ -330,19 +325,14 @@ def load_event_study_diagnostics(
             "Reference distribution length does not match the fixed horizon",
         )
     timeline = [row["entryTimestamp"] for row in references]
-    timeline.extend(
-        row["exitTimestamp"] for row in references[-holding:]
-    )
+    timeline.extend(row["exitTimestamp"] for row in references[-holding:])
     if len(timeline) != len(set(timeline)) or timeline != sorted(timeline):
         _fail(
             paths["event-study-reference-distribution"],
             "event-study.timeline",
             "Reference rows do not define one chronological aligned timeline",
         )
-    reference_by_entry = {
-        row["entryTimestamp"]: row
-        for row in references
-    }
+    reference_by_entry = {row["entryTimestamp"]: row for row in references}
     events: list[dict[str, Any]] = []
     last_primary_exit: int | None = None
     for index, row in enumerate(raw_event_rows, start=1):
@@ -372,10 +362,11 @@ def load_event_study_diagnostics(
             if expected_entry_position < len(timeline)
             else ""
         )
-        expected_exit = (
-            timeline[expected_exit_position] if expected_complete else ""
-        )
-        if row["entryTimestamp"] != expected_entry or row["exitTimestamp"] != expected_exit:
+        expected_exit = timeline[expected_exit_position] if expected_complete else ""
+        if (
+            row["entryTimestamp"] != expected_entry
+            or row["exitTimestamp"] != expected_exit
+        ):
             _fail(path, "event-study.timing", "Event entry or exit is misaligned")
         expected_primary = bool(
             complete
@@ -411,8 +402,7 @@ def load_event_study_diagnostics(
             _close(excess, asset_return - reference_return, path)
         else:
             if any(
-                row[key]
-                for key in ("assetReturn", "referenceReturn", "excessReturn")
+                row[key] for key in ("assetReturn", "referenceReturn", "excessReturn")
             ):
                 _fail(path, "event-study.censoring", "Censored returns must be empty")
             asset_return = reference_return = excess = None
@@ -434,9 +424,7 @@ def load_event_study_diagnostics(
     complete_events = [row for row in events if row["outcomeStatus"] == "complete"]
     primary_events = [row for row in events if row["primaryEligible"]]
     primary_asset = [float(row["assetReturn"]) for row in primary_events]
-    primary_reference = [
-        float(row["referenceReturn"]) for row in primary_events
-    ]
+    primary_reference = [float(row["referenceReturn"]) for row in primary_events]
     primary_excess = [float(row["excessReturn"]) for row in primary_events]
     raw_asset = [float(row["assetReturn"]) for row in complete_events]
     raw_excess = [float(row["excessReturn"]) for row in complete_events]
@@ -469,10 +457,7 @@ def load_event_study_diagnostics(
     minimum = int(policy["population"]["minimumEvents"])
     if len(primary_events) < minimum:
         status = "insufficient-events"
-    elif (
-        float(primary_mean) > float(unconditional_mean)
-        and float(excess_mean) > 0.0
-    ):
+    elif float(primary_mean) > float(unconditional_mean) and float(excess_mean) > 0.0:
         status = "observed-advantage"
     else:
         status = "no-observed-advantage"

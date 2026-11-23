@@ -51,9 +51,7 @@ DOSSIER_MANIFEST = "manifest.json"
 DOSSIER_ANALYSIS_KIND = "autoquant-research-dossier-analysis"
 DOSSIER_KIND = "autoquant-research-dossier"
 DOSSIER_STATUS_KIND = "autoquant-research-dossier-status"
-DOSSIER_ID = re.compile(
-    r"^dossier-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$"
-)
+DOSSIER_ID = re.compile(r"^dossier-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$")
 FINDING_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LANE_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -207,16 +205,13 @@ def _validate_evidence_refs(
         report_id = reference.get("reportId")
         finding_id = reference.get("findingId")
         if not isinstance(lane_id, str) or not LANE_ID.fullmatch(lane_id):
-            issues.append(
-                _issue(f"{ref_path}/laneId", "schema.id", "Invalid laneId")
-            )
+            issues.append(_issue(f"{ref_path}/laneId", "schema.id", "Invalid laneId"))
         if not isinstance(report_id, str) or not REPORT_ID.fullmatch(report_id):
             issues.append(
                 _issue(f"{ref_path}/reportId", "schema.id", "Invalid reportId")
             )
         if finding_id is not None and (
-            not isinstance(finding_id, str)
-            or not FINDING_ID.fullmatch(finding_id)
+            not isinstance(finding_id, str) or not FINDING_ID.fullmatch(finding_id)
         ):
             issues.append(
                 _issue(f"{ref_path}/findingId", "schema.id", "Invalid findingId")
@@ -267,9 +262,7 @@ def validate_dossier_analysis(
     for key in ("title", "executiveSummary"):
         issues.extend(_non_empty(value.get(key), f"{path}/{key}"))
     for key in ("limitations", "unresolvedQuestions"):
-        issues.extend(
-            _string_list(value.get(key), f"{path}/{key}", allow_empty=True)
-        )
+        issues.extend(_string_list(value.get(key), f"{path}/{key}", allow_empty=True))
 
     findings = value.get("findings")
     if not isinstance(findings, list) or not findings:
@@ -424,9 +417,7 @@ def validate_dossier_analysis(
         "findings": normalized_findings,
         "recommendations": normalized_recommendations,
         "limitations": [item.strip() for item in value["limitations"]],
-        "unresolvedQuestions": [
-            item.strip() for item in value["unresolvedQuestions"]
-        ],
+        "unresolvedQuestions": [item.strip() for item in value["unresolvedQuestions"]],
     }
 
 
@@ -561,10 +552,8 @@ def _status_report_projection(report) -> dict[str, Any]:
         ],
     }
     if "leaderDecisionSupport" in report.report["evidence"]:
-        projection["leaderDecisionSupport"] = (
-            summarize_leader_decision_support(
-                report.report["evidence"]["leaderDecisionSupport"]
-            )
+        projection["leaderDecisionSupport"] = summarize_leader_decision_support(
+            report.report["evidence"]["leaderDecisionSupport"]
         )
     return projection
 
@@ -586,9 +575,7 @@ def _current_lane_report(
             current_run = candidate
             break
     summaries = [
-        item
-        for item in list_sessions(project)
-        if item.study_id == lane["studyId"]
+        item for item in list_sessions(project) if item.study_id == lane["studyId"]
     ]
     if not summaries:
         for summary in reversed(list_run_reports(project, lane["studyId"])):
@@ -596,8 +583,7 @@ def _current_lane_report(
             if (
                 current_run is not None
                 and report.report["request"] == request
-                and report.report["anchor"]["runId"]
-                == current_run.result["id"]
+                and report.report["anchor"]["runId"] == current_run.result["id"]
             ):
                 return None, report, current_run, []
         return (
@@ -674,9 +660,7 @@ def _current_lane_report(
 def _factor_dependency_hash(result: dict[str, Any]) -> str | None:
     dependencies = result.get("dependencies")
     source_hashes = (
-        dependencies.get("sourceHashes")
-        if isinstance(dependencies, dict)
-        else None
+        dependencies.get("sourceHashes") if isinstance(dependencies, dict) else None
     )
     if not isinstance(source_hashes, dict):
         return None
@@ -702,9 +686,7 @@ def _program_lane_admission(
     program: dict[str, Any],
     lane_id: str,
 ) -> dict[str, Any]:
-    gates = {
-        gate["id"]: gate for gate in program["progression"]["gates"]
-    }
+    gates = {gate["id"]: gate for gate in program["progression"]["gates"]}
     factor_gate = gates["factor-to-portfolio"]
     portfolio_gate = gates["portfolio-to-rl"]
     if lane_id == "factor":
@@ -761,8 +743,7 @@ def _readiness(
         inspect_lane = admission["admitted"]
         if not inspect_lane:
             inspect_lane = any(
-                item.study_id == lane["studyId"]
-                for item in list_sessions(project)
+                item.study_id == lane["studyId"] for item in list_sessions(project)
             )
         if request is not None and inspect_lane:
             session, report, leader_run, blockers = _current_lane_report(
@@ -799,7 +780,9 @@ def _readiness(
             "name": lane["name"],
             "role": lane["role"],
             "required": required,
-            "status": "ready" if not blockers else ("blocked" if required else "omitted"),
+            "status": "ready"
+            if not blockers
+            else ("blocked" if required else "omitted"),
             "admission": admission,
             "study": lane["study"],
             "session": (
@@ -812,9 +795,7 @@ def _readiness(
                 else None
             ),
             "report": (
-                _status_report_projection(report)
-                if report is not None
-                else None
+                _status_report_projection(report) if report is not None else None
             ),
             "leaderRun": (
                 {
@@ -826,15 +807,9 @@ def _readiness(
                         if isinstance(leader_run.result.get("dependencies"), dict)
                         else None
                     ),
-                    "factorDependencyHash": _factor_dependency_hash(
-                        leader_run.result
-                    ),
-                    "portfolioMandateId": _portfolio_mandate_id(
-                        leader_run.result
-                    ),
-                    "researchHorizonId": _research_horizon_id(
-                        leader_run.result
-                    ),
+                    "factorDependencyHash": _factor_dependency_hash(leader_run.result),
+                    "portfolioMandateId": _portfolio_mandate_id(leader_run.result),
+                    "researchHorizonId": _research_horizon_id(leader_run.result),
                     "datasetHash": leader_run.result["dataset"]["hash"],
                     "objective": leader_run.result["objective"],
                 }
@@ -855,8 +830,7 @@ def _readiness(
         and portfolio
         and factor["status"] == "ready"
         and portfolio["status"] == "ready"
-        and factor["leaderRun"]["sourceHash"]
-        != portfolio["leaderRun"]["sourceHash"]
+        and factor["leaderRun"]["sourceHash"] != portfolio["leaderRun"]["sourceHash"]
     ):
         mismatch = _blocker(
             "dossier.factor-source-mismatch",
@@ -869,8 +843,7 @@ def _readiness(
         and rl
         and factor["status"] == "ready"
         and rl["status"] == "ready"
-        and rl["leaderRun"]["factorDependencyHash"]
-        != factor["leaderRun"]["sourceHash"]
+        and rl["leaderRun"]["factorDependencyHash"] != factor["leaderRun"]["sourceHash"]
     ):
         rl["status"] = "omitted"
         rl["blockers"].append(
@@ -901,9 +874,7 @@ def _readiness(
         for lane in lane_states
         if lane["status"] == "ready" and lane["leaderRun"] is not None
     }
-    if ready_horizon_ids and (
-        len(ready_horizon_ids) != 1 or None in ready_horizon_ids
-    ):
+    if ready_horizon_ids and (len(ready_horizon_ids) != 1 or None in ready_horizon_ids):
         top_blockers.append(
             _blocker(
                 "dossier.research-horizon-mismatch",
@@ -956,9 +927,7 @@ def _readiness(
         )
         if first_blocked is not None:
             lane_program = next(
-                lane
-                for lane in program["lanes"]
-                if lane["id"] == first_blocked["id"]
+                lane for lane in program["lanes"] if lane["id"] == first_blocked["id"]
             )
             if (
                 first_blocked["session"] is None
@@ -1040,11 +1009,7 @@ def _readiness(
                 "universe": intake["dataset"]["universe"],
                 "timeRange": intake["dataset"]["timeRange"],
                 **(
-                    {
-                        "intervalSurface": intake["dataset"][
-                            "intervalSurface"
-                        ]
-                    }
+                    {"intervalSurface": intake["dataset"]["intervalSurface"]}
                     if "intervalSurface" in intake["dataset"]
                     else {}
                 ),
@@ -1056,9 +1021,7 @@ def _readiness(
         ),
         "program": {
             "id": program["manifest"]["id"],
-            "manifestHash": hash_file(
-                project.root_dir / RESEARCH_PROGRAM_MANIFEST
-            ),
+            "manifestHash": hash_file(project.root_dir / RESEARCH_PROGRAM_MANIFEST),
             "datasetHash": program["datasetHash"],
             "progression": program["progression"],
         },
@@ -1109,9 +1072,7 @@ def _publication_evidence(
         "datasetHash": intake["manifest"]["datasetHash"],
         "program": {
             "manifest": program["manifest"],
-            "manifestHash": hash_file(
-                project.root_dir / RESEARCH_PROGRAM_MANIFEST
-            ),
+            "manifestHash": hash_file(project.root_dir / RESEARCH_PROGRAM_MANIFEST),
             "datasetHash": program["datasetHash"],
         },
         "lanes": lanes,
@@ -1135,9 +1096,7 @@ def _resolve_analysis_evidence(
     ):
         for owner_index, owner in enumerate(owners):
             for ref_index, reference in enumerate(owner["evidenceRefs"]):
-                ref_path = (
-                    f"{path}/{owner_kind}/{owner_index}/evidenceRefs/{ref_index}"
-                )
+                ref_path = f"{path}/{owner_kind}/{owner_index}/evidenceRefs/{ref_index}"
                 lane = catalog.get(reference["laneId"])
                 if lane is None:
                     issues.append(
@@ -1159,8 +1118,7 @@ def _resolve_analysis_evidence(
                     continue
                 finding_id = reference["findingId"]
                 if finding_id is not None and finding_id not in {
-                    finding["id"]
-                    for finding in lane["report"]["analysis"]["findings"]
+                    finding["id"] for finding in lane["report"]["analysis"]["findings"]
                 }:
                     issues.append(
                         _issue(
@@ -1276,8 +1234,7 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
             f"primary `{request_horizon_policy['primaryForwardBars']}` "
             "decision bars; diagnostics "
             + ", ".join(
-                f"`{item}`"
-                for item in request_horizon_policy["diagnosticForwardBars"]
+                f"`{item}`" for item in request_horizon_policy["diagnosticForwardBars"]
             )
             + (
                 " bars (`caller-supplied`)"
@@ -1345,12 +1302,10 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
                     f"`{horizon['primaryForwardBars']}` decision bars",
                     "- Diagnostic forward targets: "
                     + ", ".join(
-                        f"`{item}`"
-                        for item in horizon["diagnosticForwardBars"]
+                        f"`{item}`" for item in horizon["diagnosticForwardBars"]
                     )
                     + " decision bars",
-                    f"- Policy source: "
-                    f"`{horizon['source']['horizonPolicy']}`",
+                    f"- Policy source: `{horizon['source']['horizonPolicy']}`",
                     "- Portfolio and RL retain sequential one-bar accounting; "
                     "this Horizon Mandate does not claim a forced holding "
                     "period or direct multi-bar execution.",
@@ -1378,9 +1333,7 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
             )
             named_caps = {
                 asset: value
-                for asset, value in construction[
-                    "assetMaxAbsWeights"
-                ].items()
+                for asset, value in construction["assetMaxAbsWeights"].items()
                 if asset in mandate["tradableAssets"]
                 and value != construction["maxAbsWeight"]
             }
@@ -1395,9 +1348,7 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
                     "- Asset position roles: "
                     + ", ".join(
                         f"`{asset}`=`{role}`"
-                        for asset, role in construction[
-                            "assetPositionRoles"
-                        ].items()
+                        for asset, role in construction["assetPositionRoles"].items()
                     ),
                     f"- Role source / long-side limit / short-side limit: "
                     f"`{mandate['source']['assetPositionRoles']}` / "
@@ -1405,9 +1356,7 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
                     f"`{construction['shortGrossLimit']}`",
                     "- Context-only assets: "
                     + (
-                        ", ".join(
-                            f"`{item}`" for item in mandate["contextAssets"]
-                        )
+                        ", ".join(f"`{item}`" for item in mandate["contextAssets"])
                         if mandate["contextAssets"]
                         else "none"
                     ),
@@ -1498,9 +1447,7 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
             lines.extend(
                 diversification_stress_markdown_lines(
                     support,
-                    heading=(
-                        "## Frozen portfolio diversification stress"
-                    ),
+                    heading=("## Frozen portfolio diversification stress"),
                     lane_name=lane["name"],
                 )
             )
@@ -1565,9 +1512,7 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
     if execution_risk_lanes:
         lines.extend(["## Executed-book risk compliance", ""])
         for lane in execution_risk_lanes:
-            validation = lane["leaderRun"]["metrics"][
-                "execution_risk"
-            ]["validation"]
+            validation = lane["leaderRun"]["metrics"]["execution_risk"]["validation"]
             lines.extend(
                 [
                     f"- {lane['name']}: validation forecast coverage / "
@@ -1638,9 +1583,9 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
     if opportunity_lanes:
         lines.extend(["## RL one-step factor opportunity", ""])
         for lane in opportunity_lanes:
-            opportunity = lane["leaderRun"]["metrics"][
-                "factor_opportunity"
-            ]["validation"]
+            opportunity = lane["leaderRun"]["metrics"]["factor_opportunity"][
+                "validation"
+            ]
             candidate = opportunity["candidate"]
             oracle_mix = sorted(
                 opportunity["by_action"].items(),
@@ -1682,18 +1627,14 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
         lane
         for lane in evidence["lanes"]
         if isinstance(
-            lane["leaderRun"]["metrics"].get(
-                "parameter_neighborhood"
-            ),
+            lane["leaderRun"]["metrics"].get("parameter_neighborhood"),
             dict,
         )
     ]
     if neighborhood_lanes:
         lines.extend(["## Mechanical parameter neighborhood", ""])
         for lane in neighborhood_lanes:
-            neighborhood = lane["leaderRun"]["metrics"][
-                "parameter_neighborhood"
-            ]
+            neighborhood = lane["leaderRun"]["metrics"]["parameter_neighborhood"]
             validation = neighborhood["validation"]["aggregate"]
             lines.extend(
                 [
@@ -1725,9 +1666,9 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
     if lifecycle_lanes:
         lines.extend(["## Mechanical position lifecycle", ""])
         for lane in lifecycle_lanes:
-            validation = lane["leaderRun"]["metrics"][
-                "position_lifecycle"
-            ]["validation"]
+            validation = lane["leaderRun"]["metrics"]["position_lifecycle"][
+                "validation"
+            ]
             lines.extend(
                 [
                     f"- {lane['name']}: validation complete episodes / win "
@@ -1763,8 +1704,7 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
                 f"Harness: `{lane['report']['harness']['id']}@"
                 f"{lane['report']['harness']['version']}`.",
                 "",
-                f"Selection warning: "
-                f"{integrity['warning']}",
+                f"Selection warning: {integrity['warning']}",
                 *(
                     [
                         f"Test exposure: "
@@ -1803,8 +1743,7 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
                         else "."
                     ),
                     "",
-                    f"Selection interpretation: "
-                    f"{adjustment['interpretation']}",
+                    f"Selection interpretation: {adjustment['interpretation']}",
                     "",
                 ]
             )
@@ -1819,8 +1758,7 @@ def _render_markdown(dossier: dict[str, Any]) -> str:
                 "",
                 finding["claim"],
                 "",
-                f"Confidence: **{finding['confidence']}**. Evidence: "
-                f"{references}.",
+                f"Confidence: **{finding['confidence']}**. Evidence: {references}.",
                 "",
             ]
         )
@@ -2102,9 +2040,8 @@ def _validate_dossier_result(
         except AutoQuantValidationError as error:
             issues.extend(error.issues)
     evidence = dossier.get("evidence")
-    if (
-        not isinstance(evidence, dict)
-        or hash_json(evidence) != dossier.get("evidenceHash")
+    if not isinstance(evidence, dict) or hash_json(evidence) != dossier.get(
+        "evidenceHash"
     ):
         issues.append(
             _issue(
@@ -2246,15 +2183,16 @@ def _verify_frozen_evidence(
             continue
         if anchor.get("kind") == "run" and anchor.get("sessionId") is None:
             report = load_run_report(project, report_id)
-        elif (
-            anchor.get("kind") == "session"
-            and isinstance(anchor.get("sessionId"), str)
+        elif anchor.get("kind") == "session" and isinstance(
+            anchor.get("sessionId"), str
         ):
             session = load_session(project, anchor["sessionId"])
             report = load_report(project, session, report_id)
         else:
             issues.append(
-                _issue(path, "dossier.report-anchor", "Invalid frozen lane Report anchor")
+                _issue(
+                    path, "dossier.report-anchor", "Invalid frozen lane Report anchor"
+                )
             )
             continue
         expected_report = _report_projection(report)
@@ -2383,7 +2321,9 @@ def load_dossier(
     files = manifest.get("files")
     actual = _dossier_files(root)
     if not isinstance(files, dict) or files != actual:
-        issues.append(_issue(root, "dossier.tampered", "Research Dossier files changed"))
+        issues.append(
+            _issue(root, "dossier.tampered", "Research Dossier files changed")
+        )
     if isinstance(files, dict) and files.get(DOSSIER_RESULT) != manifest.get(
         "dossierHash"
     ):
@@ -2429,7 +2369,13 @@ def list_dossiers(project: ProjectContext) -> list[DossierSummary]:
             continue
         if entry.is_symlink() or not entry.is_dir():
             raise AutoQuantValidationError(
-                [_issue(entry, "dossier.entry", "Dossier entries must be real directories")]
+                [
+                    _issue(
+                        entry,
+                        "dossier.entry",
+                        "Dossier entries must be real directories",
+                    )
+                ]
             )
         dossier = load_dossier(project, entry.name)
         summaries.append(
@@ -2442,9 +2388,7 @@ def list_dossiers(project: ProjectContext) -> list[DossierSummary]:
                 ],
                 omitted_optional_lanes=[
                     lane["id"]
-                    for lane in dossier.dossier["evidence"][
-                        "omittedOptionalLanes"
-                    ]
+                    for lane in dossier.dossier["evidence"]["omittedOptionalLanes"]
                 ],
                 findings=len(dossier.analysis["findings"]),
                 recommendations=len(dossier.analysis["recommendations"]),

@@ -81,11 +81,7 @@ def _move(
 
 def _authority(*, has_run: bool) -> dict[str, Any]:
     return {
-        "source": (
-            "verified-immutable-run"
-            if has_run
-            else "none"
-        ),
+        "source": ("verified-immutable-run" if has_run else "none"),
         "prioritization": "diagnostic-only",
         "selectionSplit": "validation",
         "testRole": "visible-audit-only",
@@ -116,11 +112,7 @@ def _agenda(
         "run": run,
         "diagnosis": diagnosis,
         "moves": bounded,
-        "moveRole": (
-            "current-research-guidance"
-            if bounded
-            else "unavailable"
-        ),
+        "moveRole": ("current-research-guidance" if bounded else "unavailable"),
         "authority": _authority(has_run=run is not None),
     }
 
@@ -539,32 +531,25 @@ def factor_research_agenda(
 
     moves: list[dict[str, Any]] = []
     components = diagnostics["factorComponents"]
-    temporal_components = (
-        components.get("evaluationMode")
-        in {"single-asset-temporal", "two-asset-relative-value"}
-    )
+    temporal_components = components.get("evaluationMode") in {
+        "single-asset-temporal",
+        "two-asset-relative-value",
+    }
     component_measure_label = (
-        "temporal rank contribution"
-        if temporal_components
-        else "rank IC"
+        "temporal rank contribution" if temporal_components else "rank IC"
     )
     component_measure_unit = (
-        "rank-correlation-contribution"
-        if temporal_components
-        else "rank-ic"
+        "rank-correlation-contribution" if temporal_components else "rank-ic"
     )
     component_diagnosis = (
-        components["validationDiagnosis"]
-        if components["available"]
-        else None
+        components["validationDiagnosis"] if components["available"] else None
     )
     stage = diagnosis["stage"]
 
     if component_diagnosis is not None:
         preferred_id = (
             component_diagnosis["strongestRawComponent"]
-            if stage
-            in {"raw-predictive-edge-absent", "raw-statistical-evidence-weak"}
+            if stage in {"raw-predictive-edge-absent", "raw-statistical-evidence-weak"}
             else component_diagnosis["strongestResidualComponent"]
         )
         preferred = _component_by_id(components, preferred_id)
@@ -580,8 +565,7 @@ def factor_research_agenda(
             >= 0.999
         )
         if preferred is not None and not (
-            stage == "raw-statistical-evidence-weak"
-            and preferred_is_final
+            stage == "raw-statistical-evidence-weak" and preferred_is_final
         ):
             use_residual = (
                 stage
@@ -592,11 +576,9 @@ def factor_research_agenda(
                 and preferred["validation"]["nearestPeerResidual"] is not None
             )
             evidence_path = (
-                "/factorComponents/validationDiagnosis/"
-                "strongestResidualMeanIc"
+                "/factorComponents/validationDiagnosis/strongestResidualMeanIc"
                 if use_residual
-                else "/factorComponents/validationDiagnosis/"
-                "strongestRawMeanIc"
+                else "/factorComponents/validationDiagnosis/strongestRawMeanIc"
             )
             evidence_value = (
                 component_diagnosis["strongestResidualMeanIc"]
@@ -650,9 +632,7 @@ def factor_research_agenda(
                 )
             )
 
-        removal_id = component_diagnosis[
-            "removalMostImprovesFixedBlend"
-        ]
+        removal_id = component_diagnosis["removalMostImprovesFixedBlend"]
         removal_delta = component_diagnosis["bestRemovalDeltaMeanIc"]
         removal = _component_by_id(components, removal_id)
         if (
@@ -710,18 +690,14 @@ def factor_research_agenda(
                 "style-neutral-statistical-evidence-weak",
                 "blend-uplift-absent",
             }
-            and
-            redundant is not None
+            and redundant is not None
             and redundant["trainMeanAbsoluteRankAssociation"] >= 0.8
         ):
             moves.append(
                 _move(
                     priority=len(moves) + 1,
                     move_id="factor-orthogonalize-redundant-components",
-                    title=(
-                        f"Separate {redundant['left']} from "
-                        f"{redundant['right']}"
-                    ),
+                    title=(f"Separate {redundant['left']} from {redundant['right']}"),
                     hypothesis=(
                         "One predeclared causal residual representation or one "
                         "representative component improves validation "
@@ -740,9 +716,7 @@ def factor_research_agenda(
                             "mostRedundantPair/"
                             "trainMeanAbsoluteRankAssociation",
                             "Train mean absolute rank association",
-                            redundant[
-                                "trainMeanAbsoluteRankAssociation"
-                            ],
+                            redundant["trainMeanAbsoluteRankAssociation"],
                             "rank-association",
                             role="train-context",
                         )
@@ -769,7 +743,9 @@ def factor_research_agenda(
             "primaryForwardBars",
             1,
         )
-        context_candidates: list[tuple[float, int, dict[str, Any], dict[str, float]]] = []
+        context_candidates: list[
+            tuple[float, int, dict[str, Any], dict[str, float]]
+        ] = []
         for index, component in enumerate(components["components"]):
             if component.get("role") != "timestamp-context":
                 continue
@@ -797,9 +773,7 @@ def factor_research_agenda(
             if len(state_ics) < 2:
                 continue
             gap = max(state_ics.values()) - min(state_ics.values())
-            context_candidates.append(
-                (float(gap), index, component, state_ics)
-            )
+            context_candidates.append((float(gap), index, component, state_ics))
         if (
             stage
             in {
@@ -821,58 +795,57 @@ def factor_research_agenda(
                     else "conditional factor-IC range"
                 )
                 context_move = _move(
-                        priority=min(
-                            len(moves) + 1,
-                            MAX_RESEARCH_MOVES,
-                        ),
-                        move_id="factor-test-context-interaction",
-                        title=(
-                            "Test one fixed interaction with "
-                            f"{context_component['label']}"
-                        ),
-                        hypothesis=(
-                            f"The complete candidate preserves more next-bar "
-                            f"rank information in `{strongest_state}` than "
-                            f"`{weakest_state}` "
-                            f"{context_component['id']} states, and one "
-                            "predeclared causal interaction improves the "
-                            "unchanged validation objective."
-                        ),
-                        rationale=(
-                            "Train-only tertiles fix the context states and "
-                            "validation shows the largest declared conditional "
-                            f"{conditional_label} ({gap:+.4f}). This is a regime "
-                            "hypothesis, not a standalone predictive score or "
-                            "permission to tune state thresholds."
-                        ),
-                        editable_paths=editable_paths,
-                        components=[context_component["id"]],
-                        evidence_refs=[
-                            _evidence(
-                                f"/factorComponents/components/{index}/"
-                                "validation/context/"
-                                "conditionalFactorHorizonProfile",
-                                f"Validation {conditional_label}",
-                                gap,
-                                (
-                                    "rank-correlation-contribution-range"
-                                    if temporal_components
-                                    else "rank-ic-range"
-                                ),
-                            )
-                        ],
-                        objective_metric="validation_mean_ic",
-                        required_checks=[
-                            "Predeclare one causal interaction using the existing context value.",
-                            "Keep the fixed train-tertile thresholds unchanged.",
-                            "Judge the complete final factor on the unchanged validation objective.",
-                        ],
-                        stop_conditions=[
-                            "Stop if context varies across assets at one timestamp.",
-                            "Stop if the apparent range is supported by fewer than two finite states.",
-                            "Do not choose or tune the interaction from visible test-audit evidence.",
-                        ],
-                    )
+                    priority=min(
+                        len(moves) + 1,
+                        MAX_RESEARCH_MOVES,
+                    ),
+                    move_id="factor-test-context-interaction",
+                    title=(
+                        f"Test one fixed interaction with {context_component['label']}"
+                    ),
+                    hypothesis=(
+                        f"The complete candidate preserves more next-bar "
+                        f"rank information in `{strongest_state}` than "
+                        f"`{weakest_state}` "
+                        f"{context_component['id']} states, and one "
+                        "predeclared causal interaction improves the "
+                        "unchanged validation objective."
+                    ),
+                    rationale=(
+                        "Train-only tertiles fix the context states and "
+                        "validation shows the largest declared conditional "
+                        f"{conditional_label} ({gap:+.4f}). This is a regime "
+                        "hypothesis, not a standalone predictive score or "
+                        "permission to tune state thresholds."
+                    ),
+                    editable_paths=editable_paths,
+                    components=[context_component["id"]],
+                    evidence_refs=[
+                        _evidence(
+                            f"/factorComponents/components/{index}/"
+                            "validation/context/"
+                            "conditionalFactorHorizonProfile",
+                            f"Validation {conditional_label}",
+                            gap,
+                            (
+                                "rank-correlation-contribution-range"
+                                if temporal_components
+                                else "rank-ic-range"
+                            ),
+                        )
+                    ],
+                    objective_metric="validation_mean_ic",
+                    required_checks=[
+                        "Predeclare one causal interaction using the existing context value.",
+                        "Keep the fixed train-tertile thresholds unchanged.",
+                        "Judge the complete final factor on the unchanged validation objective.",
+                    ],
+                    stop_conditions=[
+                        "Stop if context varies across assets at one timestamp.",
+                        "Stop if the apparent range is supported by fewer than two finite states.",
+                        "Do not choose or tune the interaction from visible test-audit evidence.",
+                    ],
+                )
                 if len(moves) >= MAX_RESEARCH_MOVES:
                     moves[-1] = context_move
                 else:
@@ -1019,8 +992,7 @@ def portfolio_research_agenda(
     )
     if (
         isinstance(translation_diagnosis, dict)
-        and translation_diagnosis.get("status")
-        == "translation-sensitive-target-path"
+        and translation_diagnosis.get("status") == "translation-sensitive-target-path"
     ):
         move = _move(
             priority=1,
@@ -1041,21 +1013,15 @@ def portfolio_research_agenda(
             components=[],
             evidence_refs=[
                 _evidence(
-                    "/translationRobustness/diagnosis/"
-                    "minimumActiveStateAgreementRate",
+                    "/translationRobustness/diagnosis/minimumActiveStateAgreementRate",
                     "Minimum active-state agreement across fixed windows",
-                    translation_diagnosis[
-                        "minimumActiveStateAgreementRate"
-                    ],
+                    translation_diagnosis["minimumActiveStateAgreementRate"],
                     "rate",
                 ),
                 _evidence(
-                    "/translationRobustness/diagnosis/"
-                    "maximumMeanAbsoluteTargetDelta",
+                    "/translationRobustness/diagnosis/maximumMeanAbsoluteTargetDelta",
                     "Maximum mean absolute target-weight delta",
-                    translation_diagnosis[
-                        "maximumMeanAbsoluteTargetDelta"
-                    ],
+                    translation_diagnosis["maximumMeanAbsoluteTargetDelta"],
                     "weight",
                 ),
             ],
@@ -1204,12 +1170,9 @@ def portfolio_research_agenda(
                 "sharpe",
             ),
             _evidence(
-                "/signalMonetization/diagnosis/"
-                "largestAdverseAnnualizedDelta",
+                "/signalMonetization/diagnosis/largestAdverseAnnualizedDelta",
                 "Largest adverse annualized transmission delta",
-                monetization_diagnosis[
-                    "largestAdverseAnnualizedDelta"
-                ],
+                monetization_diagnosis["largestAdverseAnnualizedDelta"],
                 "annualized-return-delta",
             ),
         ],
@@ -1268,9 +1231,7 @@ def _rl_external_move(
                 "/factorFusionDiagnosis/validation/adaptiveTransmission/"
                 "meanSharpeAdvantageVsSelectedBaseline",
                 "Validation mean Sharpe advantage",
-                transmission[
-                    "meanSharpeAdvantageVsSelectedBaseline"
-                ],
+                transmission["meanSharpeAdvantageVsSelectedBaseline"],
                 "sharpe-delta",
             ),
         ],
@@ -1404,14 +1365,11 @@ def rl_research_agenda(
                 "/factorFusionDiagnosis/validation/adaptiveTransmission/"
                 "meanSharpeAdvantageVsSelectedBaseline",
                 "Validation mean Sharpe advantage",
-                transmission[
-                    "meanSharpeAdvantageVsSelectedBaseline"
-                ],
+                transmission["meanSharpeAdvantageVsSelectedBaseline"],
                 "sharpe-delta",
             ),
             _evidence(
-                "/factorFusionDiagnosis/validation/stability/"
-                "positiveNetTrialRate",
+                "/factorFusionDiagnosis/validation/stability/positiveNetTrialRate",
                 "Validation positive-net trial rate",
                 stability["positiveNetTrialRate"],
                 "fraction",
@@ -1472,10 +1430,7 @@ def build_research_agenda(
             run=run_projection,
             diagnosis=None,
             moves=[],
-            reason=(
-                f"Objective metric {metric} has no evidence-driven agenda "
-                "recipe."
-            ),
+            reason=(f"Objective metric {metric} has no evidence-driven agenda recipe."),
         )
     if lane_id is not None and lane_id != canonical_lane:
         return _agenda(
@@ -1485,8 +1440,7 @@ def build_research_agenda(
             diagnosis=None,
             moves=[],
             reason=(
-                f"Focus lane {lane_id} does not match verified objective "
-                f"{metric}."
+                f"Focus lane {lane_id} does not match verified objective {metric}."
             ),
         )
     if canonical_lane == "factor":
@@ -1679,15 +1633,9 @@ RESEARCH_AGENDA_JSON_SCHEMA: dict[str, Any] = {
                 "tradingAuthority",
             ],
             "properties": {
-                "source": {
-                    "enum": ["verified-immutable-run", "none"]
-                },
-                "prioritization": {
-                    "enum": ["diagnostic-only", "none"]
-                },
-                "selectionSplit": {
-                    "enum": ["validation", "none"]
-                },
+                "source": {"enum": ["verified-immutable-run", "none"]},
+                "prioritization": {"enum": ["diagnostic-only", "none"]},
+                "selectionSplit": {"enum": ["validation", "none"]},
                 "testRole": {
                     "enum": [
                         "visible-audit-only",
@@ -1704,9 +1652,7 @@ RESEARCH_AGENDA_JSON_SCHEMA: dict[str, Any] = {
     "allOf": [
         {
             "if": {
-                "properties": {
-                    "status": {"const": "descriptive-audit-complete"}
-                },
+                "properties": {"status": {"const": "descriptive-audit-complete"}},
                 "required": ["status"],
             },
             "then": {
@@ -1717,14 +1663,10 @@ RESEARCH_AGENDA_JSON_SCHEMA: dict[str, Any] = {
                     "moveRole": {"const": "unavailable"},
                     "authority": {
                         "properties": {
-                            "source": {
-                                "const": "verified-immutable-run"
-                            },
+                            "source": {"const": "verified-immutable-run"},
                             "prioritization": {"const": "none"},
                             "selectionSplit": {"const": "none"},
-                            "testRole": {
-                                "const": "lookback-and-rolling-context"
-                            },
+                            "testRole": {"const": "lookback-and-rolling-context"},
                         }
                     },
                 }

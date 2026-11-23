@@ -28,9 +28,7 @@ RESEARCH_PROGRAM_KIND = "autoquant-research-program"
 RESEARCH_PROGRAM_STATUS_KIND = "autoquant-research-program-status"
 RESEARCH_PROGRAM_ID = "factor-portfolio-rl"
 RESEARCH_DESK_TEMPLATE = "ohlcv-research-desk"
-RESEARCH_PROGRESSION_METHOD = (
-    "report-bound-factor-portfolio-rl-admission-v1"
-)
+RESEARCH_PROGRESSION_METHOD = "report-bound-factor-portfolio-rl-admission-v1"
 FACTOR_CLAIM_POSITIVE = "factor-claim-positive"
 PORTFOLIO_VIABILITY_POSITIVE = "post-cost-edge-positive"
 CANONICAL_LANES: tuple[dict[str, Any], ...] = (
@@ -84,9 +82,7 @@ INTEGRATION = {
     "factorToPortfolio": "shared-candidate-source",
     "rlFactorDependency": "content-locked-candidate-source",
     "portfolioMandate": "request-bound-shared-fixed-dependency",
-    "factorPredictionUniverse": (
-        "caller-owned-factor-population-fixed-dependency"
-    ),
+    "factorPredictionUniverse": ("caller-owned-factor-population-fixed-dependency"),
     "researchHorizon": "request-bound-shared-fixed-dependency",
     "factorClaim": "request-bound-factor-evaluation-authority",
     "tradingAuthority": "none",
@@ -180,9 +176,7 @@ def _validate_manifest(value: dict[str, Any], path: Path) -> dict[str, Any]:
     }
     issues = _strict_keys(value, required, path)
     if value.get("schemaVersion") != SCHEMA_VERSION:
-        issues.append(
-            _issue(f"{path}/schemaVersion", "schema.version", "Expected V1")
-        )
+        issues.append(_issue(f"{path}/schemaVersion", "schema.version", "Expected V1"))
     if value.get("kind") != RESEARCH_PROGRAM_KIND:
         issues.append(
             _issue(
@@ -301,11 +295,7 @@ def _factor_to_portfolio_gate(
     lane: dict[str, Any],
 ) -> dict[str, Any]:
     run = lane["latestRun"]
-    if (
-        lane.get("currentAttempt")
-        and run is not None
-        and run["status"] == "failed"
-    ):
+    if lane.get("currentAttempt") and run is not None and run["status"] == "failed":
         scientific_limit = run["failureDisposition"] == "scientific-limit"
         return _gate(
             gate_id="factor-to-portfolio",
@@ -407,9 +397,7 @@ def _factor_to_portfolio_gate(
                 "waits for an immutable Report freezing this exact leader Run."
             ),
         )
-    adjustment = report["selectionIntegrity"].get(
-        "selectionAdjustment"
-    )
+    adjustment = report["selectionIntegrity"].get("selectionAdjustment")
     if (
         not isinstance(adjustment, dict)
         or adjustment.get("status") != "available"
@@ -471,11 +459,7 @@ def _portfolio_to_rl_gate(
                 "evidence and Report gate passes."
             ),
         )
-    if (
-        lane.get("currentAttempt")
-        and run is not None
-        and run["status"] == "failed"
-    ):
+    if lane.get("currentAttempt") and run is not None and run["status"] == "failed":
         scientific_limit = run["failureDisposition"] == "scientific-limit"
         return _gate(
             gate_id="portfolio-to-rl",
@@ -601,10 +585,7 @@ def _research_progression(
     elif (
         rl_lane["latestSession"] is not None
         and rl_lane["latestSession"]["status"] == "active"
-    ) or (
-        rl_lane["currentRun"]
-        and not bool(_current_report(rl_lane))
-    ):
+    ) or (rl_lane["currentRun"] and not bool(_current_report(rl_lane))):
         stage = "optional-rl-in-progress"
         focus_lane_id = "rl"
         explanation = (
@@ -697,26 +678,20 @@ def _lane_state(
     if latest_run is None:
         latest_run = latest_attempt
     sessions = [
-        item
-        for item in list_sessions(project)
-        if item.study_id == lane["studyId"]
+        item for item in list_sessions(project) if item.study_id == lane["studyId"]
     ]
     latest_session = sessions[-1] if sessions else None
     reports: list[dict[str, Any]] = []
     if latest_session is not None:
         session = load_session(project, latest_session.id)
-        reports.extend(
-            item.to_dict() for item in list_reports(project, session)
-        )
+        reports.extend(item.to_dict() for item in list_reports(project, session))
     else:
         reports.extend(
-            item.to_dict()
-            for item in list_run_reports(project, lane["studyId"])
+            item.to_dict() for item in list_run_reports(project, lane["studyId"])
         )
     reports.sort(key=lambda item: (item["publishedAt"], item["id"]))
     current_attempt = (
-        latest_run is not None
-        and latest_run["studyInputHash"] == study.input_hash
+        latest_run is not None and latest_run["studyInputHash"] == study.input_hash
     )
     current_run = current_attempt and latest_run["status"] == "succeeded"
     current_report = _current_report(
@@ -915,10 +890,8 @@ def _lane_state(
             )
             if (
                 latest_session.status == "active"
-                and latest_session.baseline_run_id
-                == latest_session.leader_run_id
-                and reports[-1]["leaderRunId"]
-                == latest_session.leader_run_id
+                and latest_session.baseline_run_id == latest_session.leader_run_id
+                and reports[-1]["leaderRunId"] == latest_session.leader_run_id
             ):
                 commands.append(
                     _command(
@@ -956,9 +929,7 @@ def _lane_state(
             "objective": {
                 "metric": study.definition.objective.metric,
                 "direction": study.definition.objective.direction,
-                "minimumImprovement": (
-                    study.definition.objective.minimum_improvement
-                ),
+                "minimumImprovement": (study.definition.objective.minimum_improvement),
             },
             "dataset": {
                 "id": study.definition.dataset.id,
@@ -994,19 +965,14 @@ def load_research_program(
         return None
     manifest = _validate_manifest(_read_object(path), path)
     intake = load_project_intake(project)
-    request_path = (
-        project.root_dir / PROJECT_REQUEST
-        if intake is not None
-        else None
-    )
+    request_path = project.root_dir / PROJECT_REQUEST if intake is not None else None
     lanes = [
         _lane_state(project, lane, request_path=request_path)
         for lane in manifest["lanes"]
     ]
     dataset_hashes = {lane["study"]["datasetHash"] for lane in lanes}
     dataset_contracts = {
-        json.dumps(lane["study"]["dataset"], sort_keys=True)
-        for lane in lanes
+        json.dumps(lane["study"]["dataset"], sort_keys=True) for lane in lanes
     }
     if len(dataset_hashes) != 1 or len(dataset_contracts) != 1:
         _fail(
@@ -1079,9 +1045,7 @@ def load_research_program(
         for reader in active_lanes:
             if writer["id"] == reader["id"]:
                 continue
-            shared = writer_files & set(
-                reader["study"]["dependencySourceHashes"]
-            )
+            shared = writer_files & set(reader["study"]["dependencySourceHashes"])
             for relative in shared:
                 sessions = reader_conflicts.setdefault(relative, {})
                 sessions[writer_session["id"]] = {
@@ -1112,10 +1076,7 @@ def load_research_program(
         (
             lane
             for lane in lanes
-            if any(
-                command["id"] == "session.complete"
-                for command in lane["commands"]
-            )
+            if any(command["id"] == "session.complete" for command in lane["commands"])
         ),
         None,
     )
@@ -1322,12 +1283,8 @@ RESEARCH_PROGRAM_STATUS_JSON_SCHEMA: dict[str, Any] = {
                                     "portfolio-to-rl",
                                 ]
                             },
-                            "upstreamLaneId": {
-                                "enum": ["factor", "portfolio"]
-                            },
-                            "downstreamLaneId": {
-                                "enum": ["portfolio", "rl"]
-                            },
+                            "upstreamLaneId": {"enum": ["factor", "portfolio"]},
+                            "downstreamLaneId": {"enum": ["portfolio", "rl"]},
                             "requiredStage": {"type": "string"},
                             "status": {
                                 "enum": [
@@ -1344,9 +1301,7 @@ RESEARCH_PROGRAM_STATUS_JSON_SCHEMA: dict[str, Any] = {
                             },
                             "runId": {"type": ["string", "null"]},
                             "reportId": {"type": ["string", "null"]},
-                            "diagnosisStage": {
-                                "type": ["string", "null"]
-                            },
+                            "diagnosisStage": {"type": ["string", "null"]},
                             "iterationFocus": {
                                 "type": "string",
                                 "minLength": 1,
@@ -1357,9 +1312,7 @@ RESEARCH_PROGRAM_STATUS_JSON_SCHEMA: dict[str, Any] = {
                             },
                             "selectionSplit": {"const": "validation"},
                             "testEntersGate": {"const": False},
-                            "authority": {
-                                "const": "research-prioritization-only"
-                            },
+                            "authority": {"const": "research-prioritization-only"},
                             "tradingAuthority": {"const": "none"},
                         },
                     },

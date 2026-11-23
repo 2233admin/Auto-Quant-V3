@@ -50,7 +50,9 @@ def count_evaluated(results_dir: Path) -> int:
     """Programs actually evaluated, excluding administrative island copies."""
     if not (Path(results_dir) / DB_FILENAME).exists():
         return 0
-    ((n,),) = _query(results_dir, f"SELECT COUNT(*) FROM programs WHERE {_cost().NOT_COPY}")
+    ((n,),) = _query(
+        results_dir, f"SELECT COUNT(*) FROM programs WHERE {_cost().NOT_COPY}"
+    )
     return int(n)
 
 

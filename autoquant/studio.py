@@ -284,8 +284,7 @@ def resolve_studio_launch(
                 _issue(
                     HARNESS_PORTS,
                     "studio.managed-port-names",
-                    "Managed Studio ports must match the manifest exactly: "
-                    f"{declared}",
+                    f"Managed Studio ports must match the manifest exactly: {declared}",
                 )
             ]
         )
@@ -326,10 +325,7 @@ def resolve_studio_launch(
     return StudioLaunch(
         host=injected_host,
         port=injected_port,
-        open_browser=(
-            not no_open
-            and environment.get(HARNESS_NO_OPEN) != "1"
-        ),
+        open_browser=(not no_open and environment.get(HARNESS_NO_OPEN) != "1"),
         managed=True,
     )
 
@@ -429,7 +425,9 @@ def _workspace_projects(
 def _resolve_source(
     directory: str | Path,
     selected_project: str | None,
-) -> tuple[str, Path, dict[str, Any] | None, list[ProjectContext], list[dict[str, str]]]:
+) -> tuple[
+    str, Path, dict[str, Any] | None, list[ProjectContext], list[dict[str, str]]
+]:
     raw = Path(directory).expanduser().absolute()
     if raw.is_symlink():
         raise AutoQuantValidationError(
@@ -602,57 +600,47 @@ def _portfolio_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
             "kind": "portfolio",
             "researchHorizon": metrics.get("research_horizon"),
             "decisionCadence": (
-                metrics["portfolio_mandate"]["implementationPolicy"][
-                    "decisionPolicy"
-                ]
+                metrics["portfolio_mandate"]["implementationPolicy"]["decisionPolicy"]
                 if isinstance(metrics.get("portfolio_mandate"), dict)
                 else None
             ),
             "mandate": (
                 {
                     "id": metrics["portfolio_mandate"]["id"],
-                    "direction": metrics["portfolio_mandate"]["source"][
-                        "direction"
+                    "direction": metrics["portfolio_mandate"]["source"]["direction"],
+                    "family": metrics["portfolio_mandate"]["construction"]["family"],
+                    "grossLimit": metrics["portfolio_mandate"]["construction"][
+                        "grossLimit"
                     ],
-                    "family": metrics["portfolio_mandate"]["construction"][
-                        "family"
+                    "maxAbsWeight": metrics["portfolio_mandate"]["construction"][
+                        "maxAbsWeight"
                     ],
-                    "grossLimit": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["grossLimit"],
-                    "maxAbsWeight": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["maxAbsWeight"],
-                    "assetMaxAbsWeights": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["assetMaxAbsWeights"],
-                    "assetPositionRoles": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["assetPositionRoles"],
-                    "positionRolesSource": metrics["portfolio_mandate"][
-                        "source"
-                    ]["assetPositionRoles"],
-                    "longGrossLimit": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["longGrossLimit"],
-                    "shortGrossLimit": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["shortGrossLimit"],
-                    "benchmark": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["benchmark"],
+                    "assetMaxAbsWeights": metrics["portfolio_mandate"]["construction"][
+                        "assetMaxAbsWeights"
+                    ],
+                    "assetPositionRoles": metrics["portfolio_mandate"]["construction"][
+                        "assetPositionRoles"
+                    ],
+                    "positionRolesSource": metrics["portfolio_mandate"]["source"][
+                        "assetPositionRoles"
+                    ],
+                    "longGrossLimit": metrics["portfolio_mandate"]["construction"][
+                        "longGrossLimit"
+                    ],
+                    "shortGrossLimit": metrics["portfolio_mandate"]["construction"][
+                        "shortGrossLimit"
+                    ],
+                    "benchmark": metrics["portfolio_mandate"]["construction"][
+                        "benchmark"
+                    ],
                     "policySource": metrics["portfolio_mandate"]["source"][
                         "portfolioPolicy"
                     ],
-                    "tradableAssets": metrics["portfolio_mandate"][
-                        "tradableAssets"
+                    "tradableAssets": metrics["portfolio_mandate"]["tradableAssets"],
+                    "contextAssets": metrics["portfolio_mandate"]["contextAssets"],
+                    "riskPolicy": metrics["portfolio_mandate"]["construction"][
+                        "riskPolicy"
                     ],
-                    "contextAssets": metrics["portfolio_mandate"][
-                        "contextAssets"
-                    ],
-                    "riskPolicy": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["riskPolicy"],
                     "implementationPolicy": metrics["portfolio_mandate"][
                         "implementationPolicy"
                     ],
@@ -681,23 +669,19 @@ def _portfolio_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
                 "testAnnualizedTurnover": metrics["implementation"]["test"][
                     "annualized_one_way_turnover"
                 ],
-                "testCostDrag": metrics["implementation"]["test"][
-                    "total_cost_drag"
-                ],
+                "testCostDrag": metrics["implementation"]["test"]["total_cost_drag"],
                 "testMaximumParticipation": metrics["implementation"]["test"][
                     "maximum_volume_participation"
                 ],
             },
             "robustness": {
-                "testAdverseCostSharpe": cost_stress[adverse_cost_key][
-                    "test"
-                ]["sharpe"],
-                "adverseCostBps": float(
-                    adverse_cost_key.removesuffix("bps")
-                ),
-                "testExtraDelaySharpe": metrics["robustness"]["extra_delay"][
-                    "test"
-                ]["sharpe"],
+                "testAdverseCostSharpe": cost_stress[adverse_cost_key]["test"][
+                    "sharpe"
+                ],
+                "adverseCostBps": float(adverse_cost_key.removesuffix("bps")),
+                "testExtraDelaySharpe": metrics["robustness"]["extra_delay"]["test"][
+                    "sharpe"
+                ],
             },
             "constraintsPassed": metrics["constraint_audit"]["passed"],
         }
@@ -746,13 +730,9 @@ def _portfolio_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
                     {},
                 )
                 layers["attribution"] = {
-                    "validationReconciliationPassed": reconciliation.get(
-                        "passed"
-                    ),
+                    "validationReconciliationPassed": reconciliation.get("passed"),
                     "validationMaximumAbsoluteNetContributionShare": (
-                        concentration.get(
-                            "maximum_absolute_net_contribution_share"
-                        )
+                        concentration.get("maximum_absolute_net_contribution_share")
                     ),
                     "validationAbsoluteNetContributionHhi": concentration.get(
                         "absolute_net_contribution_hhi"
@@ -795,24 +775,16 @@ def _portfolio_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
             if isinstance(validation_execution_risk, dict):
                 layers["executedBookRisk"] = {
                     "validationForecastCoverage": (
-                        validation_execution_risk.get(
-                            "forecast_coverage"
-                        )
+                        validation_execution_risk.get("forecast_coverage")
                     ),
                     "validationPretradeBreachDates": (
-                        validation_execution_risk.get(
-                            "pretrade_breach_dates"
-                        )
+                        validation_execution_risk.get("pretrade_breach_dates")
                     ),
                     "validationRiskRebalanceOverrideDates": (
-                        validation_execution_risk.get(
-                            "risk_rebalance_override_dates"
-                        )
+                        validation_execution_risk.get("risk_rebalance_override_dates")
                     ),
                     "validationExecutedBreachDates": (
-                        validation_execution_risk.get(
-                            "executed_breach_dates"
-                        )
+                        validation_execution_risk.get("executed_breach_dates")
                     ),
                     "validationMaximumExecutedForecastAnnualized": (
                         validation_execution_risk.get(
@@ -833,14 +805,10 @@ def _portfolio_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
                         validation_lifecycle.get("complete_episodes")
                     ),
                     "validationCompleteEpisodeWinRate": (
-                        validation_lifecycle.get(
-                            "complete_episode_win_rate"
-                        )
+                        validation_lifecycle.get("complete_episode_win_rate")
                     ),
                     "validationMedianCompleteHoldingBars": (
-                        validation_lifecycle.get(
-                            "median_complete_holding_bars"
-                        )
+                        validation_lifecycle.get("median_complete_holding_bars")
                     ),
                     "validationCompletePayoffRatio": (
                         validation_lifecycle.get("complete_payoff_ratio")
@@ -875,9 +843,7 @@ def _portfolio_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
                     "validationSignAgreementWithBaseRate": aggregate.get(
                         "sign_agreement_with_base_rate"
                     ),
-                    "validationMinimumNetSharpe": aggregate.get(
-                        "minimum_net_sharpe"
-                    ),
+                    "validationMinimumNetSharpe": aggregate.get("minimum_net_sharpe"),
                     "validationWorstNetSharpeDelta": aggregate.get(
                         "worst_net_sharpe_delta"
                     ),
@@ -911,10 +877,7 @@ def _portfolio_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
 
 def _factor_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
     metrics = result["metrics"]
-    if not all(
-        isinstance(metrics.get(key), dict)
-        for key in ("validation", "test")
-    ):
+    if not all(isinstance(metrics.get(key), dict) for key in ("validation", "test")):
         return None
     try:
         layers = {
@@ -922,9 +885,7 @@ def _factor_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
             "researchHorizon": metrics.get("research_horizon"),
             "factorOutcome": metrics.get("factor_outcome"),
             "decisionCadence": (
-                metrics["portfolio_mandate"]["implementationPolicy"][
-                    "decisionPolicy"
-                ]
+                metrics["portfolio_mandate"]["implementationPolicy"]["decisionPolicy"]
                 if isinstance(metrics.get("portfolio_mandate"), dict)
                 else None
             ),
@@ -978,14 +939,12 @@ def _factor_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
                     1,
                 )
             )
-            validation_quantiles = (
-                quantiles.get(primary, {}).get("validation", {})
-            )
+            validation_quantiles = quantiles.get(primary, {}).get("validation", {})
             layers["validationQuantileSpread"] = validation_quantiles.get(
                 "high_minus_low"
             )
-            layers["validationQuantileMonotonicity"] = (
-                validation_quantiles.get("monotonicity")
+            layers["validationQuantileMonotonicity"] = validation_quantiles.get(
+                "monotonicity"
             )
         if isinstance(stability, dict):
             folds = stability.get("chronological_folds", {})
@@ -995,15 +954,11 @@ def _factor_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
                 if name.startswith("validation_") and isinstance(item, dict)
             ]
             finite_folds = [
-                float(value)
-                for value in fold_values
-                if isinstance(value, (int, float))
+                float(value) for value in fold_values if isinstance(value, (int, float))
             ]
             if finite_folds:
                 layers["validationWorstFoldMeanIc"] = min(finite_folds)
-            regimes = (
-                stability.get("causal_regimes", {}).get("validation", {})
-            )
+            regimes = stability.get("causal_regimes", {}).get("validation", {})
             if isinstance(regimes, dict):
                 layers["validationRegimesObserved"] = sum(
                     1
@@ -1024,9 +979,7 @@ def _factor_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
                 if isinstance(value, (int, float))
             ]
             if finite_styles:
-                layers["validationMaximumAbsoluteStyleCorrelation"] = max(
-                    finite_styles
-                )
+                layers["validationMaximumAbsoluteStyleCorrelation"] = max(finite_styles)
         return layers
     except (KeyError, TypeError):
         return None
@@ -1048,48 +1001,40 @@ def _rl_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
             "mandate": (
                 {
                     "id": metrics["portfolio_mandate"]["id"],
-                    "direction": metrics["portfolio_mandate"]["source"][
-                        "direction"
+                    "direction": metrics["portfolio_mandate"]["source"]["direction"],
+                    "family": metrics["portfolio_mandate"]["construction"]["family"],
+                    "grossLimit": metrics["portfolio_mandate"]["construction"][
+                        "grossLimit"
                     ],
-                    "family": metrics["portfolio_mandate"]["construction"][
-                        "family"
+                    "maxAbsWeight": metrics["portfolio_mandate"]["construction"][
+                        "maxAbsWeight"
                     ],
-                    "grossLimit": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["grossLimit"],
-                    "maxAbsWeight": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["maxAbsWeight"],
-                    "assetMaxAbsWeights": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["assetMaxAbsWeights"],
-                    "assetPositionRoles": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["assetPositionRoles"],
-                    "positionRolesSource": metrics["portfolio_mandate"][
-                        "source"
-                    ]["assetPositionRoles"],
-                    "longGrossLimit": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["longGrossLimit"],
-                    "shortGrossLimit": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["shortGrossLimit"],
-                    "benchmark": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["benchmark"],
+                    "assetMaxAbsWeights": metrics["portfolio_mandate"]["construction"][
+                        "assetMaxAbsWeights"
+                    ],
+                    "assetPositionRoles": metrics["portfolio_mandate"]["construction"][
+                        "assetPositionRoles"
+                    ],
+                    "positionRolesSource": metrics["portfolio_mandate"]["source"][
+                        "assetPositionRoles"
+                    ],
+                    "longGrossLimit": metrics["portfolio_mandate"]["construction"][
+                        "longGrossLimit"
+                    ],
+                    "shortGrossLimit": metrics["portfolio_mandate"]["construction"][
+                        "shortGrossLimit"
+                    ],
+                    "benchmark": metrics["portfolio_mandate"]["construction"][
+                        "benchmark"
+                    ],
                     "policySource": metrics["portfolio_mandate"]["source"][
                         "portfolioPolicy"
                     ],
-                    "tradableAssets": metrics["portfolio_mandate"][
-                        "tradableAssets"
+                    "tradableAssets": metrics["portfolio_mandate"]["tradableAssets"],
+                    "contextAssets": metrics["portfolio_mandate"]["contextAssets"],
+                    "riskPolicy": metrics["portfolio_mandate"]["construction"][
+                        "riskPolicy"
                     ],
-                    "contextAssets": metrics["portfolio_mandate"][
-                        "contextAssets"
-                    ],
-                    "riskPolicy": metrics["portfolio_mandate"][
-                        "construction"
-                    ]["riskPolicy"],
                     "implementationPolicy": metrics["portfolio_mandate"][
                         "implementationPolicy"
                     ],
@@ -1097,16 +1042,12 @@ def _rl_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
                 if isinstance(metrics.get("portfolio_mandate"), dict)
                 else None
             ),
-            "validationMeanNetSharpe": metrics[
-                "validation_mean_net_sharpe"
-            ],
+            "validationMeanNetSharpe": metrics["validation_mean_net_sharpe"],
             "testMeanNetSharpe": aggregate["test_net_sharpe"]["mean"],
             "validationSeedFoldStd": aggregate["validation_net_sharpe"][
                 "standard_deviation"
             ],
-            "testSeedFoldStd": aggregate["test_net_sharpe"][
-                "standard_deviation"
-            ],
+            "testSeedFoldStd": aggregate["test_net_sharpe"]["standard_deviation"],
             "validationBaselineAdvantage": comparison[
                 "mean_validation_advantage_vs_best_baseline"
             ],
@@ -1121,70 +1062,66 @@ def _rl_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
             "seeds": len(metrics["configuration"]["seeds"]),
             "policyBehavior": (
                 {
-                    "validationMeanActionRunLength": metrics[
-                        "policy_rationale"
-                    ]["validation"]["mean_action_run_length"],
-                    "validationTransitionRate": metrics[
-                        "policy_rationale"
-                    ]["validation"]["transition_rate"],
-                    "validationRetentionRate": metrics[
-                        "policy_rationale"
-                    ]["validation"]["retention_rate"],
-                    "validationMedianActionMargin": metrics[
-                        "policy_rationale"
-                    ]["validation"]["median_action_margin"],
-                    "validationTieRate": metrics["policy_rationale"][
+                    "validationMeanActionRunLength": metrics["policy_rationale"][
                         "validation"
-                    ]["tie_rate"],
-                    "selectionAuthority": metrics["policy_rationale"][
-                        "policy"
-                    ]["selection_authority"],
+                    ]["mean_action_run_length"],
+                    "validationTransitionRate": metrics["policy_rationale"][
+                        "validation"
+                    ]["transition_rate"],
+                    "validationRetentionRate": metrics["policy_rationale"][
+                        "validation"
+                    ]["retention_rate"],
+                    "validationMedianActionMargin": metrics["policy_rationale"][
+                        "validation"
+                    ]["median_action_margin"],
+                    "validationTieRate": metrics["policy_rationale"]["validation"][
+                        "tie_rate"
+                    ],
+                    "selectionAuthority": metrics["policy_rationale"]["policy"][
+                        "selection_authority"
+                    ],
                 }
                 if isinstance(metrics.get("policy_rationale"), dict)
                 else None
             ),
             "factorOpportunity": (
                 {
-                    "validationOracleHitRate": metrics[
-                        "factor_opportunity"
-                    ]["validation"]["oracle_hit_rate"],
-                    "validationMeanSelectedRank": metrics[
-                        "factor_opportunity"
-                    ]["validation"]["mean_selected_rank"],
-                    "validationMeanRealizedRegret": metrics[
-                        "factor_opportunity"
-                    ]["validation"]["mean_realized_regret"],
-                    "validationCandidateOracleFrequency": metrics[
-                        "factor_opportunity"
-                    ]["validation"]["candidate"]["oracle_frequency"],
+                    "validationOracleHitRate": metrics["factor_opportunity"][
+                        "validation"
+                    ]["oracle_hit_rate"],
+                    "validationMeanSelectedRank": metrics["factor_opportunity"][
+                        "validation"
+                    ]["mean_selected_rank"],
+                    "validationMeanRealizedRegret": metrics["factor_opportunity"][
+                        "validation"
+                    ]["mean_realized_regret"],
+                    "validationCandidateOracleFrequency": metrics["factor_opportunity"][
+                        "validation"
+                    ]["candidate"]["oracle_frequency"],
                     "validationCandidateMissedOpportunityRate": metrics[
                         "factor_opportunity"
-                    ]["validation"]["candidate"][
-                        "missed_opportunity_rate"
+                    ]["validation"]["candidate"]["missed_opportunity_rate"],
+                    "selectionAuthority": metrics["factor_opportunity"]["policy"][
+                        "selection_authority"
                     ],
-                    "selectionAuthority": metrics[
-                        "factor_opportunity"
-                    ]["policy"]["selection_authority"],
                 }
                 if isinstance(metrics.get("factor_opportunity"), dict)
                 else None
             ),
             "executedBookRisk": (
                 {
-                    "validationForecastCoverage": metrics[
-                        "execution_risk"
-                    ]["validation"]["forecast_coverage"],
-                    "validationRiskRebalanceOverrideDates": metrics[
-                        "execution_risk"
-                    ]["validation"][
-                        "risk_rebalance_override_dates"
+                    "validationForecastCoverage": metrics["execution_risk"][
+                        "validation"
+                    ]["forecast_coverage"],
+                    "validationRiskRebalanceOverrideDates": metrics["execution_risk"][
+                        "validation"
+                    ]["risk_rebalance_override_dates"],
+                    "validationExecutedBreachDates": metrics["execution_risk"][
+                        "validation"
+                    ]["executed_breach_dates"],
+                    "selectionAuthority": metrics["execution_risk"]["policy"][
+                        "selection_authority"
                     ],
-                    "validationExecutedBreachDates": metrics[
-                        "execution_risk"
-                    ]["validation"]["executed_breach_dates"],
-                    "selectionAuthority": metrics["execution_risk"][
-                        "policy"
-                    ]["selection_authority"],
                 }
                 if isinstance(metrics.get("execution_risk"), dict)
                 else None
@@ -1202,7 +1139,9 @@ def _run_metric_layers(result: dict[str, Any]) -> dict[str, Any] | None:
     )
 
 
-def _project_snapshot(project: ProjectContext, workspace_root: Path | None = None) -> dict[str, Any]:
+def _project_snapshot(
+    project: ProjectContext, workspace_root: Path | None = None
+) -> dict[str, Any]:
     diagnostics: list[dict[str, str]] = []
     program_path = confined_path(
         project.root_dir,
@@ -1247,10 +1186,7 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
                     "--study",
                     intake["study"]["id"],
                     "--request",
-                    str(
-                        project.root_dir
-                        / intake["manifest"]["requestPath"]
-                    ),
+                    str(project.root_dir / intake["manifest"]["requestPath"]),
                     "--json",
                 ],
                 "creates-artifact",
@@ -1274,9 +1210,7 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
     )
     diagnostics.extend(issues)
     agent_work_brief = (
-        agent_work_brief_raw
-        if isinstance(agent_work_brief_raw, dict)
-        else None
+        agent_work_brief_raw if isinstance(agent_work_brief_raw, dict) else None
     )
     external_holdout_raw, issues = _read_category(
         "external-holdout",
@@ -1288,16 +1222,12 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
     )
     diagnostics.extend(issues)
     external_holdout = (
-        external_holdout_raw
-        if isinstance(external_holdout_raw, dict)
-        else None
+        external_holdout_raw if isinstance(external_holdout_raw, dict) else None
     )
     if external_holdout is not None:
         holdout_action = external_holdout["nextAction"]
         if intake is not None:
-            intake["commands"] = (
-                [holdout_action] if holdout_action is not None else []
-            )
+            intake["commands"] = [holdout_action] if holdout_action is not None else []
         if research_program_status is not None:
             research_program_status = {
                 **research_program_status,
@@ -1354,12 +1284,11 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
                 else None
             )
         except AutoQuantValidationError as error:
-            diagnostics.extend(
-                _diagnostics(f"study-dataset:{item.id}", error)
-            )
+            diagnostics.extend(_diagnostics(f"study-dataset:{item.id}", error))
         studies.append(summary)
     runs: list[dict[str, Any]] = []
     from .run_history import history_row
+
     for item in runs_raw:
         summary = item.to_dict()
         verified_run = load_run(project, item.id)
@@ -1394,11 +1323,7 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
         ):
             return None
         return next(
-            (
-                item
-                for item in runs_raw
-                if item.id == lane["latestRun"]["id"]
-            ),
+            (item for item in runs_raw if item.id == lane["latestRun"]["id"]),
             None,
         )
 
@@ -1557,8 +1482,7 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
             item
             for item in reversed(runs_raw)
             if item.status == "succeeded"
-            and item.primary_metric
-            == "validation_net_sharpe_advantage"
+            and item.primary_metric == "validation_net_sharpe_advantage"
         ),
         None,
     )
@@ -1591,12 +1515,8 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
         try:
             session = load_session(project, summary.id)
             snapshot = session_snapshot(project, session)
-            campaigns = [
-                item.to_dict() for item in list_campaigns(project, session)
-            ]
-            reports = [
-                item.to_dict() for item in list_reports(project, session)
-            ]
+            campaigns = [item.to_dict() for item in list_campaigns(project, session)]
+            reports = [item.to_dict() for item in list_reports(project, session)]
             progress = list_campaign_progress(session)
             decision_matrix = None
             try:
@@ -1793,10 +1713,7 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
         and dossier_status["nextAction"] is not None
     ):
         commands.append(dossier_status["nextAction"])
-    if (
-        external_holdout is not None
-        and external_holdout["nextAction"] is not None
-    ):
+    if external_holdout is not None and external_holdout["nextAction"] is not None:
         commands.append(external_holdout["nextAction"])
     return {
         "id": project.manifest.id,
@@ -1810,9 +1727,7 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
         "researchProgramStatus": research_program_status,
         "agentWorkBrief": agent_work_brief,
         "agentWorkBriefHash": (
-            hash_json(agent_work_brief)
-            if agent_work_brief is not None
-            else None
+            hash_json(agent_work_brief) if agent_work_brief is not None else None
         ),
         "externalHoldout": external_holdout,
         "dossierStatus": dossier_status,
@@ -1842,7 +1757,8 @@ def _project_snapshot(project: ProjectContext, workspace_root: Path | None = Non
             "delegatedSessions": sum(
                 item["delegation"] is not None for item in sessions
             ),
-            "reports": len(run_reports) + sum(len(item["reports"]) for item in sessions),
+            "reports": len(run_reports)
+            + sum(len(item["reports"]) for item in sessions),
             "reviews": len(reviews),
             "dossiers": len(dossiers),
             "verdicts": verdicts,
@@ -1896,10 +1812,7 @@ def _session_commands(
             "read-only",
         ),
     ]
-    if (
-        session.delegation is not None
-        and session.manifest["status"] == "active"
-    ):
+    if session.delegation is not None and session.manifest["status"] == "active":
         commands.append(
             _command(
                 "report.publish",
@@ -1938,8 +1851,7 @@ def _session_commands(
         if (
             session.manifest["status"] == "active"
             and session.manifest["leader"] == session.manifest["baseline"]
-            and reports[-1]["leaderRunId"]
-            == session.manifest["leader"]["runId"]
+            and reports[-1]["leaderRunId"] == session.manifest["leader"]["runId"]
         ):
             commands.append(
                 _command(
@@ -1972,9 +1884,13 @@ def build_studio_snapshot(
         project_id,
     )
     with run_read_memo():
-        observations = [_project_snapshot(project, root if workspace else None) for project in projects]
+        observations = [
+            _project_snapshot(project, root if workspace else None)
+            for project in projects
+        ]
         from .studio_library import library_projection
         from .studio_research import research_summary
+
         for project, observation in zip(projects, observations):
             observation["library"] = library_projection(project, observation, root)
             observation["research"] = research_summary(project.root_dir)
@@ -1989,9 +1905,7 @@ def build_studio_snapshot(
             "rootDir": str(root),
             "workspace": workspace,
         },
-        "valid": not diagnostics and all(
-            project["valid"] for project in observations
-        ),
+        "valid": not diagnostics and all(project["valid"] for project in observations),
         "diagnostics": diagnostics,
         "projects": observations,
     }
@@ -2413,9 +2327,7 @@ def _handler(
             self._send(
                 status,
                 "application/json; charset=utf-8",
-                json.dumps(
-                    payload, ensure_ascii=False, separators=(",", ":")
-                ).encode(),
+                json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode(),
                 head_only=head_only,
             )
 
@@ -2424,9 +2336,7 @@ def _handler(
             assert actions is not None
             try:
                 if not actions.host_allowed(self.headers.get("Host")):
-                    raise ActionError(
-                        403, "studio.host", "Host header is not allowed"
-                    )
+                    raise ActionError(403, "studio.host", "Host header is not allowed")
                 if mutating:
                     if not actions.origin_allowed(
                         self.headers.get("Origin"),
@@ -2466,7 +2376,19 @@ def _handler(
             """Serve GET action/job routes; False when path is not one."""
             assert actions is not None
             job_match = re.fullmatch(r"/api/v1/jobs/([A-Za-z0-9-]+)", path)
-            if path not in {"/api/v1/actions", "/api/v1/jobs", "/api/v1/idea", "/api/v1/idea-datasets", "/api/v1/data-sources", "/api/v1/assistant", "/api/v1/assistant/session"} and not job_match:
+            if (
+                path
+                not in {
+                    "/api/v1/actions",
+                    "/api/v1/jobs",
+                    "/api/v1/idea",
+                    "/api/v1/idea-datasets",
+                    "/api/v1/data-sources",
+                    "/api/v1/assistant",
+                    "/api/v1/assistant/session",
+                }
+                and not job_match
+            ):
                 return False
             if not self._token_ok():
                 return True
@@ -2476,36 +2398,37 @@ def _handler(
                 elif path == "/api/v1/assistant/session":
                     ids = parse_qs(urlsplit(self.path).query).get("id") or []
                     if len(ids) != 1:
-                        raise ActionError(400, "assistant.session", "One conversation id is required")
+                        raise ActionError(
+                            400, "assistant.session", "One conversation id is required"
+                        )
                     data = actions.assistant.view(ids[0])
                 elif path == "/api/v1/data-sources":
                     from .studio_data import sources
+
                     paths = parse_qs(urlsplit(self.path).query).get("path") or []
                     if len(paths) > 1:
-                        raise ActionError(422, "studio.dataset", "Select one staged source")
+                        raise ActionError(
+                            422, "studio.dataset", "Select one staged source"
+                        )
                     data = sources(actions, paths[0] if paths else None)
                 elif path == "/api/v1/idea-datasets":
                     from .studio_ideas import datasets
+
                     data = datasets(actions)
                 elif path == "/api/v1/idea":
                     from .studio_ideas import idea_view
+
                     ids = parse_qs(urlsplit(self.path).query).get("project") or []
                     data = idea_view(actions, ids[0] if ids else None)
                 elif path == "/api/v1/actions":
                     ids = parse_qs(urlsplit(self.path).query).get("project") or []
                     data = actions.catalog(ids[0] if ids else None)
                 elif path == "/api/v1/jobs":
-                    data = {
-                        "jobs": [
-                            job.to_dict() for job in actions.runner.recent()
-                        ]
-                    }
+                    data = {"jobs": [job.to_dict() for job in actions.runner.recent()]}
                 else:
                     job = actions.runner.get(job_match.group(1))
                     if job is None:
-                        raise ActionError(
-                            404, "studio.unknown-job", "Unknown job"
-                        )
+                        raise ActionError(404, "studio.unknown-job", "Unknown job")
                     data = job.to_dict()
                 self._json(HTTPStatus.OK, success(data), head_only=head_only)
             except ActionError as error:
@@ -2529,9 +2452,13 @@ def _handler(
                     data = actions.candidate(project_ref, session_ref)
                 else:
                     source = _resolve_source(directory, project_id)
-                    found = {
-                        project.manifest.id: project for project in source[3]
-                    }.get(project_ref) if isinstance(project_ref, str) else None
+                    found = (
+                        {project.manifest.id: project for project in source[3]}.get(
+                            project_ref
+                        )
+                        if isinstance(project_ref, str)
+                        else None
+                    )
                     if found is None:
                         raise ActionError(
                             422,
@@ -2558,7 +2485,19 @@ def _handler(
             """Serve POST action/job routes; False when path is not one."""
             assert actions is not None
             cancel = re.fullmatch(r"/api/v1/jobs/([A-Za-z0-9-]+)/cancel", path)
-            if path not in {"/api/v1/actions/preview", "/api/v1/actions", "/api/v1/assistant/sessions", "/api/v1/assistant/message", "/api/v1/assistant/cancel", "/api/v1/assistant/confirm", "/api/v1/assistant/tool"} and not cancel:
+            if (
+                path
+                not in {
+                    "/api/v1/actions/preview",
+                    "/api/v1/actions",
+                    "/api/v1/assistant/sessions",
+                    "/api/v1/assistant/message",
+                    "/api/v1/assistant/cancel",
+                    "/api/v1/assistant/confirm",
+                    "/api/v1/assistant/tool",
+                }
+                and not cancel
+            ):
                 return False
             if not self._gate(mutating=True) or not self._token_ok():
                 return True
@@ -2580,7 +2519,9 @@ def _handler(
                     ) from None
                 if path.startswith("/api/v1/assistant/"):
                     if not isinstance(body, dict):
-                        raise ActionError(400, "assistant.request", "Body must be an object")
+                        raise ActionError(
+                            400, "assistant.request", "Body must be an object"
+                        )
                     method = {
                         "/api/v1/assistant/sessions": actions.assistant.create,
                         "/api/v1/assistant/message": actions.assistant.message,
@@ -2588,21 +2529,24 @@ def _handler(
                         "/api/v1/assistant/confirm": actions.assistant.confirm,
                         "/api/v1/assistant/tool": actions.assistant.bridge_tool,
                     }[path]
-                    self._json(HTTPStatus.ACCEPTED if path.endswith("/message") else HTTPStatus.OK,
-                               success(method(body)))
+                    self._json(
+                        HTTPStatus.ACCEPTED
+                        if path.endswith("/message")
+                        else HTTPStatus.OK,
+                        success(method(body)),
+                    )
                 elif cancel:
                     job = actions.runner.cancel(cancel.group(1))
                     if job is None:
-                        raise ActionError(
-                            404, "studio.unknown-job", "Unknown job"
-                        )
+                        raise ActionError(404, "studio.unknown-job", "Unknown job")
                     self._json(HTTPStatus.OK, success(job.to_dict()))
                 elif path == "/api/v1/actions/preview":
                     self._json(HTTPStatus.OK, success(actions.preview(body)))
                 else:
-                    saved = (
-                        isinstance(body, dict) and body.get("actionId") in {SAVE_ID, "data.check"}
-                    )
+                    saved = isinstance(body, dict) and body.get("actionId") in {
+                        SAVE_ID,
+                        "data.check",
+                    }
                     self._json(
                         HTTPStatus.OK if saved else HTTPStatus.ACCEPTED,
                         success(actions.create(body)),
@@ -2630,14 +2574,30 @@ def _handler(
                 return
             try:
                 from .studio_compare import serve_history
-                if serve_history(self, path, directory, project_id,
-                                 lambda: cache.get("snapshot", None, lambda: build_studio_snapshot(directory, project_id=project_id, host=host)).payload,
-                                 head_only):
+
+                if serve_history(
+                    self,
+                    path,
+                    directory,
+                    project_id,
+                    lambda: (
+                        cache.get(
+                            "snapshot",
+                            None,
+                            lambda: build_studio_snapshot(
+                                directory, project_id=project_id, host=host
+                            ),
+                        ).payload
+                    ),
+                    head_only,
+                ):
                     return
                 from .studio_research import serve_research
+
                 if serve_research(self, path, directory, project_id, head_only):
                     return
                 from .studio_evolution import serve_evolution
+
                 if serve_evolution(self, path, directory, project_id, head_only):
                     return
                 if path == "/api/v1/health":
@@ -2647,9 +2607,7 @@ def _handler(
                             "ok": True,
                             "service": "autoquant-studio",
                             "mode": (
-                                "read-only"
-                                if actions is None
-                                else "local-actions"
+                                "read-only" if actions is None else "local-actions"
                             ),
                         },
                         separators=(",", ":"),
@@ -2718,9 +2676,7 @@ def _handler(
                         ("run", requested_p, requested_r),
                         requested_p
                         if requested_p
-                        and not any(
-                            token in requested_p for token in ("/", "\\", "..")
-                        )
+                        and not any(token in requested_p for token in ("/", "\\", ".."))
                         else None,
                         lambda: build_run_diagnostics(
                             directory,
@@ -2732,12 +2688,11 @@ def _handler(
                     )
                     return
                 if path.startswith(STUDIO_APP_PREFIX):
-                    name = path[len(STUDIO_APP_PREFIX):]
+                    name = path[len(STUDIO_APP_PREFIX) :]
                     suffix = Path(name).suffix
                     data = (
                         _studio_app_bytes(name)
-                        if STUDIO_APP_ASSET.match(name)
-                        and suffix in STUDIO_APP_TYPES
+                        if STUDIO_APP_ASSET.match(name) and suffix in STUDIO_APP_TYPES
                         else None
                     )
                     if data is not None:
@@ -2820,9 +2775,7 @@ def _handler(
             )
 
         def do_POST(self) -> None:
-            if actions is not None and self._action_post(
-                urlsplit(self.path).path
-            ):
+            if actions is not None and self._action_post(urlsplit(self.path).path):
                 return
             self._read_only()
 
@@ -2910,6 +2863,7 @@ def create_studio_server(
     if actions is not None:
         actions.bind_port(server.server_port)
         from .studio_assistant import AssistantService
+
         actions.assistant = AssistantService(actions)
         bridge_host = "[::1]" if ":" in host else "127.0.0.1"
         actions.assistant.origin = f"http://{bridge_host}:{server.server_port}"

@@ -168,9 +168,7 @@ class WorkspaceProjectTests(unittest.TestCase):
                         conflict.write_bytes(b"pre-existing")
                     caller_before = caller.read_bytes()
 
-                    with self.assertRaises(
-                        AutoQuantValidationError
-                    ) as caught:
+                    with self.assertRaises(AutoQuantValidationError) as caught:
                         initialize_workspace(
                             root,
                             adopt_existing=True,
@@ -182,9 +180,7 @@ class WorkspaceProjectTests(unittest.TestCase):
                     )
                     self.assertEqual(caller.read_bytes(), caller_before)
                     if name != WORKSPACE_MANIFEST:
-                        self.assertFalse(
-                            (root / WORKSPACE_MANIFEST).exists()
-                        )
+                        self.assertFalse((root / WORKSPACE_MANIFEST).exists())
                     if kind == "directory":
                         self.assertEqual(
                             (conflict / "sentinel").read_bytes(),
@@ -260,9 +256,9 @@ class WorkspaceProjectTests(unittest.TestCase):
                 "ask the delegating Agent or user",
                 normalized_research,
             )
-            framework_needs = (
-                project.root_dir / "framework-needs.md"
-            ).read_text(encoding="utf-8")
+            framework_needs = (project.root_dir / "framework-needs.md").read_text(
+                encoding="utf-8"
+            )
             self.assertIn("## Open needs", framework_needs)
             self.assertIn(
                 "Do not file speculative feature wishes",
@@ -294,8 +290,7 @@ class WorkspaceProjectTests(unittest.TestCase):
                 continue
             with self.subTest(template=template):
                 research = (
-                    template_root
-                    .joinpath(template.replace("-", "_"))
+                    template_root.joinpath(template.replace("-", "_"))
                     .joinpath("research.md")
                     .read_text(encoding="utf-8")
                 )

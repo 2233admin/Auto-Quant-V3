@@ -97,8 +97,7 @@ class PredictionModeTranslationTests(unittest.TestCase):
     ) -> None:
         index = pd.bdate_range("2026-01-02", periods=100)
         target = pd.Series(
-            np.sin(np.arange(len(index)) / 5.0)
-            + np.arange(len(index)) / 100.0,
+            np.sin(np.arange(len(index)) / 5.0) + np.arange(len(index)) / 100.0,
             index=index,
         )
         first = pd.DataFrame(
@@ -167,8 +166,14 @@ class PredictionModeTranslationTests(unittest.TestCase):
         scores, _, _, _ = translate_factor_scores(factors, population)
 
         self.assertTrue(scores["CONTEXT"].isna().all())
-        self.assertEqual(scores.loc[index[0], ["A", "B", "C", "D"]].tolist(), [0.0, 1 / 3, 2 / 3, 1.0])
-        self.assertEqual(scores.loc[index[1], ["A", "B", "C", "D"]].tolist(), [1.0, 2 / 3, 1 / 3, 0.0])
+        self.assertEqual(
+            scores.loc[index[0], ["A", "B", "C", "D"]].tolist(),
+            [0.0, 1 / 3, 2 / 3, 1.0],
+        )
+        self.assertEqual(
+            scores.loc[index[1], ["A", "B", "C", "D"]].tolist(),
+            [1.0, 2 / 3, 1 / 3, 0.0],
+        )
 
     def test_relative_value_scores_and_targets_are_exact_pairs(self) -> None:
         index = pd.bdate_range("2026-01-02", periods=100)
@@ -235,8 +240,7 @@ class PredictionModeTranslationTests(unittest.TestCase):
         time = np.arange(len(index), dtype=float)
         closes = pd.DataFrame(
             {
-                asset: 100.0
-                * np.exp(np.cumsum(0.001 + 0.003 * np.sin(time / (4 + n))))
+                asset: 100.0 * np.exp(np.cumsum(0.001 + 0.003 * np.sin(time / (4 + n))))
                 for n, asset in enumerate(universe)
             },
             index=index,
@@ -251,9 +255,7 @@ class PredictionModeTranslationTests(unittest.TestCase):
         )
         available = construction.scores["LEFT"].notna()
         paired_scores = construction.scores.loc[available, ["LEFT", "RIGHT"]]
-        self.assertTrue(
-            np.allclose(paired_scores.sum(axis=1).to_numpy(), 1.0)
-        )
+        self.assertTrue(np.allclose(paired_scores.sum(axis=1).to_numpy(), 1.0))
         self.assertTrue(construction.scores["CONTEXT"].isna().all())
         active = construction.targets.loc[
             construction.targets[["LEFT", "RIGHT"]].abs().sum(axis=1) > 0
@@ -311,8 +313,7 @@ class PortfolioAccountingTests(unittest.TestCase):
             }
         )
         ledger["net_return_contribution"] = (
-            ledger["gross_return_contribution"]
-            - ledger["cost_contribution"]
+            ledger["gross_return_contribution"] - ledger["cost_contribution"]
         )
 
         episodes = build_position_episodes(
@@ -446,8 +447,7 @@ class PortfolioAccountingTests(unittest.TestCase):
         index = pd.bdate_range("2026-01-01", periods=30)
         close_returns = pd.DataFrame(
             {
-                "A": 0.002
-                * np.sin(np.arange(len(index), dtype=float) / 3.0),
+                "A": 0.002 * np.sin(np.arange(len(index), dtype=float) / 3.0),
             },
             index=index,
         )
@@ -665,13 +665,7 @@ class PortfolioAccountingTests(unittest.TestCase):
         closes = pd.DataFrame(
             {
                 asset: 100.0
-                * np.exp(
-                    np.cumsum(
-                        0.001
-                        + 0.004
-                        * np.sin(time / (3.0 + number))
-                    )
-                )
+                * np.exp(np.cumsum(0.001 + 0.004 * np.sin(time / (3.0 + number))))
                 for number, asset in enumerate(assets)
             },
             index=index,
@@ -684,10 +678,9 @@ class PortfolioAccountingTests(unittest.TestCase):
             long_exit=LONG_ENTRY_PERCENTILE,
             short_exit=SHORT_ENTRY_PERCENTILE,
         )
-        events = (
-            governed.ledger.loc[governed.ledger["asset"].eq("A")]
-            .set_index("timestamp")["signal_event"]
-        )
+        events = governed.ledger.loc[governed.ledger["asset"].eq("A")].set_index(
+            "timestamp"
+        )["signal_event"]
 
         self.assertEqual(
             events.loc[index[20:28]].tolist(),
@@ -742,11 +735,7 @@ class PortfolioAccountingTests(unittest.TestCase):
                 asset: 100.0
                 * np.exp(
                     np.cumsum(
-                        0.001
-                        + 0.06
-                        * np.sin(
-                            time / (2.0 + number * 0.35) + number
-                        )
+                        0.001 + 0.06 * np.sin(time / (2.0 + number * 0.35) + number)
                     )
                 )
                 for number, asset in enumerate(assets)
@@ -784,18 +773,15 @@ class PortfolioAccountingTests(unittest.TestCase):
             mandate=mandate,
             apply_risk_governor=False,
         )
-        daily = (
-            governed.ledger.groupby("timestamp", sort=True)
-            .agg(
-                status=("risk_governor_status", "first"),
-                scale=("risk_governor_scale", "first"),
-                before=("risk_forecast_pre_annualized", "first"),
-                after=("risk_forecast_post_annualized", "first"),
-                ceiling=(
-                    "risk_volatility_ceiling_annualized",
-                    "first",
-                ),
-            )
+        daily = governed.ledger.groupby("timestamp", sort=True).agg(
+            status=("risk_governor_status", "first"),
+            scale=("risk_governor_scale", "first"),
+            before=("risk_forecast_pre_annualized", "first"),
+            after=("risk_forecast_post_annualized", "first"),
+            ceiling=(
+                "risk_volatility_ceiling_annualized",
+                "first",
+            ),
         )
         limited = daily[daily["status"].eq("volatility_limited")]
 
@@ -809,18 +795,12 @@ class PortfolioAccountingTests(unittest.TestCase):
                 <= ungoverned.targets.abs().sum(axis=1) + 1e-12
             ).all()
         )
-        self.assertTrue(
-            constraint_audit(governed.targets, mandate=mandate)["passed"]
-        )
+        self.assertTrue(constraint_audit(governed.targets, mandate=mandate)["passed"])
         governed_metrics = signal_policy_metrics(governed, index)
         self.assertGreater(governed_metrics["risk_limited_dates"], 0)
         self.assertLess(
-            governed_metrics[
-                "maximum_post_governor_annualized_volatility"
-            ],
-            governed_metrics[
-                "maximum_pre_governor_annualized_volatility"
-            ],
+            governed_metrics["maximum_post_governor_annualized_volatility"],
+            governed_metrics["maximum_pre_governor_annualized_volatility"],
         )
 
         volumes = pd.DataFrame(
@@ -853,9 +833,7 @@ class PortfolioAccountingTests(unittest.TestCase):
         self.assertEqual(compliance["executed_breach_dates"], 0)
         self.assertLessEqual(
             compliance["maximum_executed_forecast_annualized"],
-            mandate["construction"]["riskPolicy"][
-                "annualizedVolatilityCeiling"
-            ]
+            mandate["construction"]["riskPolicy"]["annualizedVolatilityCeiling"]
             + 1e-12,
         )
 
@@ -872,13 +850,7 @@ class PortfolioAccountingTests(unittest.TestCase):
         closes = pd.DataFrame(
             {
                 asset: 100.0
-                * np.exp(
-                    np.cumsum(
-                        0.0005
-                        + 0.006
-                        * np.sin(time / (4.0 + number))
-                    )
-                )
+                * np.exp(np.cumsum(0.0005 + 0.006 * np.sin(time / (4.0 + number))))
                 for number, asset in enumerate(assets)
             },
             index=index,
@@ -990,12 +962,8 @@ class PortfolioAccountingTests(unittest.TestCase):
                         "risk_volatility_ceiling_annualized": 0.0,
                         "risk_governor_scale": 1.0,
                         "prior_target_weight": 0.0,
-                        "proposed_target_weight": float(
-                            targets.loc[timestamp, asset]
-                        ),
-                        "target_delta": float(
-                            targets.loc[timestamp, asset]
-                        ),
+                        "proposed_target_weight": float(targets.loc[timestamp, asset]),
+                        "target_delta": float(targets.loc[timestamp, asset]),
                         "target_action": "hold_flat",
                         "diagonal_risk_budget_share": 0.0,
                     }
@@ -1103,13 +1071,7 @@ class PortfolioAccountingTests(unittest.TestCase):
         closes = pd.DataFrame(
             {
                 asset: 100.0
-                * np.exp(
-                    np.cumsum(
-                        0.0005
-                        + 0.007
-                        * np.sin(time / (4.0 + number))
-                    )
-                )
+                * np.exp(np.cumsum(0.0005 + 0.007 * np.sin(time / (4.0 + number))))
                 for number, asset in enumerate(assets)
             },
             index=index,
@@ -1183,9 +1145,9 @@ class PortfolioAccountingTests(unittest.TestCase):
             "component_variance",
             "variance_contribution_share",
         ]
-        expected = full_ledger[
-            full_ledger["timestamp"].le(shared_end)
-        ][columns].reset_index(drop=True)
+        expected = full_ledger[full_ledger["timestamp"].le(shared_end)][
+            columns
+        ].reset_index(drop=True)
         actual = prefix_ledger[columns].reset_index(drop=True)
         pd.testing.assert_frame_equal(actual, expected)
 
@@ -1251,26 +1213,20 @@ class OhlcvPortfolioLabTests(unittest.TestCase):
                 "context-only",
             )
             self.assertEqual(
-                neighborhood["validation"]["aggregate"][
-                    "configuration_count"
-                ],
+                neighborhood["validation"]["aggregate"]["configuration_count"],
                 15,
             )
             self.assertAlmostEqual(
-                neighborhood["validation"]["configurations"][
-                    "base__band-005"
-                ]["performance"]["sharpe"],
+                neighborhood["validation"]["configurations"]["base__band-005"][
+                    "performance"
+                ]["sharpe"],
                 metrics["portfolio"]["validation"]["net"]["sharpe"],
             )
             self.assertTrue(
-                metrics["position_lifecycle"]["validation"][
-                    "reconciliation"
-                ]["passed"]
+                metrics["position_lifecycle"]["validation"]["reconciliation"]["passed"]
             )
             self.assertEqual(
-                metrics["liquidity_capacity"]["policy"][
-                    "selection_authority"
-                ],
+                metrics["liquidity_capacity"]["policy"]["selection_authority"],
                 "context-only",
             )
             self.assertEqual(
@@ -1278,22 +1234,16 @@ class OhlcvPortfolioLabTests(unittest.TestCase):
                 20,
             )
             self.assertGreater(
-                metrics["liquidity_capacity"]["validation"][
-                    "available_trade_dates"
-                ],
+                metrics["liquidity_capacity"]["validation"]["available_trade_dates"],
                 0,
             )
             self.assertIn("risk_governor", metrics["robustness"])
             self.assertEqual(
-                metrics["robustness"]["risk_governor"][
-                    "selectionAuthority"
-                ],
+                metrics["robustness"]["risk_governor"]["selectionAuthority"],
                 "diagnostic-only",
             )
             self.assertFalse(
-                metrics["portfolio_mandate"]["construction"]["riskPolicy"][
-                    "scaleUp"
-                ]
+                metrics["portfolio_mandate"]["construction"]["riskPolicy"]["scaleUp"]
             )
             self.assertEqual(
                 metrics["portfolio_mandate"]["construction"]["family"],
@@ -1301,23 +1251,17 @@ class OhlcvPortfolioLabTests(unittest.TestCase):
             )
             self.assertTrue(metrics["constraint_audit"]["passed"])
             self.assertFalse(metrics["split_protocol"]["candidateDependent"])
-            self.assertFalse(
-                metrics["split_protocol"]["targetCrossesBoundary"]
-            )
+            self.assertFalse(metrics["split_protocol"]["targetCrossesBoundary"])
             self.assertTrue(
-                metrics["attribution"]["validation"]["reconciliation"][
-                    "passed"
-                ]
+                metrics["attribution"]["validation"]["reconciliation"]["passed"]
             )
             self.assertGreater(
-                metrics["signal_policy"]["hysteresis_comparison"][
-                    "validation"
-                ]["transition_reduction"],
+                metrics["signal_policy"]["hysteresis_comparison"]["validation"][
+                    "transition_reduction"
+                ],
                 0,
             )
-            self.assertFalse(
-                metrics["research_integrity"]["test_enters_selection"]
-            )
+            self.assertFalse(metrics["research_integrity"]["test_enters_selection"])
             self.assertEqual(
                 {item["kind"] for item in run.result["artifacts"]},
                 {
@@ -1340,16 +1284,12 @@ class OhlcvPortfolioLabTests(unittest.TestCase):
             self.assertIn("causal_adv_dollar_volume", decision_columns)
             self.assertIn("portfolio_capacity_nav_1pct", decision_columns)
             self.assertIn("capacity_binding_asset", decision_columns)
-            episode_path = (
-                run.root_dir / "artifacts" / "position-episodes.csv"
-            )
+            episode_path = run.root_dir / "artifacts" / "position-episodes.csv"
             episode_columns = pd.read_csv(episode_path, nrows=1).columns
             self.assertIn("episode_id", episode_columns)
             self.assertIn("maximum_favorable_excursion", episode_columns)
             neighborhood_path = (
-                run.root_dir
-                / "artifacts"
-                / "portfolio-parameter-neighborhood.json"
+                run.root_dir / "artifacts" / "portfolio-parameter-neighborhood.json"
             )
             neighborhood_artifact = json.loads(
                 neighborhood_path.read_text(encoding="utf-8")
@@ -1365,9 +1305,7 @@ class OhlcvPortfolioLabTests(unittest.TestCase):
                     metrics["split_protocol"]["splits"]["validation"][
                         "eligibleSignalRows"
                     ]
-                    + metrics["split_protocol"]["splits"]["test"][
-                        "eligibleSignalRows"
-                    ]
+                    + metrics["split_protocol"]["splits"]["test"]["eligibleSignalRows"]
                 ),
             )
             snapshot = build_studio_snapshot(workspace.root_dir)
@@ -1375,32 +1313,22 @@ class OhlcvPortfolioLabTests(unittest.TestCase):
             layers = snapshot["projects"][0]["runs"][0]["metricLayers"]
             self.assertEqual(layers["kind"], "portfolio")
             self.assertTrue(layers["constraintsPassed"])
-            self.assertTrue(
-                math.isfinite(layers["portfolio"]["testNetSharpe"])
-            )
-            self.assertTrue(
-                layers["attribution"]["validationReconciliationPassed"]
-            )
+            self.assertTrue(math.isfinite(layers["portfolio"]["testNetSharpe"]))
+            self.assertTrue(layers["attribution"]["validationReconciliationPassed"])
             self.assertIsNotNone(layers["positionLifecycle"])
             self.assertIsNotNone(layers["parameterNeighborhood"])
             self.assertIsNotNone(layers["translationRobustness"])
             self.assertFalse(layers["translationRobustness"]["applicable"])
             self.assertEqual(
-                layers["parameterNeighborhood"][
-                    "validationConfigurationCount"
-                ],
+                layers["parameterNeighborhood"]["validationConfigurationCount"],
                 15,
             )
             self.assertGreater(
-                layers["attribution"][
-                    "validationMaximumAbsoluteRiskContributionShare"
-                ],
+                layers["attribution"]["validationMaximumAbsoluteRiskContributionShare"],
                 0.0,
             )
             self.assertGreater(
-                layers["signalPolicy"][
-                    "validationTransitionReductionRate"
-                ],
+                layers["signalPolicy"]["validationTransitionReductionRate"],
                 0.0,
             )
             self.assertEqual(
@@ -1408,9 +1336,7 @@ class OhlcvPortfolioLabTests(unittest.TestCase):
                 "context-only",
             )
             self.assertGreater(
-                layers["liquidityCapacity"][
-                    "validationTenthPercentileNav1Pct"
-                ],
+                layers["liquidityCapacity"]["validationTenthPercentileNav1Pct"],
                 0.0,
             )
             artifacts = {
@@ -1452,10 +1378,9 @@ class OhlcvPortfolioLabTests(unittest.TestCase):
                 rows = frame.index[-40:]
                 direction = 1.0 if asset_number % 2 else -1.0
                 scale = 1.0 + direction * np.linspace(0.0, 0.30, len(rows))
-                frame.loc[rows, ["open", "high", "low", "close"]] = (
-                    frame.loc[rows, ["open", "high", "low", "close"]]
-                    .mul(scale, axis=0)
-                )
+                frame.loc[rows, ["open", "high", "low", "close"]] = frame.loc[
+                    rows, ["open", "high", "low", "close"]
+                ].mul(scale, axis=0)
                 frame.to_csv(source, index=False)
 
             after = execute_study(project, PORTFOLIO_STUDY_ID)
@@ -1481,9 +1406,7 @@ class OhlcvPortfolioLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             _, project = make_portfolio_lab(directory)
             session = start_session(project, PORTFOLIO_STUDY_ID)
-            candidate = (
-                session.worktree_project.root_dir / "factors" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(IMPROVED_FACTOR, encoding="utf-8")
             kept = evaluate_experiment(
                 project,
@@ -1568,9 +1491,7 @@ print(json.dumps({
             self.assertEqual(campaign.result["verdicts"]["KEEP"], 1)
             observed = build_studio_snapshot(workspace.root_dir)["projects"][0]
             self.assertEqual(observed["counts"]["campaigns"], 1)
-            self.assertTrue(
-                all("metricLayers" in run for run in observed["runs"])
-            )
+            self.assertTrue(all("metricLayers" in run for run in observed["runs"]))
 
 
 if __name__ == "__main__":

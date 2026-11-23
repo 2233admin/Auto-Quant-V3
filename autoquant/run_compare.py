@@ -10,8 +10,17 @@ from .runs import RunContext
 from .studies import hash_json
 
 
-FIELDS = ("objectKind", "lane", "study", "datasetId", "datasetHash",
-          "splitWindows", "horizon", "costModel", "objective")
+FIELDS = (
+    "objectKind",
+    "lane",
+    "study",
+    "datasetId",
+    "datasetHash",
+    "splitWindows",
+    "horizon",
+    "costModel",
+    "objective",
+)
 REQUIRED = set(FIELDS) - {"costModel"}
 LANES = {
     "validation_mean_ic": ("factor", "Factor"),
@@ -41,7 +50,9 @@ def protocol_of(run: RunContext):
     dataset = result["dataset"]
     kind, lane = run_lane(result)
     study = result["study"]
-    implementation = (metrics.get("portfolio_mandate") or {}).get("implementationPolicy")
+    implementation = (metrics.get("portfolio_mandate") or {}).get(
+        "implementationPolicy"
+    )
     cost = implementation if implementation is not None else metrics.get("cost_model")
     if cost is None and lane == "RL policy":
         cost = (metrics.get("configuration") or {}).get("costBps")
@@ -50,18 +61,26 @@ def protocol_of(run: RunContext):
         cost = {"unknown": True}
     splits = (metrics.get("split_protocol") or {}).get("splits")
     if splits:
-        splits = {name: {key: window.get(key) for key in ("start", "end")}
-                  for name, window in splits.items()}
+        splits = {
+            name: {key: window.get(key) for key in ("start", "end")}
+            for name, window in splits.items()
+        }
     return {
-        "objectKind": kind, "lane": lane,
-        "study": {"id": study["id"], "hash": study["hash"],
-                  "judgeHash": result["judge"]["hash"],
-                  "programHash": study["programHash"],
-                  "dependenciesHash": (result.get("dependencies") or {}).get("hash")},
-        "datasetId": dataset["id"], "datasetHash": dataset["hash"],
+        "objectKind": kind,
+        "lane": lane,
+        "study": {
+            "id": study["id"],
+            "hash": study["hash"],
+            "judgeHash": result["judge"]["hash"],
+            "programHash": study["programHash"],
+            "dependenciesHash": (result.get("dependencies") or {}).get("hash"),
+        },
+        "datasetId": dataset["id"],
+        "datasetHash": dataset["hash"],
         "splitWindows": splits,
         "horizon": metrics.get("research_horizon"),
-        "costModel": cost, "objective": result["objective"],
+        "costModel": cost,
+        "objective": result["objective"],
     }
 
 
@@ -73,7 +92,9 @@ def _missing_authority(field, value):
     if field == "splitWindows":
         return not isinstance(value, dict) or any(
             not (value.get(split) or {}).get(key)
-            for split in ("train", "validation", "test") for key in ("start", "end"))
+            for split in ("train", "validation", "test")
+            for key in ("start", "end")
+        )
     if field == "horizon":
         return not isinstance(value, dict) or not value.get("primaryForwardBars")
     return False
@@ -87,9 +108,18 @@ def compare_protocols(a, b):
         missing = _missing_authority(field, left) or _missing_authority(field, right)
         unknown_cost = field == "costModel" and {"unknown": True} in (left, right)
         if missing or unknown_cost or left != right:
-            differences.append({"field": field, "reason": "missing" if missing or unknown_cost else "different",
-                                "a": left, "b": right})
-    return {"status": "not-comparable" if differences else "comparable", "differences": differences}
+            differences.append(
+                {
+                    "field": field,
+                    "reason": "missing" if missing or unknown_cost else "different",
+                    "a": left,
+                    "b": right,
+                }
+            )
+    return {
+        "status": "not-comparable" if differences else "comparable",
+        "differences": differences,
+    }
 
 
 def compare_runs(a: RunContext, b: RunContext):
