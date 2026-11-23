@@ -19,6 +19,7 @@ from .studio_actions import (
     confine_workspace_path,
     validate_save_params,
 )
+from .intake import quantile_intake_issues
 from .runs import list_runs
 from .sessions import list_sessions
 from .workspace import load_workspace
@@ -257,7 +258,7 @@ def prepare(service, body):
         writes = "Creates one dedicated Project and stores the hypothesis in its description and research.md. No trial or Run."
     else:
         params = _params_object(
-            body.get("params"), {"dataset", "horizon", "predictionAssets"}
+            body.get("params"), {"dataset", "horizon", "predictionAssets", "quantiles"}
         )
         project = service._project(body.get("project"))
         pid = project.manifest.id
@@ -294,6 +295,13 @@ def prepare(service, body):
         from .briefs import validate_research_request
 
         validate_research_request(request)
+        if "quantiles" in params:
+            # The same allowed set and population rule `aq project intake --quantiles` applies.
+            refused = quantile_intake_issues(
+                TEMPLATES[1], params["quantiles"], request, universe
+            )
+            if refused:
+                raise ActionError(422, "validation.failed", refused[0].message)
         request_path = safe_path(service, f".autoquant/idea-inputs/{pid}.json")
         argv = [
             sys.executable,
@@ -311,6 +319,11 @@ def prepare(service, body):
             "ohlcv-factor-lab",
             "--name",
             project.manifest.name,
+            *(
+                ["--quantiles", str(params["quantiles"])]
+                if "quantiles" in params
+                else []
+            ),
             "--json",
         ]
         fingerprint = (

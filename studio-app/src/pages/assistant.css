@@ -84,6 +84,25 @@
 .assistant-session-error { margin-top: var(--space-3) !important; padding-left: var(--space-3); border-left: 3px solid var(--signal); }
 .assistant-artifacts { display: grid; gap: var(--space-3); font: var(--type-small); overflow-wrap: anywhere; }
 .assistant-artifacts span { display: block; margin-top: var(--space-1); color: var(--muted); font-size: var(--size-label); }
+.assistant-message:has(+ .assistant-results) { padding-bottom: var(--space-3); }
+.assistant-results + .assistant-message { padding-top: var(--space-6); border-top: 1px solid var(--line); }
+.assistant-results { display: grid; gap: var(--space-4); margin: 0 0 var(--space-6); }
+/* Result card: one compact evidence card per Run in the thread (direction H: hairline border, square corners, one 8px chamfer, no pills).
+   The chamfer trims only the top-right corner and leaves the rest of the plane visible, so the "?" popovers and focus rings are not clipped. */
+.assistant-result { display: grid; gap: var(--space-3); min-width: 0; padding: var(--space-4); border: 1px solid var(--line-strong); background: var(--raised);
+  clip-path: polygon(calc(100% - var(--chamfer) - 5000px) -5000px, calc(100% - var(--chamfer) + 5000px) 5000px, -5000px 5000px, -5000px -5000px); }
+.assistant-result-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1) var(--space-3); padding-right: var(--chamfer); font: var(--type-small); }
+.assistant-result-head strong { font-weight: 600; }
+.assistant-result-head code { overflow-wrap: anywhere; color: var(--muted); font: var(--type-label-mono); }
+.assistant-result-status { margin-left: auto; color: var(--muted); font: var(--type-label); }
+.assistant-result .ct-note { max-width: none; }
+.assistant-result .wb-chart { height: auto; }
+.assistant-result .wb-chart-body { flex: none; height: 220px; }
+.assistant-result-link { display: inline-flex; align-items: center; justify-self: start; text-decoration: none; }
+.assistant-before-after { display: grid; gap: var(--space-2); min-width: 0; }
+.assistant-before-after h3 { margin: 0; font: var(--type-small); font-weight: 600; }
+.assistant-before-after .tbl { width: 100%; }
+.assistant-before-after th[scope='row'] { font-weight: 400; text-align: left; }
 .assistant-ask { position: fixed; right: 26px; bottom: 22px; z-index: 25; border: 1px solid var(--line-strong); box-shadow: none; background: var(--raised); }
 .assistant-drawer { position: fixed; inset: 0 0 0 auto; width: min(1100px, calc(100vw - 20px)); height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; border-left: 1px solid var(--line-strong); background: var(--raised); color: var(--text); }
 .assistant-drawer[open] { display: flex; flex-direction: column; }

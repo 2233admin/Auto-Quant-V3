@@ -67,10 +67,11 @@ family and the selection-adjusted result; it never shows an unadjusted best.
 
 Sidebar, top to bottom: a prominent **New factor** button, the most recent factors, then **Factors**, **Strategies**,
 **Runs**, **Tuning**, **Research** and **Knowledge** (added 2026-11-05 with the Shinka port), and at the bottom **Attention** and **Settings**. The Ideas home page is replaced by the Factors
-library; `?view=projects` keeps working as an alias.
+library. `?view=projects` opens the Projects page, a table with one row per Project of the Workspace in every lane; it is reached by URL and is not a sidebar item.
 
 | Route | Page |
 | --- | --- |
+| `?view=projects` | Projects page: every Project of the Workspace, one row each with verdict, original question, latest Run and trial count (the table that was the Ideas home); not in the sidebar |
 | `?view=factors` | Default landing library: one compact card per Factor Project with verdict, validation headline, latest Run curve and retained trial count |
 | `?view=factor&id=…` | Factor workbench: left editor (frozen question, locked parameters, expression, Run analysis), right result (run selector, action chips, status line, chart, metrics) |
 | `?view=strategies` | Portfolio Project cards with Defined/Backtested state, validation net headline metrics and development net-growth curve |
@@ -101,7 +102,7 @@ library; `?view=projects` keeps working as an alias.
 
 1. Shell and factor workbench skeleton (in progress: floating-card shell, editor and result layout measured against the
    reference).
-2. Implemented for supervised acceptance: Factors replaces Ideas and is the first-load route; `?view=projects` is an alias.
+2. Implemented for supervised acceptance: Factors replaces Ideas and is the first-load route; `?view=projects` opens the Projects page.
    The sidebar places New factor, three recent factors and the four object libraries below the brand. Attention, Settings
    and the search hint remain at the bottom. The factor editor now has complete expandable authority rows, persistent
    source tabs, a pinned trial note and a stale-session recovery action.

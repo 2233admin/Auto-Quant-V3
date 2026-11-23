@@ -29,7 +29,7 @@ const LINES: { key: LineKey; label: string; stroke: string; width: number; dash?
 const m = { l: 56, r: 16, t: 22, b: 40 }
 
 /** Compounded group curves at `width` x `height` CSS px. Test-split points are removed before any scale, marker or readout is built when test is hidden. */
-function GroupPlot({ points, width: W, height: H, label }: { points: FactorCumulativePoint[]; width: number; height: number; label: string }) {
+export function GroupPlot({ points, width: W, height: H, label }: { points: FactorCumulativePoint[]; width: number; height: number; label: string }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [hover, setHover] = useState<number | null>(null)
   const t = points.map((p) => Date.parse(p.timestamp))
@@ -129,7 +129,7 @@ function GroupPlot({ points, width: W, height: H, label }: { points: FactorCumul
   )
 }
 
-function GroupLegend({ testShown }: { testShown: boolean }) {
+export function GroupLegend({ testShown }: { testShown: boolean }) {
   return (
   <span className="legend">
     {LINES.map((l) => (
@@ -145,7 +145,7 @@ function GroupLegend({ testShown }: { testShown: boolean }) {
   )
 }
 
-function GroupTable({ points }: { points: FactorCumulativePoint[] }) {
+export function GroupTable({ points }: { points: FactorCumulativePoint[] }) {
   return (
   <table className="tbl">
     <caption className="small muted">{uiText("Compounded group growth multiples")}</caption>
@@ -206,6 +206,18 @@ export function spreadGroups(study: FactorDiagnostics, testShown: boolean): Metr
   ]
 }
 
+/**
+ * The group-return curve points a Run may draw: empty unless group evidence exists for it (not single-asset), sorted by time,
+ * with test-split points removed whenever the test audit is hidden. One rule for the Factor page and the Assistant result card.
+ */
+export function groupCurvePoints(study: FactorDiagnostics): FactorCumulativePoint[] {
+  if (study.quantileEvidence.status !== 'available' || study.predictionUniverse.evaluationMode === 'single-asset-temporal') return []
+  const testShown = studyTestVisible(study)
+  return [...(study.quantilePath?.cumulative?.points ?? [])]
+    .filter((p) => testShown || p.split !== 'test')
+    .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
+}
+
 type View = 'group' | 'ic'
 
 /**
@@ -217,9 +229,7 @@ export function FactorHero({ study, minHeight = 260 }: { study: FactorDiagnostic
   const testShown = studyTestVisible(study)
   const [choice, setChoice] = useState<View | null>(null)
   const quantiles = study.quantileEvidence.status === 'available' && study.predictionUniverse.evaluationMode !== 'single-asset-temporal'
-  const points = [...(study.quantilePath?.cumulative?.points ?? [])]
-    .filter((p) => testShown || p.split !== 'test')
-    .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
+  const points = groupCurvePoints(study)
   const groups = quantiles && points.length >= 2
   const view: View = choice ?? (groups ? 'group' : 'ic')
   const assets = study.predictionUniverse.predictionAssets?.length ?? 0

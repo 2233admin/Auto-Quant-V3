@@ -1806,6 +1806,123 @@ class StudioActionsTests(unittest.TestCase):
                 )
                 self.assertEqual(status, 422)
 
+    def test_idea_intake_freezes_the_chosen_quantile_count_through_the_cli(
+        self,
+    ) -> None:
+        from tests.intake_helpers import INTAKE_ASSETS, write_intake_inputs
+        from autoquant.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = initialize_workspace(Path(directory) / "workspace")
+            create_project(
+                workspace.root_dir,
+                "new-idea",
+                description=HYPOTHESIS,
+                template="ohlcv-factor-lab",
+            )
+            spawn = FakeSpawn()
+            server = self._serve(workspace, spawn=spawn)
+            staging = workspace.root_dir / "staging"
+            staging.mkdir()
+            _, package = write_intake_inputs(
+                staging, observations=180, request_assets=INTAKE_ASSETS
+            )
+            dataset = package.relative_to(workspace.root_dir).as_posix()
+            params = {
+                "dataset": dataset,
+                "horizon": 1,
+                "predictionAssets": list(INTAKE_ASSETS),
+            }
+
+            def preview(extra: dict):
+                return self._request(
+                    server,
+                    "POST",
+                    "/api/v1/actions/preview",
+                    {
+                        "actionId": "project.intake",
+                        "project": "new-idea",
+                        "params": {**params, **extra},
+                    },
+                )
+
+            status, plain = preview({})
+            self.assertEqual(status, 200, plain)
+            self.assertNotIn("--quantiles", plain["data"]["argv"])
+            status, five = preview({"quantiles": 5})
+            self.assertEqual(status, 200, five)
+            argv = five["data"]["argv"]
+            self.assertEqual(
+                argv[argv.index("--quantiles") : argv.index("--quantiles") + 2],
+                ["--quantiles", "5"],
+            )
+            self.assertEqual(argv[-1], "--json")
+            self.assertNotEqual(
+                five["data"]["commandHash"], plain["data"]["commandHash"]
+            )
+            self.assertEqual(five["data"]["params"]["quantiles"], 5)
+
+            for bad in (4, 0, "5", None, True, 10):
+                status, refused = preview({"quantiles": bad})
+                self.assertEqual(status, 422, (bad, refused))
+            status, small = preview(
+                {"quantiles": 5, "predictionAssets": list(INTAKE_ASSETS[:4])}
+            )
+            self.assertEqual(status, 422, small)
+            self.assertIn(
+                "5 quantiles require at least 5 prediction assets", json.dumps(small)
+            )
+            status, listed = self._request(server, "GET", "/api/v1/actions")
+            intake = next(
+                action
+                for action in listed["data"]["actions"]
+                if action["id"] == "project.intake"
+            )
+            self.assertEqual(
+                intake["params"]["quantiles"], {"type": "integer", "enum": [3, 5, 10]}
+            )
+
+            body = {
+                "actionId": "project.intake",
+                "project": "new-idea",
+                "params": {**params, "quantiles": 5},
+            }
+            status, launched = self._request(
+                server,
+                "POST",
+                "/api/v1/actions",
+                {
+                    **body,
+                    "confirm": True,
+                    "secondConfirm": True,
+                    "commandHash": five["data"]["commandHash"],
+                },
+            )
+            self.assertEqual(status, 202, launched)
+            server.actions.runner.get(launched["data"]["jobId"]).done.wait(5)
+            self.assertEqual(spawn.calls[0][0], five["data"]["argv"])
+            # Run the exact previewed command; the frozen Study must carry the count `study create --quantiles` writes.
+            # The Studio job lease leaves .autoquant/studio-research.lock in the Project and Core's pristine-scaffold
+            # check counts it as work, so remove it to isolate the previewed argv (see plans/studio-readonly-gaps.md).
+            (
+                workspace.root_dir / "projects/new-idea/.autoquant/studio-research.lock"
+            ).unlink()
+            done = subprocess.run(
+                argv,
+                cwd=workspace.root_dir,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+            study = json.loads(
+                (
+                    workspace.root_dir
+                    / "projects/new-idea/studies/ohlcv-factor-quality/study.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(study["judge"]["quantiles"], 5)
+
     def test_idea_dataset_rejects_asset_escape(self) -> None:
         from tests.intake_helpers import write_intake_inputs
 

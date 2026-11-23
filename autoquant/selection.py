@@ -245,6 +245,20 @@ def probabilistic_sharpe_probability(
     return float(NORMAL.cdf(z_score))
 
 
+def expected_maximum_z(trials: float) -> float:
+    """Expected maximum of ``trials`` independent standard-normal draws.
+
+    The closed form Core's deflated-Sharpe expectation scales by trial
+    dispersion. One trial or fewer has no selection effect, so the value is 0.
+    """
+
+    if trials <= 1:
+        return 0.0
+    return (1.0 - EULER_MASCHERONI) * NORMAL.inv_cdf(
+        1.0 - 1.0 / trials
+    ) + EULER_MASCHERONI * NORMAL.inv_cdf(1.0 - 1.0 / (trials * math.e))
+
+
 def expected_maximum_sharpe(
     successful_sharpes: list[float],
     unique_trials: int,
@@ -258,10 +272,7 @@ def expected_maximum_sharpe(
     dispersion = float(statistics.pstdev(successful_sharpes))
     if unique_trials == 1 or dispersion <= 1e-15:
         return 0.0, dispersion
-    maximum_z = (1.0 - EULER_MASCHERONI) * NORMAL.inv_cdf(
-        1.0 - 1.0 / unique_trials
-    ) + EULER_MASCHERONI * NORMAL.inv_cdf(1.0 - 1.0 / (unique_trials * math.e))
-    return dispersion * maximum_z, dispersion
+    return dispersion * expected_maximum_z(unique_trials), dispersion
 
 
 def _unsupported(reason: str, family: ResearchFamily) -> dict[str, Any]:

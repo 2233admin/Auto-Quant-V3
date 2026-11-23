@@ -1,7 +1,7 @@
 # Product maturity roadmap
 
 - Status: `active`
-- Updated: `2026-11-03`
+- Updated: `2026-11-23`
 - Related design: [[docs/design/product-capability-map]],
   [[docs/design/studio-information-architecture]],
   [[docs/design/studio-assistant]],
@@ -134,18 +134,25 @@ These are not negotiable trade-offs for any step above:
       index this plan.
 - [x] Add the conservative Code Intel structural ratchet
       ([[docs/design/structural-rules]]).
-- [ ] Step 1: land PR #3 / issue #2.
-- [ ] Step 2: issue #4 metric explanations.
-- [ ] Step 3: issue #5 data intake wizard and quality report.
-- [ ] Step 4: issue #6 Run history and same-baseline compare.
-- [ ] Split `autoquant/portfolio_explorer.py` into cohesive modules.
-- [ ] Step 5: issue #7 Strategy workbench.
-- [ ] Step 6: issue #8 factor redundancy.
-- [ ] Step 7: issue #9 full tear sheet.
+- [x] Step 1: land PR #3 / issue #2 (closed 2026-11-02).
+- [x] Step 2: issue #4 metric explanations (closed 2026-11-02).
+- [x] Step 3: issue #5 data intake wizard and quality report (closed 2026-11-02).
+- [x] Step 4: issue #6 Run history and same-baseline compare (closed 2026-11-02).
+- [ ] Split `autoquant/portfolio_explorer.py` into cohesive modules
+      (still one 9,815-line module on main `d34dd33`).
+- [x] Step 5: issue #7 Strategy workbench (closed 2026-11-02).
+- [x] Step 6: issue #8 factor redundancy (closed 2026-11-03).
+- [x] Step 7: issue #9 full tear sheet (closed 2026-11-03).
 - [ ] Open issues for items 8–15 when each is scheduled.
 - [ ] Final completion audit.
 
 ## Findings and decisions
+
+- 2026-11-23 — Re-audit against main `d34dd33`
+  ([[docs/design/product-capability-map]] section 12a): steps 1–7 shipped
+  (issues closed); the `portfolio_explorer.py` split did not happen; items
+  8–15 are not built in Core, and 11–13 exist only in the Shinka layer.
+  Acceptance items stay open until their evidence is audited.
 
 - 2026-11-03 — The survey's own suggested order put the data wizard first;
   the owner moved the Assistant (already in flight as PR #3) to step 1 and

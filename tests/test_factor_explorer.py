@@ -170,6 +170,34 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
             self.assertEqual(len(diagnostics["stability"]["assets"]), 18)
             self.assertEqual(len(diagnostics["stability"]["styles"]), 12)
             self.assertEqual(len(diagnostics["coverage"]), 6)
+            # Studio's Data coverage table reads these keys and nothing else.
+            by_asset = diagnostics["inputAvailability"]["byAsset"]
+            self.assertEqual(
+                [set(item) for item in by_asset],
+                [
+                    {
+                        "asset",
+                        "observations",
+                        "start",
+                        "end",
+                        "inputCoverage",
+                        "factorCoverage",
+                    }
+                ]
+                * 6,
+            )
+            self.assertEqual(
+                sum(item["observations"] for item in by_asset),
+                diagnostics["inputAvailability"]["observedRows"],
+            )
+            self.assertEqual(
+                [set(item) for item in diagnostics["coverage"]],
+                [{"asset", "coverage"}] * 6,
+            )
+            self.assertEqual(
+                {item["asset"] for item in by_asset},
+                {item["asset"] for item in diagnostics["coverage"]},
+            )
             availability = diagnostics["inputAvailability"]
             self.assertTrue(availability["available"])
             self.assertEqual(

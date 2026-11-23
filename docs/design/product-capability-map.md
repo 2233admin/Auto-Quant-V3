@@ -5,6 +5,9 @@
 > not own any AutoQuant invariant or schedule. The agreed build order derived
 > from it lives in [[plans/product-maturity-roadmap]]; lasting contracts stay in
 > the subsystem documents linked below.
+>
+> **Re-audited 2026-11-23** against main `d34dd33`: see section 12a for the
+> rows that changed and the remaining gaps.
 
 Date: 2026-11-03. Subject: AutoQuant
 (`D:\projects\.worktrees\aqv3-merge-assistant`, v0.9.31 plus the PR #3 draft).
@@ -265,6 +268,72 @@ Eleven products in total; BigQuant was effectively skipped.
 | Community strategy copying, emphasis on "trending" | BigQuant strategy community [second-hand]; QC public backtests [doc] | Public sharing must be preceded by a Review; share Reports, not re-runnable "bait" |
 
 ---
+
+## 12a. Re-audit against main `d34dd33` (2026-11-23)
+
+The tables above keep their 2026-11-03 "AutoQuant today" cells as the survey
+record. This section corrects them against main `d34dd33` (read-only audit:
+code, tests, Studio sources and plans; no build or browser pass). Where a cell
+above and this section disagree, this section wins until the next re-audit.
+
+### Rows whose state changed
+
+| Section / row | Map said | Now | Evidence |
+|---|---|---|---|
+| 1 Corporate actions | Partial | partial: split-jump self-check exists | `data_quality.py` `price-jumps` with adjustment hint; Studio jump-threshold field |
+| 1 Survivorship | Missing | partial: caller-declared coverage check | `data_quality.py` `survivorship` (warn, unauthenticated); `QualityTable.tsx`. No Verdict caveat |
+| 1 Data quality checks | Partial | done | 14 checks in `data_quality.py`; `aq data check`; Studio `data.check` |
+| 1 Custom data upload | Present (CLI), Studio pick-only | done | Studio data-intake wizard (`?view=data-intake`), needs `--allow-actions` |
+| 3 Decay and IC autocorrelation | Present; autocorrelation P1 | done | `factor_tearsheet.py` rank autocorrelation; tear-sheet figure |
+| 3 Turnover per group | Partial | done | `factor_tearsheet.py` per-quantile turnover |
+| 3 Quantile returns | Partial (terciles) | done in Core, partial in Studio | frozen 3/5/10 via `aq study create --quantiles`; Studio cannot choose the count |
+| 3 Long-short after cost | P1 | done | net = gross minus traded notional times bps, only with a locked cost model |
+| 3 Correlation vs own library | Partial, P0 | done (diagnostic, not a gate) | `factor_redundancy.py`; `FactorRedundancy.tsx` "possible duplicate" |
+| 3 Coverage | Present | backend only | `coverageByAsset`, `inputCoverage` published; no Factor coverage view in Studio |
+| 3 Sample-length guard | Partial | done on new tear-sheet Runs | `MIN_SAMPLE_BARS=20`, `shortSample` |
+| 5 Overfitting (PBO) | Missing | Shinka only | `shinka_research/skeptic.py` CSCV PBO; no Core PBO; Studio shows it on research pages only |
+| 5 Noise baseline | Missing | partial | Core `selection.expected_maximum_sharpe`; Factor "selection and noise" chart (frontier derived client-side in `factorMath.ts`); Shinka ledger row |
+| 6 Parameter sweeps | Partial | partial: Session trials and Shinka programs counted; no user-declared grid | `studio_library._counted_tuning` |
+| 6 Tuning task UI | Missing | partial | `?view=tuning`, `library/Tuning.tsx` status counters and trial table; no overlaid curves or noise band |
+| 6 / 10 AI assistance, Conversation | Partial (PR #3 draft) | done, acceptance gates open | Studio Assistant; template cards (#30); six intake fields (#32); `plans/studio-assistant` gates still open |
+| 7 Run comparison | Partial | done in Studio, no CLI | `run_compare.py`, `run_history.py`, `pages/compare/*`; refuses when not comparable |
+| 7 Versions and diffs | Partial, no Studio diff | partial | Compare highlights the differing source hash; no candidate code or metric diff of one factor |
+| 8 Signal delivery | Partial | partial+, backend only | `aq handoff` writes `handoff.json`; no Studio view |
+| 9 Onboarding and help | Partial, no popovers | done | `MetricInfo.tsx` popovers from `metrics/catalogue.ts` |
+| 9 Empty states | Partial | done | data-intake wizard; Assistant template cards |
+| 10 Tool calls | Present (CLI) | done, wider | `aq shinka intake` (#31), RD-Agent extraction `aq research run|extract` (#27) |
+| new: research ingestion | not in the survey | done | RD-Agent candidates through the fixed Judge and trial gate; campaign pages (#29, #33) |
+
+### Top-15 items 8–15
+
+| # | Item | State | What is still missing |
+|---|---|---|---|
+| 8 | Group neutralization | missing | caller industry or cap file, group-neutral IC; only the Judge's one-style rank neutralization exists |
+| 9 | Dated membership, survivorship caveat | partial | dated membership file; caveat on the Verdict and Factor page |
+| 10 | Tuning task with adjusted results and noise frontier | partial | overlaid curves, luck-ceiling band, adjusted best; frontier on Strategy |
+| 11 | PBO/CSCV | Shinka only | a Core Strategy verdict that carries PBO or `pbo-not-computed` |
+| 12 | Hypothesis/Verdict, Refuted protocol | Shinka only | `autoquant/hypotheses.py` and `aq hypothesis` (H1 onward) |
+| 13 | Sealed tail in Studio | Shinka only (lockbox); Core has the post-hoc external holdout | Workspace default seal, lock UI and unlock condition |
+| 14 | Self-contained HTML/PDF export | missing | only JSON and text downloads exist (`download.ts`) |
+| 15 | Forward shadow tracking, decay alerts | missing | forward Runs, forward IC curve, decay in Attention; no scheduler |
+
+### Other gaps found
+
+- Core: multi-Factor combination (`aq project from-factor` takes one
+  source); walk-forward re-estimation; style or industry attribution.
+- Studio has no action for: holdout create/bind/run/assess; report, review and
+  dossier publish; session compare/promote/complete; family declare; research
+  run/extract; handoff; `aq shinka intake`.
+- Studio shows Reviews, the correction chain and the action audit log only as
+  timeline rows or a file path.
+- The Factor noise frontier is computed in the browser, against the rule that
+  Studio presents and does not compute statistics.
+- Assistant results link to Runs but carry no metric card, and trials have no
+  before/after table.
+- `?view=projects` falls back to the Factor library; Projects is reachable only
+  indirectly.
+- Issue #22: the scroll hole fix (`cfef045`) is on main but unmeasured and has
+  no regression test.
 
 ## 12. Source URLs
 

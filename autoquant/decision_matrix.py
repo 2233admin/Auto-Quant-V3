@@ -1170,12 +1170,14 @@ def _trial(
         verdict = "BASELINE"
         hypothesis = "Fixed Session baseline"
         prior_improvement = None
+        prior_leader_run_id = None
     else:
         sequence = int(experiment["sequence"])
         experiment_id = experiment["id"]
         verdict = experiment["verdict"]
         hypothesis = experiment["hypothesis"]
         prior_improvement = experiment["improvement"]
+        prior_leader_run_id = experiment["leader"]["runId"]
     return {
         "role": "baseline" if experiment is None else "candidate",
         "sequence": sequence,
@@ -1187,6 +1189,7 @@ def _trial(
         "sourceHash": run.result["subject"]["sourceHash"],
         "primaryValue": primary_value,
         "objectiveImprovementVsPriorLeader": prior_improvement,
+        "priorLeaderRunId": prior_leader_run_id,
         "objectiveImprovementVsBaseline": _objective_improvement(
             run,
             baseline,
@@ -1462,6 +1465,7 @@ SESSION_DECISION_MATRIX_JSON_SCHEMA: dict[str, Any] = {
                     "sourceHash",
                     "primaryValue",
                     "objectiveImprovementVsPriorLeader",
+                    "priorLeaderRunId",
                     "objectiveImprovementVsBaseline",
                     "isCurrentLeader",
                     "metrics",

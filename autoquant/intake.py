@@ -86,12 +86,19 @@ from .position_snapshots import (
     load_position_snapshot,
 )
 from .prediction_modes import (
+    CROSS_SECTIONAL_MODE,
     FACTOR_POPULATION,
     PredictionModeError,
     build_factor_population,
     load_factor_population,
 )
-from .studies import StudyContext, hash_file, hash_json, load_study
+from .studies import (
+    QUANTILE_CHOICES,
+    StudyContext,
+    hash_file,
+    hash_json,
+    load_study,
+)
 from .workspace import (
     SCHEMA_VERSION,
     AutoQuantValidationError,
@@ -592,6 +599,9 @@ class PreparedIntake:
     # Optional exact Factor source and lineage carried by `aq project
     # from-factor` into a research desk; None for every ordinary intake.
     factor_seed: Any = None
+    # Frozen Factor tear-sheet group count for ohlcv-factor-lab; None leaves
+    # the Study judge without the field, which means three groups.
+    quantiles: int | None = None
 
     @property
     def universe(self) -> list[str]:
@@ -1738,6 +1748,56 @@ def _daily_panel_availability(
     )
 
 
+def quantile_intake_issues(
+    template: str,
+    quantiles: Any,
+    request: dict[str, Any],
+    universe: list[str],
+) -> list[ValidationIssue]:
+    """Refuse a Factor group count the frozen Study could not carry.
+
+    The count lands in the Study judge exactly as ``aq study create
+    --quantiles`` writes it, so the allowed set and the population rule are
+    the Study's own. A cross-sectional tear sheet also needs one prediction
+    asset per group, which the Study cannot see before the first Run.
+    """
+
+    if type(quantiles) is not int or quantiles not in QUANTILE_CHOICES:
+        return [_issue("quantiles", "schema.choice", "Quantiles must be 3, 5 or 10")]
+    if template != "ohlcv-factor-lab":
+        return [
+            _issue(
+                "quantiles",
+                "intake.quantiles-template",
+                "--quantiles is consumed only by ohlcv-factor-lab",
+            )
+        ]
+    if len(universe) < quantiles:
+        return [
+            _issue(
+                "quantiles",
+                "study.quantile-population",
+                "Quantiles require at least one asset per group",
+            )
+        ]
+    try:
+        population = build_factor_population(request, universe)
+    except PredictionModeError:
+        return []
+    if (
+        population["evaluationMode"] == CROSS_SECTIONAL_MODE
+        and len(population["predictionAssets"]) < quantiles
+    ):
+        return [
+            _issue(
+                "quantiles",
+                "study.quantile-population",
+                f"{quantiles} quantiles require at least {quantiles} prediction assets",
+            )
+        ]
+    return []
+
+
 def prepare_project_intake(
     request_path: str | Path,
     package_path: str | Path,
@@ -1745,6 +1805,7 @@ def prepare_project_intake(
     *,
     minimum_observations_override: int | None = None,
     external_holdout: bool = False,
+    quantiles: int | None = None,
 ) -> PreparedIntake:
     """Validate external request/data before a Project staging directory exists."""
 
@@ -2112,6 +2173,12 @@ def prepare_project_intake(
                     str(error),
                 )
             )
+    if quantiles is not None:
+        issues.extend(
+            quantile_intake_issues(
+                template, quantiles, request, list(prepared_by_symbol)
+            )
+        )
     if len(prepared) < minimum_assets:
         issues.append(
             _issue(
@@ -2479,6 +2546,7 @@ def prepare_project_intake(
         assets=tuple(prepared),
         start=str(start),
         end=str(end),
+        quantiles=quantiles,
     )
 
 

@@ -33,7 +33,7 @@ from .sessions import (
     load_session,
     session_snapshot,
 )
-from .studies import STUDY_ID, load_study, path_matches_pattern
+from .studies import QUANTILE_CHOICES, STUDY_ID, load_study, path_matches_pattern
 from .workspace import (
     SCHEMA_VERSION,
     AutoQuantValidationError,
@@ -1487,6 +1487,10 @@ class ActionService:
                             "dataset": {"type": "string"},
                             "horizon": {"type": "integer", "minimum": 1, "maximum": 60},
                             "predictionAssets": {"type": "array"},
+                            "quantiles": {
+                                "type": "integer",
+                                "enum": list(QUANTILE_CHOICES),
+                            },
                         },
                     },
                     {

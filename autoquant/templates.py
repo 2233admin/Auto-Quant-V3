@@ -843,6 +843,7 @@ def _apply_ohlcv_factor_lab(
             ],
             [],
             60,
+            intake.quantiles if intake is not None else None,
         ),
         objective=StudyObjective("validation_mean_ic", "maximize", 0.01),
         dataset=StudyDataset(
