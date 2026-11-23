@@ -32,7 +32,7 @@ Studio presents and never computes statistics or verdicts. Three places broke or
 
 - [ ] The Factor page lists, per prediction asset, the published input coverage and factor coverage, and states plainly when the Run published none.
 - [ ] `aq project intake --template ohlcv-factor-lab --quantiles 5` and the Studio intake action freeze the same Study judge. Leaving the option out or choosing 3 leaves the Study bytes unchanged. Other values and other templates are refused.
-- [ ] `?view=projects` renders the Projects page, and the navigation reaches it where the information architecture places it.
+- [x] `?view=projects` renders the Projects page. The information architecture does not place it in the sidebar, so it is reached by URL only.
 - [ ] The Factor frontier series is published by the server, the browser holds no quantile or expected-maximum code, and a test pins the server values to the numbers the former browser code produced on the same ledgers.
 - [ ] The Strategy page draws a server frontier for a Portfolio Run with at least two successful trials and otherwise shows a not-computed state with the reason and no line.
 - [ ] Every new string exists in `zh-CN` and English, and the Studio gates and Python tests named in Verification pass.
@@ -42,13 +42,14 @@ Studio presents and never computes statistics or verdicts. Three places broke or
 - [x] Server frontier module, Core `expected_maximum_z`, snapshot and Strategy evidence wiring, Python tests, browser tests and the browser fixture.
 - [ ] Quantile count through Core, the Studio action and the intake form.
 - [ ] Factor coverage section.
-- [ ] Projects route.
+- [x] Projects route, its page mount and the tests, with the information-architecture and Studio guide updates.
 - [ ] Documentation updates and the final verification.
 
 ## Findings and decisions
 
 - 2026-11-23 — The frontier is published beside the frozen evidence, in `noiseFrontier` on the Project snapshot and on the Strategy evidence. `build_selection_adjustment` output is embedded in frozen Session and Report evidence and its schema is closed, so nothing was added to it.
 - 2026-11-23 — The browser used its own Acklam quantile and compared the selected IC with its own pass line. The server uses the exact normal quantile and publishes Core's `passes` verdict. On the four pinned ledgers the two implementations agree to better than 1e-8 and give the same verdict.
+- 2026-11-23 — The brief called `?view=projects` a bug. The information architecture and a test documented it as an alias of the Factors library, and the Projects table (the old Ideas home) had no route. The route now opens that table, which is the only page listing every Project of the Workspace in every lane. Every caller that meant the Factors library (brand, top-bar mark, breadcrumbs, back links) now links to `?view=factors`. The sidebar is unchanged.
 - 2026-11-23 — A Portfolio Run with one trial, or trials with identical Sharpe values, has no measured spread, so the Strategy frontier is not computed. Drawing a flat zero line would claim a noise scale Core never measured.
 
 ## Verification
@@ -58,6 +59,7 @@ Studio presents and never computes statistics or verdicts. Three places broke or
 ## Progress log
 
 - 2026-11-23 — Plan created. Frontier work landed first.
+- 2026-11-23 — Projects route and page mount landed.
 
 ## Completion
 

@@ -29,8 +29,9 @@ import { STATE_COPY } from '../src/components/stateCopy'
 import { StateCatalogue } from '../src/components/workbench/StateCatalogue'
 import { CampaignBlock } from '../src/pages/project/ProjectResearch'
 
-test('landing and legacy projects alias both open Factors', () => {
-  for (const query of ['', '?view=projects', '?view=factors']) assert.equal(parseRoute(query).view, 'factors')
+test('the landing and ?view=factors open Factors; ?view=projects is its own page', () => {
+  for (const query of ['', '?view=factors']) assert.equal(parseRoute(query).view, 'factors')
+  assert.equal(parseRoute('?view=projects').view, 'projects')
 })
 
 test('Chinese presentation preserves user names, numerical evidence, commands and canonical verdict states', () => {
