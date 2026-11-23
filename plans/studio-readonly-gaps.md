@@ -1,6 +1,6 @@
 # Studio read-only gaps
 
-- Status: `active`
+- Status: `completed`
 - Updated: `2026-11-23`
 - Related design: [[docs/design/studio-information-architecture]], [[docs/design/full-factor-tear-sheet]], [[docs/design/panda-display-gap-matrix]], [[docs/STUDIO]].
 
@@ -33,9 +33,9 @@ Studio presents and never computes statistics or verdicts. Three places broke or
 - [x] The Factor page lists, per prediction asset, the published input coverage and factor coverage, and states plainly when the Run published none.
 - [x] `aq project intake --template ohlcv-factor-lab --quantiles 5` and the Studio intake action freeze the same Study judge. Leaving the option out leaves the Study bytes unchanged, and the idea form leaves it out for the default 3. Other values and other templates are refused.
 - [x] `?view=projects` renders the Projects page. The information architecture does not place it in the sidebar, so it is reached by URL only.
-- [ ] The Factor frontier series is published by the server, the browser holds no quantile or expected-maximum code, and a test pins the server values to the numbers the former browser code produced on the same ledgers.
-- [ ] The Strategy page draws a server frontier for a Portfolio Run with at least two successful trials and otherwise shows a not-computed state with the reason and no line.
-- [ ] Every new string exists in `zh-CN` and English, and the Studio gates and Python tests named in Verification pass.
+- [x] The Factor frontier series is published by the server, the browser holds no quantile or expected-maximum code, and a test pins the server values to the numbers the former browser code produced on the same ledgers.
+- [x] The Strategy page draws a server frontier for a Portfolio Run with at least two successful trials and otherwise shows a not-computed state with the reason and no line.
+- [x] Every new string exists in `zh-CN` and English, and the Studio gates and Python tests named in Verification pass.
 
 ## Work
 
@@ -43,7 +43,7 @@ Studio presents and never computes statistics or verdicts. Three places broke or
 - [x] Quantile count through Core, the Studio action and the intake form.
 - [x] Factor coverage section.
 - [x] Projects route, its page mount and the tests, with the information-architecture and Studio guide updates.
-- [ ] Documentation updates and the final verification.
+- [x] Documentation updates and the final verification.
 
 ## Findings and decisions
 
@@ -57,7 +57,19 @@ Studio presents and never computes statistics or verdicts. Three places broke or
 
 ## Verification
 
-- Pending.
+Run on `3700635` in `D:/projects/.worktrees/aqv3-fe-a`, 2026-11-23. The host was shared with other long test runs, so a few subprocess-timing tests timed out in the combined run and were rerun alone.
+
+| Command | Exit | Result |
+| --- | --- | --- |
+| `uv run python -m unittest tests.test_studio tests.test_studio_actions tests.test_studio_data tests.test_studio_strategy tests.test_studio_frontier tests.test_selection tests.test_intake tests.test_intake_quantiles tests.test_studies tests.test_factor_tearsheet tests.test_factor_explorer tests.test_documentation tests.test_cli tests.test_studio_host tests.test_studio_cache tests.test_studio_factor_references` | 1 | 232 ran, 228 pass, 4 errors: two 5 s `studio serve` start-up timeouts, two 20 s job waits. All four are load timeouts. |
+| The same four tests alone (`test_managed_cli_fails_when_injected_port_is_occupied`, `test_managed_cli_subprocess_rejects_conflicting_explicit_port`, `test_enabled_snapshot_carries_token_and_gates_hold`, `test_end_to_end_real_evaluate_through_studio`) | 0 | 4 pass in 24 s |
+| `uv run python scripts/check_doc_links.py` | 0 | 2126 documentation double-links resolve |
+| `cd studio-app; pnpm run typecheck` | 0 | `tsc -b --noEmit` clean |
+| `cd studio-app; pnpm run check:i18n` | 0 | 0 untranslated strings, 104 Core enums, 0 missing |
+| `cd studio-app; pnpm run test:ui` | 0 | 130 pass, 0 fail |
+| `cd studio-app; pnpm run build` | 0 | built; the rebuilt `autoquant/studio_app` was discarded with `git checkout -- autoquant/studio_app` and is not committed |
+
+New tests: `tests/test_studio_frontier.py` (11), `tests/test_intake_quantiles.py` (7), one Studio action test in `tests/test_studio_actions.py`, key pins in `tests/test_factor_explorer.py`, and in `studio-app/tests` `noise-frontier` (7), `projects-route` (3), `quantile-select` (4), `factor-coverage` (6).
 
 ## Progress log
 
@@ -68,4 +80,4 @@ Studio presents and never computes statistics or verdicts. Three places broke or
 
 ## Completion
 
-Not complete.
+All acceptance items are met and the checks above are recorded. The built Studio bundle in `autoquant/studio_app` is not part of these commits; CI rebuilds it and compares. The Studio job lease defect in Findings is separate work.
