@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --noEmit",
     "check:i18n": "node scripts/ui-inventory.cjs --check",
-    "test:ui": "node tests/run-idea-answer.cjs"
+    "test:ui": "node tests/run-idea-answer.cjs",
+    "smoke": "node scripts/smoke-routes.mjs"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-sc": "^5.3.1",
