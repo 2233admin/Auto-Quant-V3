@@ -27,7 +27,7 @@ Auto-Quant-V2/
 ```json
 {
   "schema_version": 1,
-  "name": "AutoQuant V2 Research Desk",
+  "name": "AutoQuant V3 Research Desk",
   "projects_directory": "projects",
   "default_project": "sample-research-desk"
 }
