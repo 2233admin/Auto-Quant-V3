@@ -1,7 +1,7 @@
 # Panda-style chat intake UX
 
-- Status: `proposed`
-- Updated: `2026-11-22`
+- Status: `active`
+- Updated: `2026-11-23`
 - Related design: [[docs/design/studio-observation-surface]], [[docs/design/external-researcher-driver]], [[docs/design/studio-assistant]]
 
 ## Outcome
@@ -81,6 +81,9 @@ The online product was used from a logged-in Chrome session on 2026-11-22. The o
 ## Progress log
 
 - 2026-11-22 — Plan created after a logged-in review of the online product's chat, factor library, strategy library, run history, tuning, simulation, and market pages.
+- 2026-11-23 — Template cards (#30) and the six intake fields (#32) landed;
+  the in-chat result summary with five metrics and a chart is not built. Status
+  moved to `active`; acceptance not audited.
 
 ## Completion
 
