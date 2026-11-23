@@ -1,4 +1,4 @@
-"""AutoQuant V2 Workspace, Project, research, and evidence primitives."""
+"""AutoQuant V3 Workspace, Project, research, and evidence primitives."""
 
 from .workspace import (
     PROJECT_MANIFEST,

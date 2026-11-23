@@ -1,4 +1,4 @@
-"""Workspace and self-contained Project boundaries for AutoQuant V2."""
+"""Workspace and self-contained Project boundaries for AutoQuant V3."""
 
 from __future__ import annotations
 
