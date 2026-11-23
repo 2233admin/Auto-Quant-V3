@@ -102,7 +102,16 @@ class SessionDecisionMatrixTests(unittest.TestCase):
                 [trial["verdict"] for trial in complete["trials"]],
                 ["BASELINE", "KEEP", "CRASH"],
             )
-            crash = complete["trials"][-1]
+            baseline_trial, kept_trial, crash = complete["trials"]
+            self.assertIsNone(baseline_trial["priorLeaderRunId"])
+            self.assertEqual(
+                kept_trial["priorLeaderRunId"],
+                baseline_trial["runId"],
+            )
+            self.assertEqual(
+                crash["priorLeaderRunId"],
+                kept_trial["runId"],
+            )
             self.assertEqual(crash["status"], "failed")
             self.assertTrue(crash["errors"])
             self.assertTrue(
