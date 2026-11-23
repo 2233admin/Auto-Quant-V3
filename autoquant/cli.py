@@ -328,7 +328,7 @@ def build_parser() -> RaisingArgumentParser:
     parser = RaisingArgumentParser(
         prog="aq",
         description=(
-            "AutoQuant V2 — one standardized quantitative workbench with "
+            "AutoQuant V3 — one standardized quantitative workbench with "
             "many self-contained Projects."
         ),
     )
@@ -6113,7 +6113,7 @@ def dispatch(args: argparse.Namespace) -> CommandResult:
             "capabilities",
             {
                 "name": "aq",
-                "description": "AutoQuant V2 quantitative research workbench CLI",
+                "description": "AutoQuant V3 quantitative research workbench CLI",
                 "harness": harness,
                 "commands": CLI_COMMANDS,
             },
