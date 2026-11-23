@@ -404,8 +404,10 @@ The first viewport prioritizes:
   spread, weakest chronological fold, maximum fixed-style overlap, test audit
   IC, and rank turnover;
 - the latest successful Factor Run's verified IC path, fixed-horizon decay,
-  quantile path, fold/regime/asset stability, style overlap, coverage, and
-  turnover tear sheet;
+  quantile path, fold/regime/asset stability, style overlap, a Data coverage
+  table (per asset: bars, first and last bar, input coverage and factor
+  coverage, as the Run published them, or a plain statement that it
+  published none), and turnover tear sheet;
 - portfolio Run summaries for held-out IC, net Sharpe, signal-state change,
   hysteresis transition reduction, maximum asset return/risk contribution,
   attribution reconciliation, turnover, cost stress, and contextual liquidity

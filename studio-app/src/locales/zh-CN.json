@@ -3097,5 +3097,17 @@
   "Tear-sheet groups": "分组数",
   "{0} groups": "{0} 组",
   "{0} groups (default)": "{0} 组（默认）",
-  "Frozen with the Study. Needs at least one prediction asset per group.": "随 Study 一同冻结。每组至少需要一个预测资产。"
+  "Frozen with the Study. Needs at least one prediction asset per group.": "随 Study 一同冻结。每组至少需要一个预测资产。",
+  "{0} of {1} possible asset-bar rows are observed ({2}); {3} of {4} bars have every asset.": "在 {1} 个可能的资产-时点行中，实际观测到 {0} 行（{2}）；{4} 个时点中有 {3} 个时点所有资产齐全。",
+  "First bar": "首条",
+  "Last bar": "末条",
+  "Input coverage": "行情覆盖率",
+  "Factor coverage": "因子覆盖率",
+  "About input coverage": "关于行情覆盖率",
+  "About factor coverage": "关于因子覆盖率",
+  "The share of the panel's bars at which this asset has a price. A missing bar is left empty, never filled.": "面板各时点中该资产有价格的比例。缺失的时点保持为空，不做填充。",
+  "The share of this asset's bars at which the candidate produced a finite factor value.": "该资产的各时点中，候选因子给出有限取值的比例。",
+  "This Run published factor coverage only; it did not publish input coverage per asset.": "本次运行只发布了因子覆盖率，没有按资产发布行情覆盖率。",
+  "Coverage not published": "未发布覆盖率",
+  "This Run did not publish per-asset input or factor coverage, so none is shown.": "本次运行没有按资产发布行情或因子覆盖率，因此不显示。"
 }

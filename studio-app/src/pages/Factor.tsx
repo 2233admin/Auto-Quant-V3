@@ -11,6 +11,7 @@ import { routeHref } from '../route'
 import { FactorHero, spreadGroups } from './GroupReturn'
 import { FactorTearSheet } from './FactorTearSheet'
 import { IcOverTime, Quantiles } from './FactorCharts'
+import { CoverageTable } from './FactorCoverage'
 import { frontierAbsent, frontierUnavailableReason, NoiseSection } from './NoiseFrontier'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
 import { SPLITS } from './factorMath'
@@ -271,6 +272,7 @@ const ANCHOR_TAB: Record<string, TabId> = {
   'sec-folds': 'stability',
   'sec-horizons': 'stability',
   'sec-stability': 'stability',
+  'sec-coverage': 'stability',
   'sec-protocol': 'provenance',
   'sec-provenance': 'provenance',
   'sec-errors': 'provenance',
@@ -428,6 +430,9 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
                   </Section>
                   <Section title={tr('Stability: regime, asset, style', '稳定性：市场状态、资产与风格')} id="sec-stability" icon={<Icon name="params" />} micro="STABILITY" caption={tr('Per-split tables: market regime, asset and overlap with known styles.', '按数据划分展示市场状态、资产及与已知风格的重叠。')}>
                     <StabilityTables study={study} />
+                  </Section>
+                  <Section title={tr('Data coverage', '数据覆盖')} id="sec-coverage" icon={<Icon name="folder" />} micro="COVERAGE" caption={tr('Bars and factor values each asset had in this Run, as published.', '本次运行中各资产的行情条数与因子取值情况（按已发布数据）。')}>
+                    <CoverageTable study={study} />
                   </Section>
                 </>
               ),

@@ -410,6 +410,9 @@ export type FactorSpreadStats = {
 
 export type FactorSpreadSplit = FactorSpreadStats & { split: FactorSplit; role?: string }
 
+/** One asset of the Run's input panel: how many bars it has, over what span, and how much of the panel and of its factor values are present. */
+export type FactorAssetAvailability = { asset: string; observations: number; start: string; end: string; inputCoverage: number; factorCoverage: number }
+
 export type FactorDiagnostics = {
   tearSheet?: FactorTearSheet
   redundancy?: FactorRedundancy
@@ -448,7 +451,19 @@ export type FactorDiagnostics = {
     weakestValidationFold?: { id: string; meanRankIc: number | null }
     maximumValidationStyleOverlap?: { style: string; meanRankCorrelation: number | null }
   }
-  inputAvailability: { available: boolean; observationCoverage?: number; observedRows?: number; possibleRows?: number }
+  /** Observed-only input availability of the Run's panel; `byAsset` is present when `available`. */
+  inputAvailability: {
+    available: boolean
+    reason?: string
+    timestamps?: number
+    completeTimestamps?: number
+    observationCoverage?: number
+    observedRows?: number
+    possibleRows?: number
+    byAsset?: FactorAssetAvailability[]
+  }
+  /** Per-asset share of finite factor values, as the Run's factor report published it. */
+  coverage?: { asset: string; coverage: number }[]
   factorQualification: {
     available: boolean
     diagnosis?: { stage: string; iterationFocus?: string; explanation: string; qualifiesForPortfolio: boolean }
