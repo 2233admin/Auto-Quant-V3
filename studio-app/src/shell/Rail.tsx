@@ -46,7 +46,7 @@ export function Rail({ route, data, narrow: compact, onSearch }: RailProps) {
   const hosted = isHosted(data.workspace)
   return (
     <aside ref={rail} data-measure="sidebar" className={narrow ? 'rail is-narrow mo-hl' : 'rail mo-hl'}>
-      <a className="brand" href={routeHref({ view: 'projects' })} aria-label={narrow ? uiText("AutoQuant Studio") : undefined}>
+      <a className="brand" href={routeHref({ view: 'factors' })} aria-label={narrow ? uiText("AutoQuant Studio") : undefined}>
         <Mark />
         <span className="brand-text">
           <b>{uiText("AutoQuant Studio")}</b>

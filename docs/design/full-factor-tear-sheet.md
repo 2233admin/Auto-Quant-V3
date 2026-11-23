@@ -13,7 +13,10 @@ same evidence without full paths. Publication does not change any objective,
 qualification, KEEP/REVERT logic, or legacy tertile artifact.
 
 Optional Study `judge.quantiles` accepts exactly integer 3, 5 or 10. CLI:
-`aq study create ... --quantiles 5`. It participates in Study identity and
+`aq study create ... --quantiles 5`, or `aq project intake ... --template
+ohlcv-factor-lab --quantiles 5`, which writes the same judge field. The Studio
+idea workbench offers the same three values on its data-binding step and starts
+that command. It participates in Study identity and
 cannot be tuned inside a Session. Absence serializes exactly as before and
 means 3; no old manifest or Run is rewritten. Study loading refuses an
 explicit count larger than the dataset universe; the Judge also checks the

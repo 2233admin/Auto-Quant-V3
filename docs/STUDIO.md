@@ -357,7 +357,8 @@ Under Ideas the sidebar lists up to three recently opened Projects; the list is
 kept in the browser's local storage and is never sent to the server. Fixed at the
 bottom are **Attention** (with a count) and **Settings**. The theme toggle stays
 in the top bar. One Project is one idea, so a card or row title is the Project
-name; the route key `?view=projects` is unchanged so existing links still work.
+name. `?view=projects` opens the Projects page, a table of every Project in the
+Workspace; it is reached by URL and is not a sidebar item.
 
 **Factors** offers **List** and **Cards** in the same library. Both use the
 same search, verdict and split filters, sorting, and links to factor analysis.
@@ -403,8 +404,10 @@ The first viewport prioritizes:
   spread, weakest chronological fold, maximum fixed-style overlap, test audit
   IC, and rank turnover;
 - the latest successful Factor Run's verified IC path, fixed-horizon decay,
-  quantile path, fold/regime/asset stability, style overlap, coverage, and
-  turnover tear sheet;
+  quantile path, fold/regime/asset stability, style overlap, a Data coverage
+  table (per asset: bars, first and last bar, input coverage and factor
+  coverage, as the Run published them, or a plain statement that it
+  published none), and turnover tear sheet;
 - portfolio Run summaries for held-out IC, net Sharpe, signal-state change,
   hysteresis transition reduction, maximum asset return/risk contribution,
   attribution reconciliation, turnover, cost stress, and contextual liquidity

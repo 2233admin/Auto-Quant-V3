@@ -60,6 +60,7 @@ None.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/studio-readonly-gaps]] | Close five Studio gaps against published Core evidence: Factor input coverage, a 3/5/10 quantile choice at intake, a routable Projects page, and server-computed noise frontiers on the Factor and Strategy pages. | 2026-11-23 |
 | [[plans/prepared-source-workspace-harness-command]] | Made the checked-in Studio command executable from an independently prepared source Workspace under an ordinary supervisor PATH and enforced supported managed IPv4 loopback authority. | 2026-08-22 |
 | [[plans/generic-harness-web-surface]] | Made Studio a vendor-neutral, strictly supervised, origin-neutral, managed-only embeddable Harness Web Surface without weakening standalone security. | 2026-08-22 |
 | [[plans/openalice-harness-studio-capability]] | Let OpenAlice discover and launch the existing Studio on one host-assigned fixed loopback port without changing standalone operation. | 2026-08-21 |

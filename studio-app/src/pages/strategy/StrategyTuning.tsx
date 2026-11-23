@@ -3,6 +3,7 @@ import { uiTemplate, uiText, uiValue } from '../../i18n'
 import { MetricGrid } from '../../components/workbench'
 import { Empty } from '../../components/States'
 import { fn, up } from '../portfolio/pfmt'
+import { frontierAbsent, frontierUnavailableReason, PortfolioNoiseFrontierChart } from '../NoiseFrontier'
 
 /** A neighborhood is a context stress, not a search result or a parameter recommendation. */
 export function StrategyTuning({ project }: { project: ProjectSnapshot }) {
@@ -10,6 +11,7 @@ export function StrategyTuning({ project }: { project: ProjectSnapshot }) {
   const evidence = project.library?.strategy?.evidence
   const adjustment = evidence?.selectionAdjustment
   const statistics = adjustment?.statistics
+  const frontier = evidence?.noiseFrontier ?? { ...frontierAbsent(), kind: 'portfolio-net-sharpe' as const }
   return <div className="vstack">
     <h2 className="type-section">{uiText('Parameter neighborhood')}</h2>
     {neighborhood?.available ? <p>{uiTemplate('{0} predeclared configurations; base {1}.', [neighborhood.policy?.configurationCount ?? '—', neighborhood.policy?.baseConfigurationId ?? '—'])}</p>
@@ -27,6 +29,9 @@ export function StrategyTuning({ project }: { project: ProjectSnapshot }) {
       ]}]} />}
       {adjustment.reason && <p className="small muted">{uiValue(adjustment.reason)}</p>}
     </> : <p>{uiText('No verified selection adjustment is available. No adjusted tuning result can be claimed.')}</p>}
+    <h3 className="type-section">{uiText('Selection and noise')}</h3>
+    {frontier.status === 'available' ? <PortfolioNoiseFrontierChart frontier={frontier} />
+      : <Empty title={uiText('Noise frontier')}><p>{frontierUnavailableReason(frontier)}</p></Empty>}
     <p className="small mono" translate="no">{evidence?.runId ?? '—'}</p>
     <p className="small muted">{uiText('No parameters are applied. A new hypothesis requires a separately declared, counted trial and a fresh external holdout where required.')}</p>
   </div>

@@ -1,7 +1,7 @@
 import { translate, uiTemplate, uiText, uiValue, useLanguage } from '../i18n'
 import { BuildStrategyAction } from '../actions/BuildStrategyAction'
 import { useEffect, useState, type ReactNode } from 'react'
-import { getJson, type FactorDiagnostics, type ProjectSnapshot, type RankSummary, type RunRow } from '../api'
+import { getJson, type FactorDiagnostics, type FactorNoiseFrontier, type ProjectSnapshot, type RankSummary, type RunRow } from '../api'
 import { Glyph, Icon } from '../design/icons'
 import { signedNumber } from '../design/signConvention'
 import { num, plural, when } from '../format'
@@ -10,9 +10,11 @@ import { Notice } from '../Notice'
 import { routeHref } from '../route'
 import { FactorHero, spreadGroups } from './GroupReturn'
 import { FactorTearSheet } from './FactorTearSheet'
-import { IcOverTime, Empty, NoiseFrontierChart, Quantiles } from './FactorCharts'
+import { IcOverTime, Quantiles } from './FactorCharts'
+import { CoverageTable } from './FactorCoverage'
+import { frontierAbsent, frontierUnavailableReason, NoiseSection } from './NoiseFrontier'
 import { gatedSplits, studyTestVisible, TEST_HIDDEN_NOTE } from './testGate'
-import { noiseFrontier, SPLITS, type FrontierResult } from './factorMath'
+import { SPLITS } from './factorMath'
 import { FactorVerdict, FoldTable, HorizonTable, ProtocolBox, ProvenanceBox, QualificationBlock, RunErrors, StabilityTables, VerdictReasons } from './FactorEvidence'
 import { adjustmentOf, coreGroups } from './FactorWorkbench'
 import { ActionRow, FactsDialog, MetricGrid, PaneCard, StatChips, StatusLine, Tabs, useHashTab, WorkbenchShell, type ActionButton, type Stat, type TabDef } from '../components/workbench'
@@ -50,7 +52,7 @@ const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '—')
 const int = (v: number) => v.toLocaleString('en-US')
 
 /** Every row is derived from a field the Run or the Session ledger publishes; nothing is inferred beyond booleans and date order. */
-function buildChecks(study: FactorDiagnostics, frontier: FrontierResult, projectSessions: ProjectSnapshot['sessions']): Check[] {
+function buildChecks(study: FactorDiagnostics, frontier: FactorNoiseFrontier, projectSessions: ProjectSnapshot['sessions']): Check[] {
   const { protocol } = study
   const windows = protocol.splits.splits
   const ordered =
@@ -138,20 +140,20 @@ function buildChecks(study: FactorDiagnostics, frontier: FrontierResult, project
       label: uiTemplate("Validation {0}-bar mean IC is positive with HAC |t| ≥ 1.96", [protocol.primaryHorizon]),
       detail: primary ? `Mean IC ${num(primary.meanRankIc, 4)}, HAC t ${num(tStat, 2)}, p ${num(primary.hacNormalPValue, 3)}, ${int(primary.observations)} observations.` : 'No validation summary.',
     },
-    frontier.ok && frontier.value.passes !== null
+    frontier.status === 'available' && frontier.passes !== null
       ? {
           id: 'familywise',
           group: 'Evidence',
-          state: frontier.value.passes ? 'pass' : 'fail',
+          state: frontier.passes ? 'pass' : 'fail',
           label: uiText("Selected IC survives the family-wise HAC rule"),
-          detail: uiTemplate("Raw p {0} × {1} trials = adjusted p {2}; the rule needs ≤ 0.05.", [num(frontier.value.rawP, 3), frontier.value.trials, num(frontier.value.adjustedP, 3)]),
+          detail: uiTemplate("Raw p {0} × {1} trials = adjusted p {2}; the rule needs ≤ 0.05.", [num(frontier.rawPValue, 3), frontier.trials, num(frontier.adjustedPValue, 3)]),
         }
       : {
           id: 'familywise',
           group: 'Evidence',
           state: 'info',
           label: uiText("Selected IC survives the family-wise HAC rule"),
-          detail: frontier.ok ? 'The ledger publishes no verdict.' : frontier.reason,
+          detail: frontier.status === 'available' ? 'The ledger publishes no verdict.' : frontierUnavailableReason(frontier),
         },
     {
       id: 'qualification',
@@ -197,10 +199,10 @@ function Ledger({ checks }: { checks: Check[] }) {
   )
 }
 
-function Limits({ study, frontier }: { study: FactorDiagnostics; frontier: FrontierResult }) {
+function Limits({ study, frontier }: { study: FactorDiagnostics; frontier: FactorNoiseFrontier }) {
   const mode = study.predictionUniverse.evaluationMode ?? 'unspecified'
   const assets = study.predictionUniverse.predictionAssets ?? []
-  const trials = frontier.ok ? frontier.value.trials : null
+  const trials = frontier.status === 'available' ? frontier.trials : null
   return (
     <>
       <div className="two">
@@ -270,6 +272,7 @@ const ANCHOR_TAB: Record<string, TabId> = {
   'sec-folds': 'stability',
   'sec-horizons': 'stability',
   'sec-stability': 'stability',
+  'sec-coverage': 'stability',
   'sec-protocol': 'provenance',
   'sec-provenance': 'provenance',
   'sec-errors': 'provenance',
@@ -292,7 +295,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
   const tr = (en: string, zh: string) => translate(language, en, zh)
   const runRow: RunRow | undefined = project.runs.find((r) => r.id === study.run.id)
   const adjustment = adjustmentOf(project)
-  const frontier = noiseFrontier(project.sessions, project.runs)
+  const frontier = project.noiseFrontier ?? frontierAbsent()
   const checks = buildChecks(study, frontier, project.sessions)
   const primary = study.horizonProfile.find((row) => row.horizon === study.protocol.primaryHorizon)
   const validation = study.summary.validation ?? primary?.validation
@@ -391,18 +394,7 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
                     <IcOverTime study={study} />
                   </Section>
                   <Section title={tr('Selection and noise', '选择与噪声')} id="sec-noise" icon={<Icon name="tuning" />} micro="NOISE FRONTIER">
-                    {frontier.ok ? <NoiseFrontierChart frontier={frontier.value} runIc={runIc} /> : <Empty title={uiText("Noise frontier")} reason={frontier.reason} />}
-                    {frontier.ok && (
-                      <p className="muted small">
-                        {frontier.value.leaderRunId ? (
-                          <>{uiText("Selected value: Run ")}<span className="mono" translate="no">{frontier.value.leaderRunId}</span>
-                            {frontier.value.leaderRunId === study.run.id ? uiText(" (this Run).") : uiText("; this page shows a later Run that did not replace it.")}
-                          </>
-                        ) : (
-                          'The selected value comes from the Session ledger; no single Run matches it exactly.'
-                        )}
-                      </p>
-                    )}
+                    <NoiseSection frontier={frontier} runIc={runIc} runId={study.run.id} />
                   </Section>
                   <Section title={tr('Quantile returns', '分组收益')} id="sec-quantiles" icon={<Icon name="strategies" />} micro="QUANTILES">
                     <Quantiles study={study} />
@@ -438,6 +430,9 @@ function Content({ study, project, loadingRun, go, loop }: { study: FactorDiagno
                   </Section>
                   <Section title={tr('Stability: regime, asset, style', '稳定性：市场状态、资产与风格')} id="sec-stability" icon={<Icon name="params" />} micro="STABILITY" caption={tr('Per-split tables: market regime, asset and overlap with known styles.', '按数据划分展示市场状态、资产及与已知风格的重叠。')}>
                     <StabilityTables study={study} />
+                  </Section>
+                  <Section title={tr('Data coverage', '数据覆盖')} id="sec-coverage" icon={<Icon name="folder" />} micro="COVERAGE" caption={tr('Bars and factor values each asset had in this Run, as published.', '本次运行中各资产的行情条数与因子取值情况（按已发布数据）。')}>
+                    <CoverageTable study={study} />
                   </Section>
                 </>
               ),

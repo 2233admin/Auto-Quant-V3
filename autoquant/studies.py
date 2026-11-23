@@ -30,6 +30,8 @@ SHA256 = re.compile(r"^[0-9a-f]{64}$")
 SUBJECT_KINDS = {"strategy", "factor", "model", "research"}
 DIRECTIONS = {"maximize", "minimize"}
 IGNORED_SOURCE_NAMES = {".DS_Store", "__pycache__"}
+# Frozen Factor tear-sheet group counts a Study may declare; absent means 3.
+QUANTILE_CHOICES = (3, 5, 10)
 
 
 @dataclass(frozen=True)
@@ -581,7 +583,7 @@ def parse_study_definition(raw: dict[str, Any], path: Path) -> StudyDefinition:
     )
     judge_kind = _string(judge_raw.get("kind"), f"{path}/judge/kind", issues)
     quantiles = judge_raw.get("quantiles")
-    if "quantiles" in judge_raw and (type(quantiles) is not int or quantiles not in (3, 5, 10)):
+    if "quantiles" in judge_raw and (type(quantiles) is not int or quantiles not in QUANTILE_CHOICES):
         issues.append(_issue(f"{path}/judge/quantiles", "schema.choice", "Quantiles must be 3, 5 or 10"))
     if judge_kind and judge_kind != "python":
         issues.append(
@@ -1807,7 +1809,7 @@ STUDY_JSON_SCHEMA: dict[str, Any] = {
                     "items": {"type": "string", "minLength": 1},
                 },
                 "arguments": {"type": "array", "items": {"type": "string"}},
-                "quantiles": {"type": "integer", "enum": [3, 5, 10]},
+                "quantiles": {"type": "integer", "enum": list(QUANTILE_CHOICES)},
                 "timeout_seconds": {
                     "type": "integer",
                     "minimum": 1,

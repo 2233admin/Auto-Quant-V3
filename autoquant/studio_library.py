@@ -14,6 +14,7 @@ from .research_verdict import factor_development_verdict
 from .selection import build_research_family, build_selection_adjustment
 from .studio_actions import _is_link, confine_workspace_path
 from .studio_factor_references import factor_references
+from .studio_frontier import portfolio_noise_frontier
 from .workspace import AutoQuantValidationError
 
 
@@ -216,10 +217,14 @@ def library_projection(project, snapshot, workspace_root):
             try:
                 run = load_run(project, latest["id"])
                 family = build_research_family(project, run)
+                adjustment = build_selection_adjustment(run, family)
                 evidence = {
                     "runId": latest["id"],
                     "researchFamily": family.projection,
-                    "selectionAdjustment": build_selection_adjustment(run, family),
+                    "selectionAdjustment": adjustment,
+                    "noiseFrontier": portfolio_noise_frontier(
+                        adjustment, family.projection
+                    ),
                 }
             except (OSError, AutoQuantValidationError):
                 pass
