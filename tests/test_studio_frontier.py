@@ -307,6 +307,15 @@ class FactorFrontierUnavailableTests(unittest.TestCase):
                     factor_noise_frontier(with_statistics(**overrides), [])["reasonCode"],
                     "degenerate-p-value",
                 )
+        # A HAC p this small rounds 1 - p/2 to 1.0; the frontier must still
+        # publish (regression: StatisticsError broke the whole Studio snapshot).
+        for tiny in (1e-17, 1e-300):
+            with self.subTest(rawHacPValue=tiny):
+                frontier = factor_noise_frontier(with_statistics(rawHacPValue=tiny), [])
+                self.assertEqual(frontier["status"], "available", frontier)
+                self.assertTrue(all(row["expected"] >= 0.0 for row in frontier["curve"]))
+        frontier = factor_noise_frontier(with_statistics(rawHacPValue=5e-324), [])
+        self.assertEqual(frontier["reasonCode"], "degenerate-p-value")
         other_metric = copy(good)
         other_metric[0]["selectionIntegrity"]["selectionMetric"] = "validation_net_sharpe"
         self.assertEqual(

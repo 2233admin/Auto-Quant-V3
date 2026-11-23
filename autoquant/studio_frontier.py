@@ -129,7 +129,13 @@ def factor_noise_frontier(
     ):
         return _unavailable(FACTOR_KIND, "degenerate-p-value")
 
-    standard_error = abs(observed) / NORMAL.inv_cdf(1.0 - raw_p / 2.0)
+    # Two-sided z from the lower tail: 1 - p/2 rounds to 1.0 for p below about
+    # 1e-16, which inv_cdf rejects, while inv_cdf(p/2) stays exact down to the
+    # smallest normal float. The value is identical for every ordinary p.
+    half = raw_p / 2.0
+    if half <= 0.0:
+        return _unavailable(FACTOR_KIND, "degenerate-p-value")
+    standard_error = abs(observed) / -NORMAL.inv_cdf(half)
 
     def expected(count: float) -> float:
         return standard_error * max(0.0, expected_maximum_z(count))
