@@ -1,6 +1,6 @@
 # Panda-style chat intake UX
 
-- Status: `proposed`
+- Status: `active`
 - Updated: `2026-11-23`
 - Related design: [[docs/design/studio-observation-surface]], [[docs/design/external-researcher-driver]], [[docs/design/studio-assistant]]
 
@@ -97,6 +97,8 @@ Not yet verified: the card and the table against a live Assistant session with a
 ## Progress log
 
 - 2026-11-22 — Plan created after a logged-in review of the online product's chat, factor library, strategy library, run history, tuning, simulation, and market pages.
+- 2026-11-23 — Template cards (#30) and the six intake fields (#32) landed.
+  Status moved to `active`; acceptance not audited.
 - 2026-11-23 — Added the Assistant result card (five published metrics per Factor or Portfolio Run, one cumulative chart, link to the full evidence page) and the before/after table for counted trials, with one server field (`priorLeaderRunId`) and 24 frontend tests. Evidence is in Verification. Left open: live-session check, other lanes, and every item not about results.
 
 ## Completion

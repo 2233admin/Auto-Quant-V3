@@ -5,7 +5,7 @@ the owner publishes it). V3 uses its own `3.x` line; its history contains
 upstream AutoQuant V2 through `v0.9.34`. OpenAlice's catalog pins upstream V2
 `v0.9.34` until the host deliberately selects a newer tag.
 
-Updated: 2026-11-04.
+Updated: 2026-11-23.
 
 Related: [[README]], [[docs/CHANGELOG]], [[docs/ARCHITECTURE]],
 [[docs/design/agent-native-quant-workbench]],
@@ -28,6 +28,26 @@ conversion by reference, `aq capabilities --summary`, the Windows researcher
 launch fix, and a known-failure test baseline (`tests/known_failures.json`,
 checked by `scripts/check_known_failures.py`; one known product defect, issue
 20: the sample desk judge predates the template judge).
+
+Since `3.0.0` (on main, unreleased) V3 added:
+
+- the ported Shinka research layer (`aq shinka`): a research direction bound
+  to a Project, hypothesis notebook, frozen evaluator, skeptic with DSR and
+  CSCV PBO, a one-shot sealed lockbox, rule-based verdicts and a Workspace
+  research library, with Studio research, evolution and library pages;
+- `aq shinka intake templates|questions|apply`: Panda-style templates and
+  meaning-changing questions that end in a frozen experiment plan (#31);
+- local RD-Agent research: `aq research run|extract|list|show`, with quoted
+  candidates run through the fixed Session Judge and trial gate, and Studio
+  review of the candidates (#27);
+- Studio researcher campaign pages linked to Session experiments (#29, #33),
+  factor replay and decision evidence, and Assistant template cards and six
+  intake fields (#30, #32);
+- CI on hosted `ubuntu-latest` with pnpm 12, whose regression gate is
+  `scripts/check_known_failures.py` (#37).
+
+Capability against mature products was re-audited on 2026-11-23; see section
+12a of [[docs/design/product-capability-map]].
 
 Upstream `v0.9.32`-`v0.9.34` (the OpenAlice Harness integration) is merged as
 Git history. Its managed-launch implementation is the only one; V3 adds only an
@@ -180,8 +200,18 @@ AutoQuant evidence without moving live-trading authority into the quant desk.
 - External OHLCV acquisition and package preparation still require Agent
   judgment. The public Skill now covers one observed daily close-time
   materialization route without turning Core into a downloader.
-- Studio is a verified observation surface, not a full interactive research
-  authoring or orchestration UI.
+- Studio is a verified observation surface with a bounded set of confirmed
+  write actions (data check and intake, Project creation, Session start and
+  check, experiment evaluation, Strategy build, candidate save). Holdout,
+  Report/Review/Dossier publication, Session promotion, research runs and
+  handoff stay CLI-only.
+- Group neutralization, dated universe membership, HTML/PDF export, forward
+  shadow tracking and a Core Hypothesis/Refuted protocol are not built. PBO and
+  a sealed tail exist only in the Shinka layer, not on Core Factor or Strategy
+  verdicts.
+- The CI regression job intermittently exceeds its 45-minute timeout on
+  hosted runners (two of three runs on the same tree, 2026-11-23); the cause is
+  not yet identified.
 - OpenAlice's catalog defaults to upstream V2 `v0.9.34`; host-side adoption
   of a V3 release is independent of package publication. With automatic
   updates on, OpenAlice applies the newest stable SemVer tag of the canonical

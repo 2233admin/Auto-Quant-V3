@@ -20,6 +20,7 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
+| [[plans/panda-style-chat-intake]] | Open Studio into a chat workspace with task-grouped templates, six intake fields, read-only-safe send, and result summaries that link to full evidence. | 2026-11-23 |
 | [[plans/shinka-panda-intake]] | A template plus only the meaning-changing questions turn a rough quant idea into a Shinka experiment whose plan is frozen before the first trial. | 2026-11-23 |
 | [[plans/local-research-presets]] | Extract quoted candidates and run local-model preset selection through the fixed Session Judge and trial gate. | 2026-11-21 |
 | [[plans/shinka-direction-as-project]] | A Shinka research direction lives in a V3 Project, `aq shinka` addresses it by Project, and Studio draws its research pages and the Workspace library natively. | 2026-11-05 |
@@ -29,7 +30,7 @@ invariants live in `docs/design/`.
 | [[plans/factor-redundancy]] | Diagnose validation overlap and residual IC against comparable Workspace factors without changing verdicts. | 2026-11-03 |
 | [[plans/strategy-workbench]] | Open Strategy evidence tabs and offer only Core-supported, confirmed Factor-to-Portfolio routes. | 2026-11-03 |
 | [[plans/run-history-compare]] | Browse immutable Runs across the Workspace and compare two only under the same evaluation authority, refusing with the exact differing fields. | 2026-11-03 |
-| [[plans/product-maturity-roadmap]] | Close the most visible gaps against mature factor-research products in the agreed seven-step order without weakening any integrity rule. | 2026-11-03 |
+| [[plans/product-maturity-roadmap]] | Close the most visible gaps against mature factor-research products in the agreed seven-step order without weakening any integrity rule. | 2026-11-23 |
 | [[plans/studio-assistant]] | Add local Claude/Codex conversations with governed aq writes, safe context and explicit isolation completion gates. | 2026-11-02 |
 | [[plans/studio-confirmed-design-foundation]] | Apply confirmed Studio hierarchy, sign conventions, figures and states with automated browser measurements. | 2026-11-01 |
 | [[plans/measured-factor-strategy-libraries]] | Measure and implement the Factor/Strategy libraries, navigation and persistent factor editor for supervised acceptance. | 2026-11-01 |
@@ -43,7 +44,6 @@ invariants live in `docs/design/`.
 
 | Plan | Outcome | Updated |
 | --- | --- | --- |
-| [[plans/panda-style-chat-intake]] | Open Studio into a chat workspace with task-grouped templates, six intake fields, read-only-safe send, and result summaries that link to full evidence. | 2026-11-23 |
 | [[plans/order-native-bar-execution-kernel]] | Build a standalone deterministic bar-by-bar order/TPSL execution kernel with fixture coverage, no lane dependency yet. | 2026-08-19 |
 | [[plans/order-native-mechanical-portfolio-integration]] | Replace `simulate_targets`'s implicit close-target execution with kernel-backed order realization in the mechanical Portfolio lane. | 2026-08-19 |
 | [[plans/order-native-governed-rl-integration]] | Route governed RL and its baselines through the same fixed execution kernel as the mechanical lane. | 2026-08-19 |
