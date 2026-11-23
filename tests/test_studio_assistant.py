@@ -185,6 +185,65 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual([], self.actions.created)
         self.assertEqual(0, state["usedTrials"])
 
+    def _refused_proposal_releases_confirmation(self, answer):
+        """After a declined or expired confirmation the turn keeps running: the
+        chat must not keep showing the dead action, and a new proposal in the
+        same turn must reach confirmation again instead of failing as busy."""
+        seen = {}
+        call = {"operation": "action.run",
+                "params": {"actionId": "session.start", "params": {"study": "factor"}}}
+
+        def run(provider, prompt, cwd, emit, tool, stop, bridge):
+            try:
+                tool("aq", call)
+            except ActionError as error:
+                seen["first"] = error.code
+            seen["afterRefusal"] = service.view(chat["id"])
+            try:
+                tool("aq", call)
+            except ActionError as error:
+                seen["second"] = error.code
+        service = self.service(run, execution_check=lambda project: None)
+        chat = self.chat(service)
+        service.message({"sessionId": chat["id"], "content": "Evaluate"})
+        state = self.await_state(service, chat["id"], {"awaiting-confirmation"})
+        answer(service, chat["id"], state["pendingAction"]["id"])
+        deadline = time.monotonic() + 3
+        while "afterRefusal" not in seen and time.monotonic() < deadline:
+            time.sleep(0.02)
+        after = seen["afterRefusal"]
+        self.assertEqual("running", after["status"])
+        self.assertIsNone(after["pendingAction"])
+        second = self.await_state(service, chat["id"], {"awaiting-confirmation"})
+        self.assertIsNone(second["pendingAction"]["accepted"])
+        self.assertNotEqual(state["pendingAction"]["id"], second["pendingAction"]["id"])
+        service.confirm({"sessionId": chat["id"], "actionId": second["pendingAction"]["id"],
+                         "accepted": False})
+        final = self.await_state(service, chat["id"], {"idle", "error"})
+        self.assertEqual("idle", final["status"])
+        self.assertEqual(0, final["usedTrials"])
+        self.assertEqual([], self.actions.created)
+        return seen["first"]
+
+    def test_declined_confirmation_is_released_for_the_rest_of_the_turn(self):
+        code = self._refused_proposal_releases_confirmation(
+            lambda service, identity, action: service.confirm(
+                {"sessionId": identity, "actionId": action, "accepted": False}))
+        self.assertEqual("assistant.declined", code)
+
+    def test_expired_confirmation_is_released_for_the_rest_of_the_turn(self):
+        with patch("autoquant.studio_assistant.CONFIRMATION_TIMEOUT_SECONDS", 0.3):
+            calls = []
+
+            def answer(service, identity, action):
+                if not calls:
+                    calls.append(action)  # let the first one expire
+                else:
+                    service.confirm({"sessionId": identity, "actionId": action,
+                                     "accepted": False})
+            code = self._refused_proposal_releases_confirmation(answer)
+        self.assertEqual("assistant.confirmation-timeout", code)
+
     def _trial(self, fail=False):
         self.actions.fail = fail
 
