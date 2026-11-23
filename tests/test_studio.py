@@ -245,39 +245,35 @@ class StudioObservationTests(unittest.TestCase):
             self.assertEqual(observed["counts"]["verdicts"]["KEEP"], 1)
             self.assertIsNone(observed["dossierStatus"])
             self.assertEqual(observed["dossiers"], [])
-            self.assertEqual(observed["sessions"][0]["session"]["id"], session.manifest["id"])
+            self.assertEqual(
+                observed["sessions"][0]["session"]["id"], session.manifest["id"]
+            )
             self.assertEqual(
                 observed["sessions"][0]["session"]["baselineGuard"],
                 session.manifest["baselineGuard"],
             )
             self.assertTrue(observed["sessions"][0]["authority"]["valid"])
             self.assertEqual(
-                observed["sessions"][0]["selectionIntegrity"][
-                    "selectionSplit"
-                ],
+                observed["sessions"][0]["selectionIntegrity"]["selectionSplit"],
                 "unspecified",
             )
             self.assertIsNone(
-                observed["sessions"][0]["selectionIntegrity"][
-                    "externalHoldoutRequired"
-                ]
+                observed["sessions"][0]["selectionIntegrity"]["externalHoldoutRequired"]
             )
             self.assertEqual(
-                observed["sessions"][0]["selectionIntegrity"][
-                    "researchFamily"
-                ]["uniqueSourceTrials"],
+                observed["sessions"][0]["selectionIntegrity"]["researchFamily"][
+                    "uniqueSourceTrials"
+                ],
                 2,
             )
             self.assertEqual(
-                observed["sessions"][0]["selectionIntegrity"][
-                    "selectionAdjustment"
-                ]["status"],
+                observed["sessions"][0]["selectionIntegrity"]["selectionAdjustment"][
+                    "status"
+                ],
                 "unsupported",
             )
             self.assertEqual(
-                observed["sessions"][0]["selectionIntegrity"][
-                    "verdictAuthority"
-                ],
+                observed["sessions"][0]["selectionIntegrity"]["verdictAuthority"],
                 "diagnostic-only",
             )
             self.assertTrue(
@@ -288,13 +284,17 @@ class StudioObservationTests(unittest.TestCase):
             direct = build_studio_snapshot(project.root_dir)
             self.assertEqual(direct["source"]["scope"], "project")
             self.assertIsNone(direct["source"]["workspace"])
-            self.assertEqual([item["id"] for item in direct["projects"]], ["factor-project"])
+            self.assertEqual(
+                [item["id"] for item in direct["projects"]], ["factor-project"]
+            )
 
             selected = build_studio_snapshot(
                 workspace.root_dir,
                 project_id="empty-lab",
             )
-            self.assertEqual([item["id"] for item in selected["projects"]], ["empty-lab"])
+            self.assertEqual(
+                [item["id"] for item in selected["projects"]], ["empty-lab"]
+            )
             with self.assertRaisesRegex(
                 AutoQuantValidationError,
                 "cannot select inside a direct Project",
@@ -751,9 +751,7 @@ class StudioObservationTests(unittest.TestCase):
                     self.assertEqual(response.headers["Cache-Control"], "no-cache")
                     self.assertTrue(response.headers["ETag"].startswith('"'))
                     self.assertEqual(response.headers["X-Frame-Options"], "DENY")
-                self.assertEqual(
-                    summary["kind"], "autoquant-studio-workspace-summary"
-                )
+                self.assertEqual(summary["kind"], "autoquant-studio-workspace-summary")
                 row = next(
                     item
                     for item in summary["projects"]
@@ -825,9 +823,7 @@ class StudioObservationTests(unittest.TestCase):
             other = project.manifest.id
             from autoquant.studio import build_project_snapshot
 
-            ok = build_project_snapshot(
-                workspace.root_dir, other, project_id=other
-            )
+            ok = build_project_snapshot(workspace.root_dir, other, project_id=other)
             self.assertEqual([item["id"] for item in ok["projects"]], [other])
             with self.assertRaisesRegex(AutoQuantValidationError, "restricted"):
                 build_project_snapshot(
@@ -1012,9 +1008,12 @@ class StudioObservationTests(unittest.TestCase):
             "127.1",
             "127.000.000.001",
         ):
-            with self.subTest(host=host), self.assertRaisesRegex(
-                AutoQuantValidationError,
-                "host",
+            with (
+                self.subTest(host=host),
+                self.assertRaisesRegex(
+                    AutoQuantValidationError,
+                    "host",
+                ),
             ):
                 resolve_studio_launch(
                     host=None,
@@ -1028,7 +1027,10 @@ class StudioObservationTests(unittest.TestCase):
                 )
 
     def test_workspace_summary_carries_host_marker_only_when_managed(self) -> None:
-        from autoquant.studio import MANAGED_SNAPSHOT_HOST, workspace_summary_from_snapshot
+        from autoquant.studio import (
+            MANAGED_SNAPSHOT_HOST,
+            workspace_summary_from_snapshot,
+        )
 
         base = {
             "generatedAt": "2026-01-01T00:00:00+00:00",
@@ -1039,7 +1041,9 @@ class StudioObservationTests(unittest.TestCase):
             "projects": [],
         }
         self.assertNotIn("host", workspace_summary_from_snapshot(base))
-        managed = workspace_summary_from_snapshot({**base, "host": dict(MANAGED_SNAPSHOT_HOST)})
+        managed = workspace_summary_from_snapshot(
+            {**base, "host": dict(MANAGED_SNAPSHOT_HOST)}
+        )
         self.assertEqual(managed["host"], MANAGED_SNAPSHOT_HOST)
 
     def test_non_managed_environment_preserves_standalone_launch(self) -> None:
@@ -1078,9 +1082,10 @@ class StudioObservationTests(unittest.TestCase):
         from autoquant.cli import main
 
         environment = self._managed_environment(49321)
-        with mock.patch.dict(os.environ, environment, clear=True), mock.patch(
-            "autoquant.cli.serve_studio"
-        ) as serve:
+        with (
+            mock.patch.dict(os.environ, environment, clear=True),
+            mock.patch("autoquant.cli.serve_studio") as serve,
+        ):
             exit_code = main(["studio", "serve", "."])
 
         self.assertEqual(exit_code, 0)
@@ -1148,9 +1153,7 @@ class StudioObservationTests(unittest.TestCase):
                 port = probe.getsockname()[1]
             default_was_free = False
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as default_probe:
-                default_was_free = default_probe.connect_ex(
-                    ("127.0.0.1", 8765)
-                ) != 0
+                default_was_free = default_probe.connect_ex(("127.0.0.1", 8765)) != 0
             environment = self._managed_environment(port)
             environment["PATH"] = parent_environment["PATH"]
             environment.pop("VIRTUAL_ENV", None)
@@ -1183,9 +1186,11 @@ class StudioObservationTests(unittest.TestCase):
                     ("/", b'<div id="root">'),
                     ("/legacy", b"Quant research desk"),
                     ("/assets/studio.css", b"--bg"),
-                    ("/assets/studio.js", b'/api/v1/snapshot'),
+                    ("/assets/studio.js", b"/api/v1/snapshot"),
                 ):
-                    with urlopen(Request(f"{base}{path}", headers=headers), timeout=3) as response:
+                    with urlopen(
+                        Request(f"{base}{path}", headers=headers), timeout=3
+                    ) as response:
                         body = response.read()
                         self.assertEqual(response.status, 200)
                         self.assertIn(expected, body)
@@ -1238,9 +1243,7 @@ class StudioObservationTests(unittest.TestCase):
 
             self.assertNotEqual(process.returncode, None)
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener_check:
-                self.assertNotEqual(
-                    listener_check.connect_ex(("127.0.0.1", port)), 0
-                )
+                self.assertNotEqual(listener_check.connect_ex(("127.0.0.1", port)), 0)
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as released:
                 released.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 released.bind(("127.0.0.1", port))
@@ -1270,7 +1273,9 @@ class StudioObservationTests(unittest.TestCase):
             self.assertIn("Failed to spawn", result.stderr)
             self.assertIn("aq", result.stderr)
             self.assertEqual((workspace / "uv.lock").read_bytes(), lock_before)
-            self.assertFalse((workspace / ".venv" / VENV_SCRIPTS / AQ_EXECUTABLE).exists())
+            self.assertFalse(
+                (workspace / ".venv" / VENV_SCRIPTS / AQ_EXECUTABLE).exists()
+            )
 
     def test_managed_no_open_environment_suppresses_real_browser_opener(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1278,7 +1283,7 @@ class StudioObservationTests(unittest.TestCase):
             marker = Path(directory) / "browser-opened"
             opener = Path(directory) / "browser-opener"
             opener.write_text(
-                "#!/bin/sh\nprintf opened > \"$AUTOQUANT_BROWSER_MARKER\"\n",
+                '#!/bin/sh\nprintf opened > "$AUTOQUANT_BROWSER_MARKER"\n',
                 encoding="utf-8",
             )
             opener.chmod(0o755)
@@ -1369,9 +1374,7 @@ class StudioObservationTests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         # POSIX reports EADDRINUSE; Windows reports WSAEADDRINUSE (10048) or,
         # with the server's SO_REUSEADDR on an exclusively held port, WSAEACCES (10013).
-        self.assertRegex(
-            result.stderr, r"Address already in use|WinError 100(13|48)"
-        )
+        self.assertRegex(result.stderr, r"Address already in use|WinError 100(13|48)")
 
     def test_managed_cli_subprocess_rejects_conflicting_explicit_port(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1428,7 +1431,9 @@ class StudioObservationTests(unittest.TestCase):
                 announcement = process.stdout.readline().strip()
                 self.assertTrue(
                     announcement.startswith("AutoQuant Studio: http://127.0.0.1:"),
-                    process.stderr.read() if process.poll() is not None else announcement,
+                    process.stderr.read()
+                    if process.poll() is not None
+                    else announcement,
                 )
                 url = announcement.removeprefix("AutoQuant Studio: ")
                 with urlopen(f"{url}/api/v1/health", timeout=3) as response:

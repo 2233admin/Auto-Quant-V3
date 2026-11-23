@@ -51,10 +51,7 @@ def _validate_universe(research_universe: list[str]) -> None:
     if (
         not research_universe
         or len(research_universe) != len(set(research_universe))
-        or any(
-            not isinstance(asset, str) or not asset
-            for asset in research_universe
-        )
+        or any(not isinstance(asset, str) or not asset for asset in research_universe)
     ):
         raise PredictionModeError(
             "factor-population.research-universe",
@@ -212,9 +209,7 @@ def build_factor_population(
         "contextAssets": context_assets,
         "evaluationMode": evaluation_mode,
         "assetPredictionRoles": {
-            asset: (
-                "prediction" if asset in prediction_assets else "context-only"
-            )
+            asset: ("prediction" if asset in prediction_assets else "context-only")
             for asset in research_universe
         },
         "relativeValuePair": relative_value_pair,
@@ -254,12 +249,22 @@ def validate_factor_population(
     issues: list[ValidationIssue] = []
     if not isinstance(value, dict):
         raise AutoQuantValidationError(
-            [_issue(path, "factor-population.type", "Factor population must be an object")]
+            [
+                _issue(
+                    path,
+                    "factor-population.type",
+                    "Factor population must be an object",
+                )
+            ]
         )
     for key in sorted(required - value.keys()):
-        issues.append(_issue(f"{path}/{key}", "schema.missing", f"Missing required field '{key}'"))
+        issues.append(
+            _issue(f"{path}/{key}", "schema.missing", f"Missing required field '{key}'")
+        )
     for key in sorted(value.keys() - required):
-        issues.append(_issue(f"{path}/{key}", "schema.unknown", f"Unknown field '{key}'"))
+        issues.append(
+            _issue(f"{path}/{key}", "schema.unknown", f"Unknown field '{key}'")
+        )
     research = value.get("researchUniverse")
     prediction = value.get("predictionAssets")
     context = value.get("contextAssets")
@@ -268,25 +273,51 @@ def validate_factor_population(
     try:
         _validate_universe(research)
     except (PredictionModeError, TypeError) as error:
-        issues.append(_issue(f"{path}/researchUniverse", "factor-population.research-universe", str(error)))
+        issues.append(
+            _issue(
+                f"{path}/researchUniverse",
+                "factor-population.research-universe",
+                str(error),
+            )
+        )
         research = []
     if (
         not isinstance(prediction, list)
         or not prediction
         or len(prediction) != len(set(prediction))
-        or any(not isinstance(asset, str) or asset not in research for asset in prediction)
+        or any(
+            not isinstance(asset, str) or asset not in research for asset in prediction
+        )
     ):
-        issues.append(_issue(f"{path}/predictionAssets", "factor-population.prediction-assets", "Prediction assets must be one unique non-empty subset of the research universe"))
+        issues.append(
+            _issue(
+                f"{path}/predictionAssets",
+                "factor-population.prediction-assets",
+                "Prediction assets must be one unique non-empty subset of the research universe",
+            )
+        )
         prediction = []
     expected_context = [asset for asset in research if asset not in prediction]
     if context != expected_context:
-        issues.append(_issue(f"{path}/contextAssets", "factor-population.context-assets", "Context assets must be the ordered research-universe complement"))
+        issues.append(
+            _issue(
+                f"{path}/contextAssets",
+                "factor-population.context-assets",
+                "Context assets must be the ordered research-universe complement",
+            )
+        )
     expected_roles = {
         asset: "prediction" if asset in prediction else "context-only"
         for asset in research
     }
     if roles != expected_roles:
-        issues.append(_issue(f"{path}/assetPredictionRoles", "factor-population.asset-roles", "Factor roles must exactly identify prediction and context-only assets"))
+        issues.append(
+            _issue(
+                f"{path}/assetPredictionRoles",
+                "factor-population.asset-roles",
+                "Factor roles must exactly identify prediction and context-only assets",
+            )
+        )
     if (
         not isinstance(source, dict)
         or set(source) != {"kind", "requestHash", "factorPolicy"}
@@ -294,11 +325,23 @@ def validate_factor_population(
         or source.get("factorPolicy") not in {"caller-supplied", "reference-default"}
         or (
             source.get("kind") == "research-request"
-            and (not isinstance(source.get("requestHash"), str) or len(source["requestHash"]) != 64)
+            and (
+                not isinstance(source.get("requestHash"), str)
+                or len(source["requestHash"]) != 64
+            )
         )
-        or (source.get("kind") == "template-default" and source.get("requestHash") is not None)
+        or (
+            source.get("kind") == "template-default"
+            and source.get("requestHash") is not None
+        )
     ):
-        issues.append(_issue(f"{path}/source", "factor-population.source", "Invalid Factor population source"))
+        issues.append(
+            _issue(
+                f"{path}/source",
+                "factor-population.source",
+                "Invalid Factor population source",
+            )
+        )
     claim = value.get("claim")
     outcome = value.get("outcome")
     if claim not in {
@@ -336,8 +379,17 @@ def validate_factor_population(
             outcome=str(outcome),
             direction=direction,
         )
-        if value.get("evaluationMode") != mode or value.get("relativeValuePair") != pair:
-            issues.append(_issue(path, "factor-population.mode", "Evaluation mode or relative-value contrast differs from the fixed population"))
+        if (
+            value.get("evaluationMode") != mode
+            or value.get("relativeValuePair") != pair
+        ):
+            issues.append(
+                _issue(
+                    path,
+                    "factor-population.mode",
+                    "Evaluation mode or relative-value contrast differs from the fixed population",
+                )
+            )
     except PredictionModeError as error:
         issues.append(_issue(path, error.code, str(error)))
     expected_authority = (
@@ -353,11 +405,23 @@ def validate_factor_population(
         or value.get("portfolioAuthority") != "none"
         or value.get("tradingAuthority") != "none"
     ):
-        issues.append(_issue(path, "factor-population.authority", "Factor population identity or authority is invalid"))
+        issues.append(
+            _issue(
+                path,
+                "factor-population.authority",
+                "Factor population identity or authority is invalid",
+            )
+        )
     payload = {key: value.get(key) for key in required - {"id"}}
     expected_id = f"factor-population-{hash_json(payload)[:16]}"
     if value.get("id") != expected_id:
-        issues.append(_issue(f"{path}/id", "factor-population.derived-id", "Factor population id is not derived from its complete content"))
+        issues.append(
+            _issue(
+                f"{path}/id",
+                "factor-population.derived-id",
+                "Factor population id is not derived from its complete content",
+            )
+        )
     if issues:
         raise AutoQuantValidationError(issues)
     return {**payload, "id": expected_id}
@@ -369,11 +433,23 @@ def load_factor_population(path: str | Path) -> dict[str, Any]:
         value = json.loads(population_path.read_text(encoding="utf-8"))
     except FileNotFoundError:
         raise AutoQuantValidationError(
-            [_issue(population_path, "factor-population.missing", f"Missing Factor population: {population_path}")]
+            [
+                _issue(
+                    population_path,
+                    "factor-population.missing",
+                    f"Missing Factor population: {population_path}",
+                )
+            ]
         ) from None
     except json.JSONDecodeError as error:
         raise AutoQuantValidationError(
-            [_issue(population_path, "factor-population.json", f"Invalid JSON at line {error.lineno}, column {error.colno}: {error.msg}")]
+            [
+                _issue(
+                    population_path,
+                    "factor-population.json",
+                    f"Invalid JSON at line {error.lineno}, column {error.colno}: {error.msg}",
+                )
+            ]
         ) from None
     return validate_factor_population(value, population_path)
 
@@ -396,7 +472,9 @@ def resolve_prediction_population(
             "factor-population.research-universe",
             "Factor population researchUniverse must equal the Study universe",
         )
-    if population["claim"] != factor_claim.get("claim") or population["outcome"] != factor_outcome(factor_claim):
+    if population["claim"] != factor_claim.get("claim") or population[
+        "outcome"
+    ] != factor_outcome(factor_claim):
         raise PredictionModeError(
             "factor-population.factor-claim",
             "Factor population claim and outcome must equal the fixed Factor Claim",
@@ -445,7 +523,11 @@ def validate_population_mandate_compatibility(
         )
     if population.get("evaluation_mode") == TWO_ASSET_RELATIVE_VALUE_MODE:
         construction = mandate.get("construction")
-        roles = construction.get("assetPositionRoles") if isinstance(construction, dict) else None
+        roles = (
+            construction.get("assetPositionRoles")
+            if isinstance(construction, dict)
+            else None
+        )
         if (
             not isinstance(construction, dict)
             or construction.get("family") != "dollar-neutral"
@@ -487,13 +569,19 @@ def validate_prediction_population_metrics(
             "Run prediction_universe is not one complete Factor Population projection",
         )
     prediction_assets = value["prediction_assets"]
-    context_assets = [
-        asset for asset in research_universe if asset not in prediction_assets
-    ] if isinstance(prediction_assets, list) else None
-    expected_roles = {
-        asset: "prediction" if asset in prediction_assets else "context-only"
-        for asset in research_universe
-    } if isinstance(prediction_assets, list) else None
+    context_assets = (
+        [asset for asset in research_universe if asset not in prediction_assets]
+        if isinstance(prediction_assets, list)
+        else None
+    )
+    expected_roles = (
+        {
+            asset: "prediction" if asset in prediction_assets else "context-only"
+            for asset in research_universe
+        }
+        if isinstance(prediction_assets, list)
+        else None
+    )
     direction = (
         "relative-value"
         if value["evaluation_mode"] == TWO_ASSET_RELATIVE_VALUE_MODE
@@ -587,8 +675,12 @@ def signal_translation_contract(
             if mode == SINGLE_ASSET_TEMPORAL_MODE
             else "causal-ordered-factor-spread-history"
         ),
-        "window_observations": None if mode == CROSS_SECTIONAL_MODE else temporal_window,
-        "minimum_observations": MIN_CROSS_SECTIONAL_ASSETS if mode == CROSS_SECTIONAL_MODE else temporal_minimum,
+        "window_observations": None
+        if mode == CROSS_SECTIONAL_MODE
+        else temporal_window,
+        "minimum_observations": MIN_CROSS_SECTIONAL_ASSETS
+        if mode == CROSS_SECTIONAL_MODE
+        else temporal_minimum,
         "relative_value_pair": population.get("relative_value_pair"),
         "context_score": "unavailable-never-ranked",
         "selection_authority": "fixed-mechanical-translation",
@@ -602,10 +694,21 @@ FACTOR_POPULATION_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
     "required": [
-        "schemaVersion", "kind", "id", "source", "claim", "outcome",
-        "researchUniverse", "predictionAssets", "contextAssets",
-        "evaluationMode", "assetPredictionRoles", "relativeValuePair",
-        "authority", "evaluationAuthority", "portfolioAuthority",
+        "schemaVersion",
+        "kind",
+        "id",
+        "source",
+        "claim",
+        "outcome",
+        "researchUniverse",
+        "predictionAssets",
+        "contextAssets",
+        "evaluationMode",
+        "assetPredictionRoles",
+        "relativeValuePair",
+        "authority",
+        "evaluationAuthority",
+        "portfolioAuthority",
         "tradingAuthority",
     ],
     "properties": {
@@ -624,23 +727,43 @@ FACTOR_POPULATION_JSON_SCHEMA: dict[str, Any] = {
                         {"type": "string", "pattern": "^[0-9a-f]{64}$"},
                     ]
                 },
-                "factorPolicy": {
-                    "enum": ["caller-supplied", "reference-default"]
-                },
+                "factorPolicy": {"enum": ["caller-supplied", "reference-default"]},
             },
         },
-        "claim": {"enum": ["decision-signal", "known-style-validation", "novel-factor"]},
-        "outcome": {"enum": [FORWARD_RETURN_OUTCOME, FORWARD_REALIZED_VOLATILITY_OUTCOME]},
-        "researchUniverse": {"type": "array", "minItems": 1, "uniqueItems": True, "items": {"type": "string", "minLength": 1}},
-        "predictionAssets": {"type": "array", "minItems": 1, "uniqueItems": True, "items": {"type": "string", "minLength": 1}},
-        "contextAssets": {"type": "array", "uniqueItems": True, "items": {"type": "string", "minLength": 1}},
-        "evaluationMode": {"enum": [CROSS_SECTIONAL_MODE, SINGLE_ASSET_TEMPORAL_MODE, TWO_ASSET_RELATIVE_VALUE_MODE]},
+        "claim": {
+            "enum": ["decision-signal", "known-style-validation", "novel-factor"]
+        },
+        "outcome": {
+            "enum": [FORWARD_RETURN_OUTCOME, FORWARD_REALIZED_VOLATILITY_OUTCOME]
+        },
+        "researchUniverse": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string", "minLength": 1},
+        },
+        "predictionAssets": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string", "minLength": 1},
+        },
+        "contextAssets": {
+            "type": "array",
+            "uniqueItems": True,
+            "items": {"type": "string", "minLength": 1},
+        },
+        "evaluationMode": {
+            "enum": [
+                CROSS_SECTIONAL_MODE,
+                SINGLE_ASSET_TEMPORAL_MODE,
+                TWO_ASSET_RELATIVE_VALUE_MODE,
+            ]
+        },
         "assetPredictionRoles": {
             "type": "object",
             "minProperties": 1,
-            "additionalProperties": {
-                "enum": ["prediction", "context-only"]
-            },
+            "additionalProperties": {"enum": ["prediction", "context-only"]},
         },
         "relativeValuePair": {
             "anyOf": [
@@ -669,7 +792,12 @@ FACTOR_POPULATION_JSON_SCHEMA: dict[str, Any] = {
                 },
             ]
         },
-        "authority": {"enum": ["caller-factor-policy-prediction-assets", "factor-claim-complete-research-universe"]},
+        "authority": {
+            "enum": [
+                "caller-factor-policy-prediction-assets",
+                "factor-claim-complete-research-universe",
+            ]
+        },
         "evaluationAuthority": {"const": "factor-evaluation-only"},
         "portfolioAuthority": {"const": "none"},
         "tradingAuthority": {"const": "none"},

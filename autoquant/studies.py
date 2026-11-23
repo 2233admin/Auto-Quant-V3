@@ -224,7 +224,13 @@ def _string(
     allow_empty: bool = False,
 ) -> str:
     if not isinstance(value, str) or (not allow_empty and not value.strip()):
-        issues.append(_issue(path, "schema.string", "Must be a string" if allow_empty else "Must be a non-empty string"))
+        issues.append(
+            _issue(
+                path,
+                "schema.string",
+                "Must be a string" if allow_empty else "Must be a non-empty string",
+            )
+        )
         return ""
     return value
 
@@ -252,7 +258,11 @@ def _path_pattern(value: Any, path: str, issues: list[ValidationIssue]) -> str:
         return result
     if "*" in result and not result.endswith("/**"):
         issues.append(
-            _issue(path, "schema.path-pattern", "Only exact paths or trailing '/**' closures are supported")
+            _issue(
+                path,
+                "schema.path-pattern",
+                "Only exact paths or trailing '/**' closures are supported",
+            )
         )
         return result
     root = result[:-3] if result.endswith("/**") else result
@@ -577,14 +587,23 @@ def parse_study_definition(raw: dict[str, Any], path: Path) -> StudyDefinition:
                 "paths",
                 "arguments",
                 "timeout_seconds",
-            } | ({"quantiles"} if "quantiles" in judge_raw else set()),
+            }
+            | ({"quantiles"} if "quantiles" in judge_raw else set()),
             path=f"{path}/judge",
         )
     )
     judge_kind = _string(judge_raw.get("kind"), f"{path}/judge/kind", issues)
     quantiles = judge_raw.get("quantiles")
-    if "quantiles" in judge_raw and (type(quantiles) is not int or quantiles not in QUANTILE_CHOICES):
-        issues.append(_issue(f"{path}/judge/quantiles", "schema.choice", "Quantiles must be 3, 5 or 10"))
+    if "quantiles" in judge_raw and (
+        type(quantiles) is not int or quantiles not in QUANTILE_CHOICES
+    ):
+        issues.append(
+            _issue(
+                f"{path}/judge/quantiles",
+                "schema.choice",
+                "Quantiles must be 3, 5 or 10",
+            )
+        )
     if judge_kind and judge_kind != "python":
         issues.append(
             _issue(
@@ -636,7 +655,11 @@ def parse_study_definition(raw: dict[str, Any], path: Path) -> StudyDefinition:
     else:
         judge_arguments = list(arguments)
     timeout = judge_raw.get("timeout_seconds")
-    if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 3600:
+    if (
+        not isinstance(timeout, int)
+        or isinstance(timeout, bool)
+        or not 1 <= timeout <= 3600
+    ):
         issues.append(
             _issue(
                 f"{path}/judge/timeout_seconds",
@@ -701,7 +724,8 @@ def parse_study_definition(raw: dict[str, Any], path: Path) -> StudyDefinition:
     issues.extend(
         _strict_keys(
             dataset_raw,
-            required=dataset_required | ({"paths"} if "paths" in dataset_raw else set()),
+            required=dataset_required
+            | ({"paths"} if "paths" in dataset_raw else set()),
             path=f"{path}/dataset",
         )
     )
@@ -741,7 +765,13 @@ def parse_study_definition(raw: dict[str, Any], path: Path) -> StudyDefinition:
                 )
             )
     if type(quantiles) is int and len(universe) < quantiles:
-        issues.append(_issue(f"{path}/judge/quantiles", "study.quantile-population", "Quantiles require at least one asset per group"))
+        issues.append(
+            _issue(
+                f"{path}/judge/quantiles",
+                "study.quantile-population",
+                "Quantiles require at least one asset per group",
+            )
+        )
     dataset_paths_raw = dataset_raw.get("paths")
     dataset_paths: list[str] | None = None
     if "paths" in dataset_raw:
@@ -1091,9 +1121,7 @@ def _load_study_root(
     invalid_judge = []
     for pattern in definition.judge.paths:
         relative = pattern[:-3] if pattern.endswith("/**") else pattern
-        if not (
-            relative == judge_root or relative.startswith(f"{judge_root}/")
-        ):
+        if not (relative == judge_root or relative.startswith(f"{judge_root}/")):
             invalid_judge.append(pattern)
     if invalid_judge:
         raise AutoQuantValidationError(
@@ -1118,8 +1146,7 @@ def _load_study_root(
             ]
         )
     allowed_editable_roots = [
-        project.manifest.directories[key]
-        for key in ("strategies", "factors", "models")
+        project.manifest.directories[key] for key in ("strategies", "factors", "models")
     ]
     invalid_editable = []
     for pattern in definition.editable["paths"]:
@@ -1136,8 +1163,7 @@ def _load_study_root(
                     f"{manifest_path}/editable/paths",
                     "study.editable-surface",
                     "Editable paths must stay under Project strategy, factor, or "
-                    "model source directories: "
-                    + ", ".join(invalid_editable),
+                    "model source directories: " + ", ".join(invalid_editable),
                 )
             ]
         )
@@ -1156,9 +1182,9 @@ def _load_study_root(
         for pattern in definition.dependencies["paths"]:
             relative = pattern[:-3] if pattern.endswith("/**") else pattern
             if pattern not in exact_request_dependencies and not any(
-                    relative == allowed or relative.startswith(f"{allowed}/")
-                    for allowed in allowed_editable_roots
-                ):
+                relative == allowed or relative.startswith(f"{allowed}/")
+                for allowed in allowed_editable_roots
+            ):
                 invalid_dependencies.append(pattern)
         if invalid_dependencies:
             raise AutoQuantValidationError(
@@ -1168,8 +1194,7 @@ def _load_study_root(
                         "study.dependency-surface",
                         "Dependency paths must stay under Project strategy, factor, "
                         "or model source directories unless they are exact "
-                        "Study-owned request files: "
-                        + ", ".join(invalid_dependencies),
+                        "Study-owned request files: " + ", ".join(invalid_dependencies),
                     )
                 ]
             )
@@ -1231,8 +1256,7 @@ def _load_study_root(
             from .position_snapshots import load_position_snapshot
 
             snapshot_path = (
-                project.root_dir
-                / definition.research_request.position_snapshot_path
+                project.root_dir / definition.research_request.position_snapshot_path
             )
             snapshot = load_position_snapshot(snapshot_path)
             if snapshot["source"]["requestHash"] != hash_json(request):
@@ -1301,9 +1325,7 @@ def _load_study_root(
                     "Upstream Study input hash differs from the immutable source Run",
                 )
             )
-        declared_artifacts = {
-            item["path"] for item in source_run.result["artifacts"]
-        }
+        declared_artifacts = {item["path"] for item in source_run.result["artifacts"]}
         for artifact in upstream.artifacts:
             artifact_file = source_run.root_dir / artifact.path
             if artifact.path not in declared_artifacts:
@@ -1326,13 +1348,9 @@ def _load_study_root(
                 )
         if upstream_issues:
             raise AutoQuantValidationError(upstream_issues)
-        upstream_evidence_hash = hash_json(
-            definition.to_dict()["upstream_evidence"]
-        )
+        upstream_evidence_hash = hash_json(definition.to_dict()["upstream_evidence"])
     study_manifest_relative = (
-        Path(project.manifest.directories["studies"])
-        / definition.id
-        / STUDY_MANIFEST
+        Path(project.manifest.directories["studies"]) / definition.id / STUDY_MANIFEST
     ).as_posix()
     program_relative = (
         Path(project.manifest.directories["studies"])
@@ -1504,7 +1522,11 @@ def create_study(
 ) -> StudyContext:
     if not STUDY_ID.fullmatch(definition.id):
         raise AutoQuantValidationError(
-            [_issue(definition.id, "schema.id", "Study id must use lowercase kebab-case")]
+            [
+                _issue(
+                    definition.id, "schema.id", "Study id must use lowercase kebab-case"
+                )
+            ]
         )
     target = _study_root(project, definition.id)
     if target.exists() or target.is_symlink():

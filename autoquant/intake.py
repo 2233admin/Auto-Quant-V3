@@ -230,8 +230,7 @@ def _optional_asset_class_issues(
                 _issue(
                     f"{path}/assetClass",
                     "dataset.asset-class-summary",
-                    "assetClass must summarize per-asset classes as "
-                    f"'{expected}'",
+                    f"assetClass must summarize per-asset classes as '{expected}'",
                 )
             )
     return issues
@@ -242,9 +241,7 @@ def _validate_provider_claim(
     path: Path | str,
 ) -> tuple[dict[str, Any], list[ValidationIssue]]:
     if not isinstance(value, dict):
-        return {}, [
-            _issue(path, "schema.type", "Provider must be an object")
-        ]
+        return {}, [_issue(path, "schema.type", "Provider must be an object")]
     issues = _strict_keys(value, PROVIDER_KEYS, path)
     for key in ("name", "terms"):
         issues.extend(_non_empty(value.get(key), f"{path}/{key}"))
@@ -262,9 +259,7 @@ def _validate_provider_claim(
             )
         else:
             try:
-                parsed = datetime.fromisoformat(
-                    retrieved_at.replace("Z", "+00:00")
-                )
+                parsed = datetime.fromisoformat(retrieved_at.replace("Z", "+00:00"))
                 if parsed.tzinfo is None:
                     raise ValueError("timezone required")
             except ValueError:
@@ -288,9 +283,7 @@ def _normalize_provider_claim(provider: dict[str, Any]) -> dict[str, Any]:
     return {
         "name": provider["name"].strip(),
         "retrievedAt": (
-            retrieved_at.strip()
-            if isinstance(retrieved_at, str)
-            else None
+            retrieved_at.strip() if isinstance(retrieved_at, str) else None
         ),
         "sourceUri": (
             provider["sourceUri"].strip()
@@ -335,10 +328,7 @@ def _validate_source_claims(
             )
         )
         source_id = source.get("id")
-        if (
-            not isinstance(source_id, str)
-            or not SAFE_SOURCE_ID.fullmatch(source_id)
-        ):
+        if not isinstance(source_id, str) or not SAFE_SOURCE_ID.fullmatch(source_id):
             issues.append(
                 _issue(
                     f"{source_path}/id",
@@ -542,9 +532,7 @@ def _canonical_frame(
                 )
             ]
         )
-    invalid_volume = (
-        (volume < 0).any() if allow_zero_volume else (volume <= 0).any()
-    )
+    invalid_volume = (volume < 0).any() if allow_zero_volume else (volume <= 0).any()
     if not np.isfinite(volume).all() or invalid_volume:
         qualifier = "non-negative" if allow_zero_volume else "strictly positive"
         raise AutoQuantValidationError(
@@ -637,26 +625,18 @@ class PreparedIntake:
 
     @property
     def multi_source(self) -> bool:
-        return (
-            self.package["schemaVersion"]
-            == MULTI_SOURCE_OBSERVED_SCHEMA_VERSION
-        )
+        return self.package["schemaVersion"] == MULTI_SOURCE_OBSERVED_SCHEMA_VERSION
 
     @property
     def per_asset_classes(self) -> bool:
-        return all(
-            "assetClass" in asset
-            for asset in self.package["assets"]
-        )
+        return all("assetClass" in asset for asset in self.package["assets"])
 
     @property
     def interval_surface(self) -> dict[str, Any] | None:
         if not self.multi_interval:
             return None
         if self.package["schemaVersion"] == 2:
-            return interval_surface(
-                self.package["featureIntervals"]
-            ).to_dict()
+            return interval_surface(self.package["featureIntervals"]).to_dict()
         if self.observed_intraday:
             return observed_interval_surface(
                 self.package["baseInterval"],
@@ -703,9 +683,7 @@ def _validate_v1_package_manifest(
     }
     issues = _strict_keys(value, required, path)
     if value.get("schemaVersion") != SCHEMA_VERSION:
-        issues.append(
-            _issue(f"{path}/schemaVersion", "schema.version", "Expected V1")
-        )
+        issues.append(_issue(f"{path}/schemaVersion", "schema.version", "Expected V1"))
     if value.get("kind") != DATASET_PACKAGE_KIND:
         issues.append(
             _issue(
@@ -790,9 +768,7 @@ def _validate_v1_package_manifest(
     for index, asset in enumerate(assets):
         asset_path = f"{path}/assets/{index}"
         if not isinstance(asset, dict):
-            issues.append(
-                _issue(asset_path, "schema.type", "Asset must be an object")
-            )
+            issues.append(_issue(asset_path, "schema.type", "Asset must be an object"))
             continue
         issues.extend(
             _strict_keys(
@@ -802,11 +778,7 @@ def _validate_v1_package_manifest(
                     "venue",
                     "currency",
                     "path",
-                    *(
-                        ("assetClass",)
-                        if "assetClass" in asset
-                        else ()
-                    ),
+                    *(("assetClass",) if "assetClass" in asset else ()),
                 },
                 asset_path,
             )
@@ -849,7 +821,9 @@ def _validate_v1_package_manifest(
     )
     if len(symbols) != len(set(symbols)):
         issues.append(
-            _issue(f"{path}/assets", "dataset.duplicate-symbol", "Symbols must be unique")
+            _issue(
+                f"{path}/assets", "dataset.duplicate-symbol", "Symbols must be unique"
+            )
         )
     if len(source_paths) != len(set(source_paths)):
         issues.append(
@@ -1153,9 +1127,7 @@ def _validate_v5_package_manifest(
             )
         )
     expected_class = (
-        next(iter(set(asset_classes)))
-        if len(set(asset_classes)) == 1
-        else "mixed"
+        next(iter(set(asset_classes))) if len(set(asset_classes)) == 1 else "mixed"
     )
     if asset_classes and value.get("assetClass") != expected_class:
         issues.append(
@@ -1256,9 +1228,7 @@ def _validate_v6_package_manifest(
     )
     v5_projection = {
         **{
-            key: item
-            for key, item in value.items()
-            if key not in {"sources", "assets"}
+            key: item for key, item in value.items() if key not in {"sources", "assets"}
         },
         "schemaVersion": OBSERVED_INTRADAY_SCHEMA_VERSION,
         "provider": fallback_provider,
@@ -1293,11 +1263,7 @@ def _validate_v6_package_manifest(
         raise AutoQuantValidationError(issues)
     assert normalized_v5 is not None
     return {
-        **{
-            key: item
-            for key, item in normalized_v5.items()
-            if key != "provider"
-        },
+        **{key: item for key, item in normalized_v5.items() if key != "provider"},
         "schemaVersion": MULTI_SOURCE_OBSERVED_SCHEMA_VERSION,
         "sources": sources,
         "assets": [
@@ -1412,7 +1378,9 @@ def _validate_v2_package_manifest(
         )
     market = value.get("market")
     if not isinstance(market, dict):
-        issues.append(_issue(f"{path}/market", "schema.type", "Market must be an object"))
+        issues.append(
+            _issue(f"{path}/market", "schema.type", "Market must be an object")
+        )
         market = {}
     else:
         issues.extend(
@@ -1452,7 +1420,9 @@ def _validate_v2_package_manifest(
 
     assets = value.get("assets")
     if not isinstance(assets, list) or not assets:
-        issues.append(_issue(f"{path}/assets", "schema.array", "Assets must be non-empty"))
+        issues.append(
+            _issue(f"{path}/assets", "schema.array", "Assets must be non-empty")
+        )
         assets = []
     symbols: list[str] = []
     source_paths: list[str] = []
@@ -1469,11 +1439,7 @@ def _validate_v2_package_manifest(
                     "venue",
                     "currency",
                     "path",
-                    *(
-                        ("assetClass",)
-                        if "assetClass" in asset
-                        else ()
-                    ),
+                    *(("assetClass",) if "assetClass" in asset else ()),
                 },
                 asset_path,
             )
@@ -1510,9 +1476,15 @@ def _validate_v2_package_manifest(
         )
     )
     if len(symbols) != len(set(symbols)):
-        issues.append(_issue(f"{path}/assets", "dataset.duplicate-symbol", "Symbols must be unique"))
+        issues.append(
+            _issue(
+                f"{path}/assets", "dataset.duplicate-symbol", "Symbols must be unique"
+            )
+        )
     if len(source_paths) != len(set(source_paths)):
-        issues.append(_issue(f"{path}/assets", "dataset.duplicate-path", "Paths must be unique"))
+        issues.append(
+            _issue(f"{path}/assets", "dataset.duplicate-path", "Paths must be unique")
+        )
     if issues:
         raise AutoQuantValidationError(issues)
     return {
@@ -1595,9 +1567,7 @@ def _validate_v3_package_manifest(
             market,
         ).to_dict()
     except IntervalContractError as error:
-        issues.append(
-            _issue(f"{path}/featureIntervals", error.code, str(error))
-        )
+        issues.append(_issue(f"{path}/featureIntervals", error.code, str(error)))
         surface = None
     if value.get("timestampSemantics") != "bar-close":
         issues.append(
@@ -1719,23 +1689,17 @@ def _validate_package_manifest(
 def _daily_panel_availability_from_dates(
     asset_dates: list[list[str]],
     *,
-    minimum_assets_per_factor_timestamp: int = (
-        FACTOR_MIN_ASSETS_PER_TIMESTAMP
-    ),
+    minimum_assets_per_factor_timestamp: int = (FACTOR_MIN_ASSETS_PER_TIMESTAMP),
     eligible_dates: list[str] | None = None,
 ) -> tuple[list[str], dict[str, Any]]:
     if not asset_dates:
         return [], {
             "alignment": RAGGED_PANEL_POLICY["alignment"],
-            "missingObservation": RAGGED_PANEL_POLICY[
-                "missingObservation"
-            ],
+            "missingObservation": RAGGED_PANEL_POLICY["missingObservation"],
             "unionObservations": 0,
             "intersectionObservations": 0,
             "eligibleFactorObservations": 0,
-            "minimumAssetsPerFactorTimestamp": (
-                minimum_assets_per_factor_timestamp
-            ),
+            "minimumAssetsPerFactorTimestamp": (minimum_assets_per_factor_timestamp),
             "observedRows": 0,
             "possibleRows": 0,
             "observationCoverage": 0.0,
@@ -1748,19 +1712,13 @@ def _daily_panel_availability_from_dates(
     date_sets = [set(dates) for dates in asset_dates]
     union_dates = sorted(set().union(*date_sets))
     intersection_dates = sorted(set.intersection(*date_sets))
-    counts = [
-        sum(date in dates for dates in date_sets)
-        for date in union_dates
-    ]
+    counts = [sum(date in dates for dates in date_sets) for date in union_dates]
     possible = len(union_dates) * len(asset_dates)
     observed = sum(len(dates) for dates in date_sets)
     eligible = (
         len(eligible_dates)
         if eligible_dates is not None
-        else sum(
-            count >= minimum_assets_per_factor_timestamp
-            for count in counts
-        )
+        else sum(count >= minimum_assets_per_factor_timestamp for count in counts)
     )
     return union_dates, {
         "alignment": RAGGED_PANEL_POLICY["alignment"],
@@ -1768,20 +1726,14 @@ def _daily_panel_availability_from_dates(
         "unionObservations": len(union_dates),
         "intersectionObservations": len(intersection_dates),
         "eligibleFactorObservations": eligible,
-        "minimumAssetsPerFactorTimestamp": (
-            minimum_assets_per_factor_timestamp
-        ),
+        "minimumAssetsPerFactorTimestamp": (minimum_assets_per_factor_timestamp),
         "observedRows": observed,
         "possibleRows": possible,
-        "observationCoverage": (
-            float(observed / possible) if possible else 0.0
-        ),
+        "observationCoverage": (float(observed / possible) if possible else 0.0),
         "assetsPerTimestamp": {
             "minimum": min(counts) if counts else 0,
             "median": (
-                float(np.median(np.asarray(counts, dtype=float)))
-                if counts
-                else 0.0
+                float(np.median(np.asarray(counts, dtype=float))) if counts else 0.0
             ),
             "maximum": max(counts) if counts else 0,
         },
@@ -1792,10 +1744,7 @@ def _daily_panel_availability(
     assets: list[PreparedAsset] | tuple[PreparedAsset, ...],
 ) -> tuple[list[str], dict[str, Any]]:
     return _daily_panel_availability_from_dates(
-        [
-            [str(value) for value in asset.frame["timestamp"]]
-            for asset in assets
-        ]
+        [[str(value) for value in asset.frame["timestamp"]] for asset in assets]
     )
 
 
@@ -1843,8 +1792,7 @@ def quantile_intake_issues(
             _issue(
                 "quantiles",
                 "study.quantile-population",
-                f"{quantiles} quantiles require at least {quantiles} "
-                "prediction assets",
+                f"{quantiles} quantiles require at least {quantiles} prediction assets",
             )
         ]
     return []
@@ -1872,16 +1820,21 @@ def prepare_project_intake(
                 _issue(
                     template,
                     "intake.template",
-                    "Intake profile must be one of: "
-                    + ", ".join(admitted_profiles),
+                    "Intake profile must be one of: " + ", ".join(admitted_profiles),
                 )
             ]
-    )
+        )
     request = load_research_request(request_path)
     manifest_path = Path(package_path).expanduser().absolute()
     if manifest_path.is_symlink():
         raise AutoQuantValidationError(
-            [_issue(manifest_path, "path.symlink", "Dataset manifest cannot be a symlink")]
+            [
+                _issue(
+                    manifest_path,
+                    "path.symlink",
+                    "Dataset manifest cannot be a symlink",
+                )
+            ]
         )
     if manifest_path.is_dir():
         raise AutoQuantValidationError(
@@ -1900,18 +1853,14 @@ def prepare_project_intake(
                 _issue(
                     template,
                     "holdout.template",
-                    "Frozen holdout target intake requires "
-                    "ohlcv-research-desk",
+                    "Frozen holdout target intake requires ohlcv-research-desk",
                 )
             ]
         )
-    if (
-        minimum_observations_override is not None
-        and (
-            not isinstance(minimum_observations_override, int)
-            or isinstance(minimum_observations_override, bool)
-            or minimum_observations_override < 1
-        )
+    if minimum_observations_override is not None and (
+        not isinstance(minimum_observations_override, int)
+        or isinstance(minimum_observations_override, bool)
+        or minimum_observations_override < 1
     ):
         raise AutoQuantValidationError(
             [
@@ -1930,12 +1879,8 @@ def prepare_project_intake(
     prepared: list[PreparedAsset] = []
     issues: list[ValidationIssue] = []
     expected_dates: list[Any] | None = None
-    ragged_daily = (
-        package["schemaVersion"] == RAGGED_DAILY_SCHEMA_VERSION
-    )
-    observed_intraday = (
-        package["schemaVersion"] in OBSERVED_SCHEMA_VERSIONS
-    )
+    ragged_daily = package["schemaVersion"] == RAGGED_DAILY_SCHEMA_VERSION
+    observed_intraday = package["schemaVersion"] in OBSERVED_SCHEMA_VERSIONS
     factor_policy = request.get("factorPolicy")
     observed_target_symbols = (
         list(factor_policy.get("predictionAssets", []))
@@ -2007,8 +1952,7 @@ def prepare_project_intake(
             _issue(
                 "request/portfolioPolicy/decisionSchedule/anchor",
                 "request.dataset-decision-anchor",
-                "session-start requires a V3 intraday XNYS "
-                "regular-session package",
+                "session-start requires a V3 intraday XNYS regular-session package",
             )
         )
     if (
@@ -2025,8 +1969,7 @@ def prepare_project_intake(
             _issue(
                 "request/portfolioPolicy/decisionSchedule",
                 "request.dataset-decision-schedule",
-                "calendar-month-end requires a V1 daily XNYS "
-                "regular-session package",
+                "calendar-month-end requires a V1 daily XNYS regular-session package",
             )
         )
     for index, asset in enumerate(package["assets"]):
@@ -2037,7 +1980,9 @@ def prepare_project_intake(
         )
         if not source.is_file():
             issues.append(
-                _issue(source, "dataset.source-missing", f"Missing asset source: {source}")
+                _issue(
+                    source, "dataset.source-missing", f"Missing asset source: {source}"
+                )
             )
             continue
         interval_frames = None
@@ -2076,9 +2021,7 @@ def prepare_project_intake(
         elif observed_intraday:
             try:
                 frame = validate_observed_ohlcv(
-                    _read_source(source).rename(
-                        columns={"date": "timestamp"}
-                    ),
+                    _read_source(source).rename(columns={"date": "timestamp"}),
                     label=asset["symbol"],
                 )
                 if (
@@ -2105,11 +2048,7 @@ def prepare_project_intake(
         dates = frame["timestamp"].tolist()
         if expected_dates is None:
             expected_dates = dates
-        elif (
-            dates != expected_dates
-            and not ragged_daily
-            and not observed_intraday
-        ):
+        elif dates != expected_dates and not ragged_daily and not observed_intraday:
             panel = (
                 "exact base timestamp panel"
                 if package["schemaVersion"] in {2, 3}
@@ -2137,9 +2076,7 @@ def prepare_project_intake(
                     package["assetClass"],
                 ),
                 volume_semantics=(
-                    asset["volumeSemantics"]
-                    if observed_intraday
-                    else None
+                    asset["volumeSemantics"] if observed_intraday else None
                 ),
                 source_id=asset.get("sourceId"),
             )
@@ -2254,37 +2191,27 @@ def prepare_project_intake(
     if observations < minimum_observations:
         unit = (
             f"base {package['baseInterval']}"
-            if package["schemaVersion"]
-            in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
+            if package["schemaVersion"] in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
             else "daily"
         )
         issues.append(
             _issue(
                 manifest_path,
                 "dataset.observations",
-                (
-                    "Frozen external holdout target"
-                    if external_holdout
-                    else template
-                )
+                ("Frozen external holdout target" if external_holdout else template)
                 + f" requires at least {minimum_observations} {unit} rows",
             )
         )
     if (
         availability is not None
         and not observed_intraday
-        and availability["eligibleFactorObservations"]
-        < minimum_observations
+        and availability["eligibleFactorObservations"] < minimum_observations
     ):
         issues.append(
             _issue(
                 manifest_path,
                 "dataset.factor-breadth-history",
-                (
-                    "Frozen external holdout target"
-                    if external_holdout
-                    else template
-                )
+                ("Frozen external holdout target" if external_holdout else template)
                 + f" requires at least {minimum_observations} "
                 f"timestamps with {FACTOR_MIN_ASSETS_PER_TIMESTAMP} or "
                 "more observed assets",
@@ -2361,8 +2288,7 @@ def prepare_project_intake(
             _issue(
                 "request/positionScenarios",
                 "request.position-scenarios-template",
-                "positionScenarios is consumed only by "
-                "ohlcv-book-risk-lab",
+                "positionScenarios is consumed only by ohlcv-book-risk-lab",
             )
         )
     if (
@@ -2398,8 +2324,7 @@ def prepare_project_intake(
             _issue(
                 "request/pathStressPolicy",
                 "request.path-stress-policy-template",
-                "pathStressPolicy is consumed only by "
-                "ohlcv-book-path-stress-lab",
+                "pathStressPolicy is consumed only by ohlcv-book-path-stress-lab",
             )
         )
     if (
@@ -2431,13 +2356,9 @@ def prepare_project_intake(
                     "ohlcv-allocation-lab requires direction long",
                 )
             )
-        roles = {
-            item["symbol"]: item.get("positionRole")
-            for item in request["assets"]
-        }
+        roles = {item["symbol"]: item.get("positionRole") for item in request["assets"]}
         if any(
-            role not in {"long-only", "context-only"}
-            for role in roles.values()
+            role not in {"long-only", "context-only"} for role in roles.values()
         ) or not any(role == "long-only" for role in roles.values()):
             issues.append(
                 _issue(
@@ -2456,10 +2377,7 @@ def prepare_project_intake(
                 )
             )
         benchmark = request.get("benchmarkPolicy")
-        if (
-            not isinstance(benchmark, dict)
-            or benchmark.get("kind") != "fixed-weights"
-        ):
+        if not isinstance(benchmark, dict) or benchmark.get("kind") != "fixed-weights":
             issues.append(
                 _issue(
                     "request/benchmarkPolicy",
@@ -2598,8 +2516,7 @@ def prepare_project_intake(
                 ]
             )
     if isinstance(position_snapshot, dict) and (
-        study_owned
-        or template in {"ohlcv-book-risk-lab", "ohlcv-book-path-stress-lab"}
+        study_owned or template in {"ohlcv-book-risk-lab", "ohlcv-book-path-stress-lab"}
     ):
         as_of = pd.Timestamp(position_snapshot["asOf"])
         start_timestamp = pd.Timestamp(start)
@@ -2731,24 +2648,24 @@ def materialize_intake_dataset(
                                 )
                             ]
                         )
-                    common["start"] = pd.Timestamp(
-                        frame["timestamp"].iloc[0]
-                    ).isoformat().replace("+00:00", "Z")
-                    common["end"] = pd.Timestamp(
-                        frame["timestamp"].iloc[-1]
-                    ).isoformat().replace("+00:00", "Z")
+                    common["start"] = (
+                        pd.Timestamp(frame["timestamp"].iloc[0])
+                        .isoformat()
+                        .replace("+00:00", "Z")
+                    )
+                    common["end"] = (
+                        pd.Timestamp(frame["timestamp"].iloc[-1])
+                        .isoformat()
+                        .replace("+00:00", "Z")
+                    )
                     observed_intraday_dates.append(
                         [
-                            pd.Timestamp(value)
-                            .isoformat()
-                            .replace("+00:00", "Z")
+                            pd.Timestamp(value).isoformat().replace("+00:00", "Z")
                             for value in frame["timestamp"]
                         ]
                     )
                 frame["timestamp"] = frame["timestamp"].map(
-                    lambda value: pd.Timestamp(value)
-                    .isoformat()
-                    .replace("+00:00", "Z")
+                    lambda value: pd.Timestamp(value).isoformat().replace("+00:00", "Z")
                 )
                 frame.to_csv(
                     target,
@@ -2763,14 +2680,10 @@ def materialize_intake_dataset(
                         "normalizedHash": hash_file(target),
                         "observations": len(frame),
                         "start": (
-                            str(frame["timestamp"].iloc[0])
-                            if len(frame)
-                            else None
+                            str(frame["timestamp"].iloc[0]) if len(frame) else None
                         ),
                         "end": (
-                            str(frame["timestamp"].iloc[-1])
-                            if len(frame)
-                            else None
+                            str(frame["timestamp"].iloc[-1]) if len(frame) else None
                         ),
                     }
                 )
@@ -2801,9 +2714,7 @@ def materialize_intake_dataset(
         "priceAdjustment": intake.package["priceAdjustment"],
         "packageManifestHash": hash_file(intake.package_path),
         "requestHash": intake.request_hash,
-        "requestedAssets": [
-            item["symbol"] for item in intake.request["assets"]
-        ],
+        "requestedAssets": [item["symbol"] for item in intake.request["assets"]],
         "universe": intake.universe,
         "timeRange": {"start": intake.start, "end": intake.end},
         "template": intake.template,
@@ -2824,9 +2735,7 @@ def materialize_intake_dataset(
                 for item in intake.request["assets"]
                 if item.get("positionRole") != "context-only"
             )
-            target_dates = observed_intraday_dates[
-                intake.universe.index(target_symbol)
-            ]
+            target_dates = observed_intraday_dates[intake.universe.index(target_symbol)]
             snapshot["availability"] = _daily_panel_availability_from_dates(
                 observed_intraday_dates,
                 minimum_assets_per_factor_timestamp=1,
@@ -2837,9 +2746,7 @@ def materialize_intake_dataset(
         if intake.ragged_daily:
             snapshot["schemaVersion"] = RAGGED_DAILY_SCHEMA_VERSION
             snapshot["panelPolicy"] = dict(RAGGED_PANEL_POLICY)
-            snapshot["availability"] = _daily_panel_availability(
-                intake.assets
-            )[1]
+            snapshot["availability"] = _daily_panel_availability(intake.assets)[1]
     snapshot_path = output / "snapshot.json"
     _write_json(snapshot_path, snapshot)
     interval_line = (
@@ -2855,10 +2762,7 @@ def materialize_intake_dataset(
         else f"- Frequency: `{snapshot['frequency']}`\n"
     )
     provider_summary = (
-        ", ".join(
-            source["provider"]["name"]
-            for source in snapshot["sources"]
-        )
+        ", ".join(source["provider"]["name"] for source in snapshot["sources"])
         if intake.multi_source
         else snapshot["provider"]["name"]
     )
@@ -2957,21 +2861,18 @@ def _validate_v1_snapshot(
     issues = _strict_keys(snapshot, required, path)
     if (
         snapshot.get("schemaVersion")
-        != (
-            RAGGED_DAILY_SCHEMA_VERSION
-            if ragged
-            else SCHEMA_VERSION
-        )
+        != (RAGGED_DAILY_SCHEMA_VERSION if ragged else SCHEMA_VERSION)
         or snapshot.get("kind") != DATASET_SNAPSHOT_KIND
     ):
-        issues.append(_issue(path, "intake.snapshot-schema", "Invalid dataset snapshot"))
+        issues.append(
+            _issue(path, "intake.snapshot-schema", "Invalid dataset snapshot")
+        )
     if ragged and snapshot.get("panelPolicy") != RAGGED_PANEL_POLICY:
         issues.append(
             _issue(
                 f"{path}/panelPolicy",
                 "intake.snapshot-panel-policy",
-                "Ragged daily snapshot must preserve the fixed "
-                "observed-only policy",
+                "Ragged daily snapshot must preserve the fixed observed-only policy",
             )
         )
     availability = snapshot.get("availability")
@@ -3006,8 +2907,7 @@ def _validate_v1_snapshot(
                 )
             )
         if (
-            availability.get("alignment")
-            != RAGGED_PANEL_POLICY["alignment"]
+            availability.get("alignment") != RAGGED_PANEL_POLICY["alignment"]
             or availability.get("missingObservation")
             != RAGGED_PANEL_POLICY["missingObservation"]
             or availability.get("minimumAssetsPerFactorTimestamp")
@@ -3029,11 +2929,7 @@ def _validate_v1_snapshot(
             "possibleRows",
         ):
             value = availability.get(key)
-            if (
-                not isinstance(value, int)
-                or isinstance(value, bool)
-                or value < 0
-            ):
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 issues.append(
                     _issue(
                         f"{path}/availability/{key}",
@@ -3092,9 +2988,7 @@ def _validate_v1_snapshot(
         )
     for key in ("packageManifestHash", "requestHash"):
         if not _valid_hash(snapshot.get(key)):
-            issues.append(
-                _issue(f"{path}/{key}", "schema.hash", f"Invalid {key}")
-            )
+            issues.append(_issue(f"{path}/{key}", "schema.hash", f"Invalid {key}"))
 
     market = snapshot.get("market")
     if not isinstance(market, dict):
@@ -3176,16 +3070,16 @@ def _validate_v1_snapshot(
         )
         time_range = {}
     else:
-        issues.extend(
-            _strict_keys(time_range, {"start", "end"}, f"{path}/timeRange")
-        )
+        issues.extend(_strict_keys(time_range, {"start", "end"}, f"{path}/timeRange"))
     for key in ("start", "end"):
         issues.extend(_non_empty(time_range.get(key), f"{path}/timeRange/{key}"))
 
     assets = snapshot.get("assets")
     if not isinstance(assets, list) or not assets:
         issues.append(
-            _issue(f"{path}/assets", "schema.array", "Snapshot assets must be non-empty")
+            _issue(
+                f"{path}/assets", "schema.array", "Snapshot assets must be non-empty"
+            )
         )
         assets = []
     asset_symbols: list[str] = []
@@ -3279,12 +3173,7 @@ def _validate_v1_snapshot(
                 asset_end = pd.Timestamp(asset.get("end"))
                 range_start = pd.Timestamp(time_range.get("start"))
                 range_end = pd.Timestamp(time_range.get("end"))
-                if not (
-                    range_start
-                    <= asset_start
-                    <= asset_end
-                    <= range_end
-                ):
+                if not (range_start <= asset_start <= asset_end <= range_end):
                     raise ValueError
             except (TypeError, ValueError):
                 issues.append(
@@ -3428,9 +3317,7 @@ def _validate_multi_interval_snapshot(
         expected_surface = canonical_interval_surface(
             surface,
             schema_version=(
-                OBSERVED_INTRADAY_SCHEMA_VERSION
-                if observed
-                else schema_version
+                OBSERVED_INTRADAY_SCHEMA_VERSION if observed else schema_version
             ),
         )
         if surface != expected_surface:
@@ -3442,9 +3329,7 @@ def _validate_multi_interval_snapshot(
                 )
             )
     except IntervalContractError as error:
-        issues.append(
-            _issue(f"{path}/intervalSurface", error.code, str(error))
-        )
+        issues.append(_issue(f"{path}/intervalSurface", error.code, str(error)))
         expected_surface = (
             interval_surface([]).to_dict()
             if schema_version == 2
@@ -3541,7 +3426,9 @@ def _validate_multi_interval_snapshot(
         )
     time_range = snapshot.get("timeRange")
     if not isinstance(time_range, dict):
-        issues.append(_issue(f"{path}/timeRange", "schema.type", "timeRange must be an object"))
+        issues.append(
+            _issue(f"{path}/timeRange", "schema.type", "timeRange must be an object")
+        )
         time_range = {}
     else:
         issues.extend(_strict_keys(time_range, {"start", "end"}, f"{path}/timeRange"))
@@ -3550,7 +3437,11 @@ def _validate_multi_interval_snapshot(
 
     assets = snapshot.get("assets")
     if not isinstance(assets, list) or not assets:
-        issues.append(_issue(f"{path}/assets", "schema.array", "Snapshot assets must be non-empty"))
+        issues.append(
+            _issue(
+                f"{path}/assets", "schema.array", "Snapshot assets must be non-empty"
+            )
+        )
         assets = []
     symbols: list[str] = []
     snapshot_asset_classes: list[str] = []
@@ -3580,16 +3471,15 @@ def _validate_multi_interval_snapshot(
         for key in ("symbol", "venue", "currency", "sourcePath", "start", "end"):
             issues.extend(_non_empty(asset.get(key), f"{asset_path}/{key}"))
         if not _valid_hash(asset.get("sourceHash")):
-            issues.append(_issue(f"{asset_path}/sourceHash", "schema.hash", "Invalid sourceHash"))
+            issues.append(
+                _issue(f"{asset_path}/sourceHash", "schema.hash", "Invalid sourceHash")
+            )
         symbol = asset.get("symbol")
         if isinstance(symbol, str):
             symbols.append(symbol)
-        if (
-            not observed
-            and (
-                asset.get("start") != time_range.get("start")
-                or asset.get("end") != time_range.get("end")
-            )
+        if not observed and (
+            asset.get("start") != time_range.get("start")
+            or asset.get("end") != time_range.get("end")
         ):
             issues.append(
                 _issue(
@@ -3623,12 +3513,7 @@ def _validate_multi_interval_snapshot(
                 asset_end = pd.Timestamp(asset.get("end"))
                 range_start = pd.Timestamp(time_range.get("start"))
                 range_end = pd.Timestamp(time_range.get("end"))
-                if not (
-                    range_start
-                    <= asset_start
-                    <= asset_end
-                    <= range_end
-                ):
+                if not (range_start <= asset_start <= asset_end <= range_end):
                     raise ValueError
             except (TypeError, ValueError):
                 issues.append(
@@ -3656,14 +3541,20 @@ def _validate_multi_interval_snapshot(
         rows = asset.get("intervals")
         if not isinstance(rows, list) or not rows:
             issues.append(
-                _issue(f"{asset_path}/intervals", "schema.array", "Missing interval inventory")
+                _issue(
+                    f"{asset_path}/intervals",
+                    "schema.array",
+                    "Missing interval inventory",
+                )
             )
             rows = []
         observed_intervals: list[str] = []
         for row_index, row in enumerate(rows):
             row_path = f"{asset_path}/intervals/{row_index}"
             if not isinstance(row, dict):
-                issues.append(_issue(row_path, "schema.type", "Interval row must be an object"))
+                issues.append(
+                    _issue(row_path, "schema.type", "Interval row must be an object")
+                )
                 continue
             issues.extend(
                 _strict_keys(
@@ -3683,7 +3574,11 @@ def _validate_multi_interval_snapshot(
                 issues.extend(_non_empty(row.get(key), f"{row_path}/{key}"))
             if not _valid_hash(row.get("normalizedHash")):
                 issues.append(
-                    _issue(f"{row_path}/normalizedHash", "schema.hash", "Invalid normalizedHash")
+                    _issue(
+                        f"{row_path}/normalizedHash",
+                        "schema.hash",
+                        "Invalid normalizedHash",
+                    )
                 )
             observations = row.get("observations")
             if (
@@ -3702,8 +3597,7 @@ def _validate_multi_interval_snapshot(
             if (
                 isinstance(symbol, str)
                 and isinstance(row.get("interval"), str)
-                and row.get("normalizedPath")
-                != f"ohlcv/{row['interval']}/{symbol}.csv"
+                and row.get("normalizedPath") != f"ohlcv/{row['interval']}/{symbol}.csv"
             ):
                 issues.append(
                     _issue(
@@ -3730,8 +3624,7 @@ def _validate_multi_interval_snapshot(
         )
     if schema_version == MULTI_SOURCE_OBSERVED_SCHEMA_VERSION:
         unused_sources = sorted(
-            {source["id"] for source in source_claims}
-            - set(snapshot_source_ids)
+            {source["id"] for source in source_claims} - set(snapshot_source_ids)
         )
         if unused_sources:
             issues.append(
@@ -3919,11 +3812,9 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
     ):
         issues.append(
             _issue(
-                f"{request_path}/portfolioPolicy/"
-                "decisionSchedule/anchor",
+                f"{request_path}/portfolioPolicy/decisionSchedule/anchor",
                 "request.dataset-decision-anchor",
-                "session-start requires a V3 intraday XNYS "
-                "regular-session package",
+                "session-start requires a V3 intraday XNYS regular-session package",
             )
         )
     if (
@@ -3940,12 +3831,13 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
             _issue(
                 f"{request_path}/portfolioPolicy/decisionSchedule",
                 "request.dataset-decision-schedule",
-                "calendar-month-end requires a V1 daily XNYS "
-                "regular-session package",
+                "calendar-month-end requires a V1 daily XNYS regular-session package",
             )
         )
     if hash_json(request) != manifest.get("requestHash"):
-        issues.append(_issue(request_path, "intake.request-hash", "Request hash mismatch"))
+        issues.append(
+            _issue(request_path, "intake.request-hash", "Request hash mismatch")
+        )
     position_path = project.root_dir / POSITION_SNAPSHOT
     if manifest.get("template") in {
         "ohlcv-book-risk-lab",
@@ -3965,11 +3857,15 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
             issues.extend(error.issues)
     if hash_file(snapshot_path) != manifest.get("datasetSnapshotHash"):
         issues.append(
-            _issue(snapshot_path, "intake.snapshot-hash", "Dataset snapshot hash mismatch")
+            _issue(
+                snapshot_path, "intake.snapshot-hash", "Dataset snapshot hash mismatch"
+            )
         )
     if snapshot.get("requestHash") != manifest.get("requestHash"):
         issues.append(
-            _issue(snapshot_path, "intake.snapshot-request", "Snapshot request mismatch")
+            _issue(
+                snapshot_path, "intake.snapshot-request", "Snapshot request mismatch"
+            )
         )
     if snapshot.get("template") != manifest.get("template"):
         issues.append(
@@ -4026,8 +3922,7 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
             continue
         normalized_rows = (
             asset.get("intervals", [])
-            if snapshot.get("schemaVersion")
-            in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
+            if snapshot.get("schemaVersion") in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
             else [asset]
         )
         for row in normalized_rows:
@@ -4054,11 +3949,9 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                         "Normalized asset hash mismatch",
                     )
                 )
-            elif (
-                snapshot.get("schemaVersion")
-                == RAGGED_DAILY_SCHEMA_VERSION
-                and isinstance(asset.get("symbol"), str)
-            ):
+            elif snapshot.get(
+                "schemaVersion"
+            ) == RAGGED_DAILY_SCHEMA_VERSION and isinstance(asset.get("symbol"), str):
                 try:
                     normalized = _canonical_frame(
                         normalized_path,
@@ -4067,17 +3960,12 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                 except AutoQuantValidationError as error:
                     issues.extend(error.issues)
                 else:
-                    dates = [
-                        str(value)
-                        for value in normalized["timestamp"].tolist()
-                    ]
+                    dates = [str(value) for value in normalized["timestamp"].tolist()]
                     ragged_dates_by_symbol[asset["symbol"]] = dates
                     if (
                         row.get("observations") != len(dates)
-                        or row.get("start")
-                        != (dates[0] if dates else None)
-                        or row.get("end")
-                        != (dates[-1] if dates else None)
+                        or row.get("start") != (dates[0] if dates else None)
+                        or row.get("end") != (dates[-1] if dates else None)
                     ):
                         issues.append(
                             _issue(
@@ -4088,8 +3976,7 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                             )
                         )
         if (
-            snapshot.get("schemaVersion")
-            in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
+            snapshot.get("schemaVersion") in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
             and isinstance(asset.get("symbol"), str)
             and isinstance(snapshot.get("timeRange"), dict)
         ):
@@ -4114,9 +4001,7 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                     and loaded_interval_asset is not None
                 ):
                     dates = [
-                        pd.Timestamp(value)
-                        .isoformat()
-                        .replace("+00:00", "Z")
+                        pd.Timestamp(value).isoformat().replace("+00:00", "Z")
                         for value in loaded_interval_asset["timestamp"]
                     ]
                     observed_dates_by_symbol[asset["symbol"]] = dates
@@ -4132,14 +4017,10 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                     if (
                         not isinstance(base_record, dict)
                         or base_record.get("observations") != len(dates)
-                        or base_record.get("start")
-                        != (dates[0] if dates else None)
-                        or base_record.get("end")
-                        != (dates[-1] if dates else None)
-                        or asset.get("start")
-                        != (dates[0] if dates else None)
-                        or asset.get("end")
-                        != (dates[-1] if dates else None)
+                        or base_record.get("start") != (dates[0] if dates else None)
+                        or base_record.get("end") != (dates[-1] if dates else None)
+                        or asset.get("start") != (dates[0] if dates else None)
+                        or asset.get("end") != (dates[-1] if dates else None)
                     ):
                         issues.append(
                             _issue(
@@ -4149,18 +4030,13 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                                 "canonical normalized rows",
                             )
                         )
-    if (
-        snapshot.get("schemaVersion") == RAGGED_DAILY_SCHEMA_VERSION
-        and len(ragged_dates_by_symbol)
-        == len(snapshot.get("universe", []))
-    ):
+    if snapshot.get("schemaVersion") == RAGGED_DAILY_SCHEMA_VERSION and len(
+        ragged_dates_by_symbol
+    ) == len(snapshot.get("universe", [])):
         ordered_dates = [
-            ragged_dates_by_symbol[symbol]
-            for symbol in snapshot["universe"]
+            ragged_dates_by_symbol[symbol] for symbol in snapshot["universe"]
         ]
-        union_dates, availability = _daily_panel_availability_from_dates(
-            ordered_dates
-        )
+        union_dates, availability = _daily_panel_availability_from_dates(ordered_dates)
         if snapshot.get("availability") != availability:
             issues.append(
                 _issue(
@@ -4200,14 +4076,11 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                 "Study dataset hash mismatch",
             )
         )
-    if (
-        snapshot.get("schemaVersion") in OBSERVED_SCHEMA_VERSIONS
-        and len(observed_dates_by_symbol)
-        == len(snapshot.get("universe", []))
-    ):
+    if snapshot.get("schemaVersion") in OBSERVED_SCHEMA_VERSIONS and len(
+        observed_dates_by_symbol
+    ) == len(snapshot.get("universe", [])):
         ordered_dates = [
-            observed_dates_by_symbol[symbol]
-            for symbol in snapshot["universe"]
+            observed_dates_by_symbol[symbol] for symbol in snapshot["universe"]
         ]
         target_symbol = next(
             (
@@ -4228,14 +4101,11 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                 _issue(
                     snapshot_path,
                     "intake.snapshot-availability",
-                    "V5 availability summary differs from canonical "
-                    "observed rows",
+                    "V5 availability summary differs from canonical observed rows",
                 )
             )
     time_range = (
-        snapshot.get("timeRange")
-        if isinstance(snapshot.get("timeRange"), dict)
-        else {}
+        snapshot.get("timeRange") if isinstance(snapshot.get("timeRange"), dict) else {}
     )
     expected_dataset = {
         "id": snapshot.get("id"),
@@ -4250,13 +4120,15 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
         or actual_dataset.version != expected_dataset["version"]
         or actual_dataset.asset_class != expected_dataset["assetClass"]
         or actual_dataset.universe != expected_dataset["universe"]
-        or actual_dataset.time_range.start
-        != expected_dataset["timeRange"].get("start")
-        or actual_dataset.time_range.end
-        != expected_dataset["timeRange"].get("end")
+        or actual_dataset.time_range.start != expected_dataset["timeRange"].get("start")
+        or actual_dataset.time_range.end != expected_dataset["timeRange"].get("end")
     ):
         issues.append(
-            _issue(study.manifest_path, "intake.study-dataset", "Study differs from snapshot")
+            _issue(
+                study.manifest_path,
+                "intake.study-dataset",
+                "Study differs from snapshot",
+            )
         )
     mandate_studies = {
         "ohlcv-portfolio-lab": ("ohlcv-portfolio-quality",),
@@ -4271,19 +4143,18 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
         mandate_study = load_study(project, mandate_study_id)
         if (
             mandate_study.definition.dependencies is not None
-            and PORTFOLIO_MANDATE
-            in mandate_study.definition.dependencies["paths"]
+            and PORTFOLIO_MANDATE in mandate_study.definition.dependencies["paths"]
         ):
             requires_mandate = True
     mandate_path = project.root_dir / PORTFOLIO_MANDATE
     if requires_mandate or mandate_path.exists() or mandate_path.is_symlink():
         mandate = load_portfolio_mandate(mandate_path)
         annualization = 252
-        if (
-            snapshot.get("schemaVersion")
-            in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
-            and snapshot.get("assets")
-        ):
+        if snapshot.get("schemaVersion") in {
+            2,
+            3,
+            *OBSERVED_SCHEMA_VERSIONS,
+        } and snapshot.get("assets"):
             target_symbol = next(
                 (
                     item["symbol"]
@@ -4315,8 +4186,7 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                 )
                 if isinstance(base_record, dict):
                     normalized_path = confined_path(
-                        project.root_dir
-                        / project.manifest.directories["data"],
+                        project.root_dir / project.manifest.directories["data"],
                         base_record.get("normalizedPath", ""),
                         f"{snapshot_path}/assets/0/intervals",
                     )
@@ -4351,8 +4221,7 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
         horizon_study = load_study(project, horizon_study_id)
         if (
             horizon_study.definition.dependencies is not None
-            and RESEARCH_HORIZON
-            in horizon_study.definition.dependencies["paths"]
+            and RESEARCH_HORIZON in horizon_study.definition.dependencies["paths"]
         ):
             requires_horizon = True
         else:
@@ -4386,16 +4255,13 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
         ),
     }.get(manifest.get("template"), ())
     factor_claim_path = project.root_dir / FACTOR_CLAIM
-    factor_claim_present = (
-        factor_claim_path.exists() or factor_claim_path.is_symlink()
-    )
+    factor_claim_present = factor_claim_path.exists() or factor_claim_path.is_symlink()
     factor_claim_dependencies: dict[str, bool] = {}
     for factor_study_id in factor_claim_studies:
         factor_study = load_study(project, factor_study_id)
         factor_claim_dependencies[factor_study_id] = (
             factor_study.definition.dependencies is not None
-            and FACTOR_CLAIM
-            in factor_study.definition.dependencies["paths"]
+            and FACTOR_CLAIM in factor_study.definition.dependencies["paths"]
         )
     requires_factor_claim = any(factor_claim_dependencies.values())
     factor_claim_contract = factor_claim_present or requires_factor_claim
@@ -4431,19 +4297,12 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
         factor_study = load_study(project, factor_study_id)
         factor_population_dependencies[factor_study_id] = (
             factor_study.definition.dependencies is not None
-            and FACTOR_POPULATION
-            in factor_study.definition.dependencies["paths"]
+            and FACTOR_POPULATION in factor_study.definition.dependencies["paths"]
         )
-    requires_factor_population = any(
-        factor_population_dependencies.values()
-    )
-    factor_population_contract = (
-        factor_population_present or requires_factor_population
-    )
+    requires_factor_population = any(factor_population_dependencies.values())
+    factor_population_contract = factor_population_present or requires_factor_population
     if factor_population_contract:
-        for factor_study_id, binds_population in (
-            factor_population_dependencies.items()
-        ):
+        for factor_study_id, binds_population in factor_population_dependencies.items():
             if binds_population:
                 continue
             factor_study = load_study(project, factor_study_id)
@@ -4478,9 +4337,7 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                     )
                 )
     event_policy_path = project.root_dir / EVENT_STUDY_POLICY
-    event_policy_present = (
-        event_policy_path.exists() or event_policy_path.is_symlink()
-    )
+    event_policy_present = event_policy_path.exists() or event_policy_path.is_symlink()
     requires_event_policy = (
         manifest.get("template") == "ohlcv-event-study-lab"
         and study.definition.dependencies is not None
@@ -4518,7 +4375,10 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
         and study.definition.dependencies is not None
         and BOOK_PATH_STRESS_POLICY in study.definition.dependencies["paths"]
     )
-    if manifest.get("template") == "ohlcv-book-path-stress-lab" and not requires_path_stress:
+    if (
+        manifest.get("template") == "ohlcv-book-path-stress-lab"
+        and not requires_path_stress
+    ):
         issues.append(
             _issue(
                 study.manifest_path,
@@ -4541,18 +4401,13 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
         except AutoQuantValidationError as error:
             issues.extend(error.issues)
     allocation_path = project.root_dir / ALLOCATION_POLICY
-    allocation_present = (
-        allocation_path.exists() or allocation_path.is_symlink()
-    )
+    allocation_present = allocation_path.exists() or allocation_path.is_symlink()
     requires_allocation = (
         manifest.get("template") == "ohlcv-allocation-lab"
         and study.definition.dependencies is not None
         and ALLOCATION_POLICY in study.definition.dependencies["paths"]
     )
-    if (
-        manifest.get("template") == "ohlcv-allocation-lab"
-        and not requires_allocation
-    ):
+    if manifest.get("template") == "ohlcv-allocation-lab" and not requires_allocation:
         issues.append(
             _issue(
                 study.manifest_path,
@@ -4564,11 +4419,11 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
         try:
             allocation = load_allocation_contract(allocation_path)
             allocation_annualization = 252
-            if (
-                snapshot.get("schemaVersion")
-                in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
-                and snapshot.get("assets")
-            ):
+            if snapshot.get("schemaVersion") in {
+                2,
+                3,
+                *OBSERVED_SCHEMA_VERSIONS,
+            } and snapshot.get("assets"):
                 target_symbol = next(
                     (
                         item["symbol"]
@@ -4596,8 +4451,7 @@ def load_project_intake(project: ProjectContext) -> dict[str, Any] | None:
                 )
                 if isinstance(base_record, dict):
                     normalized_path = confined_path(
-                        project.root_dir
-                        / project.manifest.directories["data"],
+                        project.root_dir / project.manifest.directories["data"],
                         base_record.get("normalizedPath", ""),
                         f"{snapshot_path}/assets/0/intervals",
                     )
@@ -4664,12 +4518,9 @@ def dataset_snapshot_class_context(
     return {
         "assetClass": summary,
         "assetClasses": {
-            asset["symbol"]: asset.get("assetClass", summary)
-            for asset in assets
+            asset["symbol"]: asset.get("assetClass", summary) for asset in assets
         },
-        "assetClassSource": (
-            "per-asset" if per_asset else "package-summary"
-        ),
+        "assetClassSource": ("per-asset" if per_asset else "package-summary"),
     }
 
 
@@ -4792,8 +4643,7 @@ def load_study_dataset_snapshot(
             continue
         rows = (
             asset.get("intervals", [])
-            if snapshot.get("schemaVersion")
-            in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
+            if snapshot.get("schemaVersion") in {2, 3, *OBSERVED_SCHEMA_VERSIONS}
             else [asset]
         )
         for row in rows:
@@ -5023,9 +4873,7 @@ OHLCV_DATASET_PACKAGE_V2_JSON_SCHEMA: dict[str, Any] = {
         "kind": {"const": DATASET_PACKAGE_KIND},
         "id": {"type": "string", "minLength": 1},
         "version": {"type": "string", "minLength": 1},
-        "assetClass": OHLCV_DATASET_PACKAGE_V1_JSON_SCHEMA["properties"][
-            "assetClass"
-        ],
+        "assetClass": OHLCV_DATASET_PACKAGE_V1_JSON_SCHEMA["properties"]["assetClass"],
         "baseInterval": {"const": BASE_INTERVAL},
         "featureIntervals": {
             "type": "array",
@@ -5166,9 +5014,7 @@ OHLCV_DATASET_PACKAGE_V5_JSON_SCHEMA: dict[str, Any] = {
         "panelPolicy": {"const": OBSERVED_PANEL_POLICY},
         "market": {"const": OBSERVED_INTRADAY_MARKET},
         "priceAdjustment": {"enum": sorted(PRICE_ADJUSTMENTS)},
-        "provider": OHLCV_DATASET_PACKAGE_V1_JSON_SCHEMA["properties"][
-            "provider"
-        ],
+        "provider": OHLCV_DATASET_PACKAGE_V1_JSON_SCHEMA["properties"]["provider"],
         "assets": {
             "type": "array",
             "minItems": 1,
@@ -5196,9 +5042,7 @@ OHLCV_DATASET_PACKAGE_V5_JSON_SCHEMA: dict[str, Any] = {
                         "minLength": 1,
                         "description": OHLCV_PACKAGE_ASSET_PATH_DESCRIPTION,
                     },
-                    "volumeSemantics": {
-                        "enum": sorted(OBSERVED_VOLUME_SEMANTICS)
-                    },
+                    "volumeSemantics": {"enum": sorted(OBSERVED_VOLUME_SEMANTICS)},
                 },
             },
         },
@@ -5231,9 +5075,7 @@ OHLCV_DATASET_PACKAGE_V6_JSON_SCHEMA: dict[str, Any] = {
     "properties": {
         **{
             key: item
-            for key, item in OHLCV_DATASET_PACKAGE_V5_JSON_SCHEMA[
-                "properties"
-            ].items()
+            for key, item in OHLCV_DATASET_PACKAGE_V5_JSON_SCHEMA["properties"].items()
             if key not in {"schemaVersion", "provider", "assets"}
         },
         "schemaVersion": {"const": MULTI_SOURCE_OBSERVED_SCHEMA_VERSION},
@@ -5262,9 +5104,9 @@ OHLCV_DATASET_PACKAGE_V6_JSON_SCHEMA: dict[str, Any] = {
                             },
                         },
                     },
-                    "provider": OHLCV_DATASET_PACKAGE_V1_JSON_SCHEMA[
-                        "properties"
-                    ]["provider"],
+                    "provider": OHLCV_DATASET_PACKAGE_V1_JSON_SCHEMA["properties"][
+                        "provider"
+                    ],
                 },
             },
         },
@@ -5284,9 +5126,9 @@ OHLCV_DATASET_PACKAGE_V6_JSON_SCHEMA: dict[str, Any] = {
                     "sourceId",
                 ],
                 "properties": {
-                    **OHLCV_DATASET_PACKAGE_V5_JSON_SCHEMA["properties"][
-                        "assets"
-                    ]["items"]["properties"],
+                    **OHLCV_DATASET_PACKAGE_V5_JSON_SCHEMA["properties"]["assets"][
+                        "items"
+                    ]["properties"],
                     "sourceId": {
                         "type": "string",
                         "pattern": SAFE_SOURCE_ID.pattern,

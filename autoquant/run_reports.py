@@ -102,7 +102,13 @@ def _reports_root(project: ProjectContext, *, create: bool) -> Path:
     root = confined_path(project.root_dir, RUN_REPORTS_DIRECTORY, "project/reports")
     if root.is_symlink():
         raise AutoQuantValidationError(
-            [_issue(root, "path.symlink", "Project Reports directory cannot be a symlink")]
+            [
+                _issue(
+                    root,
+                    "path.symlink",
+                    "Project Reports directory cannot be a symlink",
+                )
+            ]
         )
     if create:
         root.mkdir(exist_ok=True)
@@ -141,10 +147,7 @@ def _anchor(
         )
     run = load_run(project, run_id)
     issues: list[ValidationIssue] = []
-    if any(
-        summary.study_id == study_id
-        for summary in list_sessions(project)
-    ):
+    if any(summary.study_id == study_id for summary in list_sessions(project)):
         issues.append(
             _issue(
                 project.root_dir,
@@ -254,9 +257,7 @@ def _request_for_run(
     binding = run.result.get("researchRequest")
     dependencies = run.result.get("dependencies")
     source_hashes = (
-        dependencies.get("sourceHashes")
-        if isinstance(dependencies, dict)
-        else None
+        dependencies.get("sourceHashes") if isinstance(dependencies, dict) else None
     )
     if isinstance(binding, dict):
         relative = binding["path"]
@@ -300,10 +301,7 @@ def _request_for_run(
                     ]
                 )
             snapshot_path = (
-                run.root_dir
-                / "inputs"
-                / "dependency-sources"
-                / snapshot_relative
+                run.root_dir / "inputs" / "dependency-sources" / snapshot_relative
             )
             if hash_file(snapshot_path) != snapshot_hash:
                 raise AutoQuantValidationError(
@@ -349,10 +347,7 @@ def _request_for_run(
                 ]
             )
         snapshot_path = (
-            run.root_dir
-            / "inputs"
-            / "dependency-sources"
-            / snapshot_relative
+            run.root_dir / "inputs" / "dependency-sources" / snapshot_relative
         )
         snapshot = _read_json(snapshot_path, "position snapshot")
         validate_position_snapshot(snapshot, snapshot_path)
@@ -425,8 +420,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
                 f"- Failure disposition: `{run['failureDisposition']}`",
                 "- Failure errors: "
                 + "; ".join(
-                    f"`{item['code']}` — {item['message']}"
-                    for item in run["errors"]
+                    f"`{item['code']}` — {item['message']}" for item in run["errors"]
                 ),
             ]
             if run["status"] == "failed"
@@ -546,7 +540,13 @@ def _prepare_correction(
     reason = correction_reason.strip()
     if not reason:
         raise AutoQuantValidationError(
-            [_issue(project.root_dir, "report.correction-reason", "Correction reason must be non-empty")]
+            [
+                _issue(
+                    project.root_dir,
+                    "report.correction-reason",
+                    "Correction reason must be non-empty",
+                )
+            ]
         )
     prior = load_run_report(project, corrects_report_id)
     if prior.report["anchor"] != anchor:
@@ -599,9 +599,7 @@ def _prepare_correction(
                 )
             ]
         )
-    package_path = (
-        Path(GOVERNING_REVIEW_DIRECTORY) / review.review["id"]
-    ).as_posix()
+    package_path = (Path(GOVERNING_REVIEW_DIRECTORY) / review.review["id"]).as_posix()
     correction = {
         "schemaVersion": SCHEMA_VERSION,
         "kind": REPORT_CORRECTION_KIND,
@@ -693,12 +691,12 @@ def publish_run_report(
         staging.mkdir()
         _write_json(staging / REPORT_ANALYSIS, normalized)
         _write_json(staging / REPORT_RESULT, report)
-        (staging / REPORT_MARKDOWN).write_text(_render_markdown(report), encoding="utf-8")
+        (staging / REPORT_MARKDOWN).write_text(
+            _render_markdown(report), encoding="utf-8"
+        )
         if governing_review is not None:
             embedded_root = (
-                staging
-                / GOVERNING_REVIEW_DIRECTORY
-                / governing_review.review["id"]
+                staging / GOVERNING_REVIEW_DIRECTORY / governing_review.review["id"]
             )
             embedded_root.parent.mkdir()
             shutil.copytree(governing_review.root_dir, embedded_root)
@@ -768,9 +766,16 @@ def _validate_result(
         or report.get("authority") != "quantitative-decision-support"
         or report.get("tradingAuthority") != "none"
     ):
-        issues.append(_issue(path, "report.identity", "Invalid Run-bound Report identity"))
-    if report.get("project") != {"id": project.manifest.id, "name": project.manifest.name}:
-        issues.append(_issue(f"{path}/project", "report.project", "Report Project differs"))
+        issues.append(
+            _issue(path, "report.identity", "Invalid Run-bound Report identity")
+        )
+    if report.get("project") != {
+        "id": project.manifest.id,
+        "name": project.manifest.name,
+    }:
+        issues.append(
+            _issue(f"{path}/project", "report.project", "Report Project differs")
+        )
     if "correction" in report:
         issues.extend(
             _validate_correction_shape(
@@ -787,12 +792,21 @@ def _validate_result(
         issues.extend(
             _strict_keys(
                 anchor,
-                {"kind", "studyId", "runId", "sessionId", "resultHash", "studyInputHash"},
+                {
+                    "kind",
+                    "studyId",
+                    "runId",
+                    "sessionId",
+                    "resultHash",
+                    "studyInputHash",
+                },
                 f"{path}/anchor",
             )
         )
         if anchor.get("kind") != "run" or anchor.get("sessionId") is not None:
-            issues.append(_issue(f"{path}/anchor", "report.anchor", "Invalid Run Report anchor"))
+            issues.append(
+                _issue(f"{path}/anchor", "report.anchor", "Invalid Run Report anchor")
+            )
     run = None
     if isinstance(anchor.get("runId"), str):
         try:
@@ -817,7 +831,13 @@ def _validate_result(
                 )
             )
         if report.get("harness") != run.result["harness"]:
-            issues.append(_issue(f"{path}/harness", "report.harness", "Report Harness differs from Run"))
+            issues.append(
+                _issue(
+                    f"{path}/harness",
+                    "report.harness",
+                    "Report Harness differs from Run",
+                )
+            )
     intake = load_project_intake(project)
     request = None
     request_hash = None
@@ -835,17 +855,31 @@ def _validate_result(
             )
         )
     try:
-        normalized = validate_report_analysis(report.get("analysis"), f"{path}/analysis")
+        normalized = validate_report_analysis(
+            report.get("analysis"), f"{path}/analysis"
+        )
         if hash_json(normalized) != report.get("analysisHash"):
-            issues.append(_issue(f"{path}/analysisHash", "report.analysis-hash", "Analysis hash mismatch"))
+            issues.append(
+                _issue(
+                    f"{path}/analysisHash",
+                    "report.analysis-hash",
+                    "Analysis hash mismatch",
+                )
+            )
     except (AutoQuantValidationError, TypeError) as error:
         if isinstance(error, AutoQuantValidationError):
             issues.extend(error.issues)
         else:
             issues.append(_issue(f"{path}/analysis", "schema.type", "Invalid analysis"))
     evidence = report.get("evidence")
-    if not isinstance(evidence, dict) or hash_json(evidence) != report.get("evidenceHash"):
-        issues.append(_issue(f"{path}/evidenceHash", "report.evidence-hash", "Evidence hash mismatch"))
+    if not isinstance(evidence, dict) or hash_json(evidence) != report.get(
+        "evidenceHash"
+    ):
+        issues.append(
+            _issue(
+                f"{path}/evidenceHash", "report.evidence-hash", "Evidence hash mismatch"
+            )
+        )
     published_at = report.get("publishedAt")
     if (
         isinstance(published_at, str)
@@ -854,7 +888,10 @@ def _validate_result(
     ):
         try:
             published = datetime.fromisoformat(published_at)
-            if published.utcoffset() is None or published.utcoffset().total_seconds() != 0:
+            if (
+                published.utcoffset() is None
+                or published.utcoffset().total_seconds() != 0
+            ):
                 raise ValueError
             identity = hash_json(
                 {
@@ -870,13 +907,23 @@ def _validate_result(
                     ),
                 }
             )
-            expected_id = f"report-{published.strftime('%Y%m%dT%H%M%S%fZ')}-{identity[:12]}"
+            expected_id = (
+                f"report-{published.strftime('%Y%m%dT%H%M%S%fZ')}-{identity[:12]}"
+            )
             if report_id != expected_id:
-                issues.append(_issue(path, "report.derived-id", "Research Report id is not derived"))
+                issues.append(
+                    _issue(
+                        path, "report.derived-id", "Research Report id is not derived"
+                    )
+                )
         except ValueError:
-            issues.append(_issue(f"{path}/publishedAt", "schema.datetime", "Invalid publishedAt"))
+            issues.append(
+                _issue(f"{path}/publishedAt", "schema.datetime", "Invalid publishedAt")
+            )
     else:
-        issues.append(_issue(f"{path}/publishedAt", "schema.string", "Invalid publishedAt"))
+        issues.append(
+            _issue(f"{path}/publishedAt", "schema.string", "Invalid publishedAt")
+        )
     if issues:
         raise AutoQuantValidationError(issues)
 
@@ -893,14 +940,27 @@ def _validate_correction_shape(
         {"schemaVersion", "kind", "corrects", "governingReview", "reason"},
         path,
     )
-    if value.get("schemaVersion") != SCHEMA_VERSION or value.get("kind") != REPORT_CORRECTION_KIND:
-        issues.append(_issue(path, "report.correction-kind", "Invalid Report correction identity"))
+    if (
+        value.get("schemaVersion") != SCHEMA_VERSION
+        or value.get("kind") != REPORT_CORRECTION_KIND
+    ):
+        issues.append(
+            _issue(path, "report.correction-kind", "Invalid Report correction identity")
+        )
     reason = value.get("reason")
     if not isinstance(reason, str) or not reason.strip():
-        issues.append(_issue(f"{path}/reason", "schema.string", "Correction reason must be non-empty"))
+        issues.append(
+            _issue(
+                f"{path}/reason", "schema.string", "Correction reason must be non-empty"
+            )
+        )
     corrects = value.get("corrects")
     if not isinstance(corrects, dict):
-        issues.append(_issue(f"{path}/corrects", "schema.type", "Correction target must be an object"))
+        issues.append(
+            _issue(
+                f"{path}/corrects", "schema.type", "Correction target must be an object"
+            )
+        )
     else:
         issues.extend(
             _strict_keys(
@@ -910,19 +970,53 @@ def _validate_correction_shape(
             )
         )
         target_id = corrects.get("reportId")
-        if not isinstance(target_id, str) or not REPORT_ID.fullmatch(target_id) or target_id == report_id:
-            issues.append(_issue(f"{path}/corrects/reportId", "report.correction-target", "Invalid prior Report id"))
+        if (
+            not isinstance(target_id, str)
+            or not REPORT_ID.fullmatch(target_id)
+            or target_id == report_id
+        ):
+            issues.append(
+                _issue(
+                    f"{path}/corrects/reportId",
+                    "report.correction-target",
+                    "Invalid prior Report id",
+                )
+            )
         if not isinstance(corrects.get("reportHash"), str) or not SHA256.fullmatch(
             corrects.get("reportHash", "")
         ):
-            issues.append(_issue(f"{path}/corrects/reportHash", "schema.hash", "Invalid prior Report hash"))
+            issues.append(
+                _issue(
+                    f"{path}/corrects/reportHash",
+                    "schema.hash",
+                    "Invalid prior Report hash",
+                )
+            )
         if not isinstance(corrects.get("publishedAt"), str):
-            issues.append(_issue(f"{path}/corrects/publishedAt", "schema.string", "Invalid prior publication time"))
+            issues.append(
+                _issue(
+                    f"{path}/corrects/publishedAt",
+                    "schema.string",
+                    "Invalid prior publication time",
+                )
+            )
         if not isinstance(corrects.get("anchor"), dict):
-            issues.append(_issue(f"{path}/corrects/anchor", "schema.type", "Invalid prior Report anchor"))
+            issues.append(
+                _issue(
+                    f"{path}/corrects/anchor",
+                    "schema.type",
+                    "Invalid prior Report anchor",
+                )
+            )
     review = value.get("governingReview")
     if not isinstance(review, dict):
-        issues.append(_issue(f"{path}/governingReview", "schema.type", "Governing Review must be an object"))
+        issues.append(
+            _issue(
+                f"{path}/governingReview",
+                "schema.type",
+                "Governing Review must be an object",
+            )
+        )
     else:
         issues.extend(
             _strict_keys(
@@ -935,22 +1029,48 @@ def _validate_correction_shape(
 
         review_id = review.get("id")
         if not isinstance(review_id, str) or not REVIEW_ID.fullmatch(review_id):
-            issues.append(_issue(f"{path}/governingReview/id", "review.id", "Invalid governing Review id"))
+            issues.append(
+                _issue(
+                    f"{path}/governingReview/id",
+                    "review.id",
+                    "Invalid governing Review id",
+                )
+            )
         for key in ("reviewHash", "manifestHash"):
             digest = review.get(key)
             if not isinstance(digest, str) or not SHA256.fullmatch(digest):
-                issues.append(_issue(f"{path}/governingReview/{key}", "schema.hash", f"Invalid {key}"))
+                issues.append(
+                    _issue(
+                        f"{path}/governingReview/{key}", "schema.hash", f"Invalid {key}"
+                    )
+                )
         if review.get("conclusion") not in REVIEW_CONCLUSIONS:
-            issues.append(_issue(f"{path}/governingReview/conclusion", "schema.choice", "Invalid Review conclusion"))
+            issues.append(
+                _issue(
+                    f"{path}/governingReview/conclusion",
+                    "schema.choice",
+                    "Invalid Review conclusion",
+                )
+            )
         expected_path = (
-            Path(GOVERNING_REVIEW_DIRECTORY) / review_id
-        ).as_posix() if isinstance(review_id, str) else None
+            (Path(GOVERNING_REVIEW_DIRECTORY) / review_id).as_posix()
+            if isinstance(review_id, str)
+            else None
+        )
         if review.get("packagePath") != expected_path:
-            issues.append(_issue(f"{path}/governingReview/packagePath", "schema.path", "Governing Review package path is not canonical"))
+            issues.append(
+                _issue(
+                    f"{path}/governingReview/packagePath",
+                    "schema.path",
+                    "Governing Review package path is not canonical",
+                )
+            )
     return issues
 
 
-def _verify_evidence(project: ProjectContext, report: dict[str, Any], path: Path) -> None:
+def _verify_evidence(
+    project: ProjectContext, report: dict[str, Any], path: Path
+) -> None:
     evidence = report["evidence"]
     required = {"anchor", "run", "selectionIntegrity", "leaderDecisionSupport"}
     issues = _strict_keys(evidence, required, f"{path}/evidence")
@@ -961,11 +1081,15 @@ def _verify_evidence(project: ProjectContext, report: dict[str, Any], path: Path
         "runId": anchor["runId"],
         "sessionId": None,
     }:
-        issues.append(_issue(path, "report.evidence-anchor", "Frozen evidence anchor differs"))
+        issues.append(
+            _issue(path, "report.evidence-anchor", "Frozen evidence anchor differs")
+        )
     run = load_run(project, anchor["runId"])
     projection = _run_projection(run)
     if evidence.get("run") != projection:
-        issues.append(_issue(path, "report.run-evidence", "Frozen Run evidence differs"))
+        issues.append(
+            _issue(path, "report.run-evidence", "Frozen Run evidence differs")
+        )
     expected_integrity = build_selection_integrity(
         project,
         run,
@@ -1060,7 +1184,8 @@ def _verify_correction(
     if (
         review.review["id"] != review_identity["id"]
         or review.manifest["reviewHash"] != review_identity["reviewHash"]
-        or hash_file(review.root_dir / "manifest.json") != review_identity["manifestHash"]
+        or hash_file(review.root_dir / "manifest.json")
+        != review_identity["manifestHash"]
         or review.analysis["conclusion"] != review_identity["conclusion"]
         or target["reportId"] != prior.report["id"]
         or target["reportHash"] != prior.manifest["reportHash"]
@@ -1087,13 +1212,25 @@ def load_run_report(
 ) -> ReportContext:
     if report_id in _correction_chain:
         raise AutoQuantValidationError(
-            [_issue(report_id, "report.correction-cycle", "Report correction lineage contains a cycle")]
+            [
+                _issue(
+                    report_id,
+                    "report.correction-cycle",
+                    "Report correction lineage contains a cycle",
+                )
+            ]
         )
     chain = _correction_chain | {report_id}
     root = _report_root(project, report_id)
     if root.is_symlink() or not root.is_dir():
         raise AutoQuantValidationError(
-            [_issue(root, "report.missing", f"Unknown Run-bound Research Report: {report_id}")]
+            [
+                _issue(
+                    root,
+                    "report.missing",
+                    f"Unknown Run-bound Research Report: {report_id}",
+                )
+            ]
         )
     manifest = _read_json(root / REPORT_MANIFEST, "report manifest")
     required = {"schemaVersion", "id", "anchor", "completed", "reportHash", "files"}
@@ -1103,13 +1240,21 @@ def load_run_report(
         or manifest.get("id") != report_id
         or manifest.get("completed") is not True
     ):
-        issues.append(_issue(root / REPORT_MANIFEST, "report.manifest", "Invalid terminal manifest"))
+        issues.append(
+            _issue(
+                root / REPORT_MANIFEST, "report.manifest", "Invalid terminal manifest"
+            )
+        )
     actual = _report_files(root)
     files = manifest.get("files")
     if not isinstance(files, dict) or files != actual:
         issues.append(_issue(root, "report.tampered", "Research Report files changed"))
-    if isinstance(files, dict) and files.get(REPORT_RESULT) != manifest.get("reportHash"):
-        issues.append(_issue(root, "report.result-hash", "Research Report hash mismatch"))
+    if isinstance(files, dict) and files.get(REPORT_RESULT) != manifest.get(
+        "reportHash"
+    ):
+        issues.append(
+            _issue(root, "report.result-hash", "Research Report hash mismatch")
+        )
     if issues:
         raise AutoQuantValidationError(issues)
     analysis = validate_report_analysis(
@@ -1128,7 +1273,13 @@ def load_run_report(
         )
     if (root / REPORT_MARKDOWN).read_text(encoding="utf-8") != _render_markdown(report):
         raise AutoQuantValidationError(
-            [_issue(root / REPORT_MARKDOWN, "report.markdown", "Report Markdown is not canonical")]
+            [
+                _issue(
+                    root / REPORT_MARKDOWN,
+                    "report.markdown",
+                    "Report Markdown is not canonical",
+                )
+            ]
         )
     _verify_evidence(project, report, root / REPORT_RESULT)
     context = ReportContext(root, manifest, report, analysis)
@@ -1150,7 +1301,11 @@ def list_run_reports(
             continue
         if entry.is_symlink() or not entry.is_dir():
             raise AutoQuantValidationError(
-                [_issue(entry, "report.entry", "Report entries must be real directories")]
+                [
+                    _issue(
+                        entry, "report.entry", "Report entries must be real directories"
+                    )
+                ]
             )
         contexts.append(load_run_report(project, entry.name))
     successors: dict[str, str] = {}

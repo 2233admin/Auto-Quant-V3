@@ -51,7 +51,9 @@ def failing_ids(log: str) -> set[str]:
     """Test ids (module.Class.test, without the tests. prefix) that failed or errored."""
 
     ids = set()
-    for name, qualified in SUMMARY.findall(log) + [(m[0], m[1]) for m in RESULT.findall(log)]:
+    for name, qualified in SUMMARY.findall(log) + [
+        (m[0], m[1]) for m in RESULT.findall(log)
+    ]:
         dotted = qualified if qualified.endswith("." + name) else f"{qualified}.{name}"
         ids.add(dotted.removeprefix("tests."))
     return ids
@@ -62,14 +64,19 @@ def tests_ran(log: str) -> int:
 
     found = RAN.findall(log)
     if not found:
-        raise SystemExit("unittest did not report a 'Ran N tests' line; the suite did not run:\n" + log[-2000:])
+        raise SystemExit(
+            "unittest did not report a 'Ran N tests' line; the suite did not run:\n"
+            + log[-2000:]
+        )
     return int(found[-1])
 
 
 def slow_tests(log: str) -> list[tuple[float, str]]:
     """(seconds, test) pairs the runner marked slow, slowest first."""
 
-    return sorted(((float(seconds), test) for seconds, test in SLOW.findall(log)), reverse=True)
+    return sorted(
+        ((float(seconds), test) for seconds, test in SLOW.findall(log)), reverse=True
+    )
 
 
 def echo(text: str) -> None:
@@ -85,7 +92,9 @@ def pump(stream: IO[bytes], parts: list[str], lock: threading.Lock) -> None:
     """Echo a child pipe as chunks arrive, even half a line, and keep the text for the parser."""
 
     # Same newline translation text=True gave the old capture: the regexes anchor on "\n".
-    decoder = io.IncrementalNewlineDecoder(codecs.getincrementaldecoder("utf-8")(errors="replace"), translate=True)
+    decoder = io.IncrementalNewlineDecoder(
+        codecs.getincrementaldecoder("utf-8")(errors="replace"), translate=True
+    )
     echoing = True
     while True:
         chunk = stream.read1(65536)
@@ -119,8 +128,12 @@ def run_unittest(arguments: list[str], *, watchdog: float, slow: float) -> str:
     ) as process:
         try:
             pumps = [
-                threading.Thread(target=pump, args=(process.stdout, out, lock), daemon=True),
-                threading.Thread(target=pump, args=(process.stderr, err, lock), daemon=True),
+                threading.Thread(
+                    target=pump, args=(process.stdout, out, lock), daemon=True
+                ),
+                threading.Thread(
+                    target=pump, args=(process.stderr, err, lock), daemon=True
+                ),
             ]
             for thread in pumps:
                 thread.start()
@@ -137,7 +150,9 @@ def seconds(value: str) -> float:
     try:
         number = float(value)
     except ValueError:
-        raise argparse.ArgumentTypeError(f"not a number of seconds: {value!r}") from None
+        raise argparse.ArgumentTypeError(
+            f"not a number of seconds: {value!r}"
+        ) from None
     if number < 0:
         raise argparse.ArgumentTypeError(f"must not be negative: {value!r}")
     return number
@@ -145,8 +160,16 @@ def seconds(value: str) -> float:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--log", type=Path, help="existing `unittest discover -v` log to parse instead of running the suite")
-    parser.add_argument("--no-rerun", action="store_true", help="do not rerun first-pass failures in isolation")
+    parser.add_argument(
+        "--log",
+        type=Path,
+        help="existing `unittest discover -v` log to parse instead of running the suite",
+    )
+    parser.add_argument(
+        "--no-rerun",
+        action="store_true",
+        help="do not rerun first-pass failures in isolation",
+    )
     parser.add_argument(
         "--watchdog",
         type=seconds,
@@ -163,32 +186,52 @@ def main(argv: list[str] | None = None) -> int:
     )
     options = parser.parse_args(argv)
 
-    known = {entry["id"]: entry for entry in json.loads(REGISTRY.read_text(encoding="utf-8"))["failures"]}
+    known = {
+        entry["id"]: entry
+        for entry in json.loads(REGISTRY.read_text(encoding="utf-8"))["failures"]
+    }
     rerun = ""
     if options.log:
         log = options.log.read_text(encoding="utf-8", errors="replace")
     else:
-        print(f"== first pass: unittest {' '.join(SUITE)} (watchdog {options.watchdog:g}s, slow >= {options.slow:g}s)", flush=True)
+        print(
+            f"== first pass: unittest {' '.join(SUITE)} (watchdog {options.watchdog:g}s, slow >= {options.slow:g}s)",
+            flush=True,
+        )
         log = run_unittest(SUITE, watchdog=options.watchdog, slow=options.slow)
     ran = tests_ran(log)
     first = failing_ids(log)
     persistent = first
     if first and not options.no_rerun:
         print(f"== rerun: {len(first)} first-pass failures in one process", flush=True)
-        rerun = run_unittest(sorted("tests." + test for test in first), watchdog=options.watchdog, slow=options.slow)
+        rerun = run_unittest(
+            sorted("tests." + test for test in first),
+            watchdog=options.watchdog,
+            slow=options.slow,
+        )
         tests_ran(rerun)
         persistent = failing_ids(rerun)
 
     flaky = sorted(first - persistent)
     new = sorted(persistent - known.keys())
     fixed = sorted(known.keys() - persistent)
-    print(f"tests run: {ran}; first pass failures: {len(first)}; persistent after rerun: {len(persistent)}; known: {len(known)}")
-    for label, tests in (("passed on rerun (resource flakes)", flaky), ("NEW failures", new), ("known failures now passing; remove them", fixed)):
+    print(
+        f"tests run: {ran}; first pass failures: {len(first)}; persistent after rerun: {len(persistent)}; known: {len(known)}"
+    )
+    for label, tests in (
+        ("passed on rerun (resource flakes)", flaky),
+        ("NEW failures", new),
+        ("known failures now passing; remove them", fixed),
+    ):
         if tests:
             print(f"{label}:")
             for test in tests:
                 print(f"  {test}")
-    slow = sorted(slow_tests(log) + [(took, f"{test} (rerun)") for took, test in slow_tests(rerun)], reverse=True)
+    slow = sorted(
+        slow_tests(log)
+        + [(took, f"{test} (rerun)") for took, test in slow_tests(rerun)],
+        reverse=True,
+    )
     if slow:
         print("slow tests, slowest first:")
         for took, test in slow[:SLOW_LISTED]:

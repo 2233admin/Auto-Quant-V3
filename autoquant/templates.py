@@ -216,6 +216,8 @@ def project_template_routes() -> list[dict[str, Any]]:
         }
         for route in PROJECT_TEMPLATE_ROUTES
     ]
+
+
 OHLCV_STUDY_ID = "ohlcv-factor-quality"
 PORTFOLIO_STUDY_ID = "ohlcv-portfolio-quality"
 RL_STUDY_ID = "ohlcv-rl-factor-policy"
@@ -321,10 +323,7 @@ def _write_demo_ohlcv(
     output.mkdir()
     dates = _business_dates(OHLCV_START, OHLCV_OBSERVATIONS)
     random_source = random.Random(20260724)
-    closes = {
-        asset: 70.0 + 13.0 * index
-        for index, asset in enumerate(OHLCV_ASSETS)
-    }
+    closes = {asset: 70.0 + 13.0 * index for index, asset in enumerate(OHLCV_ASSETS)}
     prior_signals = {asset: 0.0 for asset in OHLCV_ASSETS}
     rows = {asset: [] for asset in OHLCV_ASSETS}
 
@@ -354,8 +353,7 @@ def _write_demo_ohlcv(
             low = min(open_price, close_price) * (1.0 - spread)
             base_volume = 900_000.0 * (1.0 + index * 0.22)
             volume = base_volume * math.exp(
-                0.55 * current_signals[asset]
-                + 0.08 * math.sin(step / 17.0 + index)
+                0.55 * current_signals[asset] + 0.08 * math.sin(step / 17.0 + index)
             )
             rows[asset].append(
                 [
@@ -478,10 +476,7 @@ def _write_rl_ohlcv(project: ProjectContext) -> date:
     output.mkdir()
     dates = _business_dates(OHLCV_START, RL_OBSERVATIONS)
     random_source = random.Random(20260725)
-    closes = {
-        asset: 80.0 + 11.0 * index
-        for index, asset in enumerate(OHLCV_ASSETS)
-    }
+    closes = {asset: 80.0 + 11.0 * index for index, asset in enumerate(OHLCV_ASSETS)}
     prior_activity = {asset: 0.0 for asset in OHLCV_ASSETS}
     prior_intraday = {asset: 0.0 for asset in OHLCV_ASSETS}
     prior_regime = 1
@@ -490,8 +485,7 @@ def _write_rl_ohlcv(project: ProjectContext) -> date:
     for step, timestamp in enumerate(dates):
         regime = 1 if (step // 42) % 2 == 0 else -1
         activity_raw = {
-            asset: random_source.gauss(0.0, 1.0)
-            + 0.20 * math.sin(step / 8.0 + index)
+            asset: random_source.gauss(0.0, 1.0) + 0.20 * math.sin(step / 8.0 + index)
             for index, asset in enumerate(OHLCV_ASSETS)
         }
         intraday_raw = {
@@ -502,20 +496,16 @@ def _write_rl_ohlcv(project: ProjectContext) -> date:
         activity_mean = sum(activity_raw.values()) / len(activity_raw)
         intraday_mean = sum(intraday_raw.values()) / len(intraday_raw)
         activity = {
-            asset: value - activity_mean
-            for asset, value in activity_raw.items()
+            asset: value - activity_mean for asset, value in activity_raw.items()
         }
         intraday = {
-            asset: value - intraday_mean
-            for asset, value in intraday_raw.items()
+            asset: value - intraday_mean for asset, value in intraday_raw.items()
         }
         market_return = 0.00010 + 0.0015 * math.sin(step / 37.0)
         for index, asset in enumerate(OHLCV_ASSETS):
             previous_close = closes[asset]
             selected_signal = (
-                prior_activity[asset]
-                if prior_regime > 0
-                else prior_intraday[asset]
+                prior_activity[asset] if prior_regime > 0 else prior_intraday[asset]
             )
             close_return = (
                 market_return
@@ -528,9 +518,7 @@ def _write_rl_ohlcv(project: ProjectContext) -> date:
             high = max(open_price, close_price) * (1.0 + spread)
             low = min(open_price, close_price) * (1.0 - spread)
             base_volume = 850_000.0 * (1.0 + index * 0.18)
-            volume = base_volume * math.exp(
-                0.55 * regime + 0.50 * activity[asset]
-            )
+            volume = base_volume * math.exp(0.55 * regime + 0.50 * activity[asset])
             rows[asset].append(
                 [
                     timestamp.isoformat(),
@@ -588,19 +576,14 @@ def _write_surface_aligned_factor_candidate(
     source = _template_text("candidate.py", template=template)
     marker = 'AVAILABLE_FEATURE_INTERVALS = ["3h", "12h", "1d"]'
     if marker not in source:
-        raise RuntimeError(
-            f"{template} candidate is missing the interval seed marker"
-        )
+        raise RuntimeError(f"{template} candidate is missing the interval seed marker")
     surface = intake.interval_surface if intake is not None else None
     feature_intervals = (
-        list(surface["featureIntervals"])
-        if isinstance(surface, dict)
-        else []
+        list(surface["featureIntervals"]) if isinstance(surface, dict) else []
     )
     source = source.replace(
         marker,
-        "AVAILABLE_FEATURE_INTERVALS = "
-        + json.dumps(feature_intervals),
+        "AVAILABLE_FEATURE_INTERVALS = " + json.dumps(feature_intervals),
         1,
     )
     target = project.root_dir / "factors/candidate.py"
@@ -631,9 +614,7 @@ def _write_research_horizon(
     project: ProjectContext,
     intake: PreparedIntake | None,
 ) -> dict[str, object]:
-    horizon = build_research_horizon(
-        intake.request if intake is not None else None
-    )
+    horizon = build_research_horizon(intake.request if intake is not None else None)
     (project.root_dir / RESEARCH_HORIZON).write_text(
         json.dumps(horizon, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -645,9 +626,7 @@ def _write_factor_claim(
     project: ProjectContext,
     intake: PreparedIntake | None,
 ) -> dict[str, object]:
-    claim = build_factor_claim(
-        intake.request if intake is not None else None
-    )
+    claim = build_factor_claim(intake.request if intake is not None else None)
     (project.root_dir / FACTOR_CLAIM).write_text(
         json.dumps(claim, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -772,10 +751,7 @@ def _externalize_intake_guidance(
         ),
     }
     provider_summary = (
-        ", ".join(
-            source["provider"]["name"]
-            for source in intake.package["sources"]
-        )
+        ", ".join(source["provider"]["name"] for source in intake.package["sources"])
         if "sources" in intake.package
         else intake.package["provider"]["name"]
     )
@@ -1152,9 +1128,7 @@ def _apply_ohlcv_book_risk_lab(
                     "assetClass": "other",
                     "venue": None,
                     "positionRole": (
-                        "long-only"
-                        if asset in OHLCV_ASSETS[:4]
-                        else "context-only"
+                        "long-only" if asset in OHLCV_ASSETS[:4] else "context-only"
                     ),
                 }
                 for asset in OHLCV_ASSETS
@@ -1164,18 +1138,12 @@ def _apply_ohlcv_book_risk_lab(
                 "kind": "hypothetical-weights",
                 "asOf": f"{_time_range_value(end)}T00:00:00Z",
                 "baseCurrency": "USD",
-                "weights": {
-                    asset: 0.25 for asset in OHLCV_ASSETS[:4]
-                },
+                "weights": {asset: 0.25 for asset in OHLCV_ASSETS[:4]},
                 "cashWeight": 0.0,
             },
             "horizon": "Current covariance state through the final closed bar.",
-            "hypotheses": [
-                "The reported assets share materially overlapping risk."
-            ],
-            "constraints": [
-                "No Broker, account reconciliation, or order authority."
-            ],
+            "hypotheses": ["The reported assets share materially overlapping risk."],
+            "constraints": ["No Broker, account reconciliation, or order authority."],
             "deliverables": [
                 "Risk contribution, effective-risk-bet, and reduction evidence."
             ],
@@ -1322,15 +1290,9 @@ def _apply_ohlcv_event_study_lab(
                 "minimumEvents": 3,
             },
             "horizon": "Two-bar wait and five-bar close-to-close outcome.",
-            "hypotheses": [
-                "The fixed price event may have positive delayed returns."
-            ],
-            "constraints": [
-                "No parameter search, order, or trading authority."
-            ],
-            "deliverables": [
-                "Event ledger, references, uncertainty, and conclusion."
-            ],
+            "hypotheses": ["The fixed price event may have positive delayed returns."],
+            "constraints": ["No parameter search, order, or trading authority."],
+            "deliverables": ["Event ledger, references, uncertainty, and conclusion."],
             "source": {
                 "system": "local",
                 "workspaceId": None,
@@ -1445,7 +1407,9 @@ def _apply_ohlcv_book_path_stress_lab(
                     "symbol": asset,
                     "assetClass": "other",
                     "venue": None,
-                    "positionRole": "long-only" if asset in OHLCV_ASSETS[:3] else "context-only",
+                    "positionRole": "long-only"
+                    if asset in OHLCV_ASSETS[:3]
+                    else "context-only",
                 }
                 for asset in OHLCV_ASSETS
             ],
@@ -1469,8 +1433,12 @@ def _apply_ohlcv_book_path_stress_lab(
             },
             "horizon": "All complete twenty-session windows through the final closed bar.",
             "hypotheses": ["Loss episodes may be dominated by one repeated holding."],
-            "constraints": ["No forecast, optimization, account reconstruction, Order, or trading authority."],
-            "deliverables": ["Complete window ledger, selected paths, exact attribution, and dominance conclusion."],
+            "constraints": [
+                "No forecast, optimization, account reconstruction, Order, or trading authority."
+            ],
+            "deliverables": [
+                "Complete window ledger, selected paths, exact attribution, and dominance conclusion."
+            ],
             "source": {
                 "system": "local",
                 "workspaceId": None,
@@ -1484,7 +1452,10 @@ def _apply_ohlcv_book_path_stress_lab(
             encoding="utf-8",
         )
     else:
-        if intake.request.get("positionSnapshot") is None or intake.request.get("pathStressPolicy") is None:
+        if (
+            intake.request.get("positionSnapshot") is None
+            or intake.request.get("pathStressPolicy") is None
+        ):
             raise AutoQuantValidationError(
                 [
                     _issue(
@@ -1934,9 +1905,7 @@ def _apply_ohlcv_research_desk(
         _write_preflight_manifest(
             study,
             entrypoint=(
-                rl_preflight
-                if definition.id == RL_STUDY_ID
-                else factor_preflight
+                rl_preflight if definition.id == RL_STUDY_ID else factor_preflight
             ),
         )
         _externalize_intake_guidance(project, intake, study.program_path)

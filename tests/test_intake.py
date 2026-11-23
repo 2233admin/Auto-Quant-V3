@@ -494,9 +494,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 research,
             )
             self.assertEqual(
-                (project.root_dir / "framework-needs.md").read_text(
-                    encoding="utf-8"
-                ),
+                (project.root_dir / "framework-needs.md").read_text(encoding="utf-8"),
                 needs,
             )
             self.assertEqual(project.manifest.name, "Strict Factor Project")
@@ -559,17 +557,15 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 template=prepared.template,
                 template_intake=prepared,
             )
-            candidate = (
-                project.root_dir / "factors" / "candidate.py"
-            ).read_text(encoding="utf-8")
+            candidate = (project.root_dir / "factors" / "candidate.py").read_text(
+                encoding="utf-8"
+            )
             self.assertIn(
                 "AVAILABLE_FEATURE_INTERVALS = []",
                 candidate,
             )
             self.assertIn("API demonstrator", candidate)
-            research = (
-                project.root_dir / "research.md"
-            ).read_text(encoding="utf-8")
+            research = (project.root_dir / "research.md").read_text(encoding="utf-8")
             self.assertIn("Do not execute it as the caller's baseline", research)
             self.assertNotIn("aq run execute", research)
             run = execute_study(project, OHLCV_STUDY_ID)
@@ -594,9 +590,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             request_path, original_package_path = write_intake_inputs(root)
-            package = json.loads(
-                original_package_path.read_text(encoding="utf-8")
-            )
+            package = json.loads(original_package_path.read_text(encoding="utf-8"))
             staging = root / "workspace" / "staging"
             raw = staging / "raw-ohlcv"
             raw.mkdir(parents=True)
@@ -623,20 +617,11 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                {
-                    asset.symbol: asset.source_relative_path
-                    for asset in prepared.assets
-                },
-                {
-                    symbol: f"raw-ohlcv/{symbol}.csv"
-                    for symbol in source_hashes
-                },
+                {asset.symbol: asset.source_relative_path for asset in prepared.assets},
+                {symbol: f"raw-ohlcv/{symbol}.csv" for symbol in source_hashes},
             )
             self.assertEqual(
-                {
-                    asset.symbol: asset.source_hash
-                    for asset in prepared.assets
-                },
+                {asset.symbol: asset.source_hash for asset in prepared.assets},
                 source_hashes,
             )
             self.assertEqual(
@@ -757,21 +742,16 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 fixture_root = root / f"v{version}"
                 fixture_root.mkdir()
                 request_path, package_path = writer(fixture_root)
-                package = json.loads(
-                    package_path.read_text(encoding="utf-8")
-                )
+                package = json.loads(package_path.read_text(encoding="utf-8"))
                 if version == 4:
                     package["schemaVersion"] = 4
                     package["panelPolicy"] = {
                         "alignment": "observed-only",
                         "missingObservation": "absent-no-fill",
                     }
-                request = json.loads(
-                    request_path.read_text(encoding="utf-8")
-                )
+                request = json.loads(request_path.read_text(encoding="utf-8"))
                 requested_classes = {
-                    asset["symbol"]: asset["assetClass"]
-                    for asset in request["assets"]
+                    asset["symbol"]: asset["assetClass"] for asset in request["assets"]
                 }
                 expected_classes = {}
                 for asset in package["assets"]:
@@ -796,9 +776,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 )
 
             for version, request_path, package_path, expected_classes in fixtures:
-                package = json.loads(
-                    package_path.read_text(encoding="utf-8")
-                )
+                package = json.loads(package_path.read_text(encoding="utf-8"))
                 jsonschema.validate(
                     package,
                     OHLCV_DATASET_PACKAGE_JSON_SCHEMA,
@@ -810,10 +788,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 )
                 self.assertTrue(prepared.per_asset_classes)
                 self.assertEqual(
-                    {
-                        asset.symbol: asset.asset_class
-                        for asset in prepared.assets
-                    },
+                    {asset.symbol: asset.asset_class for asset in prepared.assets},
                     expected_classes,
                 )
                 project = create_project(
@@ -849,11 +824,9 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 package,
                 OHLCV_DATASET_PACKAGE_JSON_SCHEMA,
             )
-            retrieved_schema = (
-                OHLCV_DATASET_PACKAGE_JSON_SCHEMA["oneOf"][0]["properties"][
-                    "provider"
-                ]["properties"]["retrievedAt"]
-            )
+            retrieved_schema = OHLCV_DATASET_PACKAGE_JSON_SCHEMA["oneOf"][0][
+                "properties"
+            ]["provider"]["properties"]["retrievedAt"]
             self.assertIn(
                 "never substitute a later packaging timestamp",
                 retrieved_schema["description"],
@@ -872,14 +845,10 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             )
             intake = load_project_intake(project)
             assert intake is not None
-            self.assertIsNone(
-                intake["dataset"]["provider"]["retrievedAt"]
-            )
+            self.assertIsNone(intake["dataset"]["provider"]["retrievedAt"])
             studio = build_studio_snapshot(project.root_dir)
             self.assertIsNone(
-                studio["projects"][0]["intake"]["dataset"]["provider"][
-                    "retrievedAt"
-                ]
+                studio["projects"][0]["intake"]["dataset"]["provider"]["retrievedAt"]
             )
 
             for invalid in ("", "2026-07-30T00:00:00", 123):
@@ -888,9 +857,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                     json.dumps(package, indent=2, sort_keys=True) + "\n",
                     encoding="utf-8",
                 )
-                with self.assertRaises(
-                    AutoQuantValidationError
-                ) as captured:
+                with self.assertRaises(AutoQuantValidationError) as captured:
                     prepare_project_intake(
                         request_path,
                         package_path,
@@ -900,9 +867,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                     "dataset.retrieved-at",
                     {issue.code for issue in captured.exception.issues},
                 )
-            with self.assertRaises(
-                AutoQuantValidationError
-            ) as captured:
+            with self.assertRaises(AutoQuantValidationError) as captured:
                 prepare_project_intake(
                     request_path,
                     package_path.parent,
@@ -952,9 +917,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             v4_root = root / "v4"
             v4_root.mkdir()
             request_path, package_path = write_intake_inputs(v4_root)
-            v4_package = json.loads(
-                package_path.read_text(encoding="utf-8")
-            )
+            v4_package = json.loads(package_path.read_text(encoding="utf-8"))
             v4_package["schemaVersion"] = 4
             v4_package["panelPolicy"] = {
                 "alignment": "observed-only",
@@ -964,15 +927,11 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 json.dumps(v4_package, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
-            fixtures.append(
-                (request_path, package_path, "ohlcv-factor-lab")
-            )
+            fixtures.append((request_path, package_path, "ohlcv-factor-lab"))
 
             observed_versions: list[int] = []
             for request_path, package_path, template in fixtures:
-                package = json.loads(
-                    package_path.read_text(encoding="utf-8")
-                )
+                package = json.loads(package_path.read_text(encoding="utf-8"))
                 package["provider"]["retrievedAt"] = None
                 package_path.write_text(
                     json.dumps(package, indent=2, sort_keys=True) + "\n",
@@ -987,12 +946,8 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                     package_path,
                     template,
                 )
-                self.assertIsNone(
-                    prepared.package["provider"]["retrievedAt"]
-                )
-                observed_versions.append(
-                    prepared.package["schemaVersion"]
-                )
+                self.assertIsNone(prepared.package["provider"]["retrievedAt"])
+                observed_versions.append(prepared.package["schemaVersion"])
             self.assertEqual(sorted(observed_versions), [1, 2, 3, 4, 5])
 
     def test_research_desk_rejects_pre_factor_claim_intake(self) -> None:
@@ -1012,12 +967,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             )
 
             claim_path = project.root_dir / FACTOR_CLAIM
-            study_path = (
-                project.root_dir
-                / "studies"
-                / OHLCV_STUDY_ID
-                / "study.json"
-            )
+            study_path = project.root_dir / "studies" / OHLCV_STUDY_ID / "study.json"
             study = json.loads(study_path.read_text(encoding="utf-8"))
             study["dependencies"]["paths"].remove(FACTOR_CLAIM)
             study_path.write_text(
@@ -1070,9 +1020,9 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 claim["source"]["factorPolicy"],
                 "caller-supplied",
             )
-            candidate = (
-                project.root_dir / "factors" / "candidate.py"
-            ).read_text(encoding="utf-8")
+            candidate = (project.root_dir / "factors" / "candidate.py").read_text(
+                encoding="utf-8"
+            )
             self.assertIn(
                 "KNOWN_STYLE = 'reversal_5'",
                 candidate,
@@ -1099,9 +1049,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             )
             selected = next(
                 item
-                for item in projection["factorQualification"]["selection"][
-                    "candidates"
-                ]
+                for item in projection["factorQualification"]["selection"]["candidates"]
                 if item["style"] == "reversal_5"
             )
             self.assertAlmostEqual(
@@ -1135,7 +1083,10 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             },
         )
         for index, policy in enumerate(cases):
-            with self.subTest(policy=policy), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(policy=policy),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 root = Path(directory)
                 request_path, package_path = write_intake_inputs(root)
                 request = json.loads(request_path.read_text(encoding="utf-8"))
@@ -1245,9 +1196,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 template=prepared.template,
                 template_intake=prepared,
             )
-            horizon = load_research_horizon(
-                project.root_dir / RESEARCH_HORIZON
-            )
+            horizon = load_research_horizon(project.root_dir / RESEARCH_HORIZON)
             self.assertEqual(horizon["primaryForwardBars"], 5)
             self.assertEqual(horizon["diagnosticForwardBars"], [1, 5, 20])
             self.assertEqual(
@@ -1336,9 +1285,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 PORTFOLIO_MANDATE,
                 study.definition.dependencies["paths"],
             )
-            self.assertFalse(
-                (project.root_dir / PORTFOLIO_MANDATE).exists()
-            )
+            self.assertFalse((project.root_dir / PORTFOLIO_MANDATE).exists())
             fixed_population = load_factor_population(
                 project.root_dir / FACTOR_POPULATION
             )
@@ -1362,11 +1309,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             self.assertEqual(population["context_assets"], ["SPY"])
             self.assertEqual(run.result["metrics"]["prediction_assets"], 4)
             self.assertEqual(
-                set(
-                    run.result["metrics"]["stability"]["per_asset"][
-                        "validation"
-                    ]
-                ),
+                set(run.result["metrics"]["stability"]["per_asset"]["validation"]),
                 set(requested),
             )
 
@@ -1468,20 +1411,15 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 {
                     "left_asset": "NVDA",
                     "right_asset": "QQQ",
-                    "factor_contrast": (
-                        "factor(left_asset)-factor(right_asset)"
-                    ),
+                    "factor_contrast": ("factor(left_asset)-factor(right_asset)"),
                     "target_contrast": (
-                        "forward_return(left_asset)-"
-                        "forward_return(right_asset)"
+                        "forward_return(left_asset)-forward_return(right_asset)"
                     ),
                     "portfolio_construction_authority": "none",
                 },
             )
             self.assertEqual(
-                metrics["input_availability"][
-                    "minimum_assets_per_factor_timestamp"
-                ],
+                metrics["input_availability"]["minimum_assets_per_factor_timestamp"],
                 2,
             )
             self.assertEqual(
@@ -1498,9 +1436,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 "two-asset-relative-value",
             )
             self.assertEqual(
-                components["validation_diagnosis"][
-                    "strongest_raw_component"
-                ],
+                components["validation_diagnosis"]["strongest_raw_component"],
                 "base_momentum_10",
             )
             projection = load_factor_diagnostics(project, run.result["id"])
@@ -1580,19 +1516,14 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             metric = run.result["metrics"]["translation_robustness"]
             self.assertTrue(metric["applicable"])
             self.assertEqual(
-                [
-                    profile["window"]
-                    for profile in metric["policy"]["profiles"]
-                ],
+                [profile["window"] for profile in metric["policy"]["profiles"]],
                 [40, 60, 120],
             )
             self.assertEqual(
                 metric["diagnosis"]["selection_split"],
                 "validation",
             )
-            self.assertFalse(
-                metric["diagnosis"]["test_enters_diagnosis"]
-            )
+            self.assertFalse(metric["diagnosis"]["test_enters_diagnosis"])
             self.assertIn(
                 "portfolio-translation-robustness",
                 {artifact["kind"] for artifact in run.result["artifacts"]},
@@ -1622,13 +1553,9 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             self.assertEqual(
                 monetization["semantics"],
                 {
-                    "contribution": (
-                        "additive-weight-times-next-bar-return"
-                    ),
+                    "contribution": ("additive-weight-times-next-bar-return"),
                     "evaluationMode": "two-asset-relative-value",
-                    "intentConstruction": (
-                        "capped-complementary-relative-value-pair"
-                    ),
+                    "intentConstruction": ("capped-complementary-relative-value-pair"),
                     "equalIntent": (
                         "prediction-mode-aware-mandate-constrained-"
                         "signal-state-diagnostic"
@@ -1639,28 +1566,19 @@ class RequestDrivenIntakeTests(unittest.TestCase):
             )
             validation_monetization = monetization["validation"]
             self.assertGreater(
-                validation_monetization["coverage"][
-                    "equalIntentActiveDates"
-                ],
+                validation_monetization["coverage"]["equalIntentActiveDates"],
                 0,
             )
             self.assertEqual(
-                validation_monetization["coverage"][
-                    "equalIntentActiveDates"
-                ],
-                validation_monetization["coverage"][
-                    "rawTargetActiveDates"
-                ],
+                validation_monetization["coverage"]["equalIntentActiveDates"],
+                validation_monetization["coverage"]["rawTargetActiveDates"],
             )
             monetization_stages = {
-                item["id"]: item
-                for item in validation_monetization["stages"]
+                item["id"]: item for item in validation_monetization["stages"]
             }
             self.assertAlmostEqual(
                 monetization_stages["equalIntent"]["totalContribution"],
-                monetization_stages["preGovernorSizing"][
-                    "totalContribution"
-                ],
+                monetization_stages["preGovernorSizing"]["totalContribution"],
                 places=12,
             )
             self.assertEqual(
@@ -1690,9 +1608,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 PORTFOLIO_DIAGNOSTICS_JSON_SCHEMA,
             )
             artifact_path = (
-                run.root_dir
-                / "artifacts"
-                / "portfolio-translation-robustness.json"
+                run.root_dir / "artifacts" / "portfolio-translation-robustness.json"
             )
             artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
             first_scored = next(
@@ -1771,9 +1687,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 ["ETH", "SOL", "XRP", "ADA"],
             )
             self.assertEqual(
-                metrics["input_availability"][
-                    "minimum_assets_per_factor_timestamp"
-                ],
+                metrics["input_availability"]["minimum_assets_per_factor_timestamp"],
                 1,
             )
             self.assertEqual(
@@ -1790,9 +1704,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 "single-asset-temporal",
             )
             self.assertEqual(
-                components["validation_diagnosis"][
-                    "strongest_raw_component"
-                ],
+                components["validation_diagnosis"]["strongest_raw_component"],
                 "base_momentum_10",
             )
             self.assertEqual(
@@ -1806,14 +1718,10 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 },
             )
             self.assertIsNotNone(
-                components["validation_diagnosis"][
-                    "strongest_residual_component"
-                ]
+                components["validation_diagnosis"]["strongest_residual_component"]
             )
             self.assertIsNotNone(
-                components["validation_diagnosis"][
-                    "removal_most_improves_fixed_blend"
-                ]
+                components["validation_diagnosis"]["removal_most_improves_fixed_blend"]
             )
 
             projection = load_factor_diagnostics(project, run.result["id"])
@@ -1830,9 +1738,7 @@ class RequestDrivenIntakeTests(unittest.TestCase):
                 projection["quantileEvidence"]["reason"],
             )
             self.assertEqual(
-                projection["inputAvailability"][
-                    "minimumAssetsPerFactorTimestamp"
-                ],
+                projection["inputAvailability"]["minimumAssetsPerFactorTimestamp"],
                 1,
             )
             self.assertEqual(
@@ -1942,9 +1848,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             self.assertEqual(run.result["status"], "succeeded")
             metrics = run.result["metrics"]["factor_components"]
             context = next(
-                item
-                for item in metrics["components"]
-                if item["id"] == "market_state"
+                item for item in metrics["components"] if item["id"] == "market_state"
             )["timestamp_context"]
             self.assertEqual(
                 context["method"],
@@ -2083,9 +1987,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 template=prepared.template,
                 template_intake=prepared,
             )
-            mandate = load_portfolio_mandate(
-                project.root_dir / PORTFOLIO_MANDATE
-            )
+            mandate = load_portfolio_mandate(project.root_dir / PORTFOLIO_MANDATE)
             self.assertEqual(
                 mandate["source"]["portfolioPolicy"],
                 "caller-supplied",
@@ -2144,14 +2046,12 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 jsonschema.validate(run.result, RUN_RESULT_JSON_SCHEMA)
             portfolio_metrics = portfolio_run.result["metrics"]
             daily = pd.read_csv(
-                portfolio_run.root_dir
-                / "artifacts"
-                / "daily-portfolio.csv"
+                portfolio_run.root_dir / "artifacts" / "daily-portfolio.csv"
             )
             spy = pd.read_csv(root / "external-data" / "SPY.csv")
-            expected_spy_returns = (
-                spy["close"].shift(-1) / spy["close"] - 1.0
-            ).fillna(0.0)
+            expected_spy_returns = (spy["close"].shift(-1) / spy["close"] - 1.0).fillna(
+                0.0
+            )
             expected_by_date = dict(
                 zip(
                     spy["date"],
@@ -2160,14 +2060,11 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 )
             )
             source_positions = {
-                str(date): position
-                for position, date in enumerate(spy["date"])
+                str(date): position for position, date in enumerate(spy["date"])
             }
             for _, row in daily.iterrows():
                 decision_date = str(row["timestamp"])[:10]
-                expected_eligible = (
-                    source_positions[decision_date] % 4 == 0
-                )
+                expected_eligible = source_positions[decision_date] % 4 == 0
                 self.assertEqual(
                     bool(row["decision_eligible"]),
                     expected_eligible,
@@ -2197,9 +2094,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                     )
             self.assertEqual(len(daily), len(spy) - 1)
             for row_number in (0, 50, len(daily) - 2):
-                decision_date = str(
-                    daily.loc[row_number, "timestamp"]
-                )[:10]
+                decision_date = str(daily.loc[row_number, "timestamp"])[:10]
                 self.assertAlmostEqual(
                     daily.loc[row_number, "benchmark_return"],
                     expected_by_date[decision_date],
@@ -2225,15 +2120,11 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 },
             )
             self.assertEqual(
-                set(
-                    portfolio_metrics["robustness"]["cost_stress"]
-                ),
+                set(portfolio_metrics["robustness"]["cost_stress"]),
                 {"0bps", "17.5bps", "35bps"},
             )
             self.assertEqual(
-                portfolio_metrics["liquidity_capacity"]["policy"][
-                    "reference_nav"
-                ],
+                portfolio_metrics["liquidity_capacity"]["policy"]["reference_nav"],
                 250_000.0,
             )
             portfolio_projection = load_portfolio_diagnostics(
@@ -2252,19 +2143,15 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 portfolio_projection["mandate"]["benchmark"],
                 mandate["construction"]["benchmark"],
             )
-            for position in portfolio_projection["sizingAnatomy"][
-                "positions"
-            ]:
+            for position in portfolio_projection["sizingAnatomy"]["positions"]:
                 self.assertEqual(
                     position["maxAbsWeight"],
-                    mandate["construction"]["assetMaxAbsWeights"][
-                        position["asset"]
-                    ],
+                    mandate["construction"]["assetMaxAbsWeights"][position["asset"]],
                 )
             self.assertAlmostEqual(
-                portfolio_projection["strategyViability"]["validation"][
-                    "friction"
-                ]["baseCostBps"],
+                portfolio_projection["strategyViability"]["validation"]["friction"][
+                    "baseCostBps"
+                ],
                 17.5,
             )
             self.assertEqual(
@@ -2284,15 +2171,11 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 17.5,
             )
             self.assertEqual(
-                rl_run.result["metrics"]["configuration"][
-                    "noTradeOneWay"
-                ],
+                rl_run.result["metrics"]["configuration"]["noTradeOneWay"],
                 0.04,
             )
             self.assertEqual(
-                rl_run.result["metrics"]["configuration"][
-                    "decisionSchedule"
-                ],
+                rl_run.result["metrics"]["configuration"]["decisionSchedule"],
                 mandate["implementationPolicy"]["decisionPolicy"],
             )
             action_rows = pd.read_csv(
@@ -2305,9 +2188,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 previous_action = "balanced"
                 for _, row in group.iterrows():
                     decision_date = str(row["timestamp"])[:10]
-                    expected_eligible = (
-                        source_positions[decision_date] % 4 == 0
-                    )
+                    expected_eligible = source_positions[decision_date] % 4 == 0
                     self.assertEqual(
                         bool(row["decision_eligible"]),
                         expected_eligible,
@@ -2330,12 +2211,8 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                             row["action"],
                             previous_action,
                         )
-                        risk_override = bool(
-                            row["risk_rebalance_override"]
-                        )
-                        constraint_override = bool(
-                            row["constraint_rebalance_override"]
-                        )
+                        risk_override = bool(row["risk_rebalance_override"])
+                        constraint_override = bool(row["constraint_rebalance_override"])
                         expected_reason = (
                             "mandate_and_risk_override"
                             if risk_override and constraint_override
@@ -2360,15 +2237,11 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 rl_run.result["id"],
             )
             self.assertEqual(
-                rl_projection["portfolioMandate"][
-                    "implementationPolicy"
-                ],
+                rl_projection["portfolioMandate"]["implementationPolicy"],
                 mandate["implementationPolicy"],
             )
             self.assertEqual(
-                rl_projection["portfolioMandate"][
-                    "assetMaxAbsWeights"
-                ],
+                rl_projection["portfolioMandate"]["assetMaxAbsWeights"],
                 mandate["construction"]["assetMaxAbsWeights"],
             )
             self.assertEqual(
@@ -2382,9 +2255,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 },
                 mandate["implementationPolicy"]["decisionPolicy"],
             )
-            for audit in rl_run.result["metrics"][
-                "constraint_audit"
-            ].values():
+            for audit in rl_run.result["metrics"]["constraint_audit"].values():
                 self.assertTrue(audit["passed"])
                 self.assertEqual(
                     audit["asset_max_abs_weights"],
@@ -2409,9 +2280,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 mandate["implementationPolicy"]["decisionPolicy"],
             )
 
-            delegated_request = load_research_request(
-                project.root_dir / "request.json"
-            )
+            delegated_request = load_research_request(project.root_dir / "request.json")
             session = start_session(
                 project,
                 PORTFOLIO_STUDY_ID,
@@ -2454,9 +2323,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                     "unresolvedQuestions": ["Does the edge survive new data?"],
                 },
             )
-            report_markdown = (
-                report.root_dir / "report.md"
-            ).read_text(encoding="utf-8")
+            report_markdown = (report.root_dir / "report.md").read_text(
+                encoding="utf-8"
+            )
             self.assertIn("`SPY long`", report_markdown)
             self.assertIn(
                 "`caller-supplied` / evaluation-only",
@@ -2526,9 +2395,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 template=prepared.template,
                 template_intake=prepared,
             )
-            mandate = load_portfolio_mandate(
-                project.root_dir / PORTFOLIO_MANDATE
-            )
+            mandate = load_portfolio_mandate(project.root_dir / PORTFOLIO_MANDATE)
             self.assertEqual(
                 mandate["source"]["assetPositionRoles"],
                 "caller-supplied",
@@ -2557,9 +2424,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                     mandate,
                 )
             decisions = pd.read_csv(
-                portfolio_run.root_dir
-                / "artifacts"
-                / "portfolio-decisions.csv"
+                portfolio_run.root_dir / "artifacts" / "portfolio-decisions.csv"
             )
             self.assertTrue(
                 (
@@ -2616,34 +2481,23 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 rl_run.result["id"],
             )
             self.assertEqual(
-                rl_projection["portfolioMandate"][
-                    "assetPositionRoles"
-                ],
+                rl_projection["portfolioMandate"]["assetPositionRoles"],
                 mandate["construction"]["assetPositionRoles"],
             )
             self.assertEqual(
-                rl_projection["portfolioMandate"][
-                    "positionRolesSource"
-                ],
+                rl_projection["portfolioMandate"]["positionRolesSource"],
                 "caller-supplied",
             )
-            for audit in rl_run.result["metrics"][
-                "constraint_audit"
-            ].values():
+            for audit in rl_run.result["metrics"]["constraint_audit"].values():
                 self.assertTrue(audit["passed"])
                 self.assertEqual(
                     audit["asset_position_roles"],
                     mandate["construction"]["assetPositionRoles"],
                 )
             studio = build_studio_snapshot(project.root_dir)
-            observed = {
-                item["id"]: item
-                for item in studio["projects"][0]["runs"]
-            }
+            observed = {item["id"]: item for item in studio["projects"][0]["runs"]}
             for run in (portfolio_run, rl_run):
-                layer = observed[run.result["id"]]["metricLayers"][
-                    "mandate"
-                ]
+                layer = observed[run.result["id"]]["metricLayers"]["mandate"]
                 self.assertEqual(
                     layer["assetPositionRoles"],
                     mandate["construction"]["assetPositionRoles"],
@@ -2703,9 +2557,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 prepared.interval_surface,
             )
             self.assertEqual(
-                run.result["metrics"]["research_horizon"][
-                    "primaryForwardBars"
-                ],
+                run.result["metrics"]["research_horizon"]["primaryForwardBars"],
                 5,
             )
             jsonschema.validate(run.result, RUN_RESULT_JSON_SCHEMA)
@@ -2738,9 +2590,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 template=prepared.template,
                 template_intake=prepared,
             )
-            mandate = load_portfolio_mandate(
-                project.root_dir / PORTFOLIO_MANDATE
-            )
+            mandate = load_portfolio_mandate(project.root_dir / PORTFOLIO_MANDATE)
             self.assertEqual(
                 mandate["implementationPolicy"]["decisionPolicy"],
                 {
@@ -2829,9 +2679,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                     "calendar": "XNYS",
                     "timezone": "America/New_York",
                     "anchor": "market-open",
-                    "aggregationMethod": (
-                        "complete-xnys-regular-session-bar-close-v1"
-                    ),
+                    "aggregationMethod": ("complete-xnys-regular-session-bar-close-v1"),
                     "terminalBucketPolicy": "complete-at-session-close",
                 },
             )
@@ -2843,19 +2691,15 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             )
             self.assertIn(
                 'AVAILABLE_FEATURE_INTERVALS = ["3h", "1d"]',
-                (
-                    project.root_dir / "factors" / "candidate.py"
-                ).read_text(encoding="utf-8"),
+                (project.root_dir / "factors" / "candidate.py").read_text(
+                    encoding="utf-8"
+                ),
             )
             intake = load_project_intake(project)
             self.assertIsNotNone(intake)
-            mandate = load_portfolio_mandate(
-                project.root_dir / PORTFOLIO_MANDATE
-            )
+            mandate = load_portfolio_mandate(project.root_dir / PORTFOLIO_MANDATE)
             self.assertEqual(
-                mandate["construction"]["riskPolicy"][
-                    "annualizationPeriods"
-                ],
+                mandate["construction"]["riskPolicy"]["annualizationPeriods"],
                 252 * 7,
             )
             runs = [
@@ -2880,9 +2724,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             self.assertEqual(
                 [
                     item["id"]
-                    for item in runs[0].result["metrics"][
-                        "factor_components"
-                    ]["declaration"]["components"]
+                    for item in runs[0].result["metrics"]["factor_components"][
+                        "declaration"
+                    ]["components"]
                 ],
                 [
                     "base_momentum_10",
@@ -2896,9 +2740,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 ],
                 252 * 7,
             )
-            observed = build_studio_snapshot(root / "workspace")[
-                "projects"
-            ][0]
+            observed = build_studio_snapshot(root / "workspace")["projects"][0]
             self.assertTrue(observed["valid"], observed["diagnostics"])
             self.assertEqual(
                 observed["intake"]["dataset"]["intervalSurface"],
@@ -2946,9 +2788,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                     "calendar": "XNYS",
                     "timezone": "America/New_York",
                     "anchor": "market-open",
-                    "aggregationMethod": (
-                        "complete-xnys-regular-session-bar-close-v1"
-                    ),
+                    "aggregationMethod": ("complete-xnys-regular-session-bar-close-v1"),
                     "terminalBucketPolicy": "complete-at-session-close",
                 },
             )
@@ -2959,9 +2799,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 template=prepared.template,
                 template_intake=prepared,
             )
-            mandate = load_portfolio_mandate(
-                project.root_dir / PORTFOLIO_MANDATE
-            )
+            mandate = load_portfolio_mandate(project.root_dir / PORTFOLIO_MANDATE)
             self.assertEqual(
                 mandate["implementationPolicy"]["decisionPolicy"]["bars"],
                 4,
@@ -2984,9 +2822,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 )
                 jsonschema.validate(run.result, RUN_RESULT_JSON_SCHEMA)
 
-            source = pd.read_csv(
-                package_path.parent / "AAPL.csv"
-            )
+            source = pd.read_csv(package_path.parent / "AAPL.csv")
             source["session"] = pd.to_datetime(
                 source["timestamp"],
                 utc=True,
@@ -3003,15 +2839,11 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 )
             )
             daily = pd.read_csv(
-                portfolio_run.root_dir
-                / "artifacts"
-                / "daily-portfolio.csv"
+                portfolio_run.root_dir / "artifacts" / "daily-portfolio.csv"
             )
             for _, row in daily.iterrows():
                 timestamp = str(row["timestamp"]).replace("+00:00", "Z")
-                expected_eligible = (
-                    source_positions[timestamp] % 4 == 0
-                )
+                expected_eligible = source_positions[timestamp] % 4 == 0
                 self.assertEqual(
                     bool(row["decision_eligible"]),
                     expected_eligible,
@@ -3037,9 +2869,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 rl_run.result["id"],
             )
             self.assertEqual(
-                portfolio_projection["mandate"][
-                    "implementationPolicy"
-                ]["decisionPolicy"]["bars"],
+                portfolio_projection["mandate"]["implementationPolicy"][
+                    "decisionPolicy"
+                ]["bars"],
                 4,
             )
             self.assertEqual(
@@ -3047,9 +2879,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 int(daily["decision_eligible"].sum()),
             )
             self.assertEqual(
-                rl_projection["portfolioMandate"][
-                    "implementationPolicy"
-                ]["decisionPolicy"]["bars"],
+                rl_projection["portfolioMandate"]["implementationPolicy"][
+                    "decisionPolicy"
+                ]["bars"],
                 4,
             )
             self.assertEqual(rl_projection["decisionCadence"]["bars"], 4)
@@ -3071,13 +2903,10 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             first_timestamps = set(first_source_rows["timestamp"])
             observed_portfolio = {
                 str(row["timestamp"]).replace("+00:00", "Z")
-                for _, row in daily[
-                    daily["decision_eligible"]
-                ].iterrows()
+                for _, row in daily[daily["decision_eligible"]].iterrows()
             }
             self.assertTrue(
-                first_timestamps - {source.iloc[-1]["timestamp"]}
-                <= observed_portfolio
+                first_timestamps - {source.iloc[-1]["timestamp"]} <= observed_portfolio
             )
             jsonschema.validate(
                 portfolio_projection,
@@ -3090,9 +2919,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
 
     def test_v2_multi_interval_package_prepares_complete_locked_surface(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            request_path, package_path = write_multi_interval_inputs(
-                Path(directory)
-            )
+            request_path, package_path = write_multi_interval_inputs(Path(directory))
             jsonschema.Draft202012Validator(
                 OHLCV_DATASET_PACKAGE_JSON_SCHEMA,
                 format_checker=jsonschema.FormatChecker(),
@@ -3188,12 +3015,8 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
 
             snapshot_path = project.root_dir / "data" / "ohlcv" / "snapshot.json"
             snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
-            btc = next(
-                item for item in snapshot["assets"] if item["symbol"] == "BTC"
-            )
-            row = next(
-                item for item in btc["intervals"] if item["interval"] == "12h"
-            )
+            btc = next(item for item in snapshot["assets"] if item["symbol"] == "BTC")
+            row = next(item for item in btc["intervals"] if item["interval"] == "12h")
             row["normalizedHash"] = hash_file(data_path)
             snapshot_path.write_text(
                 json.dumps(snapshot, indent=2, sort_keys=True) + "\n",
@@ -3229,17 +3052,12 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 root,
                 observations=420,
             )
-            request_payload = json.loads(
-                request_path.read_text(encoding="utf-8")
-            )
-            benchmark_assets = [
-                asset["symbol"] for asset in request_payload["assets"]
-            ]
+            request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+            benchmark_assets = [asset["symbol"] for asset in request_payload["assets"]]
             request_payload["benchmarkPolicy"] = {
                 "kind": "fixed-weights",
                 "weights": {
-                    asset: 1.0 / len(benchmark_assets)
-                    for asset in benchmark_assets
+                    asset: 1.0 / len(benchmark_assets) for asset in benchmark_assets
                 },
             }
             request_path.write_text(
@@ -3261,13 +3079,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
 
             intake = load_project_intake(project)
             self.assertIsNotNone(intake)
-            mandate = load_portfolio_mandate(
-                project.root_dir / PORTFOLIO_MANDATE
-            )
+            mandate = load_portfolio_mandate(project.root_dir / PORTFOLIO_MANDATE)
             self.assertEqual(
-                mandate["construction"]["riskPolicy"][
-                    "annualizationPeriods"
-                ],
+                mandate["construction"]["riskPolicy"]["annualizationPeriods"],
                 24 * 365,
             )
             self.assertEqual(
@@ -3281,14 +3095,10 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             session = start_session(
                 project,
                 OHLCV_STUDY_ID,
-                request=load_research_request(
-                    project.root_dir / "request.json"
-                ),
+                request=load_research_request(project.root_dir / "request.json"),
             )
             candidate_path = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
+                session.worktree_project.root_dir / "factors" / "candidate.py"
             )
             candidate_path.write_text(
                 candidate_path.read_text(encoding="utf-8")
@@ -3323,9 +3133,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 )
                 jsonschema.validate(run.result, RUN_RESULT_JSON_SCHEMA)
             factor_run = runs[0]
-            factor_components = factor_run.result["metrics"][
-                "factor_components"
-            ]
+            factor_components = factor_run.result["metrics"]["factor_components"]
             self.assertEqual(
                 factor_components["trial_disclosure"],
                 {
@@ -3337,12 +3145,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 },
             )
             self.assertEqual(
-                [
-                    item["id"]
-                    for item in factor_components["declaration"][
-                        "components"
-                    ]
-                ],
+                [item["id"] for item in factor_components["declaration"]["components"]],
                 [
                     "base_momentum_10",
                     "momentum_3h_4",
@@ -3361,9 +3164,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 "fixed-diagnostic-blend-not-candidate-factor",
             )
             self.assertFalse(
-                factor_projection["trialDisclosure"][
-                    "entersPromotionScore"
-                ]
+                factor_projection["trialDisclosure"]["entersPromotionScore"]
             )
             self.assertEqual(
                 {run.result["dataset"]["hash"] for run in runs},
@@ -3394,14 +3195,12 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 runs[2].result["id"],
             )
             self.assertTrue(
-                factor_diagnostics["protocol"]["splits"]["splits"][
-                    "validation"
-                ]["end"].endswith("Z")
+                factor_diagnostics["protocol"]["splits"]["splits"]["validation"][
+                    "end"
+                ].endswith("Z")
             )
             self.assertTrue(
-                portfolio_diagnostics["currentBook"]["timestamp"].endswith(
-                    "Z"
-                )
+                portfolio_diagnostics["currentBook"]["timestamp"].endswith("Z")
             )
             self.assertEqual(
                 rl_diagnostics["portfolioMandate"]["riskPolicy"][
@@ -3421,19 +3220,18 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_v2_rejects_forming_semantics_clock_and_hourly_gaps(self) -> None:
         for mutate, expected in (
             (
-                lambda package: package.update(
-                    {"timestampSemantics": "bar-open"}
-                ),
+                lambda package: package.update({"timestampSemantics": "bar-open"}),
                 "must mean bar-close",
             ),
             (
-                lambda package: package["market"].update(
-                    {"clock": "session"}
-                ),
+                lambda package: package["market"].update({"clock": "session"}),
                 "continuous 24/7 UTC",
             ),
         ):
-            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(expected=expected),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 request_path, package_path = write_multi_interval_inputs(
                     Path(directory)
                 )
@@ -3507,9 +3305,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 self.assertEqual(asset["sourceHash"], hash_file(source))
                 self.assertEqual(asset["normalizedHash"], hash_file(normalized))
             study = load_study(project, PORTFOLIO_STUDY_ID)
-            mandate = load_portfolio_mandate(
-                project.root_dir / PORTFOLIO_MANDATE
-            )
+            mandate = load_portfolio_mandate(project.root_dir / PORTFOLIO_MANDATE)
             self.assertEqual(mandate["source"]["direction"], "long")
             self.assertEqual(mandate["tradableAssets"], ["AAPL", "MSFT"])
             self.assertEqual(
@@ -3527,7 +3323,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                     ]
                 },
             )
-            self.assertEqual(study.definition.dataset.universe, intake["dataset"]["universe"])
+            self.assertEqual(
+                study.definition.dataset.universe, intake["dataset"]["universe"]
+            )
             self.assertEqual(
                 study.definition.dataset.time_range.start,
                 intake["dataset"]["timeRange"]["start"],
@@ -3582,12 +3380,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 )
             )
             monetization = diagnostics["signalMonetization"]
-            self.assertTrue(
-                monetization["validation"]["reconciliation"]["passed"]
-            )
+            self.assertTrue(monetization["validation"]["reconciliation"]["passed"])
             monetization_assets = {
-                item["asset"]: item
-                for item in monetization["validation"]["byAsset"]
+                item["asset"]: item for item in monetization["validation"]["byAsset"]
             }
             for asset in ("NVDA", "QQQ", "SPY"):
                 self.assertEqual(
@@ -3615,9 +3410,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 0.0,
             )
             self.assertEqual(decision["tradingAuthority"], "none")
-            decision_by_asset = {
-                item["asset"]: item for item in decision["positions"]
-            }
+            decision_by_asset = {item["asset"]: item for item in decision["positions"]}
             for asset in ("AAPL", "MSFT"):
                 position = decision_by_asset[asset]
                 self.assertIn(position["signalState"], {0, 1})
@@ -3631,16 +3424,12 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                     self.assertFalse(position["tradable"])
                     self.assertEqual(position["targetWeight"], 0.0)
                     self.assertEqual(position["allocationStatus"], "context_only")
-                    decision_position = decision_by_asset[
-                        position["asset"]
-                    ]
+                    decision_position = decision_by_asset[position["asset"]]
                     self.assertEqual(
                         decision_position["nextTriggers"],
                         [],
                     )
-                    self.assertIsNone(
-                        decision_position["nearestTrigger"]
-                    )
+                    self.assertIsNone(decision_position["nearestTrigger"])
             session = start_session(
                 project,
                 PORTFOLIO_STUDY_ID,
@@ -3657,7 +3446,10 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             ("ohlcv-factor-lab", OHLCV_STUDY_ID),
             ("ohlcv-rl-factor-lab", RL_STUDY_ID),
         ):
-            with self.subTest(template=template), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(template=template),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 root = Path(directory)
                 request_path, package_path = write_intake_inputs(root)
                 workspace = initialize_workspace(root / "workspace")
@@ -3777,9 +3569,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 root,
                 observations=260,
             )
-            package = json.loads(
-                package_path.read_text(encoding="utf-8")
-            )
+            package = json.loads(package_path.read_text(encoding="utf-8"))
             package["schemaVersion"] = 4
             package["panelPolicy"] = {
                 "alignment": "observed-only",
@@ -3824,9 +3614,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             )
             self.assertIn(
                 "AVAILABLE_FEATURE_INTERVALS = []",
-                (
-                    project.root_dir / "factors" / "candidate.py"
-                ).read_text(encoding="utf-8"),
+                (project.root_dir / "factors" / "candidate.py").read_text(
+                    encoding="utf-8"
+                ),
             )
             intake = load_project_intake(project)
             assert intake is not None
@@ -3863,22 +3653,16 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 "ragged-observed-only",
             )
             self.assertAlmostEqual(
-                run.result["metrics"]["input_availability"][
-                    "observation_coverage"
-                ],
+                run.result["metrics"]["input_availability"]["observation_coverage"],
                 1297 / 1300,
             )
             diagnostics = load_factor_diagnostics(
                 project,
                 run.result["id"],
             )
-            self.assertTrue(
-                diagnostics["inputAvailability"]["available"]
-            )
+            self.assertTrue(diagnostics["inputAvailability"]["available"])
             self.assertEqual(
-                diagnostics["inputAvailability"][
-                    "assetsPerTimestamp"
-                ]["input"],
+                diagnostics["inputAvailability"]["assetsPerTimestamp"]["input"],
                 {"minimum": 4, "median": 5.0, "maximum": 5},
             )
 
@@ -3921,9 +3705,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             )
             self.assertIn(
                 "AVAILABLE_FEATURE_INTERVALS = []",
-                (
-                    project.root_dir / "factors" / "candidate.py"
-                ).read_text(encoding="utf-8"),
+                (project.root_dir / "factors" / "candidate.py").read_text(
+                    encoding="utf-8"
+                ),
             )
             intake = load_project_intake(project)
             assert intake is not None
@@ -3932,15 +3716,11 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 5,
             )
             self.assertEqual(
-                intake["dataset"]["availability"][
-                    "eligibleFactorObservations"
-                ],
+                intake["dataset"]["availability"]["eligibleFactorObservations"],
                 395,
             )
             self.assertEqual(
-                intake["dataset"]["availability"][
-                    "intersectionObservations"
-                ],
+                intake["dataset"]["availability"]["intersectionObservations"],
                 395,
             )
             self.assertEqual(
@@ -3971,18 +3751,13 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             )
             primary = metrics["split_protocol"]["horizons"]["24"]
             self.assertEqual(
-                sum(
-                    item["eligibleSignalRows"]
-                    for item in primary.values()
-                ),
+                sum(item["eligibleSignalRows"] for item in primary.values()),
                 395 - (3 * 24),
             )
             session = start_session(
                 project,
                 OHLCV_STUDY_ID,
-                request=json.loads(
-                    request_path.read_text(encoding="utf-8")
-                ),
+                request=json.loads(request_path.read_text(encoding="utf-8")),
             )
             self.assertEqual(
                 session.manifest["studyId"],
@@ -4050,9 +3825,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 220,
             )
             self.assertEqual(
-                metrics["input_availability"]["by_asset"]["SPY"][
-                    "observations"
-                ],
+                metrics["input_availability"]["by_asset"]["SPY"]["observations"],
                 219,
             )
             diagnostics = load_factor_diagnostics(
@@ -4095,9 +3868,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                                 {
                                     "kind": "run",
                                     "id": run.result["id"],
-                                    "artifactPath": (
-                                        "artifacts/factor-report.json"
-                                    ),
+                                    "artifactPath": ("artifacts/factor-report.json"),
                                 }
                             ],
                         }
@@ -4127,9 +3898,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
 
     def test_v5_daily_rejects_invalid_completed_bar_rows(self) -> None:
         def naive(frame: pd.DataFrame) -> pd.DataFrame:
-            frame.loc[0, "timestamp"] = frame.loc[0, "timestamp"].removesuffix(
-                "Z"
-            )
+            frame.loc[0, "timestamp"] = frame.loc[0, "timestamp"].removesuffix("Z")
             return frame
 
         def duplicate(frame: pd.DataFrame) -> pd.DataFrame:

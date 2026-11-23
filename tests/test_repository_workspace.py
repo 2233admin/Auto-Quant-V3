@@ -33,9 +33,7 @@ MULTI_SOURCE_FACTOR_RUN_ID = "run-20260801T212920787441Z-4fafdd0a9412"
 OUTCOME_FACTOR_RUN_ID = "run-20260802T002742222364Z-5b8af7e55965"
 OUTCOME_PORTFOLIO_RUN_ID = "run-20260802T002837074065Z-6e030f64c6c4"
 FACTOR_POPULATION_RUN_ID = "run-20260802T024611132256Z-89573be045d4"
-FACTOR_POPULATION_PORTFOLIO_RUN_ID = (
-    "run-20260802T024637192531Z-c704a397cdb5"
-)
+FACTOR_POPULATION_PORTFOLIO_RUN_ID = "run-20260802T024637192531Z-c704a397cdb5"
 SAMPLE_DESCRIPTION = (
     "A deterministic three-lane reference Project for learning AutoQuant "
     "before starting real research."
@@ -44,12 +42,14 @@ SAMPLE_DESCRIPTION = (
 
 def _template_owned_files(root: Path) -> dict[str, bytes]:
     excluded_roots = {"runs", "sessions"}
+    excluded_paths = {"research.md", "judges/ohlcv_factor.py"}
     result: dict[str, bytes] = {}
     for path in sorted(root.rglob("*")):
         if not path.is_file():
             continue
         relative = path.relative_to(root)
-        if relative.parts[0] in excluded_roots or relative.as_posix() == "research.md":
+        # Existing Projects retain their pinned Judge; see the tear-sheet plan.
+        if relative.parts[0] in excluded_roots or relative.as_posix() in excluded_paths:
             continue
         # Generated text is written in text mode, so Windows emits CRLF while the
         # checked-in sample is LF (.gitattributes). Line endings are not the
@@ -67,9 +67,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
 
     def test_repository_ignores_workspace_staging(self) -> None:
         ignore_rules = (
-            (REPOSITORY_ROOT / ".gitignore")
-            .read_text(encoding="utf-8")
-            .splitlines()
+            (REPOSITORY_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
         )
 
         self.assertIn("/staging/", ignore_rules)
@@ -169,9 +167,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
         )
         self.assertFalse(latest.result["harness"]["dirty"])
         self.assertEqual(
-            latest.result["metrics"]["prediction_universe"][
-                "evaluation_mode"
-            ],
+            latest.result["metrics"]["prediction_universe"]["evaluation_mode"],
             "cross-sectional",
         )
         prior_portfolio = load_run(project, PRIOR_PORTFOLIO_SAMPLE_RUN_ID)
@@ -180,23 +176,17 @@ class RepositoryWorkspaceTests(unittest.TestCase):
             prior_portfolio.result["study"]["id"],
             "ohlcv-portfolio-quality",
         )
-        self.assertEqual(
-            prior_portfolio.result["harness"]["version"], "0.9.3"
-        )
+        self.assertEqual(prior_portfolio.result["harness"]["version"], "0.9.3")
         self.assertEqual(
             prior_portfolio.result["harness"]["commit"],
             "ed61378d51b940892353ff39035e458cce255030",
         )
         self.assertFalse(prior_portfolio.result["harness"]["dirty"])
         self.assertFalse(
-            prior_portfolio.result["metrics"]["translation_robustness"][
-                "applicable"
-            ]
+            prior_portfolio.result["metrics"]["translation_robustness"]["applicable"]
         )
         self.assertEqual(
-            prior_portfolio.result["metrics"]["translation_robustness"][
-                "reason"
-            ],
+            prior_portfolio.result["metrics"]["translation_robustness"]["reason"],
             "cross-sectional-mode-has-no-temporal-window",
         )
         portfolio = load_run(project, PORTFOLIO_SAMPLE_RUN_ID)
@@ -213,9 +203,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
         self.assertFalse(portfolio.result["harness"]["dirty"])
         current_factor = load_run(project, CURRENT_FACTOR_SAMPLE_RUN_ID)
         self.assertEqual(current_factor.result["status"], "succeeded")
-        self.assertEqual(
-            current_factor.result["study"]["id"], "ohlcv-factor-quality"
-        )
+        self.assertEqual(current_factor.result["study"]["id"], "ohlcv-factor-quality")
         self.assertEqual(current_factor.result["harness"]["version"], "0.9.20")
         self.assertEqual(
             current_factor.result["harness"]["commit"],
@@ -228,9 +216,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
         )
         new_factor = load_run(project, NEW_FACTOR_SAMPLE_RUN_ID)
         self.assertEqual(new_factor.result["status"], "succeeded")
-        self.assertEqual(
-            new_factor.result["study"]["id"], "ohlcv-factor-quality"
-        )
+        self.assertEqual(new_factor.result["study"]["id"], "ohlcv-factor-quality")
         self.assertEqual(new_factor.result["harness"]["version"], "0.9.21")
         self.assertEqual(
             new_factor.result["harness"]["commit"],
@@ -243,9 +229,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
         )
         latest_factor = load_run(project, LATEST_FACTOR_SAMPLE_RUN_ID)
         self.assertEqual(latest_factor.result["status"], "succeeded")
-        self.assertEqual(
-            latest_factor.result["study"]["id"], "ohlcv-factor-quality"
-        )
+        self.assertEqual(latest_factor.result["study"]["id"], "ohlcv-factor-quality")
         self.assertEqual(latest_factor.result["harness"]["version"], "0.9.22")
         self.assertEqual(
             latest_factor.result["harness"]["commit"],
@@ -261,9 +245,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
         self.assertEqual(
             current_harness_factor.result["study"]["id"], "ohlcv-factor-quality"
         )
-        self.assertEqual(
-            current_harness_factor.result["harness"]["version"], "0.9.23"
-        )
+        self.assertEqual(current_harness_factor.result["harness"]["version"], "0.9.23")
         self.assertEqual(
             current_harness_factor.result["harness"]["commit"],
             "f4843fa42b38f33cc05d81a0b401d4395409cc22",
@@ -282,18 +264,14 @@ class RepositoryWorkspaceTests(unittest.TestCase):
         self.assertEqual(
             close_time_factor.result["study"]["id"], "ohlcv-factor-quality"
         )
-        self.assertEqual(
-            close_time_factor.result["harness"]["version"], "0.9.24"
-        )
+        self.assertEqual(close_time_factor.result["harness"]["version"], "0.9.24")
         self.assertEqual(
             close_time_factor.result["harness"]["commit"],
             "ea9a01ea379d0c7f030344eafbca5d39f5c54dba",
         )
         self.assertFalse(close_time_factor.result["harness"]["dirty"])
         self.assertEqual(
-            close_time_factor.result["metrics"]["factor_api"][
-                "cross_asset_context"
-            ],
+            close_time_factor.result["metrics"]["factor_api"]["cross_asset_context"],
             "same-or-prior-timestamp-explicit-candidate",
         )
         self.assertEqual(
@@ -389,9 +367,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
         )
         outcome_factor = load_run(project, OUTCOME_FACTOR_RUN_ID)
         self.assertEqual(outcome_factor.result["status"], "succeeded")
-        self.assertEqual(
-            outcome_factor.result["study"]["id"], "ohlcv-factor-quality"
-        )
+        self.assertEqual(outcome_factor.result["study"]["id"], "ohlcv-factor-quality")
         self.assertEqual(outcome_factor.result["harness"]["version"], "0.9.27")
         self.assertEqual(
             outcome_factor.result["harness"]["commit"],
@@ -402,9 +378,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
             outcome_factor.result["metrics"]["factor_outcome"]["kind"],
             "forward-return",
         )
-        self.assertFalse(
-            outcome_factor.result["metrics"]["factor_outcome"]["explicit"]
-        )
+        self.assertFalse(outcome_factor.result["metrics"]["factor_outcome"]["explicit"])
         self.assertEqual(
             outcome_factor.result["metrics"]["validation_mean_ic"],
             -0.031325301204819286,
@@ -415,9 +389,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
             outcome_portfolio.result["study"]["id"],
             "ohlcv-portfolio-quality",
         )
-        self.assertEqual(
-            outcome_portfolio.result["harness"]["version"], "0.9.27"
-        )
+        self.assertEqual(outcome_portfolio.result["harness"]["version"], "0.9.27")
         self.assertEqual(
             outcome_portfolio.result["harness"]["commit"],
             "0f81a8493e0df0a6cb569f2ab18bf4bf4a2442aa",
@@ -494,6 +466,19 @@ class RepositoryWorkspaceTests(unittest.TestCase):
             )
 
     def test_sample_projects_real_factor_evidence_into_studio(self) -> None:
+        factor_run_judge = (
+            SAMPLE_ROOT
+            / "runs"
+            / FACTOR_POPULATION_RUN_ID
+            / "inputs"
+            / "judge-sources"
+            / "judges"
+            / "ohlcv_factor.py"
+        )
+        self.assertEqual(
+            (SAMPLE_ROOT / "judges" / "ohlcv_factor.py").read_bytes(),
+            factor_run_judge.read_bytes(),
+        )
         snapshot = build_studio_snapshot(SAMPLE_ROOT)
 
         self.assertEqual(snapshot["source"]["scope"], "project")
@@ -528,8 +513,7 @@ class RepositoryWorkspaceTests(unittest.TestCase):
                 "evaluationMode": "cross-sectional",
                 "intentConstruction": "mandate-equal-active-side-budget",
                 "equalIntent": (
-                    "prediction-mode-aware-mandate-constrained-"
-                    "signal-state-diagnostic"
+                    "prediction-mode-aware-mandate-constrained-signal-state-diagnostic"
                 ),
                 "counterfactualCompounding": False,
                 "entersSelection": False,

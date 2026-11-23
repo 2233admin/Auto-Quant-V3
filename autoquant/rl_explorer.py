@@ -52,17 +52,13 @@ BASE_ARTIFACT_KINDS = {
 }
 POLICY_RATIONALE_ARTIFACT_KIND = "policy-rationales"
 POLICY_OPPORTUNITY_ARTIFACT_KIND = "policy-opportunities"
-POLICY_INCREMENTAL_ATTRIBUTION_ARTIFACT_KIND = (
-    "policy-incremental-attribution"
-)
+POLICY_INCREMENTAL_ATTRIBUTION_ARTIFACT_KIND = "policy-incremental-attribution"
 EXPECTED_ARTIFACT_KINDS = BASE_ARTIFACT_KINDS | {
     POLICY_RATIONALE_ARTIFACT_KIND,
     POLICY_OPPORTUNITY_ARTIFACT_KIND,
     POLICY_INCREMENTAL_ATTRIBUTION_ARTIFACT_KIND,
 }
-FACTOR_OPPORTUNITY_METHOD = (
-    "actual-pretrade-one-step-governed-action-audit-v1"
-)
+FACTOR_OPPORTUNITY_METHOD = "actual-pretrade-one-step-governed-action-audit-v1"
 FACTOR_OPPORTUNITY_POLICY = {
     "method": FACTOR_OPPORTUNITY_METHOD,
     "path_propagation": "selected-policy-only",
@@ -70,11 +66,14 @@ FACTOR_OPPORTUNITY_POLICY = {
     "selection_authority": "context-only",
     "trading_authority": "none",
 }
+
+
 def _factor_opportunity_reward(cost_bps: float) -> str:
     return (
-        f"net-return-after-{cost_bps:g}bps-cost-minus-"
-        "0.10-times-gross-return-squared"
+        f"net-return-after-{cost_bps:g}bps-cost-minus-0.10-times-gross-return-squared"
     )
+
+
 INCREMENTAL_ATTRIBUTION_POLICY = {
     "method": "selected-baseline-full-path-active-attribution-v1",
     "comparison_path": "independent-full-rollouts",
@@ -88,9 +87,7 @@ FACTOR_FUSION_DIAGNOSIS_METHOD = (
 )
 LEARNING_CONTRACT = {
     "method": "fixed-after-train-only-blocked-stability-audit-v1",
-    "development_selection_scope": (
-        "reference-fixture-outer-train-only-70/30-blocked"
-    ),
+    "development_selection_scope": ("reference-fixture-outer-train-only-70/30-blocked"),
     "candidate_configurations": 5,
     "selection_order": [
         "maximize-minimum-seed-advantage-vs-contextual-ridge",
@@ -290,7 +287,11 @@ def _read_object(path: Path, label: str) -> dict[str, Any]:
 def _configuration(metrics: dict[str, Any]) -> dict[str, Any]:
     value = metrics.get("configuration")
     if not isinstance(value, dict):
-        _fail("RunResult/metrics/configuration", "rl.configuration", "Missing configuration")
+        _fail(
+            "RunResult/metrics/configuration",
+            "rl.configuration",
+            "Missing configuration",
+        )
     actions = value.get("actions")
     folds = value.get("folds")
     seeds = value.get("seeds")
@@ -303,7 +304,11 @@ def _configuration(metrics: dict[str, Any]) -> dict[str, Any]:
         or len(actions) != len(set(actions))
         or not all(isinstance(item, str) and item for item in actions)
     ):
-        _fail("metrics/configuration/actions", "rl.actions", "Actions must be unique strings")
+        _fail(
+            "metrics/configuration/actions",
+            "rl.actions",
+            "Actions must be unique strings",
+        )
     if (
         not isinstance(folds, list)
         or not folds
@@ -315,9 +320,13 @@ def _configuration(metrics: dict[str, Any]) -> dict[str, Any]:
         not isinstance(seeds, list)
         or not seeds
         or len(seeds) != len(set(seeds))
-        or not all(isinstance(item, int) and not isinstance(item, bool) for item in seeds)
+        or not all(
+            isinstance(item, int) and not isinstance(item, bool) for item in seeds
+        )
     ):
-        _fail("metrics/configuration/seeds", "rl.seeds", "Seeds must be unique integers")
+        _fail(
+            "metrics/configuration/seeds", "rl.seeds", "Seeds must be unique integers"
+        )
     if (
         not isinstance(features, list)
         or not features
@@ -326,7 +335,11 @@ def _configuration(metrics: dict[str, Any]) -> dict[str, Any]:
         or not isinstance(raw_fields, list)
         or not all(isinstance(item, str) and item for item in raw_fields)
     ):
-        _fail("metrics/configuration/features", "rl.features", "Feature declarations are invalid")
+        _fail(
+            "metrics/configuration/features",
+            "rl.features",
+            "Feature declarations are invalid",
+        )
     if factor_experts is None:
         if "candidate" in actions:
             _fail(
@@ -338,17 +351,16 @@ def _configuration(metrics: dict[str, Any]) -> dict[str, Any]:
         not isinstance(factor_experts, list)
         or "candidate" not in factor_experts
         or len(factor_experts) != len(set(factor_experts))
-        or not all(
-            isinstance(item, str) and item in actions
-            for item in factor_experts
-        )
+        or not all(isinstance(item, str) and item in actions for item in factor_experts)
     ):
         _fail(
             "metrics/configuration/factorExperts",
             "rl.factor-experts",
             "Factor experts must be unique declared actions including candidate",
         )
-    episodes = _integer(value.get("episodes"), "metrics/configuration/episodes", minimum=1)
+    episodes = _integer(
+        value.get("episodes"), "metrics/configuration/episodes", minimum=1
+    )
     contextual_iterations = value.get("contextualRidgeIterations")
     if contextual_iterations is not None:
         contextual_iterations = _integer(
@@ -379,8 +391,7 @@ def _configuration(metrics: dict[str, Any]) -> dict[str, Any]:
             or not isinstance(decision_schedule.get("bars"), int)
             or isinstance(decision_schedule.get("bars"), bool)
             or not 1 <= decision_schedule["bars"] <= 252
-            or decision_schedule.get("anchor")
-            not in {"dataset-start", "session-start"}
+            or decision_schedule.get("anchor") not in {"dataset-start", "session-start"}
         ):
             _fail(
                 "configuration/decisionSchedule",
@@ -407,11 +418,17 @@ def _configuration(metrics: dict[str, Any]) -> dict[str, Any]:
         "rawStateFields": raw_fields,
         "episodes": episodes,
         "contextualRidgeIterations": contextual_iterations,
-        "epsilonStart": _finite(value.get("epsilonStart"), "configuration/epsilonStart"),
+        "epsilonStart": _finite(
+            value.get("epsilonStart"), "configuration/epsilonStart"
+        ),
         "epsilonEnd": _finite(value.get("epsilonEnd"), "configuration/epsilonEnd"),
-        "learningRate": _finite(value.get("learningRate"), "configuration/learningRate"),
+        "learningRate": _finite(
+            value.get("learningRate"), "configuration/learningRate"
+        ),
         "discount": _finite(value.get("discount"), "configuration/discount"),
-        "riskAversion": _finite(value.get("riskAversion"), "configuration/riskAversion"),
+        "riskAversion": _finite(
+            value.get("riskAversion"), "configuration/riskAversion"
+        ),
         "costBps": _finite(value.get("costBps"), "configuration/costBps"),
         "decisionSchedule": decision_schedule,
     }
@@ -423,25 +440,35 @@ def _ranges(
 ) -> dict[str, dict[str, Any]]:
     ranges = fold_value.get("ranges")
     if not isinstance(ranges, dict) or set(ranges) != {"train", *SPLITS}:
-        _fail(f"metrics/rl/folds/{fold}/ranges", "rl.ranges", "Fold ranges are incomplete")
+        _fail(
+            f"metrics/rl/folds/{fold}/ranges", "rl.ranges", "Fold ranges are incomplete"
+        )
     output: dict[str, dict[str, Any]] = {}
     previous_end: str | None = None
     for split in ("train", *SPLITS):
         item = ranges.get(split)
         if not isinstance(item, dict):
-            _fail(f"metrics/rl/folds/{fold}/ranges/{split}", "rl.range", "Range must be an object")
+            _fail(
+                f"metrics/rl/folds/{fold}/ranges/{split}",
+                "rl.range",
+                "Range must be an object",
+            )
         start = _session_date(item.get("start"), f"{fold}/{split}/start")
         end = _session_date(item.get("end"), f"{fold}/{split}/end")
-        observations = _integer(item.get("observations"), f"{fold}/{split}/observations", minimum=1)
+        observations = _integer(
+            item.get("observations"), f"{fold}/{split}/observations", minimum=1
+        )
         if start > end or (previous_end is not None and start <= previous_end):
-            _fail(f"{fold}/{split}", "rl.range-order", "Fold ranges must be chronological")
+            _fail(
+                f"{fold}/{split}", "rl.range-order", "Fold ranges must be chronological"
+            )
         output[split] = {
             "start": start,
             "end": end,
             "observations": observations,
-            "role": "training" if split == "train" else (
-                "selection" if split == "validation" else "visible-audit"
-            ),
+            "role": "training"
+            if split == "train"
+            else ("selection" if split == "validation" else "visible-audit"),
         }
         previous_end = end
     return output
@@ -454,7 +481,11 @@ def _baseline_split(
     path: str,
 ) -> dict[str, Any]:
     if name.startswith("fixed:"):
-        value = baselines.get("fixed_factor_or_blend", {}).get(name.split(":", 1)[1], {}).get(split)
+        value = (
+            baselines.get("fixed_factor_or_blend", {})
+            .get(name.split(":", 1)[1], {})
+            .get(split)
+        )
     elif name == "best-training-expert":
         value = baselines.get("best_training_expert", {}).get(split)
     elif name == "contextual-ridge":
@@ -476,18 +507,24 @@ def _performance(
     net = value.get("net")
     implementation = value.get("implementation")
     frequencies = value.get("action_frequency")
-    if not isinstance(net, dict) or not isinstance(implementation, dict) or not isinstance(frequencies, dict):
+    if (
+        not isinstance(net, dict)
+        or not isinstance(implementation, dict)
+        or not isinstance(frequencies, dict)
+    ):
         _fail(path, "rl.performance", "Trial performance evidence is incomplete")
     if set(frequencies) != set(actions):
-        _fail(path, "rl.action-frequency", "Action frequencies differ from configuration")
+        _fail(
+            path, "rl.action-frequency", "Action frequencies differ from configuration"
+        )
     normalized_frequencies = {
         action: _finite(frequencies[action], f"{path}/action_frequency/{action}")
         for action in actions
     }
-    if (
-        any(value < -1e-12 or value > 1.0 + 1e-12 for value in normalized_frequencies.values())
-        or not math.isclose(sum(normalized_frequencies.values()), 1.0, abs_tol=1e-9)
-    ):
+    if any(
+        value < -1e-12 or value > 1.0 + 1e-12
+        for value in normalized_frequencies.values()
+    ) or not math.isclose(sum(normalized_frequencies.values()), 1.0, abs_tol=1e-9):
         _fail(path, "rl.action-frequency", "Action frequencies must sum to one")
     execution_risk = value.get("execution_risk")
     if execution_risk is None:
@@ -530,9 +567,7 @@ def _performance(
                 f"{path}/execution_risk/executed_breach_dates",
             ),
             "maximumExecutedForecastAnnualized": _finite(
-                execution_risk.get(
-                    "maximum_executed_forecast_annualized"
-                ),
+                execution_risk.get("maximum_executed_forecast_annualized"),
                 f"{path}/execution_risk/maximum_executed_forecast_annualized",
             ),
             "maximumCeilingError": _finite(
@@ -543,9 +578,7 @@ def _performance(
         if (
             normalized_execution_risk["forecastAvailableDates"]
             > normalized_execution_risk["activeDates"]
-            or not 0
-            <= normalized_execution_risk["forecastCoverage"]
-            <= 1
+            or not 0 <= normalized_execution_risk["forecastCoverage"] <= 1
             or normalized_execution_risk["executedBreachDates"]
             or normalized_execution_risk["maximumCeilingError"] > 1e-10
         ):
@@ -563,9 +596,15 @@ def _performance(
     return {
         "netSharpe": _finite(net.get("sharpe"), f"{path}/net/sharpe"),
         "netTotalReturn": _finite(net.get("total_return"), f"{path}/net/total_return"),
-        "maximumDrawdown": _finite(net.get("maximum_drawdown"), f"{path}/net/maximum_drawdown"),
-        "observations": _integer(net.get("observations"), f"{path}/net/observations", minimum=1),
-        "cumulativeReward": _finite(value.get("cumulative_reward"), f"{path}/cumulative_reward"),
+        "maximumDrawdown": _finite(
+            net.get("maximum_drawdown"), f"{path}/net/maximum_drawdown"
+        ),
+        "observations": _integer(
+            net.get("observations"), f"{path}/net/observations", minimum=1
+        ),
+        "cumulativeReward": _finite(
+            value.get("cumulative_reward"), f"{path}/cumulative_reward"
+        ),
         "meanReward": _finite(value.get("mean_reward"), f"{path}/mean_reward"),
         "meanOneWayTurnover": _finite(
             implementation.get("mean_one_way_turnover"),
@@ -605,7 +644,12 @@ def _reconcile_aggregate(actual: Any, values: list[float], path: str) -> dict[st
         ("minimum", "minimum"),
         ("maximum", "maximum"),
     ):
-        _close(actual.get(actual_name), expected[expected_name], f"{path}/{actual_name}", actual_name)
+        _close(
+            actual.get(actual_name),
+            expected[expected_name],
+            f"{path}/{actual_name}",
+            actual_name,
+        )
     return expected
 
 
@@ -619,16 +663,28 @@ def _models(
         or value.get("featureNames") != configuration["featureNames"]
         or value.get("configuration") != configuration
     ):
-        _fail("policy-models", "rl.model-identity", "Model identity/configuration differs from RunResult")
+        _fail(
+            "policy-models",
+            "rl.model-identity",
+            "Model identity/configuration differs from RunResult",
+        )
     models = value.get("models")
     if not isinstance(models, dict) or set(models) != set(configuration["folds"]):
-        _fail("policy-models/models", "rl.models", "Model folds differ from configuration")
+        _fail(
+            "policy-models/models", "rl.models", "Model folds differ from configuration"
+        )
     output: list[dict[str, Any]] = []
     contextual: list[dict[str, Any]] = []
     for fold in configuration["folds"]:
         fold_models = models.get(fold)
-        if not isinstance(fold_models, dict) or not isinstance(fold_models.get("contextualRidgeBaseline"), dict):
-            _fail(f"policy-models/models/{fold}", "rl.models", "Fold model evidence is incomplete")
+        if not isinstance(fold_models, dict) or not isinstance(
+            fold_models.get("contextualRidgeBaseline"), dict
+        ):
+            _fail(
+                f"policy-models/models/{fold}",
+                "rl.models",
+                "Fold model evidence is incomplete",
+            )
         ridge = fold_models["contextualRidgeBaseline"]
         ridge_columns = ridge.get("columns")
         ridge_mean = ridge.get("mean")
@@ -646,8 +702,7 @@ def _models(
             or not isinstance(ridge_coefficients, list)
             or len(ridge_coefficients) != len(configuration["actions"])
             or any(
-                not isinstance(row, list)
-                or len(row) != len(ridge_columns) + 1
+                not isinstance(row, list) or len(row) != len(ridge_columns) + 1
                 for row in ridge_coefficients
             )
         ):
@@ -658,7 +713,12 @@ def _models(
             )
         for column in ridge_columns:
             _finite(ridge_mean[column], f"policy-models/{fold}/ridge/mean/{column}")
-            if _finite(ridge_scale[column], f"policy-models/{fold}/ridge/scale/{column}") <= 0:
+            if (
+                _finite(
+                    ridge_scale[column], f"policy-models/{fold}/ridge/scale/{column}"
+                )
+                <= 0
+            ):
                 _fail(
                     f"policy-models/{fold}/ridge/scale/{column}",
                     "rl.ridge-scale",
@@ -670,9 +730,7 @@ def _models(
                     coefficient,
                     f"policy-models/{fold}/ridge/{action_index}/{coefficient_index}",
                 )
-        expected_iterations = configuration.get(
-            "contextualRidgeIterations"
-        )
+        expected_iterations = configuration.get("contextualRidgeIterations")
         if expected_iterations is None:
             contextual.append(
                 {
@@ -689,8 +747,7 @@ def _models(
         else:
             history = ridge.get("history")
             if (
-                ridge.get("method")
-                != "iterative-same-pretrade-contextual-ridge-v1"
+                ridge.get("method") != "iterative-same-pretrade-contextual-ridge-v1"
                 or ridge.get("labelScope") != "train-only"
                 or ridge.get("anchorAction") != "balanced"
                 or ridge.get("iterations") != expected_iterations
@@ -708,10 +765,7 @@ def _models(
                     f"policy-models/models/{fold}/"
                     f"contextualRidgeBaseline/history/{iteration}"
                 )
-                if (
-                    not isinstance(item, dict)
-                    or item.get("iteration") != iteration
-                ):
+                if not isinstance(item, dict) or item.get("iteration") != iteration:
                     _fail(
                         path,
                         "rl.ridge-history",
@@ -739,10 +793,8 @@ def _models(
                     ("improvedActionFrequency", "improved"),
                 ):
                     raw_frequency = item.get(source)
-                    if (
-                        not isinstance(raw_frequency, dict)
-                        or set(raw_frequency)
-                        != set(configuration["actions"])
+                    if not isinstance(raw_frequency, dict) or set(raw_frequency) != set(
+                        configuration["actions"]
                     ):
                         _fail(
                             f"{path}/{source}",
@@ -756,14 +808,13 @@ def _models(
                         )
                         for action in configuration["actions"]
                     }
-                    if (
-                        any(value < 0.0 or value > 1.0 for value in observed.values())
-                        or not math.isclose(
-                            sum(observed.values()),
-                            1.0,
-                            rel_tol=0.0,
-                            abs_tol=1e-10,
-                        )
+                    if any(
+                        value < 0.0 or value > 1.0 for value in observed.values()
+                    ) or not math.isclose(
+                        sum(observed.values()),
+                        1.0,
+                        rel_tol=0.0,
+                        abs_tol=1e-10,
                     ):
                         _fail(
                             f"{path}/{source}",
@@ -813,10 +864,20 @@ def _models(
                 }
             )
         seeds = fold_models.get("seeds")
-        if not isinstance(seeds, dict) or set(seeds) != {str(seed) for seed in configuration["seeds"]}:
-            _fail(f"policy-models/models/{fold}/seeds", "rl.models", "Model seeds differ from configuration")
+        if not isinstance(seeds, dict) or set(seeds) != {
+            str(seed) for seed in configuration["seeds"]
+        }:
+            _fail(
+                f"policy-models/models/{fold}/seeds",
+                "rl.models",
+                "Model seeds differ from configuration",
+            )
         for seed in configuration["seeds"]:
-            weights = seeds[str(seed)].get("weights") if isinstance(seeds[str(seed)], dict) else None
+            weights = (
+                seeds[str(seed)].get("weights")
+                if isinstance(seeds[str(seed)], dict)
+                else None
+            )
             if (
                 not isinstance(weights, list)
                 or len(weights) != len(configuration["actions"])
@@ -826,10 +887,17 @@ def _models(
                     for row in weights
                 )
             ):
-                _fail(f"policy-models/{fold}/{seed}", "rl.model-shape", "Q weights have the wrong shape")
+                _fail(
+                    f"policy-models/{fold}/{seed}",
+                    "rl.model-shape",
+                    "Q weights have the wrong shape",
+                )
             normalized = [
                 [
-                    _finite(weight, f"policy-models/{fold}/{seed}/{action_index}/{feature_index}")
+                    _finite(
+                        weight,
+                        f"policy-models/{fold}/{seed}/{action_index}/{feature_index}",
+                    )
                     for feature_index, weight in enumerate(row)
                 ]
                 for action_index, row in enumerate(weights)
@@ -845,40 +913,78 @@ def _training(
     input_hash: str,
 ) -> list[dict[str, Any]]:
     if value.get("inputHash") != input_hash:
-        _fail("training-history/inputHash", "rl.training-identity", "Training identity differs from RunResult")
+        _fail(
+            "training-history/inputHash",
+            "rl.training-identity",
+            "Training identity differs from RunResult",
+        )
     histories = value.get("histories")
     if not isinstance(histories, dict) or set(histories) != set(configuration["folds"]):
-        _fail("training-history/histories", "rl.training", "Training folds differ from configuration")
+        _fail(
+            "training-history/histories",
+            "rl.training",
+            "Training folds differ from configuration",
+        )
     output: list[dict[str, Any]] = []
     for fold in configuration["folds"]:
         fold_histories = histories.get(fold)
         if not isinstance(fold_histories, dict) or set(fold_histories) != {
             str(seed) for seed in configuration["seeds"]
         }:
-            _fail(f"training-history/{fold}", "rl.training", "Training seeds differ from configuration")
+            _fail(
+                f"training-history/{fold}",
+                "rl.training",
+                "Training seeds differ from configuration",
+            )
         for seed in configuration["seeds"]:
             episodes = fold_histories[str(seed)]
-            if not isinstance(episodes, list) or len(episodes) != configuration["episodes"]:
-                _fail(f"training-history/{fold}/{seed}", "rl.training-budget", "Training episode budget differs")
+            if (
+                not isinstance(episodes, list)
+                or len(episodes) != configuration["episodes"]
+            ):
+                _fail(
+                    f"training-history/{fold}/{seed}",
+                    "rl.training-budget",
+                    "Training episode budget differs",
+                )
             for index, episode in enumerate(episodes, start=1):
                 path = f"training-history/{fold}/{seed}/{index}"
                 if not isinstance(episode, dict) or episode.get("episode") != index:
-                    _fail(path, "rl.training-episode", "Training episodes must be complete and ordered")
+                    _fail(
+                        path,
+                        "rl.training-episode",
+                        "Training episodes must be complete and ordered",
+                    )
                 counts = episode.get("actionCounts")
-                if not isinstance(counts, dict) or set(counts) != set(configuration["actions"]):
-                    _fail(path, "rl.training-actions", "Training action counts differ from configuration")
+                if not isinstance(counts, dict) or set(counts) != set(
+                    configuration["actions"]
+                ):
+                    _fail(
+                        path,
+                        "rl.training-actions",
+                        "Training action counts differ from configuration",
+                    )
                 normalized_counts = {
                     action: _integer(counts[action], f"{path}/actionCounts/{action}")
                     for action in configuration["actions"]
                 }
-                if sum(normalized_counts.values()) != ranges[fold]["train"]["observations"]:
-                    _fail(path, "rl.training-observations", "Training action counts do not match fold observations")
+                if (
+                    sum(normalized_counts.values())
+                    != ranges[fold]["train"]["observations"]
+                ):
+                    _fail(
+                        path,
+                        "rl.training-observations",
+                        "Training action counts do not match fold observations",
+                    )
                 epsilon = _finite(episode.get("epsilon"), f"{path}/epsilon")
                 expected_epsilon = configuration["epsilonStart"] + (
                     (index - 1) / max(1, configuration["episodes"] - 1)
                 ) * (configuration["epsilonEnd"] - configuration["epsilonStart"])
                 _close(epsilon, expected_epsilon, f"{path}/epsilon", "epsilon schedule")
-                total_reward = _finite(episode.get("totalReward"), f"{path}/totalReward")
+                total_reward = _finite(
+                    episode.get("totalReward"), f"{path}/totalReward"
+                )
                 mean_reward = _finite(episode.get("meanReward"), f"{path}/meanReward")
                 _close(
                     mean_reward,
@@ -917,7 +1023,11 @@ def _action_rows(
                 ]
             )
             if fields != constraint_fields:
-                _fail(path, "rl.csv-columns", "Action CSV columns differ from the fixed contract")
+                _fail(
+                    path,
+                    "rl.csv-columns",
+                    "Action CSV columns differ from the fixed contract",
+                )
             has_execution_risk = True
             has_execution_constraints = True
             rows: list[dict[str, Any]] = []
@@ -926,26 +1036,55 @@ def _action_rows(
             previous_actions: dict[tuple[str, int, str], str] = {}
             for row_number, row in enumerate(reader, start=2):
                 if None in row or any(value is None for value in row.values()):
-                    _fail(f"{path}:{row_number}", "rl.csv-width", "Action row width differs from header")
+                    _fail(
+                        f"{path}:{row_number}",
+                        "rl.csv-width",
+                        "Action row width differs from header",
+                    )
                 fold = row["fold"]
                 split = row["split"]
                 action = row["action"]
                 try:
                     seed = int(row["seed"])
                 except ValueError:
-                    _fail(f"{path}:{row_number}", "rl.seed", "Action seed must be an integer")
-                if fold not in configuration["folds"] or seed not in configuration["seeds"]:
-                    _fail(f"{path}:{row_number}", "rl.trial", "Action row uses an undeclared fold/seed")
+                    _fail(
+                        f"{path}:{row_number}",
+                        "rl.seed",
+                        "Action seed must be an integer",
+                    )
+                if (
+                    fold not in configuration["folds"]
+                    or seed not in configuration["seeds"]
+                ):
+                    _fail(
+                        f"{path}:{row_number}",
+                        "rl.trial",
+                        "Action row uses an undeclared fold/seed",
+                    )
                 if split not in SPLITS or action not in configuration["actions"]:
-                    _fail(f"{path}:{row_number}", "rl.action", "Action row uses an undeclared split/action")
-                timestamp = _session_date(row["timestamp"], f"{path}:{row_number}/timestamp")
+                    _fail(
+                        f"{path}:{row_number}",
+                        "rl.action",
+                        "Action row uses an undeclared split/action",
+                    )
+                timestamp = _session_date(
+                    row["timestamp"], f"{path}:{row_number}/timestamp"
+                )
                 declared = ranges[fold][split]
                 if not declared["start"] <= timestamp <= declared["end"]:
-                    _fail(f"{path}:{row_number}", "rl.action-range", "Action timestamp lies outside its fold split")
+                    _fail(
+                        f"{path}:{row_number}",
+                        "rl.action-range",
+                        "Action timestamp lies outside its fold split",
+                    )
                 key = (fold, seed, split, timestamp)
                 group = (fold, seed, split)
                 if key in seen or timestamp <= last_dates.get(group, ""):
-                    _fail(f"{path}:{row_number}", "rl.action-order", "Action timestamps must be unique and ordered")
+                    _fail(
+                        f"{path}:{row_number}",
+                        "rl.action-order",
+                        "Action timestamps must be unique and ordered",
+                    )
                 seen.add(key)
                 last_dates[group] = timestamp
                 if row["decision_eligible"] not in {"True", "False"}:
@@ -1003,9 +1142,7 @@ def _action_rows(
                         else timestamp[:10]
                     )
                 )
-                if (
-                    decision_session != expected_session
-                ):
+                if decision_session != expected_session:
                     _fail(
                         f"{path}:{row_number}/decision_anchor",
                         "rl.decision-anchor",
@@ -1030,53 +1167,46 @@ def _action_rows(
                         "decisionSchedule": decision_schedule,
                         "decisionSession": decision_session,
                         "reward": _finite(row["reward"], f"{path}:{row_number}/reward"),
-                        "grossReturn": _finite(row["gross_return"], f"{path}:{row_number}/gross_return"),
-                        "netReturn": _finite(row["net_return"], f"{path}:{row_number}/net_return"),
-                        "oneWayTurnover": _finite(row["one_way_turnover"], f"{path}:{row_number}/one_way_turnover"),
+                        "grossReturn": _finite(
+                            row["gross_return"], f"{path}:{row_number}/gross_return"
+                        ),
+                        "netReturn": _finite(
+                            row["net_return"], f"{path}:{row_number}/net_return"
+                        ),
+                        "oneWayTurnover": _finite(
+                            row["one_way_turnover"],
+                            f"{path}:{row_number}/one_way_turnover",
+                        ),
                         "cost": _finite(row["cost"], f"{path}:{row_number}/cost"),
                         **(
                             {
-                                "executionRiskStatus": row[
-                                    "execution_risk_status"
-                                ],
+                                "executionRiskStatus": row["execution_risk_status"],
                                 "executionRiskForecastAvailable": (
-                                    row[
-                                        "execution_risk_forecast_available"
-                                    ]
-                                    == "True"
+                                    row["execution_risk_forecast_available"] == "True"
                                 ),
                                 "executionRiskObservations": (
                                     _csv_nonnegative_integer(
-                                        row[
-                                            "execution_risk_observations"
-                                        ],
+                                        row["execution_risk_observations"],
                                         f"{path}:{row_number}/execution_risk_observations",
                                     )
                                 ),
                                 "pretradeRiskForecastAnnualized": _finite(
-                                    row[
-                                        "pretrade_risk_forecast_annualized"
-                                    ],
+                                    row["pretrade_risk_forecast_annualized"],
                                     f"{path}:{row_number}/pretrade_risk_forecast_annualized",
                                 ),
                                 "executedRiskForecastAnnualized": _finite(
-                                    row[
-                                        "executed_risk_forecast_annualized"
-                                    ],
+                                    row["executed_risk_forecast_annualized"],
                                     f"{path}:{row_number}/executed_risk_forecast_annualized",
                                 ),
                                 "executionRiskCeilingAnnualized": _finite(
-                                    row[
-                                        "execution_risk_ceiling_annualized"
-                                    ],
+                                    row["execution_risk_ceiling_annualized"],
                                     f"{path}:{row_number}/execution_risk_ceiling_annualized",
                                 ),
                                 "riskRebalanceOverride": (
                                     row["risk_rebalance_override"] == "True"
                                 ),
                                 "constraintRebalanceOverride": (
-                                    row["constraint_rebalance_override"]
-                                    == "True"
+                                    row["constraint_rebalance_override"] == "True"
                                     if has_execution_constraints
                                     else False
                                 ),
@@ -1090,17 +1220,13 @@ def _action_rows(
                                 ),
                                 "executedConstraintMaximumError": (
                                     _finite(
-                                        row[
-                                            "executed_constraint_maximum_error"
-                                        ],
+                                        row["executed_constraint_maximum_error"],
                                         f"{path}:{row_number}/executed_constraint_maximum_error",
                                     )
                                     if has_execution_constraints
                                     else 0.0
                                 ),
-                                "executionReason": row[
-                                    "execution_reason"
-                                ],
+                                "executionReason": row["execution_reason"],
                                 "grossExposure": _finite(
                                     row["gross_exposure"],
                                     f"{path}:{row_number}/gross_exposure",
@@ -1112,9 +1238,7 @@ def _action_rows(
                             }
                             if has_execution_risk
                             else {
-                                "executionRiskStatus": (
-                                    "legacy_unavailable"
-                                ),
+                                "executionRiskStatus": ("legacy_unavailable"),
                                 "executionRiskForecastAvailable": False,
                                 "executionRiskObservations": 0,
                                 "pretradeRiskForecastAnnualized": 0.0,
@@ -1141,8 +1265,7 @@ def _action_rows(
                     if (
                         row["execution_risk_forecast_available"]
                         not in {"True", "False"}
-                        or row["risk_rebalance_override"]
-                        not in {"True", "False"}
+                        or row["risk_rebalance_override"] not in {"True", "False"}
                         or (
                             has_execution_constraints
                             and row["constraint_rebalance_override"]
@@ -1172,23 +1295,15 @@ def _action_rows(
                             "target_constraint_repair",
                         }
                         or min(
-                            rows[-1][
-                                "pretradeRiskForecastAnnualized"
-                            ],
-                            rows[-1][
-                                "executedRiskForecastAnnualized"
-                            ],
-                            rows[-1][
-                                "executionRiskCeilingAnnualized"
-                            ],
+                            rows[-1]["pretradeRiskForecastAnnualized"],
+                            rows[-1]["executedRiskForecastAnnualized"],
+                            rows[-1]["executionRiskCeilingAnnualized"],
                         )
                         < 0
                         or rows[-1]["grossExposure"] < 0
                         or rows[-1]["proposedOneWayTurnover"] < 0
                         or rows[-1]["constraintRepairOneWay"] < 0
-                        or rows[-1][
-                            "executedConstraintMaximumError"
-                        ] < 0
+                        or rows[-1]["executedConstraintMaximumError"] < 0
                         or (
                             rows[-1]["riskRebalanceOverride"]
                             and rows[-1]["executionReason"]
@@ -1206,32 +1321,22 @@ def _action_rows(
                             }
                         )
                         or (
-                            rows[-1]["executionReason"]
-                            == "mandate_and_risk_override"
+                            rows[-1]["executionReason"] == "mandate_and_risk_override"
                             and (
                                 not rows[-1]["riskRebalanceOverride"]
-                                or not rows[-1][
-                                    "constraintRebalanceOverride"
-                                ]
+                                or not rows[-1]["constraintRebalanceOverride"]
                             )
                         )
                         or (
                             not rows[-1]["decisionEligible"]
                             and rows[-1]["oneWayTurnover"] > 1e-12
                             and not rows[-1]["riskRebalanceOverride"]
-                            and not rows[-1][
-                                "constraintRebalanceOverride"
-                            ]
+                            and not rows[-1]["constraintRebalanceOverride"]
                         )
                         or (
                             rows[-1]["executionRiskForecastAvailable"]
-                            and rows[-1][
-                                "executedRiskForecastAnnualized"
-                            ]
-                            > rows[-1][
-                                "executionRiskCeilingAnnualized"
-                            ]
-                            + 1e-10
+                            and rows[-1]["executedRiskForecastAnnualized"]
+                            > rows[-1]["executionRiskCeilingAnnualized"] + 1e-10
                         )
                     ):
                         _fail(
@@ -1240,7 +1345,11 @@ def _action_rows(
                             "Action executed-book risk evidence is invalid",
                         )
                 if len(rows) > MAX_ACTION_ROWS:
-                    _fail(path, "rl.row-limit", f"Action CSV exceeds {MAX_ACTION_ROWS} rows")
+                    _fail(
+                        path,
+                        "rl.row-limit",
+                        f"Action CSV exceeds {MAX_ACTION_ROWS} rows",
+                    )
     except UnicodeDecodeError:
         _fail(path, "rl.csv-encoding", "Action CSV must be UTF-8")
     if not rows:
@@ -1288,14 +1397,33 @@ def _action_projection(
                 cumulative_reward = sum(row["reward"] for row in group)
                 mean_turnover = sum(row["oneWayTurnover"] for row in group) / len(group)
                 total_cost = sum(row["cost"] for row in group)
-                _close(cumulative_reward, expected["cumulativeReward"], f"{fold}/{seed}/{split}/reward", "cumulative reward")
-                _close(cumulative_reward / len(group), expected["meanReward"], f"{fold}/{seed}/{split}/meanReward", "mean reward")
-                _close(mean_turnover, expected["meanOneWayTurnover"], f"{fold}/{seed}/{split}/turnover", "mean turnover")
-                _close(total_cost, expected["totalCostDrag"], f"{fold}/{seed}/{split}/cost", "cost drag")
+                _close(
+                    cumulative_reward,
+                    expected["cumulativeReward"],
+                    f"{fold}/{seed}/{split}/reward",
+                    "cumulative reward",
+                )
+                _close(
+                    cumulative_reward / len(group),
+                    expected["meanReward"],
+                    f"{fold}/{seed}/{split}/meanReward",
+                    "mean reward",
+                )
+                _close(
+                    mean_turnover,
+                    expected["meanOneWayTurnover"],
+                    f"{fold}/{seed}/{split}/turnover",
+                    "mean turnover",
+                )
+                _close(
+                    total_cost,
+                    expected["totalCostDrag"],
+                    f"{fold}/{seed}/{split}/cost",
+                    "cost drag",
+                )
                 expected_risk = expected["executionRisk"]
                 has_action_risk = any(
-                    row["executionRiskStatus"] != "legacy_unavailable"
-                    for row in group
+                    row["executionRiskStatus"] != "legacy_unavailable" for row in group
                 )
                 if expected_risk["available"] != has_action_risk:
                     _fail(
@@ -1332,19 +1460,14 @@ def _action_projection(
                         > row["executionRiskCeilingAnnualized"] + 1e-10
                     ]
                     overrides = [
-                        row
-                        for row in active_risk_rows
-                        if row["riskRebalanceOverride"]
+                        row for row in active_risk_rows if row["riskRebalanceOverride"]
                     ]
                     derived_risk = {
                         "available": True,
                         "activeDates": len(active_risk_rows),
-                        "forecastAvailableDates": len(
-                            available_risk_rows
-                        ),
+                        "forecastAvailableDates": len(available_risk_rows),
                         "forecastCoverage": (
-                            len(available_risk_rows)
-                            / len(active_risk_rows)
+                            len(available_risk_rows) / len(active_risk_rows)
                             if active_risk_rows
                             else 0.0
                         ),
@@ -1353,9 +1476,7 @@ def _action_projection(
                         "executedBreachDates": len(executed_breaches),
                         "maximumExecutedForecastAnnualized": (
                             max(
-                                row[
-                                    "executedRiskForecastAnnualized"
-                                ]
+                                row["executedRiskForecastAnnualized"]
                                 for row in available_risk_rows
                             )
                             if available_risk_rows
@@ -1365,12 +1486,8 @@ def _action_projection(
                             max(
                                 max(
                                     0.0,
-                                    row[
-                                        "executedRiskForecastAnnualized"
-                                    ]
-                                    - row[
-                                        "executionRiskCeilingAnnualized"
-                                    ],
+                                    row["executedRiskForecastAnnualized"]
+                                    - row["executionRiskCeilingAnnualized"],
                                 )
                                 for row in available_risk_rows
                             )
@@ -1406,7 +1523,9 @@ def _action_projection(
                         "fold": fold,
                         "seed": seed,
                         "split": split,
-                        "role": "selection" if split == "validation" else "visible-audit",
+                        "role": "selection"
+                        if split == "validation"
+                        else "visible-audit",
                         "observations": len(group),
                         "actionFrequency": frequencies,
                         "cumulativeReward": cumulative_reward,
@@ -1435,9 +1554,7 @@ def _action_projection(
         selected.add(remaining[len(remaining) // 2])
     elif slots > 1:
         selected.update(
-            remaining[
-                round(position * (len(remaining) - 1) / (slots - 1))
-            ]
+            remaining[round(position * (len(remaining) - 1) / (slots - 1))]
             for position in range(slots)
         )
     transition_rows = [
@@ -1457,19 +1574,13 @@ def _action_projection(
     }
 
 
-POLICY_RATIONALE_METHOD = (
-    "linear-q-chosen-vs-runner-up-decomposition-v1"
-)
+POLICY_RATIONALE_METHOD = "linear-q-chosen-vs-runner-up-decomposition-v1"
 POLICY_RATIONALE_POLICY = {
     "method": POLICY_RATIONALE_METHOD,
     "action_runs": "contiguous-actions-clipped-to-fold-seed-split",
     "q_scale": "uncalibrated-linear-model-score",
-    "feature_contribution": (
-        "exact-linear-chosen-minus-runner-decomposition"
-    ),
-    "realized_outcomes": (
-        "descriptive-endogenous-action-conditioning"
-    ),
+    "feature_contribution": ("exact-linear-chosen-minus-runner-decomposition"),
+    "realized_outcomes": ("descriptive-endogenous-action-conditioning"),
     "selection_authority": "context-only",
     "trading_authority": "none",
 }
@@ -1531,15 +1642,11 @@ def _behavior_metrics(
                 "action_runs": len(lengths),
                 "transitions": trial_transitions,
                 "transition_rate": (
-                    trial_transitions / (len(group) - 1)
-                    if len(group) > 1
-                    else 0.0
+                    trial_transitions / (len(group) - 1) if len(group) > 1 else 0.0
                 ),
                 "mean_action_run_length": sum(lengths) / len(lengths),
                 "mean_action_margin": sum(margins) / len(margins),
-                "tie_rate": (
-                    sum(row["tieForBest"] for row in group) / len(group)
-                ),
+                "tie_rate": (sum(row["tieForBest"] for row in group) / len(group)),
             }
         )
     decisions = len(selected)
@@ -1553,24 +1660,16 @@ def _behavior_metrics(
             "frequency": len(group) / decisions,
             "action_runs": len(action_runs),
             "mean_action_run_length": (
-                sum(action_runs) / len(action_runs)
-                if action_runs
-                else 0.0
+                sum(action_runs) / len(action_runs) if action_runs else 0.0
             ),
             "mean_action_margin": (
-                sum(row["actionMargin"] for row in group) / len(group)
-                if group
-                else 0.0
+                sum(row["actionMargin"] for row in group) / len(group) if group else 0.0
             ),
             "mean_reward": (
-                sum(row["reward"] for row in group) / len(group)
-                if group
-                else 0.0
+                sum(row["reward"] for row in group) / len(group) if group else 0.0
             ),
             "mean_net_return": (
-                sum(row["netReturn"] for row in group) / len(group)
-                if group
-                else 0.0
+                sum(row["netReturn"] for row in group) / len(group) if group else 0.0
             ),
             "mean_one_way_turnover": (
                 sum(row["oneWayTurnover"] for row in group) / len(group)
@@ -1581,12 +1680,8 @@ def _behavior_metrics(
         }
     by_feature: dict[str, dict[str, Any]] = {}
     for feature in feature_names:
-        contributions = [
-            row["marginContributions"][feature] for row in selected
-        ]
-        dominant = sum(
-            row["dominantMarginFeature"] == feature for row in selected
-        )
+        contributions = [row["marginContributions"][feature] for row in selected]
+        dominant = sum(row["dominantMarginFeature"] == feature for row in selected)
         by_feature[feature] = {
             "dominant_decisions": dominant,
             "dominant_rate": dominant / decisions,
@@ -1594,31 +1689,24 @@ def _behavior_metrics(
                 sum(contributions) / len(contributions)
             ),
             "mean_absolute_margin_contribution": (
-                sum(abs(value) for value in contributions)
-                / len(contributions)
+                sum(abs(value) for value in contributions) / len(contributions)
             ),
         }
     total_reward = sum(row["reward"] for row in selected)
     total_net_return = sum(row["netReturn"] for row in selected)
-    mean_turnover = (
-        sum(row["oneWayTurnover"] for row in selected) / decisions
-    )
+    mean_turnover = sum(row["oneWayTurnover"] for row in selected) / decisions
     total_cost = sum(row["cost"] for row in selected)
     reconciliation = {
         "rationale_rows": decisions,
         "action_rows": decisions,
         "decision_count_error": abs(
-            sum(item["decisions"] for item in by_action.values())
-            - decisions
+            sum(item["decisions"] for item in by_action.values()) - decisions
         ),
         "frequency_error": abs(
             sum(item["frequency"] for item in by_action.values()) - 1.0
         ),
         "reward_error": abs(
-            sum(
-                item["mean_reward"] * item["decisions"]
-                for item in by_action.values()
-            )
+            sum(item["mean_reward"] * item["decisions"] for item in by_action.values())
             - total_reward
         ),
         "net_return_error": abs(
@@ -1636,21 +1724,15 @@ def _behavior_metrics(
             - mean_turnover
         ),
         "cost_error": abs(
-            sum(item["total_cost"] for item in by_action.values())
-            - total_cost
+            sum(item["total_cost"] for item in by_action.values()) - total_cost
         ),
-        "transition_run_error": abs(
-            len(run_lengths) - transitions - len(groups)
-        ),
+        "transition_run_error": abs(len(run_lengths) - transitions - len(groups)),
         "dominant_feature_rate_error": abs(
-            sum(item["dominant_rate"] for item in by_feature.values())
-            - 1.0
+            sum(item["dominant_rate"] for item in by_feature.values()) - 1.0
         ),
     }
     reconciliation["passed"] = (
-        reconciliation["rationale_rows"]
-        == reconciliation["action_rows"]
-        == decisions
+        reconciliation["rationale_rows"] == reconciliation["action_rows"] == decisions
         and max(
             float(value)
             for key, value in reconciliation.items()
@@ -1664,9 +1746,7 @@ def _behavior_metrics(
         "trial_paths": len(groups),
         "transitions": transitions,
         "transition_rate": transitions / comparable if comparable else 0.0,
-        "retention_rate": (
-            1.0 - transitions / comparable if comparable else 1.0
-        ),
+        "retention_rate": (1.0 - transitions / comparable if comparable else 1.0),
         "action_runs": len(run_lengths),
         "mean_action_run_length": sum(run_lengths) / len(run_lengths),
         "median_action_run_length": _median(run_lengths),
@@ -1766,15 +1846,11 @@ def _behavior_split_projection(value: dict[str, Any]) -> dict[str, Any]:
                 "decisions": metrics["decisions"],
                 "frequency": metrics["frequency"],
                 "actionRuns": metrics["action_runs"],
-                "meanActionRunLength": metrics[
-                    "mean_action_run_length"
-                ],
+                "meanActionRunLength": metrics["mean_action_run_length"],
                 "meanActionMargin": metrics["mean_action_margin"],
                 "meanReward": metrics["mean_reward"],
                 "meanNetReturn": metrics["mean_net_return"],
-                "meanOneWayTurnover": metrics[
-                    "mean_one_way_turnover"
-                ],
+                "meanOneWayTurnover": metrics["mean_one_way_turnover"],
                 "totalCost": metrics["total_cost"],
             }
             for action, metrics in value["by_action"].items()
@@ -1801,9 +1877,7 @@ def _behavior_split_projection(value: dict[str, Any]) -> dict[str, Any]:
                 "actionRuns": trial["action_runs"],
                 "transitions": trial["transitions"],
                 "transitionRate": trial["transition_rate"],
-                "meanActionRunLength": trial[
-                    "mean_action_run_length"
-                ],
+                "meanActionRunLength": trial["mean_action_run_length"],
                 "meanActionMargin": trial["mean_action_margin"],
                 "tieRate": trial["tie_rate"],
             }
@@ -1860,17 +1934,17 @@ def _policy_behavior_projection(
             "rl.policy-rationale-identity",
             "Policy-rationale identity differs from the fixed Run",
         )
-    if raw_metrics.get("policy") != POLICY_RATIONALE_POLICY or set(
-        raw_metrics
-    ) != {"policy", "validation", "test"}:
+    if raw_metrics.get("policy") != POLICY_RATIONALE_POLICY or set(raw_metrics) != {
+        "policy",
+        "validation",
+        "test",
+    }:
         _fail(
             "RunResult/metrics/policy_rationale/policy",
             "rl.policy-rationale-policy",
             "Policy-rationale policy differs from the fixed contract",
         )
-    model_by_key = {
-        (model["fold"], model["seed"]): model for model in models
-    }
+    model_by_key = {(model["fold"], model["seed"]): model for model in models}
     expected_action_keys = [
         (
             row["fold"],
@@ -1915,9 +1989,7 @@ def _policy_behavior_projection(
             "rl.policy-rationale-coverage",
             "Policy rationale and action row counts differ",
         )
-    for index, (raw, action_row) in enumerate(
-        zip(value["rows"], action_rows)
-    ):
+    for index, (raw, action_row) in enumerate(zip(value["rows"], action_rows)):
         path = f"policy-rationales/rows/{index}"
         if not isinstance(raw, dict) or set(raw) != row_fields:
             _fail(
@@ -1942,12 +2014,9 @@ def _policy_behavior_projection(
         if (
             raw.get("previousAction") != expected_previous
             or raw.get("selectedAction") != action_row["action"]
-            or raw.get("decisionEligible")
-            != action_row["decisionEligible"]
-            or raw.get("decisionSchedule")
-            != action_row["decisionSchedule"]
-            or raw.get("decisionSession")
-            != action_row["decisionSession"]
+            or raw.get("decisionEligible") != action_row["decisionEligible"]
+            or raw.get("decisionSchedule") != action_row["decisionSchedule"]
+            or raw.get("decisionSession") != action_row["decisionSession"]
             or raw.get("selectionReason")
             != (
                 "q-argmax"
@@ -2028,28 +2097,18 @@ def _policy_behavior_projection(
         if action_row["decisionEligible"]:
             selected_index, runner_index = ranked[:2]
         else:
-            selected_index = configuration["actions"].index(
-                raw["selectedAction"]
-            )
-            runner_index = next(
-                index
-                for index in ranked
-                if index != selected_index
-            )
+            selected_index = configuration["actions"].index(raw["selectedAction"])
+            runner_index = next(index for index in ranked if index != selected_index)
         if (
-            raw["selectedAction"]
-            != configuration["actions"][selected_index]
-            or raw["runnerUpAction"]
-            != configuration["actions"][runner_index]
+            raw["selectedAction"] != configuration["actions"][selected_index]
+            or raw["runnerUpAction"] != configuration["actions"][runner_index]
         ):
             _fail(
                 path,
                 "rl.policy-rationale-ranking",
                 "Selected or runner-up action differs from frozen Q ranking",
             )
-        expected_margin = (
-            expected_q[selected_index] - expected_q[runner_index]
-        )
+        expected_margin = expected_q[selected_index] - expected_q[runner_index]
         margin = _finite(raw["actionMargin"], f"{path}/actionMargin")
         _close(
             margin,
@@ -2067,9 +2126,7 @@ def _policy_behavior_projection(
             for feature_index in range(len(encoded))
         ]
         normalized_contributions: dict[str, float] = {}
-        for feature_index, feature in enumerate(
-            configuration["featureNames"]
-        ):
+        for feature_index, feature in enumerate(configuration["featureNames"]):
             value_number = _finite(
                 contributions[feature],
                 f"{path}/marginContributions/{feature}",
@@ -2119,12 +2176,8 @@ def _policy_behavior_projection(
                 **raw,
                 "seed": int(raw["seed"]),
                 "rawState": normalized_state,
-                "encodedFeatures": dict(
-                    zip(configuration["featureNames"], encoded)
-                ),
-                "qValues": dict(
-                    zip(configuration["actions"], expected_q)
-                ),
+                "encodedFeatures": dict(zip(configuration["featureNames"], encoded)),
+                "qValues": dict(zip(configuration["actions"], expected_q)),
                 "actionMargin": margin,
                 "marginContributions": normalized_contributions,
                 "reward": action_row["reward"],
@@ -2177,23 +2230,15 @@ def _policy_behavior_projection(
                     "fold": row["fold"],
                     "seed": row["seed"],
                     "split": row["split"],
-                    "role": (
-                        "selection"
-                        if split == "validation"
-                        else "visible-audit"
-                    ),
+                    "role": ("selection" if split == "validation" else "visible-audit"),
                     "timestamp": row["timestamp"],
                     "previousAction": row["previousAction"],
                     "selectedAction": row["selectedAction"],
                     "runnerUpAction": row["runnerUpAction"],
                     "actionMargin": row["actionMargin"],
                     "tieForBest": row["tieForBest"],
-                    "dominantMarginFeature": row[
-                        "dominantMarginFeature"
-                    ],
-                    "dominantMarginContribution": row[
-                        "dominantMarginContribution"
-                    ],
+                    "dominantMarginFeature": row["dominantMarginFeature"],
+                    "dominantMarginContribution": row["dominantMarginContribution"],
                     "reward": row["reward"],
                     "netReturn": row["netReturn"],
                     "oneWayTurnover": row["oneWayTurnover"],
@@ -2213,9 +2258,7 @@ def _policy_behavior_projection(
             "tradingAuthority": policy["trading_authority"],
         },
         "selectionAuthority": "context-only",
-        "validation": _behavior_split_projection(
-            reconstructed["validation"]
-        ),
+        "validation": _behavior_split_projection(reconstructed["validation"]),
         "test": _behavior_split_projection(reconstructed["test"]),
         "representativeDecisions": representative,
     }
@@ -2255,53 +2298,37 @@ def _opportunity_metrics(
     oracle_hits = sum(row["oracleHit"] for row in selected)
     by_action: dict[str, dict[str, Any]] = {}
     for action in actions:
-        selected_count = sum(
-            row["selectedAction"] == action for row in selected
-        )
-        oracle_count = sum(
-            row["oracleAction"] == action for row in selected
-        )
+        selected_count = sum(row["selectedAction"] == action for row in selected)
+        oracle_count = sum(row["oracleAction"] == action for row in selected)
         evidence = [row["actions"][action] for row in selected]
         by_action[action] = {
             "selected_decisions": selected_count,
             "selected_frequency": selected_count / decisions,
             "oracle_decisions": oracle_count,
             "oracle_frequency": oracle_count / decisions,
-            "mean_local_reward": (
-                sum(item["reward"] for item in evidence) / decisions
-            ),
+            "mean_local_reward": (sum(item["reward"] for item in evidence) / decisions),
             "mean_one_way_turnover": (
                 sum(item["oneWayTurnover"] for item in evidence) / decisions
             ),
             "total_cost": sum(item["cost"] for item in evidence),
             "risk_repair_rate": (
-                sum(item["riskRebalanceOverride"] for item in evidence)
-                / decisions
+                sum(item["riskRebalanceOverride"] for item in evidence) / decisions
             ),
         }
-    candidate_oracle = [
-        row for row in selected if row["oracleAction"] == "candidate"
-    ]
+    candidate_oracle = [row for row in selected if row["oracleAction"] == "candidate"]
     candidate_missed = [
-        row
-        for row in candidate_oracle
-        if row["selectedAction"] != "candidate"
+        row for row in candidate_oracle if row["selectedAction"] != "candidate"
     ]
     candidate_captured = len(candidate_oracle) - len(candidate_missed)
-    candidate_vs_selected = [
-        row["candidateMinusSelectedReward"] for row in selected
-    ]
-    candidate_vs_balanced = [
-        row["candidateMinusBalancedReward"] for row in selected
-    ]
+    candidate_vs_selected = [row["candidateMinusSelectedReward"] for row in selected]
+    candidate_vs_balanced = [row["candidateMinusBalancedReward"] for row in selected]
     trials: list[dict[str, Any]] = []
     for (fold, seed), group in groups.items():
         group_candidate_oracle = sum(
             row["oracleAction"] == "candidate" for row in group
         )
         group_candidate_missed = sum(
-            row["oracleAction"] == "candidate"
-            and row["selectedAction"] != "candidate"
+            row["oracleAction"] == "candidate" and row["selectedAction"] != "candidate"
             for row in group
         )
         trials.append(
@@ -2319,9 +2346,7 @@ def _opportunity_metrics(
                 "mean_realized_regret": (
                     sum(row["realizedRegret"] for row in group) / len(group)
                 ),
-                "candidate_oracle_rate": (
-                    group_candidate_oracle / len(group)
-                ),
+                "candidate_oracle_rate": (group_candidate_oracle / len(group)),
                 "candidate_missed_opportunity_rate": (
                     group_candidate_missed / len(group)
                 ),
@@ -2329,27 +2354,18 @@ def _opportunity_metrics(
         )
     reconciliation = {
         "decision_rows": decisions,
-        "action_evaluations": sum(
-            len(row["actions"]) for row in selected
-        ),
+        "action_evaluations": sum(len(row["actions"]) for row in selected),
         "action_evaluation_count_error": abs(
-            sum(len(row["actions"]) for row in selected)
-            - decisions * len(actions)
+            sum(len(row["actions"]) for row in selected) - decisions * len(actions)
         ),
         "selected_frequency_error": abs(
-            sum(item["selected_frequency"] for item in by_action.values())
-            - 1.0
+            sum(item["selected_frequency"] for item in by_action.values()) - 1.0
         ),
         "oracle_frequency_error": abs(
-            sum(item["oracle_frequency"] for item in by_action.values())
-            - 1.0
+            sum(item["oracle_frequency"] for item in by_action.values()) - 1.0
         ),
         "regret_identity_error": max(
-            abs(
-                row["oracleReward"]
-                - row["selectedReward"]
-                - row["realizedRegret"]
-            )
+            abs(row["oracleReward"] - row["selectedReward"] - row["realizedRegret"])
             for row in selected
         ),
         "candidate_selected_delta_error": max(
@@ -2374,8 +2390,7 @@ def _opportunity_metrics(
         "selected_action_reconciliation_error": 0.0,
     }
     reconciliation["passed"] = (
-        reconciliation["action_evaluations"]
-        == decisions * len(actions)
+        reconciliation["action_evaluations"] == decisions * len(actions)
         and max(
             float(value)
             for key, value in reconciliation.items()
@@ -2397,37 +2412,24 @@ def _opportunity_metrics(
         "median_realized_regret": _median(regrets),
         "p90_realized_regret": _linear_percentile(regrets, 0.90),
         "maximum_realized_regret": max(regrets),
-        "positive_regret_rate": (
-            sum(regret > 1e-12 for regret in regrets) / decisions
-        ),
+        "positive_regret_rate": (sum(regret > 1e-12 for regret in regrets) / decisions),
         "by_action": by_action,
         "candidate": {
-            "selected_decisions": by_action["candidate"][
-                "selected_decisions"
-            ],
-            "selected_frequency": by_action["candidate"][
-                "selected_frequency"
-            ],
+            "selected_decisions": by_action["candidate"]["selected_decisions"],
+            "selected_frequency": by_action["candidate"]["selected_frequency"],
             "oracle_decisions": len(candidate_oracle),
             "oracle_frequency": len(candidate_oracle) / decisions,
             "captured_oracle_decisions": candidate_captured,
             "oracle_capture_rate": (
-                candidate_captured / len(candidate_oracle)
-                if candidate_oracle
-                else 0.0
+                candidate_captured / len(candidate_oracle) if candidate_oracle else 0.0
             ),
             "missed_opportunity_decisions": len(candidate_missed),
             "missed_opportunity_rate": len(candidate_missed) / decisions,
             "mean_reward": by_action["candidate"]["mean_local_reward"],
-            "mean_vs_selected_reward": (
-                sum(candidate_vs_selected) / decisions
-            ),
-            "mean_vs_balanced_reward": (
-                sum(candidate_vs_balanced) / decisions
-            ),
+            "mean_vs_selected_reward": (sum(candidate_vs_selected) / decisions),
+            "mean_vs_balanced_reward": (sum(candidate_vs_balanced) / decisions),
             "win_rate_vs_balanced": (
-                sum(value > 1e-12 for value in candidate_vs_balanced)
-                / decisions
+                sum(value > 1e-12 for value in candidate_vs_balanced) / decisions
             ),
         },
         "trials": trials,
@@ -2459,9 +2461,7 @@ def _opportunity_split_projection(value: dict[str, Any]) -> dict[str, Any]:
                 "oracleDecisions": metrics["oracle_decisions"],
                 "oracleFrequency": metrics["oracle_frequency"],
                 "meanLocalReward": metrics["mean_local_reward"],
-                "meanOneWayTurnover": metrics[
-                    "mean_one_way_turnover"
-                ],
+                "meanOneWayTurnover": metrics["mean_one_way_turnover"],
                 "totalCost": metrics["total_cost"],
                 "riskRepairRate": metrics["risk_repair_rate"],
             }
@@ -2472,28 +2472,16 @@ def _opportunity_split_projection(value: dict[str, Any]) -> dict[str, Any]:
             "selectedFrequency": value["candidate"]["selected_frequency"],
             "oracleDecisions": value["candidate"]["oracle_decisions"],
             "oracleFrequency": value["candidate"]["oracle_frequency"],
-            "capturedOracleDecisions": value["candidate"][
-                "captured_oracle_decisions"
-            ],
-            "oracleCaptureRate": value["candidate"][
-                "oracle_capture_rate"
-            ],
+            "capturedOracleDecisions": value["candidate"]["captured_oracle_decisions"],
+            "oracleCaptureRate": value["candidate"]["oracle_capture_rate"],
             "missedOpportunityDecisions": value["candidate"][
                 "missed_opportunity_decisions"
             ],
-            "missedOpportunityRate": value["candidate"][
-                "missed_opportunity_rate"
-            ],
+            "missedOpportunityRate": value["candidate"]["missed_opportunity_rate"],
             "meanReward": value["candidate"]["mean_reward"],
-            "meanVsSelectedReward": value["candidate"][
-                "mean_vs_selected_reward"
-            ],
-            "meanVsBalancedReward": value["candidate"][
-                "mean_vs_balanced_reward"
-            ],
-            "winRateVsBalanced": value["candidate"][
-                "win_rate_vs_balanced"
-            ],
+            "meanVsSelectedReward": value["candidate"]["mean_vs_selected_reward"],
+            "meanVsBalancedReward": value["candidate"]["mean_vs_balanced_reward"],
+            "winRateVsBalanced": value["candidate"]["win_rate_vs_balanced"],
         },
         "trials": [
             {
@@ -2632,9 +2620,7 @@ def _factor_opportunity_projection(
         configuration.get("riskAversion"),
         "metrics/configuration/riskAversion",
     )
-    for index, (raw, selected_action_row) in enumerate(
-        zip(value["rows"], action_rows)
-    ):
+    for index, (raw, selected_action_row) in enumerate(zip(value["rows"], action_rows)):
         path = f"policy-opportunities/rows/{index}"
         if not isinstance(raw, dict) or set(raw) != row_fields:
             _fail(
@@ -2656,12 +2642,9 @@ def _factor_opportunity_projection(
             )
         if (
             raw.get("selectedAction") != selected_action_row["action"]
-            or raw.get("decisionEligible")
-            != selected_action_row["decisionEligible"]
-            or raw.get("decisionSchedule")
-            != selected_action_row["decisionSchedule"]
-            or raw.get("decisionSession")
-            != selected_action_row["decisionSession"]
+            or raw.get("decisionEligible") != selected_action_row["decisionEligible"]
+            or raw.get("decisionSchedule") != selected_action_row["decisionSchedule"]
+            or raw.get("decisionSession") != selected_action_row["decisionSession"]
             or raw.get("selectedAction") not in configuration["actions"]
             or raw.get("oracleAction") not in configuration["actions"]
             or not isinstance(raw.get("oracleHit"), bool)
@@ -2749,10 +2732,7 @@ def _factor_opportunity_projection(
                 "trades",
             ):
                 raw_vector = item.get(artifact_name)
-                if (
-                    not isinstance(raw_vector, dict)
-                    or set(raw_vector) != set(assets)
-                ):
+                if not isinstance(raw_vector, dict) or set(raw_vector) != set(assets):
                     _fail(
                         f"{action_path}/{artifact_name}",
                         "rl.factor-opportunity-vector",
@@ -2815,12 +2795,8 @@ def _factor_opportunity_projection(
                     item.get("executionRiskCeilingAnnualized"),
                     f"{action_path}/executionRiskCeilingAnnualized",
                 ),
-                "riskRebalanceOverride": item.get(
-                    "riskRebalanceOverride"
-                ),
-                "constraintRebalanceOverride": item.get(
-                    "constraintRebalanceOverride"
-                ),
+                "riskRebalanceOverride": item.get("riskRebalanceOverride"),
+                "constraintRebalanceOverride": item.get("constraintRebalanceOverride"),
                 "constraintRepairOneWay": _finite(
                     item.get("constraintRepairOneWay"),
                     f"{action_path}/constraintRepairOneWay",
@@ -2834,13 +2810,9 @@ def _factor_opportunity_projection(
             if (
                 not isinstance(evidence["executionRiskStatus"], str)
                 or not evidence["executionRiskStatus"]
-                or not isinstance(
-                    evidence["executionRiskForecastAvailable"], bool
-                )
+                or not isinstance(evidence["executionRiskForecastAvailable"], bool)
                 or not isinstance(evidence["riskRebalanceOverride"], bool)
-                or not isinstance(
-                    evidence["constraintRebalanceOverride"], bool
-                )
+                or not isinstance(evidence["constraintRebalanceOverride"], bool)
                 or not isinstance(evidence["executionReason"], str)
                 or not evidence["executionReason"]
                 or min(
@@ -2872,12 +2844,8 @@ def _factor_opportunity_projection(
                     tolerance=1e-10,
                 )
             traded_notional = sum(abs(trades[asset]) for asset in assets)
-            gross_return = sum(
-                executed[asset] * forward[asset] for asset in assets
-            )
-            gross_exposure = sum(
-                abs(executed[asset]) for asset in assets
-            )
+            gross_return = sum(executed[asset] * forward[asset] for asset in assets)
+            gross_exposure = sum(abs(executed[asset]) for asset in assets)
             net_exposure = sum(executed.values())
             _close(
                 evidence["oneWayTurnover"],
@@ -2909,8 +2877,7 @@ def _factor_opportunity_projection(
             )
             _close(
                 evidence["reward"],
-                evidence["netReturn"]
-                - risk_aversion * evidence["grossReturn"] ** 2,
+                evidence["netReturn"] - risk_aversion * evidence["grossReturn"] ** 2,
                 f"{action_path}/reward",
                 "fixed reward",
                 tolerance=1e-10,
@@ -2931,8 +2898,7 @@ def _factor_opportunity_projection(
             )
             actions[action] = evidence
         rewards = {
-            action: actions[action]["reward"]
-            for action in configuration["actions"]
+            action: actions[action]["reward"] for action in configuration["actions"]
         }
         ranked = sorted(
             configuration["actions"],
@@ -2943,11 +2909,7 @@ def _factor_opportunity_projection(
         )
         selected_action = raw["selectedAction"]
         oracle_action = ranked[0] if decision_eligible else selected_action
-        selected_rank = (
-            ranked.index(selected_action) + 1
-            if decision_eligible
-            else 1
-        )
+        selected_rank = ranked.index(selected_action) + 1 if decision_eligible else 1
         selected_reward = _finite(
             raw.get("selectedReward"),
             f"{path}/selectedReward",
@@ -3132,23 +3094,15 @@ def _factor_opportunity_projection(
                     "selectedReward": row["selectedReward"],
                     "oracleReward": row["oracleReward"],
                     "realizedRegret": row["realizedRegret"],
-                    "candidateMinusSelectedReward": row[
-                        "candidateMinusSelectedReward"
-                    ],
-                    "candidateMinusBalancedReward": row[
-                        "candidateMinusBalancedReward"
-                    ],
+                    "candidateMinusSelectedReward": row["candidateMinusSelectedReward"],
+                    "candidateMinusBalancedReward": row["candidateMinusBalancedReward"],
                     "alternatives": [
                         {
                             "action": action,
                             "reward": row["actions"][action]["reward"],
-                            "grossReturn": row["actions"][action][
-                                "grossReturn"
-                            ],
+                            "grossReturn": row["actions"][action]["grossReturn"],
                             "netReturn": row["actions"][action]["netReturn"],
-                            "oneWayTurnover": row["actions"][action][
-                                "oneWayTurnover"
-                            ],
+                            "oneWayTurnover": row["actions"][action]["oneWayTurnover"],
                             "cost": row["actions"][action]["cost"],
                             "executionReason": row["actions"][action][
                                 "executionReason"
@@ -3156,9 +3110,9 @@ def _factor_opportunity_projection(
                             "riskRebalanceOverride": row["actions"][action][
                                 "riskRebalanceOverride"
                             ],
-                            "constraintRebalanceOverride": row["actions"][
-                                action
-                            ]["constraintRebalanceOverride"],
+                            "constraintRebalanceOverride": row["actions"][action][
+                                "constraintRebalanceOverride"
+                            ],
                             "constraintRepairOneWay": row["actions"][action][
                                 "constraintRepairOneWay"
                             ],
@@ -3186,23 +3140,17 @@ def _incremental_bucket(
         "decisions": len(rows),
         "active_decisions": len(active),
         "active_decision_rate": len(active) / len(rows),
-        "mean_gross_active_return": sum(
-            float(row["grossActiveReturn"]) for row in rows
-        )
+        "mean_gross_active_return": sum(float(row["grossActiveReturn"]) for row in rows)
         / len(rows),
         "total_gross_active_return": sum(
             float(row["grossActiveReturn"]) for row in rows
         ),
-        "total_incremental_cost": sum(
-            float(row["incrementalCost"]) for row in rows
-        ),
+        "total_incremental_cost": sum(float(row["incrementalCost"]) for row in rows),
         "mean_net_active_return": sum(net) / len(net),
         "total_net_active_return": sum(net),
         "active_win_rate": sum(value > 0.0 for value in net) / len(net),
         "conditional_active_win_rate": (
-            sum(value > 0.0 for value in active) / len(active)
-            if active
-            else 0.0
+            sum(value > 0.0 for value in active) / len(active) if active else 0.0
         ),
     }
 
@@ -3215,9 +3163,7 @@ def _relative_path_statistics(
     standard_deviation = math.sqrt(
         sum((value - mean_active) ** 2 for value in active) / len(active)
     )
-    periods = annualization_periods(
-        [row["timestamp"] for row in rows]
-    )
+    periods = annualization_periods([row["timestamp"] for row in rows])
     annualized_active_return = mean_active * periods
     tracking_error = standard_deviation * math.sqrt(periods)
     relative_path = 1.0
@@ -3242,9 +3188,7 @@ def _relative_path_statistics(
         "annualized_active_return": annualized_active_return,
         "annualized_tracking_error": tracking_error,
         "information_ratio": (
-            annualized_active_return / tracking_error
-            if tracking_error > 1e-15
-            else 0.0
+            annualized_active_return / tracking_error if tracking_error > 1e-15 else 0.0
         ),
         "relative_total_return": relative_path - 1.0,
         "relative_maximum_drawdown": maximum_drawdown,
@@ -3303,10 +3247,7 @@ def _incremental_metrics(
             regime_counts[dimension] += len(group)
     by_action_pair: dict[str, dict[str, Any]] = {}
     for policy_action, baseline_action in sorted(
-        {
-            (str(row["policyAction"]), str(row["baselineAction"]))
-            for row in selected
-        }
+        {(str(row["policyAction"]), str(row["baselineAction"])) for row in selected}
     ):
         group = [
             row
@@ -3333,11 +3274,7 @@ def _incremental_metrics(
             key = (
                 ("policy-switch" if policy_switched else "policy-hold")
                 + "/"
-                + (
-                    "baseline-switch"
-                    if baseline_switched
-                    else "baseline-hold"
-                )
+                + ("baseline-switch" if baseline_switched else "baseline-hold")
             )
             by_switch_state[key] = {
                 "policy_switched": policy_switched,
@@ -3367,22 +3304,15 @@ def _incremental_metrics(
             for row in selected
         ),
         "asset_gross_error": max(
-            abs(
-                sum(row["assetGrossContribution"].values())
-                - row["grossActiveReturn"]
-            )
+            abs(sum(row["assetGrossContribution"].values()) - row["grossActiveReturn"])
             for row in selected
         ),
         "asset_total_error": abs(
-            sum(
-                value["total_gross_active_contribution"]
-                for value in by_asset.values()
-            )
+            sum(value["total_gross_active_contribution"] for value in by_asset.values())
             - base["total_gross_active_return"]
         ),
         "action_pair_count_error": abs(
-            sum(value["decisions"] for value in by_action_pair.values())
-            - len(selected)
+            sum(value["decisions"] for value in by_action_pair.values()) - len(selected)
         ),
         "switch_state_count_error": abs(
             sum(value["decisions"] for value in by_switch_state.values())
@@ -3425,9 +3355,7 @@ def _incremental_metrics(
             item["annualized_tracking_error"] for item in path_stats
         )
         / len(path_stats),
-        "information_ratio": sum(
-            item["information_ratio"] for item in path_stats
-        )
+        "information_ratio": sum(item["information_ratio"] for item in path_stats)
         / len(path_stats),
         "relative_total_return": sum(
             item["relative_total_return"] for item in path_stats
@@ -3442,17 +3370,11 @@ def _incremental_metrics(
         "p95_net_active_return": _linear_percentile(net, 0.95),
         "worst_net_active_return": min(net),
         "best_net_active_return": max(net),
-        "actions_differ_rate": sum(
-            row["actionsDiffer"] for row in selected
-        )
+        "actions_differ_rate": sum(row["actionsDiffer"] for row in selected)
         / len(selected),
-        "policy_switch_rate": sum(
-            row["policySwitched"] for row in selected
-        )
+        "policy_switch_rate": sum(row["policySwitched"] for row in selected)
         / len(selected),
-        "baseline_switch_rate": sum(
-            row["baselineSwitched"] for row in selected
-        )
+        "baseline_switch_rate": sum(row["baselineSwitched"] for row in selected)
         / len(selected),
         "by_asset": by_asset,
         "by_regime": by_regime,
@@ -3480,21 +3402,15 @@ def _incremental_split_projection(
         "meanTrialTotalGrossActiveReturn": value[
             "mean_trial_total_gross_active_return"
         ],
-        "meanTrialTotalIncrementalCost": value[
-            "mean_trial_total_incremental_cost"
-        ],
-        "meanTrialTotalNetActiveReturn": value[
-            "mean_trial_total_net_active_return"
-        ],
+        "meanTrialTotalIncrementalCost": value["mean_trial_total_incremental_cost"],
+        "meanTrialTotalNetActiveReturn": value["mean_trial_total_net_active_return"],
         "annualizedActiveReturn": value["annualized_active_return"],
         "annualizedTrackingError": value["annualized_tracking_error"],
         "informationRatio": value["information_ratio"],
         "relativeTotalReturn": value["relative_total_return"],
         "relativeMaximumDrawdown": value["relative_maximum_drawdown"],
         "activeWinRate": value["active_win_rate"],
-        "conditionalActiveWinRate": value[
-            "conditional_active_win_rate"
-        ],
+        "conditionalActiveWinRate": value["conditional_active_win_rate"],
         "p05NetActiveReturn": value["p05_net_active_return"],
         "medianNetActiveReturn": value["median_net_active_return"],
         "p95NetActiveReturn": value["p95_net_active_return"],
@@ -3506,15 +3422,11 @@ def _incremental_split_projection(
         "byAsset": [
             {
                 "asset": asset,
-                "totalGrossActiveContribution": item[
-                    "total_gross_active_contribution"
-                ],
+                "totalGrossActiveContribution": item["total_gross_active_contribution"],
                 "meanTrialTotalGrossActiveContribution": item[
                     "mean_trial_total_gross_active_contribution"
                 ],
-                "meanGrossActiveContribution": item[
-                    "mean_gross_active_contribution"
-                ],
+                "meanGrossActiveContribution": item["mean_gross_active_contribution"],
             }
             for asset, item in value["by_asset"].items()
         ],
@@ -3526,19 +3438,13 @@ def _incremental_split_projection(
                 "decisions": item["decisions"],
                 "activeDecisions": item["active_decisions"],
                 "activeDecisionRate": item["active_decision_rate"],
-                "meanGrossActiveReturn": item[
-                    "mean_gross_active_return"
-                ],
-                "totalGrossActiveReturn": item[
-                    "total_gross_active_return"
-                ],
+                "meanGrossActiveReturn": item["mean_gross_active_return"],
+                "totalGrossActiveReturn": item["total_gross_active_return"],
                 "totalIncrementalCost": item["total_incremental_cost"],
                 "meanNetActiveReturn": item["mean_net_active_return"],
                 "totalNetActiveReturn": item["total_net_active_return"],
                 "activeWinRate": item["active_win_rate"],
-                "conditionalActiveWinRate": item[
-                    "conditional_active_win_rate"
-                ],
+                "conditionalActiveWinRate": item["conditional_active_win_rate"],
             }
             for key, item in value["by_regime"].items()
         ],
@@ -3552,9 +3458,7 @@ def _incremental_split_projection(
                 "meanNetActiveReturn": item["mean_net_active_return"],
                 "totalNetActiveReturn": item["total_net_active_return"],
                 "activeWinRate": item["active_win_rate"],
-                "conditionalActiveWinRate": item[
-                    "conditional_active_win_rate"
-                ],
+                "conditionalActiveWinRate": item["conditional_active_win_rate"],
             }
             for key, item in value["by_action_pair"].items()
         ],
@@ -3569,9 +3473,7 @@ def _incremental_split_projection(
                 "meanNetActiveReturn": item["mean_net_active_return"],
                 "totalNetActiveReturn": item["total_net_active_return"],
                 "activeWinRate": item["active_win_rate"],
-                "conditionalActiveWinRate": item[
-                    "conditional_active_win_rate"
-                ],
+                "conditionalActiveWinRate": item["conditional_active_win_rate"],
             }
             for key, item in value["by_switch_state"].items()
         ],
@@ -3583,26 +3485,16 @@ def _incremental_split_projection(
                 "observations": item["observations"],
                 "activeDecisions": item["active_decisions"],
                 "activeDecisionRate": item["active_decision_rate"],
-                "totalGrossActiveReturn": item[
-                    "total_gross_active_return"
-                ],
+                "totalGrossActiveReturn": item["total_gross_active_return"],
                 "totalIncrementalCost": item["total_incremental_cost"],
                 "totalNetActiveReturn": item["total_net_active_return"],
                 "activeWinRate": item["active_win_rate"],
-                "conditionalActiveWinRate": item[
-                    "conditional_active_win_rate"
-                ],
-                "annualizedActiveReturn": item[
-                    "annualized_active_return"
-                ],
-                "annualizedTrackingError": item[
-                    "annualized_tracking_error"
-                ],
+                "conditionalActiveWinRate": item["conditional_active_win_rate"],
+                "annualizedActiveReturn": item["annualized_active_return"],
+                "annualizedTrackingError": item["annualized_tracking_error"],
                 "informationRatio": item["information_ratio"],
                 "relativeTotalReturn": item["relative_total_return"],
-                "relativeMaximumDrawdown": item[
-                    "relative_maximum_drawdown"
-                ],
+                "relativeMaximumDrawdown": item["relative_maximum_drawdown"],
             }
             for item in value["trials"]
         ],
@@ -3639,15 +3531,11 @@ def _factor_fusion_diagnosis(
             "reason": "required-verified-evidence-unavailable",
         }
 
-    selected_baselines = [
-        item for item in baselines if item["selectedOnValidation"]
-    ]
+    selected_baselines = [item for item in baselines if item["selectedOnValidation"]]
     balanced_baselines = [
         item for item in baselines if item["name"] == "fixed:balanced"
     ]
-    if not selected_baselines or len(selected_baselines) != len(
-        balanced_baselines
-    ):
+    if not selected_baselines or len(selected_baselines) != len(balanced_baselines):
         _fail(
             "factorFusionDiagnosis/baselines",
             "rl.fusion-diagnosis-baselines",
@@ -3665,12 +3553,10 @@ def _factor_fusion_diagnosis(
         candidate = opportunity_split["candidate"]
         baseline_field = "validation" if split == "validation" else "test"
         balanced_sharpe = sum(
-            item[baseline_field]["netSharpe"]
-            for item in balanced_baselines
+            item[baseline_field]["netSharpe"] for item in balanced_baselines
         ) / len(balanced_baselines)
         selected_baseline_sharpe = sum(
-            item[baseline_field]["netSharpe"]
-            for item in selected_baselines
+            item[baseline_field]["netSharpe"] for item in selected_baselines
         ) / len(selected_baselines)
         candidate_sharpe = candidate_summary["mean"]
         candidate_delta = candidate_sharpe - balanced_sharpe
@@ -3688,12 +3574,8 @@ def _factor_fusion_diagnosis(
             {
                 "fold": item["fold"],
                 "seed": item["seed"],
-                "grossActiveReturn": incremental_trial[
-                    "totalGrossActiveReturn"
-                ],
-                "netActiveReturn": incremental_trial[
-                    "totalNetActiveReturn"
-                ],
+                "grossActiveReturn": incremental_trial["totalGrossActiveReturn"],
+                "netActiveReturn": incremental_trial["totalNetActiveReturn"],
                 "sharpeAdvantage": (
                     item["validationAdvantage"]
                     if split == "validation"
@@ -3716,8 +3598,7 @@ def _factor_fusion_diagnosis(
         net_values = [item["netActiveReturn"] for item in split_trials]
         mean_net = sum(net_values) / len(net_values)
         net_standard_deviation = math.sqrt(
-            sum((value - mean_net) ** 2 for value in net_values)
-            / len(net_values)
+            sum((value - mean_net) ** 2 for value in net_values) / len(net_values)
         )
         worst_trial = min(
             split_trials,
@@ -3765,21 +3646,15 @@ def _factor_fusion_diagnosis(
                 "selectedFrequency": candidate["selectedFrequency"],
                 "localBestFrequency": candidate["oracleFrequency"],
                 "oracleCaptureRate": candidate["oracleCaptureRate"],
-                "missedOpportunityRate": candidate[
-                    "missedOpportunityRate"
-                ],
+                "missedOpportunityRate": candidate["missedOpportunityRate"],
                 "meanLocalRewardDeltaVsBalanced": local_delta,
-                "meanLocalRewardDeltaVsSelected": candidate[
-                    "meanVsSelectedReward"
-                ],
+                "meanLocalRewardDeltaVsSelected": candidate["meanVsSelectedReward"],
             },
             "policySelection": {
                 "selectedBaselineMeanNetSharpe": selected_baseline_sharpe,
                 "oracleHitRate": opportunity_split["oracleHitRate"],
                 "meanSelectedRank": opportunity_split["meanSelectedRank"],
-                "meanOneStepRealizedRegret": opportunity_split[
-                    "meanRealizedRegret"
-                ],
+                "meanOneStepRealizedRegret": opportunity_split["meanRealizedRegret"],
             },
             "adaptiveTransmission": {
                 "meanTrialGrossActiveReturn": incremental_split[
@@ -3793,61 +3668,46 @@ def _factor_fusion_diagnosis(
                 ],
                 "meanSharpeAdvantageVsSelectedBaseline": sharpe_advantage,
                 "informationRatio": incremental_split["informationRatio"],
-                "activeDecisionRate": incremental_split[
-                    "activeDecisionRate"
-                ],
+                "activeDecisionRate": incremental_split["activeDecisionRate"],
                 "conditionalActiveWinRate": incremental_split[
                     "conditionalActiveWinRate"
                 ],
                 "actionsDifferRate": incremental_split["actionsDifferRate"],
                 "policySwitchRate": incremental_split["policySwitchRate"],
-                "baselineSwitchRate": incremental_split[
-                    "baselineSwitchRate"
-                ],
+                "baselineSwitchRate": incremental_split["baselineSwitchRate"],
             },
             "stability": {
                 "trialPaths": len(split_trials),
                 "positiveGrossTrialRate": sum(
-                    item["grossActiveReturn"] > 0.0
-                    for item in split_trials
+                    item["grossActiveReturn"] > 0.0 for item in split_trials
                 )
                 / len(split_trials),
                 "positiveNetTrialRate": sum(
-                    item["netActiveReturn"] > 0.0
-                    for item in split_trials
+                    item["netActiveReturn"] > 0.0 for item in split_trials
                 )
                 / len(split_trials),
                 "positiveSharpeAdvantageTrialRate": sum(
-                    item["sharpeAdvantage"] > 0.0
-                    for item in split_trials
+                    item["sharpeAdvantage"] > 0.0 for item in split_trials
                 )
                 / len(split_trials),
-                "netActiveReturnStandardDeviation": (
-                    net_standard_deviation
-                ),
+                "netActiveReturnStandardDeviation": (net_standard_deviation),
                 "worstTrial": worst_trial,
             },
             "lossLocator": {
                 "worstRegime": {
                     "key": worst_regime["key"],
                     "decisions": worst_regime["decisions"],
-                    "totalNetActiveReturn": worst_regime[
-                        "totalNetActiveReturn"
-                    ],
+                    "totalNetActiveReturn": worst_regime["totalNetActiveReturn"],
                 },
                 "worstActionPair": {
                     "key": worst_pair["key"],
                     "decisions": worst_pair["decisions"],
-                    "totalNetActiveReturn": worst_pair[
-                        "totalNetActiveReturn"
-                    ],
+                    "totalNetActiveReturn": worst_pair["totalNetActiveReturn"],
                 },
                 "worstSwitchState": {
                     "key": worst_switch["key"],
                     "decisions": worst_switch["decisions"],
-                    "totalNetActiveReturn": worst_switch[
-                        "totalNetActiveReturn"
-                    ],
+                    "totalNetActiveReturn": worst_switch["totalNetActiveReturn"],
                 },
                 "worstAssetGrossContribution": {
                     "asset": worst_asset["asset"],
@@ -3857,12 +3717,12 @@ def _factor_fusion_diagnosis(
                 },
             },
             "reconciliation": {
-                "incrementalAttributionPassed": incremental_split[
-                    "reconciliation"
-                ]["passed"],
-                "factorOpportunityPassed": opportunity_split[
-                    "reconciliation"
-                ]["passed"],
+                "incrementalAttributionPassed": incremental_split["reconciliation"][
+                    "passed"
+                ],
+                "factorOpportunityPassed": opportunity_split["reconciliation"][
+                    "passed"
+                ],
                 "trialPathsReconciled": len(split_trials) == len(trials),
             },
         }
@@ -3880,13 +3740,9 @@ def _factor_fusion_diagnosis(
         mean_test_advantage,
     )
     transmission = validation["adaptiveTransmission"]
-    positive_net_trial_rate = validation["stability"][
-        "positiveNetTrialRate"
-    ]
+    positive_net_trial_rate = validation["stability"]["positiveNetTrialRate"]
     candidate_assessment = validation["candidateFactor"]["assessment"]
-    missed_candidate = validation["candidateFactor"][
-        "missedOpportunityRate"
-    ]
+    missed_candidate = validation["candidateFactor"]["missedOpportunityRate"]
     if transmission["meanTrialGrossActiveReturn"] <= 0.0:
         stage = "adaptive-book-selection-negative"
         if candidate_assessment == "candidate-edge-absent":
@@ -3935,9 +3791,7 @@ def _factor_fusion_diagnosis(
         "available": True,
         "reason": None,
         "semantics": {
-            "localOpportunity": (
-                "same-pretrade-one-step-ex-post-audit"
-            ),
+            "localOpportunity": ("same-pretrade-one-step-ex-post-audit"),
             "adaptiveTransmission": "independent-full-policy-paths",
             "candidateFactorSource": "content-locked-study-dependency",
             "selectionSplit": "validation",
@@ -4009,9 +3863,8 @@ def _incremental_attribution_projection(
             "Incremental attribution identity differs from the fixed Run",
         )
     thresholds = value.get("thresholds")
-    if (
-        not isinstance(thresholds, dict)
-        or set(thresholds) != set(configuration["folds"])
+    if not isinstance(thresholds, dict) or set(thresholds) != set(
+        configuration["folds"]
     ):
         _fail(
             "policy-incremental-attribution/thresholds",
@@ -4021,9 +3874,7 @@ def _incremental_attribution_projection(
     normalized_thresholds: dict[str, float] = {}
     for fold in configuration["folds"]:
         item = thresholds[fold]
-        if not isinstance(item, dict) or set(item) != {
-            "marketVolatility20Median"
-        }:
+        if not isinstance(item, dict) or set(item) != {"marketVolatility20Median"}:
             _fail(
                 f"policy-incremental-attribution/thresholds/{fold}",
                 "rl.incremental-thresholds",
@@ -4085,9 +3936,7 @@ def _incremental_attribution_projection(
     }
     normalized: list[dict[str, Any]] = []
     previous: dict[tuple[str, int, str], dict[str, Any]] = {}
-    for index, (raw, action_row) in enumerate(
-        zip(value["rows"], action_rows)
-    ):
+    for index, (raw, action_row) in enumerate(zip(value["rows"], action_rows)):
         path = f"policy-incremental-attribution/rows/{index}"
         if not isinstance(raw, dict) or set(raw) != row_fields:
             _fail(
@@ -4115,8 +3964,7 @@ def _incremental_attribution_projection(
             )
         fold, seed, split, _ = key
         if (
-            raw.get("baselineName")
-            != selected_baselines.get((fold, seed))
+            raw.get("baselineName") != selected_baselines.get((fold, seed))
             or raw.get("policyAction") != action_row["action"]
             or raw.get("policyAction") not in configuration["actions"]
             or raw.get("baselineAction") not in configuration["actions"]
@@ -4139,9 +3987,8 @@ def _incremental_attribution_projection(
             for field in numeric_fields
         }
         contribution_raw = raw.get("assetGrossContribution")
-        if (
-            not isinstance(contribution_raw, dict)
-            or set(contribution_raw) != set(assets)
+        if not isinstance(contribution_raw, dict) or set(contribution_raw) != set(
+            assets
         ):
             _fail(
                 f"{path}/assetGrossContribution",
@@ -4156,37 +4003,27 @@ def _incremental_attribution_projection(
             for asset in assets
         }
         expected_volume = (
-            "below-trend"
-            if numbers["volumeRegimeValue"] < 0.0
-            else "above-trend"
+            "below-trend" if numbers["volumeRegimeValue"] < 0.0 else "above-trend"
         )
-        expected_trend = (
-            "negative"
-            if numbers["marketReturn5"] < 0.0
-            else "nonnegative"
-        )
+        expected_trend = "negative" if numbers["marketReturn5"] < 0.0 else "nonnegative"
         expected_volatility = (
             "low"
-            if numbers["marketVolatility20"]
-            < normalized_thresholds[fold]
+            if numbers["marketVolatility20"] < normalized_thresholds[fold]
             else "high"
         )
         group_key = (fold, int(seed), split)
         prior = previous.get(group_key)
         expected_policy_switch = (
-            prior is not None
-            and prior["policyAction"] != raw["policyAction"]
+            prior is not None and prior["policyAction"] != raw["policyAction"]
         )
         expected_baseline_switch = (
-            prior is not None
-            and prior["baselineAction"] != raw["baselineAction"]
+            prior is not None and prior["baselineAction"] != raw["baselineAction"]
         )
         if (
             raw.get("volumeRegime") != expected_volume
             or raw.get("marketTrend") != expected_trend
             or raw.get("volatilityRegime") != expected_volatility
-            or raw["actionsDiffer"]
-            != (raw["policyAction"] != raw["baselineAction"])
+            or raw["actionsDiffer"] != (raw["policyAction"] != raw["baselineAction"])
             or raw["policySwitched"] != expected_policy_switch
             or raw["baselineSwitched"] != expected_baseline_switch
         ):
@@ -4218,10 +4055,7 @@ def _incremental_attribution_projection(
         _close(
             numbers["incrementalCost"],
             action_row["cost"]
-            - (
-                numbers["baselineGrossReturn"]
-                - numbers["baselineNetReturn"]
-            ),
+            - (numbers["baselineGrossReturn"] - numbers["baselineNetReturn"]),
             f"{path}/incrementalCost",
             "incremental cost",
             tolerance=1e-10,
@@ -4242,8 +4076,7 @@ def _incremental_attribution_projection(
         )
         _close(
             numbers["oneWayTurnoverDelta"],
-            numbers["policyOneWayTurnover"]
-            - numbers["baselineOneWayTurnover"],
+            numbers["policyOneWayTurnover"] - numbers["baselineOneWayTurnover"],
             f"{path}/oneWayTurnoverDelta",
             "turnover delta",
             tolerance=1e-10,
@@ -4335,8 +4168,7 @@ def _execution_risk_projection(
 ) -> dict[str, Any]:
     raw = metrics.get("execution_risk")
     has_actions = any(
-        summary["executionRisk"]["available"]
-        for summary in action_summaries
+        summary["executionRisk"]["available"] for summary in action_summaries
     )
     if raw is None and not has_actions:
         return {
@@ -4353,9 +4185,7 @@ def _execution_risk_projection(
             "RL execution-risk metrics and action evidence must exist together",
         )
     expected_policy = {
-        "method": (
-            "post-drift-executed-book-volatility-compliance-v1"
-        ),
+        "method": ("post-drift-executed-book-volatility-compliance-v1"),
         "risk_policy": mandate["riskPolicy"],
         "no_trade_priority": "risk-compliance-first",
         "repair": "minimum-proportional-scale-down",
@@ -4390,27 +4220,18 @@ def _execution_risk_projection(
         active = sum(item["activeDates"] for item in items)
         available = sum(item["forecastAvailableDates"] for item in items)
         derived = {
-            "status": (
-                "available" if available else "forecast_unavailable"
-            ),
+            "status": ("available" if available else "forecast_unavailable"),
             "trial_paths": len(items),
             "active_dates": active,
             "forecast_available_dates": available,
             "forecast_coverage": available / active if active else 0.0,
-            "pretrade_breach_dates": sum(
-                item["pretradeBreachDates"] for item in items
-            ),
+            "pretrade_breach_dates": sum(item["pretradeBreachDates"] for item in items),
             "risk_rebalance_override_dates": sum(
                 item["riskRebalanceOverrideDates"] for item in items
             ),
-            "executed_breach_dates": sum(
-                item["executedBreachDates"] for item in items
-            ),
+            "executed_breach_dates": sum(item["executedBreachDates"] for item in items),
             "maximum_executed_forecast_annualized": max(
-                (
-                    item["maximumExecutedForecastAnnualized"]
-                    for item in items
-                ),
+                (item["maximumExecutedForecastAnnualized"] for item in items),
                 default=0.0,
             ),
             "maximum_ceiling_error": max(
@@ -4443,32 +4264,21 @@ def _execution_risk_projection(
             "status": derived["status"],
             "trialPaths": derived["trial_paths"],
             "activeDates": derived["active_dates"],
-            "forecastAvailableDates": derived[
-                "forecast_available_dates"
-            ],
+            "forecastAvailableDates": derived["forecast_available_dates"],
             "forecastCoverage": derived["forecast_coverage"],
-            "pretradeBreachDates": derived[
-                "pretrade_breach_dates"
-            ],
-            "riskRebalanceOverrideDates": derived[
-                "risk_rebalance_override_dates"
-            ],
-            "executedBreachDates": derived[
-                "executed_breach_dates"
-            ],
+            "pretradeBreachDates": derived["pretrade_breach_dates"],
+            "riskRebalanceOverrideDates": derived["risk_rebalance_override_dates"],
+            "executedBreachDates": derived["executed_breach_dates"],
             "maximumExecutedForecastAnnualized": derived[
                 "maximum_executed_forecast_annualized"
             ],
             "maximumCeilingError": derived["maximum_ceiling_error"],
         }
-        split_rows = [
-            row for row in action_rows if row["split"] == split
-        ]
+        split_rows = [row for row in action_rows if row["split"] == split]
         projection[split].update(
             {
                 "constraintRebalanceOverrideDates": sum(
-                    row["constraintRebalanceOverride"]
-                    for row in split_rows
+                    row["constraintRebalanceOverride"] for row in split_rows
                 ),
                 "constraintOnlyOverrideDates": sum(
                     row["constraintRebalanceOverride"]
@@ -4476,23 +4286,17 @@ def _execution_risk_projection(
                     for row in split_rows
                 ),
                 "jointConstraintRiskOverrideDates": sum(
-                    row["constraintRebalanceOverride"]
-                    and row["riskRebalanceOverride"]
+                    row["constraintRebalanceOverride"] and row["riskRebalanceOverride"]
                     for row in split_rows
                 ),
                 "constraintRepairOneWay": sum(
-                    row["constraintRepairOneWay"]
-                    for row in split_rows
+                    row["constraintRepairOneWay"] for row in split_rows
                 ),
                 "executedConstraintBreachDates": sum(
-                    row["executedConstraintMaximumError"] > 1e-10
-                    for row in split_rows
+                    row["executedConstraintMaximumError"] > 1e-10 for row in split_rows
                 ),
                 "maximumExecutedConstraintError": max(
-                    (
-                        row["executedConstraintMaximumError"]
-                        for row in split_rows
-                    ),
+                    (row["executedConstraintMaximumError"] for row in split_rows),
                     default=0.0,
                 ),
             }
@@ -4533,9 +4337,17 @@ def load_rl_diagnostics(
         if value.get("schemaVersion") != SCHEMA_VERSION:
             _fail(path, "rl.schema-version", f"RL {label} schema version differs")
     if report.get("inputHash") != run.result["inputHash"]:
-        _fail(paths["rl-report"], "rl.report-identity", "Report input identity differs from RunResult")
+        _fail(
+            paths["rl-report"],
+            "rl.report-identity",
+            "Report input identity differs from RunResult",
+        )
     if report.get("metrics") != run.result["metrics"]:
-        _fail(paths["rl-report"], "rl.report-metrics", "Report metrics differ from immutable RunResult")
+        _fail(
+            paths["rl-report"],
+            "rl.report-metrics",
+            "Report metrics differ from immutable RunResult",
+        )
     report_dataset = report.get("dataset")
     if (
         not isinstance(report_dataset, dict)
@@ -4543,21 +4355,25 @@ def load_rl_diagnostics(
         or report_dataset.get("version") != run.result["dataset"].get("version")
         or report_dataset.get("universe") != run.result["dataset"].get("universe")
     ):
-        _fail(paths["rl-report"], "rl.report-dataset", "Report dataset differs from RunResult")
+        _fail(
+            paths["rl-report"],
+            "rl.report-dataset",
+            "Report dataset differs from RunResult",
+        )
     semantics = report.get("semantics")
     if not isinstance(semantics, dict) or semantics.get("tradingAuthority") != "none":
-        _fail(paths["rl-report"], "rl.semantics", "RL report must preserve no-trading authority")
+        _fail(
+            paths["rl-report"],
+            "rl.semantics",
+            "RL report must preserve no-trading authority",
+        )
 
     metrics = run.result["metrics"]
     configuration = _configuration(metrics)
     has_candidate_fusion = "candidate" in configuration["actions"]
     factor_experts = configuration.get(
         "factorExperts",
-        [
-            action
-            for action in configuration["actions"]
-            if action != "balanced"
-        ],
+        [action for action in configuration["actions"] if action != "balanced"],
     )
     models, contextual_baselines = _models(
         models_value,
@@ -4596,7 +4412,11 @@ def load_rl_diagnostics(
         or not isinstance(baseline_metrics, dict)
         or set(baseline_metrics) != set(configuration["folds"])
     ):
-        _fail("RunResult/metrics", "rl.folds", "RL and baseline folds differ from configuration")
+        _fail(
+            "RunResult/metrics",
+            "rl.folds",
+            "RL and baseline folds differ from configuration",
+        )
 
     ranges: dict[str, dict[str, dict[str, Any]]] = {}
     trials: list[dict[str, Any]] = []
@@ -4613,12 +4433,18 @@ def load_rl_diagnostics(
     for fold in configuration["folds"]:
         fold_value = fold_metrics[fold]
         if not isinstance(fold_value, dict):
-            _fail(f"metrics/rl/folds/{fold}", "rl.fold", "Fold evidence must be an object")
+            _fail(
+                f"metrics/rl/folds/{fold}", "rl.fold", "Fold evidence must be an object"
+            )
         ranges[fold] = _ranges(fold_value, fold)
         fold_baselines = baseline_metrics[fold]
         selected = fold_baselines.get("best_validation_policy")
         if not isinstance(selected, str):
-            _fail(f"metrics/baselines/{fold}", "rl.baseline", "Missing validation-selected baseline")
+            _fail(
+                f"metrics/baselines/{fold}",
+                "rl.baseline",
+                "Missing validation-selected baseline",
+            )
         baseline_names = [
             *(f"fixed:{action}" for action in configuration["actions"]),
             "best-training-expert",
@@ -4626,12 +4452,16 @@ def load_rl_diagnostics(
         ]
         for name in baseline_names:
             validation_value = _performance(
-                _baseline_split(fold_baselines, name, "validation", f"baselines/{fold}/{name}"),
+                _baseline_split(
+                    fold_baselines, name, "validation", f"baselines/{fold}/{name}"
+                ),
                 f"baselines/{fold}/{name}/validation",
                 configuration["actions"],
             )
             test_value = _performance(
-                _baseline_split(fold_baselines, name, "test", f"baselines/{fold}/{name}"),
+                _baseline_split(
+                    fold_baselines, name, "test", f"baselines/{fold}/{name}"
+                ),
                 f"baselines/{fold}/{name}/test",
                 configuration["actions"],
             )
@@ -4645,12 +4475,16 @@ def load_rl_diagnostics(
                 }
             )
         selected_validation = _performance(
-            _baseline_split(fold_baselines, selected, "validation", f"baselines/{fold}/{selected}"),
+            _baseline_split(
+                fold_baselines, selected, "validation", f"baselines/{fold}/{selected}"
+            ),
             f"baselines/{fold}/{selected}/validation",
             configuration["actions"],
         )
         selected_test = _performance(
-            _baseline_split(fold_baselines, selected, "test", f"baselines/{fold}/{selected}"),
+            _baseline_split(
+                fold_baselines, selected, "test", f"baselines/{fold}/{selected}"
+            ),
             f"baselines/{fold}/{selected}/test",
             configuration["actions"],
         )
@@ -4677,21 +4511,30 @@ def load_rl_diagnostics(
                 f"baselines/{fold}/fixed:candidate/test",
                 configuration["actions"],
             )
-            candidate_validation_sharpes.append(
-                candidate_validation["netSharpe"]
-            )
+            candidate_validation_sharpes.append(candidate_validation["netSharpe"])
             candidate_test_sharpes.append(candidate_test["netSharpe"])
         seed_values = fold_value.get("seeds")
         if not isinstance(seed_values, dict) or set(seed_values) != {
             str(seed) for seed in configuration["seeds"]
         }:
-            _fail(f"metrics/rl/folds/{fold}/seeds", "rl.trials", "Trial seeds differ from configuration")
+            _fail(
+                f"metrics/rl/folds/{fold}/seeds",
+                "rl.trials",
+                "Trial seeds differ from configuration",
+            )
         fold_validation: list[float] = []
         fold_test: list[float] = []
         for seed in configuration["seeds"]:
             seed_value = seed_values[str(seed)]
-            if not isinstance(seed_value, dict) or seed_value.get("status") != "succeeded":
-                _fail(f"metrics/rl/folds/{fold}/seeds/{seed}", "rl.trial-status", "Successful RL Run must preserve every successful trial")
+            if (
+                not isinstance(seed_value, dict)
+                or seed_value.get("status") != "succeeded"
+            ):
+                _fail(
+                    f"metrics/rl/folds/{fold}/seeds/{seed}",
+                    "rl.trial-status",
+                    "Successful RL Run must preserve every successful trial",
+                )
             validation = _performance(
                 seed_value.get("validation"),
                 f"rl/{fold}/{seed}/validation",
@@ -4706,8 +4549,14 @@ def load_rl_diagnostics(
                 validation["observations"] != ranges[fold]["validation"]["observations"]
                 or test["observations"] != ranges[fold]["test"]["observations"]
             ):
-                _fail(f"rl/{fold}/{seed}", "rl.trial-observations", "Trial observations differ from fold ranges")
-            validation_advantage = validation["netSharpe"] - selected_validation["netSharpe"]
+                _fail(
+                    f"rl/{fold}/{seed}",
+                    "rl.trial-observations",
+                    "Trial observations differ from fold ranges",
+                )
+            validation_advantage = (
+                validation["netSharpe"] - selected_validation["netSharpe"]
+            )
             test_advantage = test["netSharpe"] - selected_test["netSharpe"]
             validation_advantage_vs_candidate = (
                 validation["netSharpe"] - candidate_validation["netSharpe"]
@@ -4749,7 +4598,11 @@ def load_rl_diagnostics(
             )
         fold_aggregate = fold_value.get("aggregate")
         if not isinstance(fold_aggregate, dict):
-            _fail(f"metrics/rl/folds/{fold}/aggregate", "rl.aggregate", "Missing fold aggregate")
+            _fail(
+                f"metrics/rl/folds/{fold}/aggregate",
+                "rl.aggregate",
+                "Missing fold aggregate",
+            )
         fold_validation_summary = _reconcile_aggregate(
             fold_aggregate.get("validation_net_sharpe"),
             fold_validation,
@@ -4758,8 +4611,13 @@ def load_rl_diagnostics(
         within_fold_validation_standard_deviations.append(
             fold_validation_summary["standardDeviation"]
         )
-        _reconcile_aggregate(fold_aggregate.get("test_net_sharpe"), fold_test, f"{fold}/test")
-        validation_advantage = sum(fold_validation) / len(fold_validation) - selected_validation["netSharpe"]
+        _reconcile_aggregate(
+            fold_aggregate.get("test_net_sharpe"), fold_test, f"{fold}/test"
+        )
+        validation_advantage = (
+            sum(fold_validation) / len(fold_validation)
+            - selected_validation["netSharpe"]
+        )
         test_advantage = sum(fold_test) / len(fold_test) - selected_test["netSharpe"]
         validation_advantage_vs_candidate = (
             sum(fold_validation) / len(fold_validation)
@@ -4768,8 +4626,7 @@ def load_rl_diagnostics(
             else None
         )
         test_advantage_vs_candidate = (
-            sum(fold_test) / len(fold_test)
-            - candidate_test["netSharpe"]
+            sum(fold_test) / len(fold_test) - candidate_test["netSharpe"]
             if candidate_test is not None
             else None
         )
@@ -4801,9 +4658,7 @@ def load_rl_diagnostics(
         validation_advantages.append(validation_advantage)
         test_advantages.append(test_advantage)
         if has_candidate_fusion:
-            validation_advantages_vs_candidate.append(
-                validation_advantage_vs_candidate
-            )
+            validation_advantages_vs_candidate.append(validation_advantage_vs_candidate)
             test_advantages_vs_candidate.append(test_advantage_vs_candidate)
 
     aggregate = metrics.get("rl", {}).get("aggregate")
@@ -4820,8 +4675,17 @@ def load_rl_diagnostics(
         "metrics/rl/aggregate/test",
     )
     if aggregate.get("failures") != []:
-        _fail("metrics/rl/aggregate/failures", "rl.failures", "Successful Run cannot hide trial failures")
-    _close(aggregate.get("failure_rate"), 0.0, "metrics/rl/aggregate/failure_rate", "failure rate")
+        _fail(
+            "metrics/rl/aggregate/failures",
+            "rl.failures",
+            "Successful Run cannot hide trial failures",
+        )
+    _close(
+        aggregate.get("failure_rate"),
+        0.0,
+        "metrics/rl/aggregate/failure_rate",
+        "failure rate",
+    )
     _close(
         metrics.get("validation_mean_net_sharpe"),
         validation_summary["mean"],
@@ -4840,8 +4704,7 @@ def load_rl_diagnostics(
         else None
     )
     mean_test_advantage_vs_candidate = (
-        sum(test_advantages_vs_candidate)
-        / len(test_advantages_vs_candidate)
+        sum(test_advantages_vs_candidate) / len(test_advantages_vs_candidate)
         if has_candidate_fusion
         else None
     )
@@ -4883,7 +4746,9 @@ def load_rl_diagnostics(
             "mean test advantage versus candidate factor",
         )
 
-    training = _training(histories_value, configuration, ranges, run.result["inputHash"])
+    training = _training(
+        histories_value, configuration, ranges, run.result["inputHash"]
+    )
     action_rows = _action_rows(paths["policy-actions"], configuration, ranges)
     within_fold_validation_action_mismatch: list[float] = []
     for fold in configuration["folds"]:
@@ -4939,10 +4804,7 @@ def load_rl_diagnostics(
         configuration,
         list(run.result["dataset"]["universe"]),
         run.result["inputHash"],
-        {
-            (item["fold"], item["seed"]): item["selectedBaseline"]
-            for item in trials
-        },
+        {(item["fold"], item["seed"]): item["selectedBaseline"] for item in trials},
     )
     validation_candidate_action_frequency = None
     if has_candidate_fusion:
@@ -4988,12 +4850,10 @@ def load_rl_diagnostics(
             "grossLimit": 1.0,
             "maxAbsWeight": 0.30,
             "assetMaxAbsWeights": {
-                asset: 0.30
-                for asset in run.result["dataset"]["universe"]
+                asset: 0.30 for asset in run.result["dataset"]["universe"]
             },
             "assetPositionRoles": {
-                asset: "two-sided"
-                for asset in run.result["dataset"]["universe"]
+                asset: "two-sided" for asset in run.result["dataset"]["universe"]
             },
             "longGrossLimit": 0.5,
             "shortGrossLimit": 0.5,
@@ -5004,8 +4864,7 @@ def load_rl_diagnostics(
                 "kind": "equal-weight-long-research-universe",
                 "asset": None,
                 "weights": {
-                    asset: 1.0
-                    / len(run.result["dataset"]["universe"])
+                    asset: 1.0 / len(run.result["dataset"]["universe"])
                     for asset in run.result["dataset"]["universe"]
                 },
             },
@@ -5022,9 +4881,7 @@ def load_rl_diagnostics(
                     "anchor": "dataset-start",
                 },
                 "costModel": "linear-traded-notional-v1",
-                "capacityModel": (
-                    "trailing-dollar-volume-participation-v1"
-                ),
+                "capacityModel": ("trailing-dollar-volume-participation-v1"),
             },
         }
     else:
@@ -5043,8 +4900,7 @@ def load_rl_diagnostics(
         )
         if (
             report_mandate != mandate
-            or mandate["researchUniverse"]
-            != run.result["dataset"]["universe"]
+            or mandate["researchUniverse"] != run.result["dataset"]["universe"]
             or configuration.get("portfolioMandateId") != mandate["id"]
         ):
             _fail(
@@ -5053,9 +4909,7 @@ def load_rl_diagnostics(
                 "RL Portfolio Mandate does not reconcile report, dataset, and configuration",
             )
         source_hashes = (
-            dependencies.get("sourceHashes")
-            if isinstance(dependencies, dict)
-            else None
+            dependencies.get("sourceHashes") if isinstance(dependencies, dict) else None
         )
         mandate_hash = (
             source_hashes.get(PORTFOLIO_MANDATE)
@@ -5076,17 +4930,13 @@ def load_rl_diagnostics(
             ("noTradeOneWay", "noTradeOneWay"),
             ("referenceNav", "referenceNav"),
         ):
-            if configuration.get(configuration_key) != implementation[
-                policy_key
-            ]:
+            if configuration.get(configuration_key) != implementation[policy_key]:
                 _fail(
                     f"metrics/configuration/{configuration_key}",
                     "rl.implementation-policy",
                     "RL configuration differs from the Portfolio Mandate",
                 )
-        if configuration.get("decisionSchedule") != implementation[
-            "decisionPolicy"
-        ]:
+        if configuration.get("decisionSchedule") != implementation["decisionPolicy"]:
             _fail(
                 "metrics/configuration/decisionSchedule",
                 "rl.decision-schedule",
@@ -5144,9 +4994,7 @@ def load_rl_diagnostics(
             expected_population,
             raw_mandate,
         )
-        expected_translation = signal_translation_contract(
-            expected_population
-        )
+        expected_translation = signal_translation_contract(expected_population)
     except PredictionModeError as error:
         _fail(
             "RunResult/metrics/prediction_universe",
@@ -5200,10 +5048,8 @@ def load_rl_diagnostics(
     if (
         not isinstance(dependencies, dict)
         or RESEARCH_HORIZON not in dependencies.get("paths", [])
-        or RESEARCH_HORIZON
-        not in dependencies.get("sourceHashes", {})
-        or configuration.get("researchHorizonId")
-        != research_horizon["id"]
+        or RESEARCH_HORIZON not in dependencies.get("sourceHashes", {})
+        or configuration.get("researchHorizonId") != research_horizon["id"]
     ):
         _fail(
             "RunResult/dependencies",
@@ -5222,7 +5068,11 @@ def load_rl_diagnostics(
         or research_integrity.get("selection_split") != "validation"
         or research_integrity.get("test_enters_selection") is not False
     ):
-        _fail("metrics/research_integrity", "rl.selection-integrity", "RL selection integrity is incomplete")
+        _fail(
+            "metrics/research_integrity",
+            "rl.selection-integrity",
+            "RL selection integrity is incomplete",
+        )
     if (
         configuration.get("learningContract") is not None
         and research_integrity.get("learning_configuration")
@@ -5246,9 +5096,7 @@ def load_rl_diagnostics(
         "meanValidationAdvantageVsCandidateFactor": (
             mean_validation_advantage_vs_candidate
         ),
-        "meanTestAdvantageVsCandidateFactor": (
-            mean_test_advantage_vs_candidate
-        ),
+        "meanTestAdvantageVsCandidateFactor": (mean_test_advantage_vs_candidate),
         "meanValidationCandidateActionFrequency": (
             validation_candidate_action_frequency
         ),
@@ -5301,18 +5149,10 @@ def load_rl_diagnostics(
             "researchAssets": expected_population["research_assets"],
             "predictionAssets": expected_population["prediction_assets"],
             "contextAssets": expected_population["context_assets"],
-            "assetPredictionRoles": expected_population[
-                "asset_prediction_roles"
-            ],
-            "evaluationAuthority": expected_population[
-                "evaluation_authority"
-            ],
-            "portfolioAuthority": expected_population[
-                "portfolio_authority"
-            ],
-            "relativeValuePair": expected_population[
-                "relative_value_pair"
-            ],
+            "assetPredictionRoles": expected_population["asset_prediction_roles"],
+            "evaluationAuthority": expected_population["evaluation_authority"],
+            "portfolioAuthority": expected_population["portfolio_authority"],
+            "relativeValuePair": expected_population["relative_value_pair"],
             "tradingAuthority": expected_population["trading_authority"],
         },
         "signalTranslation": {
@@ -5322,26 +5162,16 @@ def load_rl_diagnostics(
             "contextAssets": expected_translation["context_assets"],
             "authority": expected_translation["authority"],
             "scoreBasis": expected_translation["score_basis"],
-            "windowObservations": expected_translation[
-                "window_observations"
-            ],
-            "minimumObservations": expected_translation[
-                "minimum_observations"
-            ],
-            "relativeValuePair": expected_translation[
-                "relative_value_pair"
-            ],
+            "windowObservations": expected_translation["window_observations"],
+            "minimumObservations": expected_translation["minimum_observations"],
+            "relativeValuePair": expected_translation["relative_value_pair"],
             "contextScore": expected_translation["context_score"],
-            "selectionAuthority": expected_translation[
-                "selection_authority"
-            ],
+            "selectionAuthority": expected_translation["selection_authority"],
             "tradingAuthority": expected_translation["trading_authority"],
         },
         "researchHorizon": research_horizon,
         "decisionCadence": {
-            **mandate_projection["implementationPolicy"][
-                "decisionPolicy"
-            ],
+            **mandate_projection["implementationPolicy"]["decisionPolicy"],
             "observations": len(action_rows),
             "scheduleGroups": len(
                 {
@@ -5354,12 +5184,9 @@ def load_rl_diagnostics(
                     for row in action_rows
                 }
             ),
-            "eligibleBars": sum(
-                row["decisionEligible"] for row in action_rows
-            ),
+            "eligibleBars": sum(row["decisionEligible"] for row in action_rows),
             "eligibleRate": (
-                sum(row["decisionEligible"] for row in action_rows)
-                / len(action_rows)
+                sum(row["decisionEligible"] for row in action_rows) / len(action_rows)
             ),
             "scheduledHoldBars": sum(
                 not row["decisionEligible"]
@@ -5430,8 +5257,7 @@ def load_rl_diagnostics(
                     within_fold_validation_standard_deviations
                 ),
                 "exactConsensusFolds": sum(
-                    value <= 1e-12
-                    for value in within_fold_validation_action_mismatch
+                    value <= 1e-12 for value in within_fold_validation_action_mismatch
                 ),
                 "folds": len(within_fold_validation_standard_deviations),
                 "meanPairwiseActionMismatch": (
@@ -5819,9 +5645,7 @@ _FACTOR_FUSION_DIAGNOSIS_SCHEMA: dict[str, Any] = {
                         _FUSION_SPLIT_SCHEMA,
                         {
                             "type": "object",
-                            "properties": {
-                                "role": {"const": "visible-audit"}
-                            },
+                            "properties": {"role": {"const": "visible-audit"}},
                         },
                     ]
                 },
@@ -5937,16 +5761,10 @@ RL_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 "jointConstraintRiskOverrideBars",
             ],
             "properties": {
-                "source": {
-                    "enum": ["caller-supplied", "reference-default"]
-                },
-                "kind": {
-                    "enum": ["every-bars", "calendar-month-end"]
-                },
+                "source": {"enum": ["caller-supplied", "reference-default"]},
+                "kind": {"enum": ["every-bars", "calendar-month-end"]},
                 "bars": {"type": "integer", "minimum": 1, "maximum": 252},
-                "anchor": {
-                    "enum": ["dataset-start", "session-start"]
-                },
+                "anchor": {"enum": ["dataset-start", "session-start"]},
                 "observations": {"type": "integer", "minimum": 1},
                 "scheduleGroups": {"type": "integer", "minimum": 1},
                 "eligibleBars": {"type": "integer", "minimum": 0},
@@ -5968,11 +5786,7 @@ RL_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
             },
             "allOf": [
                 {
-                    "if": {
-                        "properties": {
-                            "kind": {"const": "every-bars"}
-                        }
-                    },
+                    "if": {"properties": {"kind": {"const": "every-bars"}}},
                     "then": {"required": ["bars", "anchor"]},
                 }
             ],

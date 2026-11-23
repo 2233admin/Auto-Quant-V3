@@ -81,13 +81,11 @@ class DecisionPlanTests(unittest.TestCase):
         self.assertEqual(plan.tradingAuthority, "none")
         self.assertEqual(OrderLifecycleState.WORKING.value, "working")
 
-
     def test_trading_authority_cannot_be_supplied_or_changed(self) -> None:
         with self.assertRaises(TypeError):
             DecisionPlan(**{**_plan().__dict__, "tradingAuthority": "live"})
         with self.assertRaises((AttributeError, TypeError)):
             _plan().tradingAuthority = "live"  # type: ignore[misc]
-
 
     def test_tp_sl_children_are_bounded_by_parent_filled_quantity(self) -> None:
         with self.assertRaisesRegex(PortfolioFailure, "filled quantity"):
@@ -105,7 +103,6 @@ class DecisionPlanTests(unittest.TestCase):
                 takeProfit=ProtectionSpec(kind="take-profit", quantity=1.0, weight=5.0),
             )
 
-
     def test_lifecycle_has_exact_forward_and_terminal_states(self) -> None:
         self.assertEqual(
             [state.value for state in OrderLifecycleState],
@@ -119,7 +116,6 @@ class DecisionPlanTests(unittest.TestCase):
                 "rejected",
             ],
         )
-
 
     def test_illegal_order_and_empty_plan_are_rejected(self) -> None:
         with self.assertRaisesRegex(PortfolioFailure, "side"):
@@ -138,7 +134,6 @@ class DecisionPlanTests(unittest.TestCase):
         values["orderIntents"] = ()
         with self.assertRaisesRegex(PortfolioFailure, "OrderIntent"):
             DecisionPlan(**values)
-
 
     def test_evidence_json_round_trip(self) -> None:
         evidence = ExecutionEvidence(

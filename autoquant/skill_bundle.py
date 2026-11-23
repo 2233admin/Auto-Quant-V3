@@ -197,9 +197,7 @@ def verify_materialized_workspace_skills(
         for skill in expected["skills"]:
             destination = root / discovery_root / skill["id"]
             if not destination.is_dir() or destination.is_symlink():
-                raise SkillBundleError(
-                    f"Workspace Skill is unavailable: {destination}"
-                )
+                raise SkillBundleError(f"Workspace Skill is unavailable: {destination}")
             if _skill_files(destination) != skill["files"]:
                 raise SkillBundleError(
                     f"Workspace Skill copy has drifted: {destination}"

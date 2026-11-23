@@ -52,17 +52,38 @@ def validate_factor_lineage(raw: Any, path: Path | str) -> dict[str, Any]:
     """Return the lineage when its structure and trial arithmetic are exact."""
 
     if not isinstance(raw, dict) or set(raw) != LINEAGE_KEYS:
-        raise _issue(path, "lineage.schema", "Factor lineage must contain exactly the documented fields")
-    if raw["kind"] != FACTOR_LINEAGE_KIND or raw["schemaVersion"] != FACTOR_LINEAGE_SCHEMA_VERSION:
-        raise _issue(path, "lineage.kind", "Unsupported Factor lineage kind or schema version")
+        raise _issue(
+            path,
+            "lineage.schema",
+            "Factor lineage must contain exactly the documented fields",
+        )
+    if (
+        raw["kind"] != FACTOR_LINEAGE_KIND
+        or raw["schemaVersion"] != FACTOR_LINEAGE_SCHEMA_VERSION
+    ):
+        raise _issue(
+            path, "lineage.kind", "Unsupported Factor lineage kind or schema version"
+        )
     if raw["authority"] != "evidence-by-reference" or raw["tradingAuthority"] != "none":
-        raise _issue(path, "lineage.authority", "Factor lineage carries reference evidence only and no trading authority")
+        raise _issue(
+            path,
+            "lineage.authority",
+            "Factor lineage carries reference evidence only and no trading authority",
+        )
     source = raw["source"]
     trials = raw["trials"]
-    if not isinstance(source, dict) or not isinstance(source.get("projectId"), str) or not source["projectId"]:
-        raise _issue(path, "lineage.source", "Factor lineage must name its source Project")
+    if (
+        not isinstance(source, dict)
+        or not isinstance(source.get("projectId"), str)
+        or not source["projectId"]
+    ):
+        raise _issue(
+            path, "lineage.source", "Factor lineage must name its source Project"
+        )
     if not isinstance(trials, dict):
-        raise _issue(path, "lineage.trials", "Factor lineage must record inherited trials")
+        raise _issue(
+            path, "lineage.trials", "Factor lineage must record inherited trials"
+        )
     inherited = trials.get("inheritedSourceTrials")
     distinct = trials.get("sourceProjectDistinctSources")
     families = trials.get("sourceFamilies")
@@ -103,8 +124,12 @@ def load_factor_lineage(project: ProjectContext) -> tuple[dict[str, Any], str] |
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as error:
-        raise _issue(path, "lineage.json", f"Cannot read Factor lineage: {error}") from error
-    return validate_factor_lineage(raw, path), hashlib.sha256(path.read_bytes()).hexdigest()
+        raise _issue(
+            path, "lineage.json", f"Cannot read Factor lineage: {error}"
+        ) from error
+    return validate_factor_lineage(raw, path), hashlib.sha256(
+        path.read_bytes()
+    ).hexdigest()
 
 
 def inheritance_projection(project: ProjectContext) -> dict[str, Any] | None:
@@ -119,7 +144,9 @@ def inheritance_projection(project: ProjectContext) -> dict[str, Any] | None:
         "lineagePath": FACTOR_LINEAGE,
         "lineageHash": digest,
         "sourceProjectId": lineage["source"]["projectId"],
-        "sourceFamilyIds": sorted(item["id"] for item in lineage["trials"]["sourceFamilies"]),
+        "sourceFamilyIds": sorted(
+            item["id"] for item in lineage["trials"]["sourceFamilies"]
+        ),
         "inheritedSourceTrials": lineage["trials"]["inheritedSourceTrials"],
         "countAssumption": "source-project-distinct-factor-sources-upper-bound",
     }

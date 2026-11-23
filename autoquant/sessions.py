@@ -59,12 +59,8 @@ EXPERIMENT_DIFF = "diff.patch"
 EXPERIMENT_MANIFEST = "manifest.json"
 PROMOTION_RECEIPT = "promotion.json"
 COMPLETION_RECEIPT = "completion.json"
-SESSION_ID = re.compile(
-    r"^session-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$"
-)
-COMPLETION_ID = re.compile(
-    r"^completion-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$"
-)
+SESSION_ID = re.compile(r"^session-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$")
+COMPLETION_ID = re.compile(r"^completion-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$")
 EXPERIMENT_ID = re.compile(r"^exp-[0-9]{4}-[0-9a-f]{12}$")
 SESSION_STATUSES = {"active", "completed", "promoted"}
 VERDICTS = {"KEEP", "REVERT", "CRASH"}
@@ -302,16 +298,16 @@ def _fixed_inventory(
         relative = path.relative_to(worktree.root_dir).as_posix()
         if path.is_symlink():
             raise AutoQuantValidationError(
-                [_issue(path, "path.symlink", "Session worktree cannot contain symlinks")]
+                [
+                    _issue(
+                        path, "path.symlink", "Session worktree cannot contain symlinks"
+                    )
+                ]
             )
         if not path.is_file():
             continue
-        if (
-            relative != SESSION_WORKTREE_MARKER
-            and any(
-                path_matches_pattern(relative, pattern)
-                for pattern in editable_patterns
-            )
+        if relative != SESSION_WORKTREE_MARKER and any(
+            path_matches_pattern(relative, pattern) for pattern in editable_patterns
         ):
             continue
         hashes[relative] = hash_file(path)
@@ -322,7 +318,11 @@ def _copy_project_file(project: ProjectContext, relative: str, target: Path) -> 
     source = confined_path(project.root_dir, relative, f"project/{relative}")
     if source.is_symlink() or not source.is_file():
         raise AutoQuantValidationError(
-            [_issue(source, "session.source", f"Missing fixed Project file: {relative}")]
+            [
+                _issue(
+                    source, "session.source", f"Missing fixed Project file: {relative}"
+                )
+            ]
         )
     destination = target / relative
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -440,14 +440,10 @@ def _reusable_baseline(
         result = run.result
         dependencies = result.get("dependencies")
         dependency_hash = (
-            dependencies.get("hash")
-            if isinstance(dependencies, dict)
-            else None
+            dependencies.get("hash") if isinstance(dependencies, dict) else None
         )
         upstream = result.get("upstreamEvidence")
-        upstream_hash = (
-            upstream.get("hash") if isinstance(upstream, dict) else None
-        )
+        upstream_hash = upstream.get("hash") if isinstance(upstream, dict) else None
         if (
             result["study"].get("hash") == study.study_hash
             and result["study"].get("programHash") == study.program_hash
@@ -472,9 +468,7 @@ def start_session(
 
     assert_iterative_research_allowed(project)
     normalized_request = (
-        validate_research_request(request, "request")
-        if request is not None
-        else None
+        validate_research_request(request, "request") if request is not None else None
     )
     study = load_study(project, study_id)
     if not study.definition.editable["paths"]:
@@ -488,10 +482,7 @@ def start_session(
                 )
             ]
         )
-    if (
-        study.definition.objective.metric
-        == "current_component_risk_hhi"
-    ):
+    if study.definition.objective.metric == "current_component_risk_hhi":
         raise AutoQuantValidationError(
             [
                 _issue(
@@ -503,9 +494,7 @@ def start_session(
             ]
         )
     if normalized_request is not None:
-        requested_symbols = {
-            item["symbol"] for item in normalized_request["assets"]
-        }
+        requested_symbols = {item["symbol"] for item in normalized_request["assets"]}
         study_symbols = set(study.definition.dataset.universe)
         missing_symbols = sorted(requested_symbols - study_symbols)
         mismatched_classes = sorted(
@@ -514,8 +503,7 @@ def start_session(
                 for item in normalized_request["assets"]
                 if (
                     study.definition.dataset.asset_class != "mixed"
-                    and item["assetClass"]
-                    != study.definition.dataset.asset_class
+                    and item["assetClass"] != study.definition.dataset.asset_class
                 )
             }
         )
@@ -550,10 +538,7 @@ def start_session(
             project,
             study,
         )
-        if (
-            baseline_preflight is not None
-            and baseline_preflight["status"] != "passed"
-        ):
+        if baseline_preflight is not None and baseline_preflight["status"] != "passed":
             issues = [
                 _issue(
                     study.root_dir,
@@ -713,9 +698,13 @@ def _validate_session_manifest(
     if value.get("schemaVersion") != SCHEMA_VERSION:
         issues.append(_issue(f"{path}/schemaVersion", "schema.version", "Expected V1"))
     if value.get("id") != expected_id:
-        issues.append(_issue(f"{path}/id", "session.directory-id", "Session id mismatch"))
+        issues.append(
+            _issue(f"{path}/id", "session.directory-id", "Session id mismatch")
+        )
     if value.get("status") not in SESSION_STATUSES:
-        issues.append(_issue(f"{path}/status", "schema.choice", "Invalid Session status"))
+        issues.append(
+            _issue(f"{path}/status", "schema.choice", "Invalid Session status")
+        )
     if not isinstance(value.get("projectId"), str) or not value["projectId"]:
         issues.append(_issue(f"{path}/projectId", "schema.string", "Invalid projectId"))
     if not isinstance(value.get("studyId"), str) or not value["studyId"]:
@@ -747,7 +736,9 @@ def _validate_session_manifest(
     for key in ("baseline", "leader"):
         pointer = value.get(key)
         if not isinstance(pointer, dict):
-            issues.append(_issue(f"{path}/{key}", "schema.type", f"{key} must be an object"))
+            issues.append(
+                _issue(f"{path}/{key}", "schema.type", f"{key} must be an object")
+            )
             continue
         issues.extend(
             _strict_keys(
@@ -757,21 +748,35 @@ def _validate_session_manifest(
             )
         )
         if isinstance(pointer, dict):
-            if not isinstance(pointer.get("runId"), str) or not pointer["runId"].startswith("run-"):
-                issues.append(_issue(f"{path}/{key}/runId", "schema.string", "Invalid Run id"))
+            if not isinstance(pointer.get("runId"), str) or not pointer[
+                "runId"
+            ].startswith("run-"):
+                issues.append(
+                    _issue(f"{path}/{key}/runId", "schema.string", "Invalid Run id")
+                )
             if not isinstance(pointer.get("sourceHash"), str) or not SHA256.fullmatch(
                 pointer.get("sourceHash", "")
             ):
-                issues.append(_issue(f"{path}/{key}/sourceHash", "schema.hash", "Invalid sourceHash"))
+                issues.append(
+                    _issue(
+                        f"{path}/{key}/sourceHash", "schema.hash", "Invalid sourceHash"
+                    )
+                )
             if not isinstance(pointer.get("metric"), str) or not pointer["metric"]:
-                issues.append(_issue(f"{path}/{key}/metric", "schema.string", "Invalid metric"))
+                issues.append(
+                    _issue(f"{path}/{key}/metric", "schema.string", "Invalid metric")
+                )
             pointer_value = pointer.get("value")
             if (
                 not isinstance(pointer_value, (int, float))
                 or isinstance(pointer_value, bool)
                 or not math.isfinite(float(pointer_value))
             ):
-                issues.append(_issue(f"{path}/{key}/value", "schema.number", "Invalid metric value"))
+                issues.append(
+                    _issue(
+                        f"{path}/{key}/value", "schema.number", "Invalid metric value"
+                    )
+                )
     baseline_guard = value.get("baselineGuard")
     if baseline_guard is not None:
         guard_path = f"{path}/baselineGuard"
@@ -794,7 +799,11 @@ def _validate_session_manifest(
                 "reused-successful-run",
             }:
                 issues.append(
-                    _issue(f"{guard_path}/mode", "schema.choice", "Invalid baseline guard mode")
+                    _issue(
+                        f"{guard_path}/mode",
+                        "schema.choice",
+                        "Invalid baseline guard mode",
+                    )
                 )
             if not isinstance(baseline_guard.get("baselineRunId"), str):
                 issues.append(
@@ -865,11 +874,19 @@ def _validate_session_manifest(
             )
         elif any(not SHA256.fullmatch(item) for item in fixed.values()):
             issues.append(
-                _issue(f"{path}/locks/fixedHashes", "schema.hash", "Invalid fixed file hash")
+                _issue(
+                    f"{path}/locks/fixedHashes",
+                    "schema.hash",
+                    "Invalid fixed file hash",
+                )
             )
         for key in ("studyHash", "programHash", "judgeHash", "datasetHash"):
-            if not isinstance(locks.get(key), str) or not SHA256.fullmatch(locks.get(key, "")):
-                issues.append(_issue(f"{path}/locks/{key}", "schema.hash", f"Invalid {key}"))
+            if not isinstance(locks.get(key), str) or not SHA256.fullmatch(
+                locks.get(key, "")
+            ):
+                issues.append(
+                    _issue(f"{path}/locks/{key}", "schema.hash", f"Invalid {key}")
+                )
         if "dependencyHash" in locks and (
             not isinstance(locks.get("dependencyHash"), str)
             or not SHA256.fullmatch(locks.get("dependencyHash", ""))
@@ -894,7 +911,9 @@ def _validate_session_manifest(
             )
         harness = locks.get("harness")
         if not isinstance(harness, dict):
-            issues.append(_issue(f"{path}/locks/harness", "schema.type", "Invalid Harness lock"))
+            issues.append(
+                _issue(f"{path}/locks/harness", "schema.type", "Invalid Harness lock")
+            )
         else:
             harness_keys = {
                 "id",
@@ -914,20 +933,28 @@ def _validate_session_manifest(
                 )
             )
             if not isinstance(harness.get("dirty"), bool):
-                issues.append(_issue(f"{path}/locks/harness/dirty", "schema.boolean", "Invalid dirty flag"))
+                issues.append(
+                    _issue(
+                        f"{path}/locks/harness/dirty",
+                        "schema.boolean",
+                        "Invalid dirty flag",
+                    )
+                )
             if not isinstance(harness.get("sourceHash"), str) or not SHA256.fullmatch(
                 harness.get("sourceHash", "")
             ):
-                issues.append(_issue(f"{path}/locks/harness/sourceHash", "schema.hash", "Invalid Harness hash"))
-            if (
-                "buildProvenance" in harness
-                and harness["buildProvenance"]
-                not in {
-                    "embedded-distribution",
-                    "source-checkout",
-                    "unavailable",
-                }
-            ):
+                issues.append(
+                    _issue(
+                        f"{path}/locks/harness/sourceHash",
+                        "schema.hash",
+                        "Invalid Harness hash",
+                    )
+                )
+            if "buildProvenance" in harness and harness["buildProvenance"] not in {
+                "embedded-distribution",
+                "source-checkout",
+                "unavailable",
+            }:
                 issues.append(
                     _issue(
                         f"{path}/locks/harness/buildProvenance",
@@ -953,7 +980,11 @@ def _validate_baseline_guard(
     issues: list[ValidationIssue] = []
     if guard["baselineRunId"] != manifest["baseline"]["runId"]:
         issues.append(
-            _issue(path, "session.baseline-guard-run", "Guard baseline Run differs from Session")
+            _issue(
+                path,
+                "session.baseline-guard-run",
+                "Guard baseline Run differs from Session",
+            )
         )
     receipt = guard["preflight"]
     if guard["mode"] != "fresh-preflight-and-run":
@@ -1016,22 +1047,30 @@ def _validate_baseline_guard(
     candidate = receipt.get("candidate")
     preflight = receipt.get("preflight")
     if not isinstance(study, dict) or set(study) != {"inputHash", "datasetHash"}:
-        issues.append(_issue(f"{path}/preflight/study", "schema.type", "Invalid Study lock"))
+        issues.append(
+            _issue(f"{path}/preflight/study", "schema.type", "Invalid Study lock")
+        )
         study = {}
     if not isinstance(candidate, dict) or set(candidate) != {"sourceHash"}:
         issues.append(
-            _issue(f"{path}/preflight/candidate", "schema.type", "Invalid candidate lock")
+            _issue(
+                f"{path}/preflight/candidate", "schema.type", "Invalid candidate lock"
+            )
         )
         candidate = {}
     if not isinstance(preflight, dict) or set(preflight) != {"hash", "sourceHashes"}:
         issues.append(
-            _issue(f"{path}/preflight/preflight", "schema.type", "Invalid preflight lock")
+            _issue(
+                f"{path}/preflight/preflight", "schema.type", "Invalid preflight lock"
+            )
         )
         preflight = {}
     checks = receipt.get("checks")
     errors = receipt.get("errors")
     if not isinstance(checks, list) or not checks:
-        issues.append(_issue(f"{path}/preflight/checks", "schema.array", "Invalid checks"))
+        issues.append(
+            _issue(f"{path}/preflight/checks", "schema.array", "Invalid checks")
+        )
         checks = []
     if errors != []:
         issues.append(
@@ -1059,9 +1098,7 @@ def _validate_baseline_guard(
         "inputHash": baseline.result["studyInputHash"],
         "datasetHash": baseline.result["dataset"]["hash"],
     }
-    expected_candidate = {
-        "sourceHash": baseline.result["subject"]["sourceHash"]
-    }
+    expected_candidate = {"sourceHash": baseline.result["subject"]["sourceHash"]}
     if study != expected_study or candidate != expected_candidate:
         issues.append(
             _issue(
@@ -1106,7 +1143,11 @@ def _validate_baseline_guard(
     )
     if receipt.get("inputHash") != expected_input_hash:
         issues.append(
-            _issue(f"{path}/preflight/inputHash", "session.baseline-preflight-hash", "Invalid input hash")
+            _issue(
+                f"{path}/preflight/inputHash",
+                "session.baseline-preflight-hash",
+                "Invalid input hash",
+            )
         )
     expected_output_hash = hash_json(
         {
@@ -1118,12 +1159,22 @@ def _validate_baseline_guard(
     )
     if receipt.get("outputHash") != expected_output_hash:
         issues.append(
-            _issue(f"{path}/preflight/outputHash", "session.baseline-preflight-hash", "Invalid output hash")
+            _issue(
+                f"{path}/preflight/outputHash",
+                "session.baseline-preflight-hash",
+                "Invalid output hash",
+            )
         )
-    receipt_body = {key: value for key, value in receipt.items() if key != "receiptHash"}
+    receipt_body = {
+        key: value for key, value in receipt.items() if key != "receiptHash"
+    }
     if receipt.get("receiptHash") != hash_json(receipt_body):
         issues.append(
-            _issue(f"{path}/preflight/receiptHash", "session.baseline-preflight-hash", "Invalid receipt hash")
+            _issue(
+                f"{path}/preflight/receiptHash",
+                "session.baseline-preflight-hash",
+                "Invalid receipt hash",
+            )
         )
     if issues:
         raise AutoQuantValidationError(issues)
@@ -1309,10 +1360,8 @@ def _validate_completion_receipt(
                 if (
                     report_result.get("id") != report_id
                     or report_result.get("sessionId") != manifest["id"]
-                    or report_result.get("evidenceHash")
-                    != report.get("evidenceHash")
-                    or report_result.get("publishedAt")
-                    != report.get("publishedAt")
+                    or report_result.get("evidenceHash") != report.get("evidenceHash")
+                    or report_result.get("publishedAt") != report.get("publishedAt")
                     or not isinstance(frozen_session, dict)
                     or frozen_session.get("leader") != manifest["leader"]
                 ):
@@ -1346,7 +1395,13 @@ def load_session(project: ProjectContext, session_id: str) -> SessionContext:
     expected_worktree = f"worktree/{project.manifest.id}"
     if manifest["worktree"] != expected_worktree:
         raise AutoQuantValidationError(
-            [_issue(manifest_path, "session.worktree", "Unexpected Session worktree path")]
+            [
+                _issue(
+                    manifest_path,
+                    "session.worktree",
+                    "Unexpected Session worktree path",
+                )
+            ]
         )
     worktree_root = confined_path(root, manifest["worktree"], "session/worktree")
     worktree = load_project(worktree_root, expected_id=project.manifest.id)
@@ -1368,7 +1423,13 @@ def load_session(project: ProjectContext, session_id: str) -> SessionContext:
             or _metric_value(run) != float(pointer["value"])
         ):
             raise AutoQuantValidationError(
-                [_issue(manifest_path, "session.run-pointer", f"Invalid {key} Run pointer")]
+                [
+                    _issue(
+                        manifest_path,
+                        "session.run-pointer",
+                        f"Invalid {key} Run pointer",
+                    )
+                ]
             )
     context = SessionContext(
         root,
@@ -1461,11 +1522,7 @@ def load_session(project: ProjectContext, session_id: str) -> SessionContext:
                 "tradingAuthority",
             }
             receipt_issues = _strict_keys(receipt, receipt_required, receipt_path)
-            receipt_body = {
-                key: value
-                for key, value in receipt.items()
-                if key != "id"
-            }
+            receipt_body = {key: value for key, value in receipt.items() if key != "id"}
             promoted_at = receipt.get("promotedAt")
             expected_id = None
             if isinstance(promoted_at, str):
@@ -1473,9 +1530,7 @@ def load_session(project: ProjectContext, session_id: str) -> SessionContext:
                     stamp = datetime.fromisoformat(promoted_at).strftime(
                         "%Y%m%dT%H%M%S%fZ"
                     )
-                    expected_id = (
-                        f"promotion-{stamp}-{hash_json(receipt_body)[:12]}"
-                    )
+                    expected_id = f"promotion-{stamp}-{hash_json(receipt_body)[:12]}"
                 except ValueError:
                     pass
             if (
@@ -1761,7 +1816,13 @@ def list_sessions(project: ProjectContext) -> list[SessionSummary]:
             continue
         if entry.is_symlink() or not entry.is_dir():
             raise AutoQuantValidationError(
-                [_issue(entry, "session.entry", "Session entries must be real directories")]
+                [
+                    _issue(
+                        entry,
+                        "session.entry",
+                        "Session entries must be real directories",
+                    )
+                ]
             )
         session = load_session(project, entry.name)
         summaries.append(
@@ -1843,8 +1904,7 @@ def _history_issues(
             minimum = float(run.result["objective"]["minimumImprovement"])
             expected_verdict = (
                 "KEEP"
-                if expected_improvement > 0
-                and expected_improvement >= minimum
+                if expected_improvement > 0 and expected_improvement >= minimum
                 else "REVERT"
             )
         if (
@@ -2048,8 +2108,7 @@ def build_selection_integrity(
         declared_external_holdout_rule = raw["external_holdout_rule"]
         external_holdout_rule = (
             VISIBLE_TEST_EXTERNAL_HOLDOUT_RULE
-            if declared_external_holdout_rule
-            == LEGACY_EXTERNAL_HOLDOUT_RULE
+            if declared_external_holdout_rule == LEGACY_EXTERNAL_HOLDOUT_RULE
             else declared_external_holdout_rule
         )
     else:
@@ -2059,14 +2118,11 @@ def build_selection_integrity(
         declared_external_holdout_rule = "unspecified"
         external_holdout_rule = "unspecified"
     counts = {
-        verdict: verdicts.count(verdict)
-        for verdict in ("KEEP", "REVERT", "CRASH")
+        verdict: verdicts.count(verdict) for verdict in ("KEEP", "REVERT", "CRASH")
     }
     candidate_trials = len(verdicts)
     external_required: bool | None = (
-        candidate_trials > 0 and test_role == "visible-diagnostic"
-        if declared
-        else None
+        candidate_trials > 0 and test_role == "visible-diagnostic" if declared else None
     )
     if declared and test_role == "visible-diagnostic":
         post_audit_candidate_iterations = max(0, candidate_trials - 1)
@@ -2082,11 +2138,7 @@ def build_selection_integrity(
         post_audit_candidate_iterations = None
         test_exposure_state = "unspecified"
         test_guidance_observability = "not-declared"
-    if (
-        declared
-        and external_required
-        and post_audit_candidate_iterations == 0
-    ):
+    if declared and external_required and post_audit_candidate_iterations == 0:
         warning = (
             "The first candidate was fixed before its own test audit became "
             "visible, but baseline test evidence was already visible in this "
@@ -2132,9 +2184,7 @@ def build_selection_integrity(
         "testGuidanceObservability": test_guidance_observability,
         "declaredExternalHoldoutRule": declared_external_holdout_rule,
         "externalHoldoutRule": external_holdout_rule,
-        "externalHoldoutReason": (
-            external_holdout_rule if external_required else None
-        ),
+        "externalHoldoutReason": (external_holdout_rule if external_required else None),
         "candidateTrials": candidate_trials,
         "evaluatedRuns": candidate_trials + 1,
         "verdicts": counts,
@@ -2188,9 +2238,7 @@ SELECTION_INTEGRITY_JSON_SCHEMA: dict[str, Any] = {
             "type": ["integer", "null"],
             "minimum": 0,
         },
-        "testGuidanceObservability": {
-            "enum": ["not-observable", "not-declared"]
-        },
+        "testGuidanceObservability": {"enum": ["not-observable", "not-declared"]},
         "declaredExternalHoldoutRule": {
             "type": "string",
             "minLength": 1,
@@ -2290,19 +2338,37 @@ def _clear_editable(project: ProjectContext, study: StudyContext) -> None:
                 continue
             if not root.is_dir():
                 raise AutoQuantValidationError(
-                    [_issue(root, "study.source-directory", "Editable closure root is not a directory")]
+                    [
+                        _issue(
+                            root,
+                            "study.source-directory",
+                            "Editable closure root is not a directory",
+                        )
+                    ]
                 )
             for path in root.rglob("*"):
                 if path.is_symlink():
                     raise AutoQuantValidationError(
-                        [_issue(path, "path.symlink", "Editable source cannot contain symlinks")]
+                        [
+                            _issue(
+                                path,
+                                "path.symlink",
+                                "Editable source cannot contain symlinks",
+                            )
+                        ]
                     )
                 if path.is_file():
                     files.add(path.relative_to(project.root_dir).as_posix())
         elif root.exists():
             if not root.is_file():
                 raise AutoQuantValidationError(
-                    [_issue(root, "study.source-file", "Editable exact path is not a file")]
+                    [
+                        _issue(
+                            root,
+                            "study.source-file",
+                            "Editable exact path is not a file",
+                        )
+                    ]
                 )
             files.add(relative)
     for relative in sorted(files, reverse=True):
@@ -2321,7 +2387,13 @@ def _copy_run_sources(
             for pattern in study.definition.editable["paths"]
         ):
             raise AutoQuantValidationError(
-                [_issue(relative, "session.source-escape", "Run source is outside editable closure")]
+                [
+                    _issue(
+                        relative,
+                        "session.source-escape",
+                        "Run source is outside editable closure",
+                    )
+                ]
             )
         source = run.root_dir / "sources" / relative
         if hash_file(source) != expected_hash:
@@ -2356,7 +2428,13 @@ def _restore_leader(
     )
     if restored.source_hash != session.manifest["leader"]["sourceHash"]:
         raise AutoQuantValidationError(
-            [_issue(session.root_dir, "session.restore", "Leader source restoration failed")]
+            [
+                _issue(
+                    session.root_dir,
+                    "session.restore",
+                    "Leader source restoration failed",
+                )
+            ]
         )
 
 
@@ -2433,7 +2511,13 @@ def restore_session_worktree(
         )
         if restored.source_hash != session.manifest["leader"]["sourceHash"]:
             raise AutoQuantValidationError(
-                [_issue(staging, "session.restore", "Rebuilt leader source hash mismatch")]
+                [
+                    _issue(
+                        staging,
+                        "session.restore",
+                        "Rebuilt leader source hash mismatch",
+                    )
+                ]
             )
         fixed = _fixed_inventory(
             staged_project,
@@ -2530,7 +2614,13 @@ def evaluate_experiment(
     candidate = validate_session_authority(project, session)
     if candidate.source_hash == session.manifest["leader"]["sourceHash"]:
         raise AutoQuantValidationError(
-            [_issue(candidate.root_dir, "experiment.unchanged", "Candidate source is unchanged")]
+            [
+                _issue(
+                    candidate.root_dir,
+                    "experiment.unchanged",
+                    "Candidate source is unchanged",
+                )
+            ]
         )
     changes, patch = _source_changes(
         session.leader_run,
@@ -2539,7 +2629,13 @@ def evaluate_experiment(
     )
     if not changes:
         raise AutoQuantValidationError(
-            [_issue(candidate.root_dir, "experiment.unchanged", "Candidate has no source changes")]
+            [
+                _issue(
+                    candidate.root_dir,
+                    "experiment.unchanged",
+                    "Candidate has no source changes",
+                )
+            ]
         )
     started_at = datetime.now(timezone.utc).isoformat()
     data_root = confined_path(
@@ -2567,11 +2663,7 @@ def evaluate_experiment(
             else leader_value - candidate_value
         )
         minimum = float(run.result["objective"]["minimumImprovement"])
-        verdict = (
-            "KEEP"
-            if improvement > 0 and improvement >= minimum
-            else "REVERT"
-        )
+        verdict = "KEEP" if improvement > 0 and improvement >= minimum else "REVERT"
     sequence = int(session.manifest["nextExperiment"])
     experiment_id = f"exp-{sequence:04d}-{candidate.source_hash[:12]}"
     completed_at = datetime.now(timezone.utc).isoformat()
@@ -2643,7 +2735,9 @@ def _validate_experiment_result(
     if value.get("schemaVersion") != SCHEMA_VERSION:
         issues.append(_issue(path, "schema.version", "Expected Experiment V1"))
     if value.get("id") != experiment_id or value.get("sessionId") != session_id:
-        issues.append(_issue(path, "experiment.identity", "Experiment identity mismatch"))
+        issues.append(
+            _issue(path, "experiment.identity", "Experiment identity mismatch")
+        )
     if value.get("verdict") not in VERDICTS:
         issues.append(_issue(path, "experiment.verdict", "Invalid Experiment verdict"))
     if (
@@ -2658,14 +2752,18 @@ def _validate_experiment_result(
     if not isinstance(value.get("changesHash"), str) or not SHA256.fullmatch(
         value.get("changesHash", "")
     ):
-        issues.append(_issue(f"{path}/changesHash", "schema.hash", "Invalid changesHash"))
+        issues.append(
+            _issue(f"{path}/changesHash", "schema.hash", "Invalid changesHash")
+        )
     improvement = value.get("improvement")
     if improvement is not None and (
         not isinstance(improvement, (int, float))
         or isinstance(improvement, bool)
         or not math.isfinite(float(improvement))
     ):
-        issues.append(_issue(f"{path}/improvement", "schema.number", "Invalid improvement"))
+        issues.append(
+            _issue(f"{path}/improvement", "schema.number", "Invalid improvement")
+        )
     objective = value.get("objective")
     if not isinstance(objective, dict):
         issues.append(_issue(f"{path}/objective", "schema.type", "Invalid objective"))
@@ -2686,30 +2784,58 @@ def _validate_experiment_result(
             issues.append(_issue(f"{path}/{key}", "schema.type", f"Invalid {key}"))
             continue
         issues.extend(_strict_keys(pointer, required_keys, f"{path}/{key}"))
-        if not isinstance(pointer.get("runId"), str) or not pointer["runId"].startswith("run-"):
-            issues.append(_issue(f"{path}/{key}/runId", "schema.string", "Invalid Run id"))
+        if not isinstance(pointer.get("runId"), str) or not pointer["runId"].startswith(
+            "run-"
+        ):
+            issues.append(
+                _issue(f"{path}/{key}/runId", "schema.string", "Invalid Run id")
+            )
         if not isinstance(pointer.get("sourceHash"), str) or not SHA256.fullmatch(
             pointer.get("sourceHash", "")
         ):
-            issues.append(_issue(f"{path}/{key}/sourceHash", "schema.hash", "Invalid sourceHash"))
+            issues.append(
+                _issue(f"{path}/{key}/sourceHash", "schema.hash", "Invalid sourceHash")
+            )
     errors = value.get("errors")
     if not isinstance(errors, list):
-        issues.append(_issue(f"{path}/errors", "schema.array", "Errors must be an array"))
+        issues.append(
+            _issue(f"{path}/errors", "schema.array", "Errors must be an array")
+        )
     if value.get("verdict") == "CRASH":
         candidate = value.get("candidate")
         if isinstance(candidate, dict) and candidate.get("value") is not None:
-            issues.append(_issue(f"{path}/candidate/value", "experiment.crash-value", "CRASH cannot have a candidate value"))
+            issues.append(
+                _issue(
+                    f"{path}/candidate/value",
+                    "experiment.crash-value",
+                    "CRASH cannot have a candidate value",
+                )
+            )
         if improvement is not None:
-            issues.append(_issue(f"{path}/improvement", "experiment.crash-improvement", "CRASH cannot have an improvement"))
+            issues.append(
+                _issue(
+                    f"{path}/improvement",
+                    "experiment.crash-improvement",
+                    "CRASH cannot have an improvement",
+                )
+            )
     elif value.get("verdict") in {"KEEP", "REVERT"}:
         candidate = value.get("candidate")
-        candidate_value = candidate.get("value") if isinstance(candidate, dict) else None
+        candidate_value = (
+            candidate.get("value") if isinstance(candidate, dict) else None
+        )
         if (
             not isinstance(candidate_value, (int, float))
             or isinstance(candidate_value, bool)
             or not math.isfinite(float(candidate_value))
         ):
-            issues.append(_issue(f"{path}/candidate/value", "schema.number", "Verdict requires a candidate value"))
+            issues.append(
+                _issue(
+                    f"{path}/candidate/value",
+                    "schema.number",
+                    "Verdict requires a candidate value",
+                )
+            )
     if issues:
         raise AutoQuantValidationError(issues)
 
@@ -2744,14 +2870,22 @@ def load_experiment(
         or manifest.get("verdict") not in VERDICTS
     ):
         issues.append(
-            _issue(root / EXPERIMENT_MANIFEST, "experiment.manifest", "Invalid terminal manifest")
+            _issue(
+                root / EXPERIMENT_MANIFEST,
+                "experiment.manifest",
+                "Invalid terminal manifest",
+            )
         )
     files = manifest.get("files")
     actual = _experiment_hashes(root)
     if not isinstance(files, dict) or files != actual:
         issues.append(_issue(root, "experiment.tampered", "Experiment files changed"))
-    if isinstance(files, dict) and files.get(EXPERIMENT_RESULT) != manifest.get("resultHash"):
-        issues.append(_issue(root, "experiment.result-hash", "Experiment result hash mismatch"))
+    if isinstance(files, dict) and files.get(EXPERIMENT_RESULT) != manifest.get(
+        "resultHash"
+    ):
+        issues.append(
+            _issue(root, "experiment.result-hash", "Experiment result hash mismatch")
+        )
     if issues:
         raise AutoQuantValidationError(issues)
     result = _read_json(root / EXPERIMENT_RESULT, "experiment-result")
@@ -2762,9 +2896,18 @@ def load_experiment(
         session.manifest["id"],
     )
     changes_value = json.loads((root / EXPERIMENT_CHANGES).read_text(encoding="utf-8"))
-    if not isinstance(changes_value, list) or hash_json(changes_value) != result["changesHash"]:
+    if (
+        not isinstance(changes_value, list)
+        or hash_json(changes_value) != result["changesHash"]
+    ):
         raise AutoQuantValidationError(
-            [_issue(root / EXPERIMENT_CHANGES, "experiment.changes", "Invalid source changes")]
+            [
+                _issue(
+                    root / EXPERIMENT_CHANGES,
+                    "experiment.changes",
+                    "Invalid source changes",
+                )
+            ]
         )
     run = load_run(project, manifest["runId"])
     if (
@@ -2788,7 +2931,13 @@ def list_experiments(
             continue
         if entry.is_symlink() or not entry.is_dir():
             raise AutoQuantValidationError(
-                [_issue(entry, "experiment.entry", "Experiment entries must be directories")]
+                [
+                    _issue(
+                        entry,
+                        "experiment.entry",
+                        "Experiment entries must be directories",
+                    )
+                ]
             )
         experiment = load_experiment(project, session, entry.name)
         result = experiment.result
@@ -2855,15 +3004,9 @@ def _current_terminal_report(
     frozen_experiments = [
         item["id"] for item in report.report["evidence"]["experiments"]
     ]
-    current_experiments = [
-        item.id for item in list_experiments(project, session)
-    ]
-    frozen_campaigns = [
-        item["id"] for item in report.report["evidence"]["campaigns"]
-    ]
-    current_campaigns = [
-        item.id for item in list_campaigns(project, session)
-    ]
+    current_experiments = [item.id for item in list_experiments(project, session)]
+    frozen_campaigns = [item["id"] for item in report.report["evidence"]["campaigns"]]
+    current_campaigns = [item.id for item in list_campaigns(project, session)]
     if (
         frozen_session["leader"] != session.manifest["leader"]
         or report.report["request"] != session.delegation["request"]
@@ -2902,7 +3045,13 @@ def promote_session(
         )
     if session.manifest["leader"]["runId"] == session.manifest["baseline"]["runId"]:
         raise AutoQuantValidationError(
-            [_issue(session.manifest_path, "promotion.no-keep", "Session has no KEEP to promote")]
+            [
+                _issue(
+                    session.manifest_path,
+                    "promotion.no-keep",
+                    "Session has no KEEP to promote",
+                )
+            ]
         )
     report_projection: dict[str, Any] | None = None
     if session.delegation is not None:
@@ -2948,7 +3097,11 @@ def promote_session(
     receipt_path = session.root_dir / PROMOTION_RECEIPT
     if receipt_path.exists() or receipt_path.is_symlink():
         raise AutoQuantValidationError(
-            [_issue(receipt_path, "promotion.exists", "Promotion receipt already exists")]
+            [
+                _issue(
+                    receipt_path, "promotion.exists", "Promotion receipt already exists"
+                )
+            ]
         )
     leader_hashes = _run_source_hashes(session.leader_run)
     before_hashes = canonical.editable_hashes
@@ -2973,10 +3126,7 @@ def promote_session(
     identity = hash_json(receipt_body)
     receipt = {
         **receipt_body,
-        "id": (
-            f"promotion-{promoted.strftime('%Y%m%dT%H%M%S%fZ')}-"
-            f"{identity[:12]}"
-        ),
+        "id": (f"promotion-{promoted.strftime('%Y%m%dT%H%M%S%fZ')}-{identity[:12]}"),
     }
     with tempfile.TemporaryDirectory(prefix=f"aq-promote-{session_id}-") as directory:
         backup = Path(directory) / "backup"
@@ -2987,7 +3137,13 @@ def promote_session(
             promoted = load_study(project, session.manifest["studyId"])
             if promoted.source_hash != session.manifest["leader"]["sourceHash"]:
                 raise AutoQuantValidationError(
-                    [_issue(project.root_dir, "promotion.hash", "Promoted source hash mismatch")]
+                    [
+                        _issue(
+                            project.root_dir,
+                            "promotion.hash",
+                            "Promoted source hash mismatch",
+                        )
+                    ]
                 )
             _write_json(receipt_path, receipt)
             _atomic_write_json(
@@ -3004,7 +3160,9 @@ def promote_session(
                 source = backup / relative
                 if hash_file(source) != expected_hash:
                     raise RuntimeError("Promotion backup hash mismatch")
-                target = confined_path(project.root_dir, relative, f"rollback/{relative}")
+                target = confined_path(
+                    project.root_dir, relative, f"rollback/{relative}"
+                )
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, target)
             if receipt_path.is_file():
@@ -3119,10 +3277,7 @@ def complete_session(
     receipt = {
         "schemaVersion": SCHEMA_VERSION,
         "kind": "autoquant-session-completion",
-        "id": (
-            f"completion-{completed.strftime('%Y%m%dT%H%M%S%fZ')}-"
-            f"{identity[:12]}"
-        ),
+        "id": (f"completion-{completed.strftime('%Y%m%dT%H%M%S%fZ')}-{identity[:12]}"),
         "sessionId": session_id,
         "projectId": project.manifest.id,
         "studyId": session.manifest["studyId"],
@@ -3354,7 +3509,7 @@ SESSION_JSON_SCHEMA: dict[str, Any] = {
                 "metric": {"type": "string", "minLength": 1},
                 "value": {"type": "number"},
             },
-        }
+        },
     },
 }
 

@@ -37,11 +37,7 @@ def make_lab(root: Path, *, template: str = "ohlcv-factor-lab"):
         "factor-evidence",
         template=template,
     )
-    study_id = (
-        OHLCV_STUDY_ID
-        if template == "ohlcv-factor-lab"
-        else PORTFOLIO_STUDY_ID
-    )
+    study_id = OHLCV_STUDY_ID if template == "ohlcv-factor-lab" else PORTFOLIO_STUDY_ID
     return workspace, project, execute_study(project, study_id)
 
 
@@ -104,9 +100,7 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
             self.assertTrue(causality["available"])
             self.assertEqual(causality["audit"], "whole-panel-timestamp-prefix")
             self.assertTrue(causality["cuts"])
-            daily_path = (
-                run.root_dir / "artifacts" / "daily-factor-evidence.csv"
-            )
+            daily_path = run.root_dir / "artifacts" / "daily-factor-evidence.csv"
             with daily_path.open(encoding="utf-8", newline="") as handle:
                 daily = list(csv.DictReader(handle))
             maximum = max(
@@ -114,8 +108,7 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                 key=lambda row: abs(float(row["rank_ic_h20"] or 0.0)),
             )
             sampled_dates = {
-                item["timestamp"]
-                for item in diagnostics["icPath"]["points"]
+                item["timestamp"] for item in diagnostics["icPath"]["points"]
             }
             self.assertIn(maximum["timestamp"], sampled_dates)
             jsonschema.validate(
@@ -169,9 +162,7 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
             cumulative = diagnostics["quantilePath"]["cumulative"]
             self.assertEqual(cumulative["horizon"], 1)
             self.assertGreater(cumulative["totalRows"], 0)
-            self.assertEqual(
-                diagnostics["spreadSummary"]["status"], "available"
-            )
+            self.assertEqual(diagnostics["spreadSummary"]["status"], "available")
             self.assertEqual(
                 [item["split"] for item in diagnostics["spreadSummary"]["splits"]],
                 ["train", "validation", "test"],
@@ -227,12 +218,8 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                 qualification["selection"]["split"],
                 "train",
             )
-            self.assertFalse(
-                qualification["selection"]["validationEntersSelection"]
-            )
-            self.assertFalse(
-                qualification["semantics"]["testEntersDiagnosis"]
-            )
+            self.assertFalse(qualification["selection"]["validationEntersSelection"])
+            self.assertFalse(qualification["semantics"]["testEntersDiagnosis"])
             self.assertEqual(
                 qualification["validation"]["role"],
                 "selection",
@@ -250,20 +237,12 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                 diagnostics["summary"]["validation"]["meanRankIc"],
             )
             self.assertAlmostEqual(
-                qualification["validation"]["styleNeutralCandidate"][
-                    "meanRankIc"
-                ]
+                qualification["validation"]["styleNeutralCandidate"]["meanRankIc"]
                 - qualification["validation"]["candidate"]["meanRankIc"],
-                qualification["validation"]["incremental"][
-                    "styleNeutralIcDelta"
-                ],
+                qualification["validation"]["incremental"]["styleNeutralIcDelta"],
             )
             self.assertEqual(
-                len(
-                    qualification["validation"][
-                        "styleNeutralChronologicalFolds"
-                    ]
-                ),
+                len(qualification["validation"]["styleNeutralChronologicalFolds"]),
                 2,
             )
             components = diagnostics["factorComponents"]
@@ -279,17 +258,11 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                 },
             )
             self.assertEqual(
-                components["validationDiagnosis"][
-                    "strongestRawComponent"
-                ],
+                components["validationDiagnosis"]["strongestRawComponent"],
                 "base_momentum_10",
             )
-            self.assertIsNone(
-                components["components"][0]["nearestPeer"]["id"]
-            )
-            self.assertFalse(
-                components["declaration"]["sourceInference"]
-            )
+            self.assertIsNone(components["components"][0]["nearestPeer"]["id"])
+            self.assertFalse(components["declaration"]["sourceInference"])
 
             sampled_dates = {
                 item["timestamp"] for item in diagnostics["icPath"]["points"]
@@ -340,12 +313,8 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                 [item["id"] for item in observed["commands"]],
             )
 
-            availability_path = (
-                run.root_dir / "artifacts" / "factor-availability.csv"
-            )
-            original_availability = availability_path.read_text(
-                encoding="utf-8"
-            )
+            availability_path = run.root_dir / "artifacts" / "factor-availability.csv"
+            original_availability = availability_path.read_text(encoding="utf-8")
             availability_rows = original_availability.splitlines()
             availability_header = availability_rows[0].split(",")
             availability_cells = availability_rows[1].split(",")
@@ -385,12 +354,8 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            qualification_path = (
-                run.root_dir / "artifacts" / "factor-qualification.csv"
-            )
-            original_qualification = qualification_path.read_text(
-                encoding="utf-8"
-            )
+            qualification_path = run.root_dir / "artifacts" / "factor-qualification.csv"
+            original_qualification = qualification_path.read_text(encoding="utf-8")
             qualification_rows = original_qualification.splitlines()
             cells = qualification_rows[1].split(",")
             header = qualification_rows[0].split(",")
@@ -412,19 +377,12 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                 original_qualification,
                 encoding="utf-8",
             )
-            component_path = (
-                run.root_dir / "artifacts" / "factor-components.json"
-            )
-            original_components = component_path.read_text(
-                encoding="utf-8"
-            )
+            component_path = run.root_dir / "artifacts" / "factor-components.json"
+            original_components = component_path.read_text(encoding="utf-8")
             tampered_components = json.loads(original_components)
-            tampered_components["evidence"]["components"][0][
-                "mean_coverage"
-            ] = 0.123
+            tampered_components["evidence"]["components"][0]["mean_coverage"] = 0.123
             component_path.write_text(
-                json.dumps(tampered_components, indent=2, sort_keys=True)
-                + "\n",
+                json.dumps(tampered_components, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
             rehash_run(run.root_dir)
@@ -440,12 +398,8 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
             )
             result_path = run.root_dir / "result.json"
             report_path = run.root_dir / "artifacts" / "factor-report.json"
-            legacy_result = json.loads(
-                result_path.read_text(encoding="utf-8")
-            )
-            legacy_report = json.loads(
-                report_path.read_text(encoding="utf-8")
-            )
+            legacy_result = json.loads(result_path.read_text(encoding="utf-8"))
+            legacy_report = json.loads(report_path.read_text(encoding="utf-8"))
             legacy_result["metrics"].pop("factor_qualification")
             legacy_result["metrics"].pop("factor_components")
             legacy_result["metrics"].pop("input_availability")
@@ -498,12 +452,15 @@ class FactorEvidenceExplorerTests(unittest.TestCase):
                     run.result["id"],
                     point_limit=39,
                 )
-            with patch(
-                "autoquant.factor_explorer.MAX_ARTIFACT_BYTES",
-                1,
-            ), self.assertRaisesRegex(
-                AutoQuantValidationError,
-                "exceeds 1 bytes",
+            with (
+                patch(
+                    "autoquant.factor_explorer.MAX_ARTIFACT_BYTES",
+                    1,
+                ),
+                self.assertRaisesRegex(
+                    AutoQuantValidationError,
+                    "exceeds 1 bytes",
+                ),
             ):
                 load_factor_diagnostics(project, run.result["id"])
 
@@ -614,23 +571,13 @@ class QuantileProjectionTests(unittest.TestCase):
         bad = [self.row("2024-01-02", "train", -1.0, 0.0, 0.0)]
         with self.assertRaises(AutoQuantValidationError) as caught:
             _cumulative_quantiles(bad)
-        self.assertEqual(
-            caught.exception.issues[0].code, "factor.quantile-compound"
-        )
+        self.assertEqual(caught.exception.issues[0].code, "factor.quantile-compound")
 
     def test_downsampling_keeps_first_last_and_split_boundaries(self) -> None:
         rows = []
         for index in range(1500):
-            split = (
-                "train"
-                if index < 700
-                else "validation"
-                if index < 1100
-                else "test"
-            )
-            rows.append(
-                self.row(f"d{index:04d}", split, 0.001, 0.001, 0.002)
-            )
+            split = "train" if index < 700 else "validation" if index < 1100 else "test"
+            rows.append(self.row(f"d{index:04d}", split, 0.001, 0.001, 0.002))
         cumulative = _cumulative_quantiles(rows)
         points = cumulative["points"]
         self.assertEqual(cumulative["totalRows"], 1500)
@@ -686,9 +633,7 @@ class QuantileProjectionTests(unittest.TestCase):
         trough = 1.10 * 0.8 * 0.9
         self.assertAlmostEqual(test["maximumDrawdown"], trough / 1.10 - 1.0)
         self.assertAlmostEqual(test["hitRate"], 0.5)
-        self.assertAlmostEqual(
-            test["totalReturn"], 1.1 * 0.8 * 0.9 * 1.5 - 1.0
-        )
+        self.assertAlmostEqual(test["totalReturn"], 1.1 * 0.8 * 0.9 * 1.5 - 1.0)
         empty = summary["splits"][0]
         self.assertEqual(empty["observations"], 0)
         self.assertIsNone(empty["totalReturn"])
@@ -697,9 +642,7 @@ class QuantileProjectionTests(unittest.TestCase):
         summary = _spread_summary("single-asset-temporal", [])
         self.assertEqual(summary["status"], "protocol-unavailable")
         self.assertEqual(summary["splits"], [])
-        self.assertEqual(
-            summary["reasonCode"], "temporal-tertiles-not-defined"
-        )
+        self.assertEqual(summary["reasonCode"], "temporal-tertiles-not-defined")
 
 
 if __name__ == "__main__":

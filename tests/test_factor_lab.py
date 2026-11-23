@@ -229,9 +229,7 @@ class OhlcvFactorLabTests(unittest.TestCase):
             )
             self.assertIn(
                 "mean_outcome_by_quantile",
-                run.result["metrics"]["quantile_analysis"]["1"][
-                    "validation"
-                ],
+                run.result["metrics"]["quantile_analysis"]["1"]["validation"],
             )
             diagnostics = load_factor_diagnostics(
                 project,
@@ -331,17 +329,11 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 1.0,
             )
             self.assertEqual(
-                component["validation"]["context"]["stateOccupancy"]["low"][
-                    "rate"
-                ],
+                component["validation"]["context"]["stateOccupancy"]["low"]["rate"],
                 1.0,
             )
             self.assertFalse(projected["fixedBlend"]["available"])
-            self.assertIsNone(
-                projected["validationDiagnosis"][
-                    "strongestRawComponent"
-                ]
-            )
+            self.assertIsNone(projected["validationDiagnosis"]["strongestRawComponent"])
 
     def test_complete_judge_rejects_component_lookahead(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -373,7 +365,7 @@ class OhlcvFactorLabTests(unittest.TestCase):
             self.assertTrue(
                 (project.root_dir / "judges" / "factor_diagnostics.py").is_file()
             )
-            program = (project.root_dir / "studies" / OHLCV_STUDY_ID / "program.md")
+            program = project.root_dir / "studies" / OHLCV_STUDY_ID / "program.md"
             program_text = program.read_text(encoding="utf-8")
             self.assertIn(
                 "Missing input is not the same state as an observed false condition",
@@ -407,9 +399,7 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 1.0,
             )
             self.assertFalse(
-                run.result["metrics"]["research_integrity"][
-                    "test_enters_selection"
-                ]
+                run.result["metrics"]["research_integrity"]["test_enters_selection"]
             )
             metrics = run.result["metrics"]
             self.assertEqual(set(metrics["horizon_quality"]), {"1", "5", "10"})
@@ -425,25 +415,21 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 metrics["input_availability"]["observation_coverage"],
                 1.0,
             )
-            self.assertFalse(
-                metrics["split_protocol"]["candidateDependent"]
-            )
-            self.assertFalse(
-                metrics["split_protocol"]["targetCrossesBoundary"]
-            )
+            self.assertFalse(metrics["split_protocol"]["candidateDependent"])
+            self.assertFalse(metrics["split_protocol"]["targetCrossesBoundary"])
             self.assertEqual(
                 metrics["validation"]["hac"]["method"],
                 "newey-west-bartlett",
             )
             self.assertTrue(
-                math.isfinite(
-                    metrics["validation"]["pearson_ic"]["mean_ic"]
-                )
+                math.isfinite(metrics["validation"]["pearson_ic"]["mean_ic"])
             )
             self.assertEqual(
-                set(metrics["quantile_analysis"]["1"]["validation"][
-                    "mean_outcome_by_quantile"
-                ]),
+                set(
+                    metrics["quantile_analysis"]["1"]["validation"][
+                        "mean_outcome_by_quantile"
+                    ]
+                ),
                 {"low", "middle", "high"},
             )
             self.assertEqual(
@@ -463,9 +449,7 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 run.result["dataset"]["sourceHashes"],
                 study.dataset_hashes,
             )
-            self.assertTrue(
-                (run.root_dir / "inputs" / "dataset-files.json").is_file()
-            )
+            self.assertTrue((run.root_dir / "inputs" / "dataset-files.json").is_file())
             self.assertEqual(
                 load_run(project, run.result["id"]).result["inputHash"],
                 run.result["inputHash"],
@@ -477,17 +461,9 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 "factor",
             )
             layers = snapshot["projects"][0]["runs"][0]["metricLayers"]
-            self.assertTrue(
-                math.isfinite(layers["validationHacTStatistic"])
-            )
-            self.assertTrue(
-                math.isfinite(
-                    layers["validationFarthestHorizonMeanIc"]
-                )
-            )
-            self.assertTrue(
-                math.isfinite(layers["validationPearsonIc"])
-            )
+            self.assertTrue(math.isfinite(layers["validationHacTStatistic"]))
+            self.assertTrue(math.isfinite(layers["validationFarthestHorizonMeanIc"]))
+            self.assertTrue(math.isfinite(layers["validationPearsonIc"]))
             self.assertEqual(
                 {item["kind"] for item in run.result["artifacts"]},
                 {
@@ -520,21 +496,20 @@ class OhlcvFactorLabTests(unittest.TestCase):
                     daily.loc[
                         daily["split"].eq("validation"),
                         "pearson_ic_h1",
-                    ].dropna().mean()
+                    ]
+                    .dropna()
+                    .mean()
                 ),
                 metrics["validation"]["pearson_ic"]["mean_ic"],
                 places=10,
             )
             quantiles = pd.read_csv(artifacts["factor-quantiles"])
             validation_quantiles = quantiles[
-                quantiles["split"].eq("validation")
-                & quantiles["horizon"].eq(1)
+                quantiles["split"].eq("validation") & quantiles["horizon"].eq(1)
             ]
             self.assertAlmostEqual(
                 float(validation_quantiles["high_minus_low"].mean()),
-                metrics["quantile_analysis"]["1"]["validation"][
-                    "high_minus_low"
-                ],
+                metrics["quantile_analysis"]["1"]["validation"]["high_minus_low"],
                 places=10,
             )
             qualification = metrics["factor_qualification"]
@@ -542,21 +517,17 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 qualification["selection"]["split"],
                 "train",
             )
-            self.assertFalse(
-                qualification["selection"]["validation_enters_selection"]
-            )
-            self.assertFalse(
-                qualification["selection"]["test_enters_selection"]
-            )
-            qualification_daily = pd.read_csv(
-                artifacts["factor-qualification"]
-            )
+            self.assertFalse(qualification["selection"]["validation_enters_selection"])
+            self.assertFalse(qualification["selection"]["test_enters_selection"])
+            qualification_daily = pd.read_csv(artifacts["factor-qualification"])
             self.assertAlmostEqual(
                 float(
                     qualification_daily.loc[
                         qualification_daily["split"].eq("validation"),
                         "candidate_rank_ic_h1",
-                    ].dropna().mean()
+                    ]
+                    .dropna()
+                    .mean()
                 ),
                 metrics["validation_mean_ic"],
                 places=10,
@@ -577,17 +548,11 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 },
             )
             self.assertEqual(
-                components["validation_diagnosis"][
-                    "strongest_raw_component"
-                ],
+                components["validation_diagnosis"]["strongest_raw_component"],
                 "base_momentum_10",
             )
-            self.assertFalse(
-                components["declaration"]["exhaustive_composition_claim"]
-            )
-            self.assertFalse(
-                components["declaration"]["source_inference"]
-            )
+            self.assertFalse(components["declaration"]["exhaustive_composition_claim"])
+            self.assertFalse(components["declaration"]["source_inference"])
             component_artifact = json.loads(
                 artifacts["factor-components"].read_text(encoding="utf-8")
             )
@@ -600,7 +565,9 @@ class OhlcvFactorLabTests(unittest.TestCase):
                     qualification_daily.loc[
                         qualification_daily["split"].eq("validation"),
                         "style_neutral_candidate_rank_ic_h1",
-                    ].dropna().mean()
+                    ]
+                    .dropna()
+                    .mean()
                 ),
                 qualification["horizon_quality"]["1"]["validation"][
                     "style_neutral_candidate"
@@ -612,9 +579,7 @@ class OhlcvFactorLabTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             _, project = make_factor_lab(directory)
             session = start_session(project, OHLCV_STUDY_ID)
-            candidate = (
-                session.worktree_project.root_dir / "factors" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(IMPROVED_FACTOR, encoding="utf-8")
             kept = evaluate_experiment(
                 project,
@@ -633,21 +598,17 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 10.0,
             )
             self.assertEqual(
-                kept_metrics["quantile_analysis"]["1"]["validation"][
-                    "monotonicity"
-                ],
+                kept_metrics["quantile_analysis"]["1"]["validation"]["monotonicity"],
                 1.0,
             )
             self.assertGreater(
-                kept_metrics["quantile_analysis"]["1"]["validation"][
-                    "high_minus_low"
-                ],
+                kept_metrics["quantile_analysis"]["1"]["validation"]["high_minus_low"],
                 0.01,
             )
             self.assertGreater(
-                kept_metrics["style_correlations"]["validation"][
-                    "relative_volume_20"
-                ]["mean_rank_correlation"],
+                kept_metrics["style_correlations"]["validation"]["relative_volume_20"][
+                    "mean_rank_correlation"
+                ],
                 0.95,
             )
             qualification = kept_metrics["factor_qualification"]
@@ -662,12 +623,12 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 0.0,
             )
             self.assertAlmostEqual(
-                qualification["horizon_quality"]["1"]["validation"][
-                    "candidate"
-                ]["mean_ic"],
-                qualification["horizon_quality"]["1"]["validation"][
-                    "dominant_style"
-                ]["mean_ic"],
+                qualification["horizon_quality"]["1"]["validation"]["candidate"][
+                    "mean_ic"
+                ],
+                qualification["horizon_quality"]["1"]["validation"]["dominant_style"][
+                    "mean_ic"
+                ],
             )
             qualification_diagnosis = load_factor_diagnostics(
                 project,
@@ -788,9 +749,7 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 encoding="utf-8",
             )
             session = start_session(project, OHLCV_STUDY_ID)
-            candidate = (
-                session.worktree_project.root_dir / "factors" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(IMPROVED_FACTOR, encoding="utf-8")
             kept = evaluate_experiment(
                 project,
@@ -812,13 +771,9 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 qualification["diagnosis"]["stage"],
                 "decision-signal-positive",
             )
-            self.assertTrue(
-                qualification["diagnosis"]["qualifiesForPortfolio"]
-            )
+            self.assertTrue(qualification["diagnosis"]["qualifiesForPortfolio"])
             self.assertAlmostEqual(
-                qualification["validation"]["styleNeutralCandidate"][
-                    "meanRankIc"
-                ],
+                qualification["validation"]["styleNeutralCandidate"]["meanRankIc"],
                 0.0,
             )
 
@@ -833,10 +788,9 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 rows = frame.index[-40:]
                 direction = 1.0 if asset_number % 2 else -1.0
                 scale = 1.0 + direction * np.linspace(0.0, 0.30, len(rows))
-                frame.loc[rows, ["open", "high", "low", "close"]] = (
-                    frame.loc[rows, ["open", "high", "low", "close"]]
-                    .mul(scale, axis=0)
-                )
+                frame.loc[rows, ["open", "high", "low", "close"]] = frame.loc[
+                    rows, ["open", "high", "low", "close"]
+                ].mul(scale, axis=0)
                 frame.to_csv(source, index=False)
 
             after = execute_study(project, OHLCV_STUDY_ID)
@@ -847,40 +801,26 @@ class OhlcvFactorLabTests(unittest.TestCase):
             )
             for horizon in ("1", "5", "10"):
                 self.assertEqual(
-                    before.result["metrics"]["horizon_quality"][horizon][
-                        "validation"
-                    ],
-                    after.result["metrics"]["horizon_quality"][horizon][
-                        "validation"
-                    ],
+                    before.result["metrics"]["horizon_quality"][horizon]["validation"],
+                    after.result["metrics"]["horizon_quality"][horizon]["validation"],
                 )
                 self.assertEqual(
                     before.result["metrics"]["quantile_analysis"][horizon][
                         "validation"
                     ],
-                    after.result["metrics"]["quantile_analysis"][horizon][
-                        "validation"
-                    ],
+                    after.result["metrics"]["quantile_analysis"][horizon]["validation"],
                 )
             self.assertEqual(
                 before.result["metrics"]["style_correlations"]["validation"],
                 after.result["metrics"]["style_correlations"]["validation"],
             )
             self.assertEqual(
-                before.result["metrics"]["stability"]["causal_regimes"][
-                    "validation"
-                ],
-                after.result["metrics"]["stability"]["causal_regimes"][
-                    "validation"
-                ],
+                before.result["metrics"]["stability"]["causal_regimes"]["validation"],
+                after.result["metrics"]["stability"]["causal_regimes"]["validation"],
             )
             self.assertEqual(
-                before.result["metrics"]["stability"]["per_asset"][
-                    "validation"
-                ],
-                after.result["metrics"]["stability"]["per_asset"][
-                    "validation"
-                ],
+                before.result["metrics"]["stability"]["per_asset"]["validation"],
+                after.result["metrics"]["stability"]["per_asset"]["validation"],
             )
             self.assertNotEqual(
                 before.result["metrics"]["test"]["mean_ic"],
@@ -916,13 +856,9 @@ class OhlcvFactorLabTests(unittest.TestCase):
                 positions = np.flatnonzero(mask.to_numpy())
                 self.assertGreater(len(positions), 0)
                 self.assertTrue((labels.iloc[positions] == split).all())
-                self.assertTrue(
-                    (labels.iloc[positions + horizon] == split).all()
-                )
+                self.assertTrue((labels.iloc[positions + horizon] == split).all())
                 self.assertEqual(
-                    protocol["horizons"][str(horizon)][split][
-                        "purgedBoundaryRows"
-                    ],
+                    protocol["horizons"][str(horizon)][split]["purgedBoundaryRows"],
                     horizon,
                 )
 
@@ -932,13 +868,7 @@ class OhlcvFactorLabTests(unittest.TestCase):
         closes = pd.DataFrame(
             {
                 asset: 100.0
-                * np.exp(
-                    np.cumsum(
-                        0.0005
-                        + 0.01
-                        * np.sin(time / (5.0 + number))
-                    )
-                )
+                * np.exp(np.cumsum(0.0005 + 0.01 * np.sin(time / (5.0 + number))))
                 for number, asset in enumerate(("A", "B", "C", "D"))
             },
             index=index,
@@ -1085,9 +1015,7 @@ print(json.dumps({
             self.assertEqual(observed["counts"]["verdicts"]["KEEP"], 1)
             self.assertEqual(observed["counts"]["runs"], 2)
             self.assertEqual(
-                observed["sessions"][0]["selectionIntegrity"][
-                    "testExposureState"
-                ],
+                observed["sessions"][0]["selectionIntegrity"]["testExposureState"],
                 "first-candidate-audit-visible",
             )
             self.assertEqual(

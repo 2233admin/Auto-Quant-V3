@@ -110,7 +110,9 @@ def request_definition(
 def make_project(directory: str | Path):
     root = Path(directory) / "workspace"
     workspace = initialize_workspace(root, name="Test Quant Desk")
-    project = create_project(workspace.root_dir, "factor-project", name="Factor Project")
+    project = create_project(
+        workspace.root_dir, "factor-project", name="Factor Project"
+    )
     (project.root_dir / "factors" / "candidate.py").write_text(
         "SCORE = 1.25\n",
         encoding="utf-8",
@@ -151,11 +153,7 @@ def study_definition(
             StudyTimeRange("2026-01-01", "2026-01-31"),
             dataset_paths,
         ),
-        dependencies=(
-            {"paths": dependencies}
-            if dependencies is not None
-            else None
-        ),
+        dependencies=({"paths": dependencies} if dependencies is not None else None),
         research_request=research_request,
         upstream_evidence=upstream_evidence,
     )

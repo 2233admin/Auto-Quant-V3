@@ -13,7 +13,13 @@ from pathlib import Path
 from typing import Any
 
 from .cli_contract import CliCommandError
-from .trial_families import _parse_time, _read_cached_json, editable_study, family_state, workspace_root_for
+from .trial_families import (
+    _parse_time,
+    _read_cached_json,
+    editable_study,
+    family_state,
+    workspace_root_for,
+)
 from .trial_family_ledger import register_project
 from .workspace import AutoQuantValidationError, ProjectContext, ValidationIssue
 
@@ -22,18 +28,31 @@ POLICY_FILE = "autoquant-research-policy.json"
 POLICY_KIND = "autoquant-research-policy"
 DEFAULT_MAX_TRIALS = 20
 DEFAULT_WINDOW_DAYS = 30
-TRIAL_COMMANDS = frozenset({"run.execute", "session.start", "experiment.evaluate", "research.run"})
+TRIAL_COMMANDS = frozenset(
+    {"run.execute", "session.start", "experiment.evaluate", "research.run"}
+)
 
 
-def _refuse(code: str, message: str, state: dict[str, Any] | None = None) -> CliCommandError:
+def _refuse(
+    code: str, message: str, state: dict[str, Any] | None = None
+) -> CliCommandError:
     context = {"scope": "global", "trialGate": state} if state is not None else None
-    return CliCommandError(code, message, issues=[ValidationIssue("trialGate", code, message)], context=context)
+    return CliCommandError(
+        code,
+        message,
+        issues=[ValidationIssue("trialGate", code, message)],
+        context=context,
+    )
 
 
 def load_policy(root: Path | None) -> dict[str, Any]:
     """Desk budget policy; absent means the documented default, malformed fails closed."""
 
-    default = {"maxCountedTrialsPerFamily": DEFAULT_MAX_TRIALS, "windowDays": DEFAULT_WINDOW_DAYS, "source": "default"}
+    default = {
+        "maxCountedTrialsPerFamily": DEFAULT_MAX_TRIALS,
+        "windowDays": DEFAULT_WINDOW_DAYS,
+        "source": "default",
+    }
     if root is None:
         return default
     path = root / POLICY_FILE
@@ -42,20 +61,30 @@ def load_policy(root: Path | None) -> dict[str, Any]:
     raw = _read_cached_json(path)
     budget = raw.get("trialBudget") if isinstance(raw, dict) else None
     valid = (
-        isinstance(raw, dict) and set(raw) == {"schemaVersion", "kind", "trialBudget"}
-        and raw["schemaVersion"] == 1 and raw["kind"] == POLICY_KIND
-        and isinstance(budget, dict) and set(budget) == {"maxCountedTrialsPerFamily", "windowDays"}
+        isinstance(raw, dict)
+        and set(raw) == {"schemaVersion", "kind", "trialBudget"}
+        and raw["schemaVersion"] == 1
+        and raw["kind"] == POLICY_KIND
+        and isinstance(budget, dict)
+        and set(budget) == {"maxCountedTrialsPerFamily", "windowDays"}
         and all(type(budget[k]) is int and budget[k] >= 1 for k in budget)
     )
     if not valid:
-        raise _refuse("trial-gate.policy-invalid",
-                      f"{path} must be {{schemaVersion: 1, kind: {POLICY_KIND}, trialBudget: "
-                      "{maxCountedTrialsPerFamily: int>=1, windowDays: int>=1}}")
+        raise _refuse(
+            "trial-gate.policy-invalid",
+            f"{path} must be {{schemaVersion: 1, kind: {POLICY_KIND}, trialBudget: "
+            "{maxCountedTrialsPerFamily: int>=1, windowDays: int>=1}}",
+        )
     return {**budget, "source": POLICY_FILE}
 
 
-def gate_state(project: ProjectContext, study_id: str, *, planned: int = 1,
-               now: datetime | None = None) -> dict[str, Any] | None:
+def gate_state(
+    project: ProjectContext,
+    study_id: str,
+    *,
+    planned: int = 1,
+    now: datetime | None = None,
+) -> dict[str, Any] | None:
     """Budget and declaration state for spending ``planned`` trials, or ``None`` if ungated."""
 
     if not editable_study(project, study_id):
@@ -84,9 +113,14 @@ def gate_state(project: ProjectContext, study_id: str, *, planned: int = 1,
         "otherProjects": other_projects,
         "confirmationRequired": reason is None and bool(other_projects),
         "possibleRelatedFamilies": family["possibleRelatedFamilies"] if family else [],
-        "budget": {"maxCountedTrialsPerFamily": limit, "windowDays": policy["windowDays"],
-                   "policySource": policy["source"], "usedInWindow": used,
-                   "remaining": max(0, limit - used), "windowStart": start.isoformat()},
+        "budget": {
+            "maxCountedTrialsPerFamily": limit,
+            "windowDays": policy["windowDays"],
+            "policySource": policy["source"],
+            "usedInWindow": used,
+            "remaining": max(0, limit - used),
+            "windowStart": start.isoformat(),
+        },
         "planned": planned,
         "nextTrial": used + 1,
         "allowed": reason is None,
@@ -95,7 +129,9 @@ def gate_state(project: ProjectContext, study_id: str, *, planned: int = 1,
     }
 
 
-def enforce(project: ProjectContext, study_id: str, *, confirmed: bool, planned: int = 1) -> dict[str, Any] | None:
+def enforce(
+    project: ProjectContext, study_id: str, *, confirmed: bool, planned: int = 1
+) -> dict[str, Any] | None:
     """Raise a stable-code refusal unless the trial may be spent now."""
 
     state = gate_state(project, study_id, planned=planned)
@@ -103,26 +139,36 @@ def enforce(project: ProjectContext, study_id: str, *, confirmed: bool, planned:
         return None
     family = state["familyId"]
     if state["refusal"] == "trial-gate.family-declaration-required":
-        related = ", ".join(item["familyId"] for item in state["possibleRelatedFamilies"])
-        raise _refuse(state["refusal"],
-                      f"Study {study_id} may repeat trial family {related}. State the caller-owned answer first: "
-                      f"aq family declare <path> --project {project.manifest.id} --study {study_id} "
-                      "(--same-family FAMILY_ID | --new-hypothesis)", state)
+        related = ", ".join(
+            item["familyId"] for item in state["possibleRelatedFamilies"]
+        )
+        raise _refuse(
+            state["refusal"],
+            f"Study {study_id} may repeat trial family {related}. State the caller-owned answer first: "
+            f"aq family declare <path> --project {project.manifest.id} --study {study_id} "
+            "(--same-family FAMILY_ID | --new-hypothesis)",
+            state,
+        )
     if state["refusal"] == "trial-gate.budget-exhausted":
         budget = state["budget"]
-        raise _refuse(state["refusal"],
-                      f"Trial family {family} already spent {budget['usedInWindow']} of "
-                      f"{budget['maxCountedTrialsPerFamily']} counted trials in the last {budget['windowDays']} days "
-                      f"(planned {planned}); the desk policy ({budget['policySource']}) refuses more", state)
+        raise _refuse(
+            state["refusal"],
+            f"Trial family {family} already spent {budget['usedInWindow']} of "
+            f"{budget['maxCountedTrialsPerFamily']} counted trials in the last {budget['windowDays']} days "
+            f"(planned {planned}); the desk policy ({budget['policySource']}) refuses more",
+            state,
+        )
     if state["confirmationRequired"] and not confirmed:
         projects = ", ".join(state["otherProjects"])
-        raise _refuse("trial-gate.confirmation-required",
-                      f"Family {family} already has {state['otherProjectTrials']} trials from Projects {projects}; "
-                      f"this command would spend counted trial {state['nextTrial']} of "
-                      f"{state['budget']['maxCountedTrialsPerFamily']} per {state['budget']['windowDays']} days "
-                      "against the same question from another Project. Repeating a question across Projects is the "
-                      "selection-bias risk; rerun with --confirm-trial only after deciding it is worth another try.",
-                      state)
+        raise _refuse(
+            "trial-gate.confirmation-required",
+            f"Family {family} already has {state['otherProjectTrials']} trials from Projects {projects}; "
+            f"this command would spend counted trial {state['nextTrial']} of "
+            f"{state['budget']['maxCountedTrialsPerFamily']} per {state['budget']['windowDays']} days "
+            "against the same question from another Project. Repeating a question across Projects is the "
+            "selection-bias risk; rerun with --confirm-trial only after deciding it is worth another try.",
+            state,
+        )
     return state
 
 
@@ -132,17 +178,24 @@ def gated(args: Any, select_project, handler, study_for_session) -> Any:
     project = select_project(args)
     study_id = getattr(args, "study", None) or study_for_session(project, args.session)
     planned = getattr(args, "max_turns", 1) if args.command_id == "research.run" else 1
-    enforce(project, study_id, confirmed=bool(getattr(args, "confirm_trial", False)), planned=max(1, planned))
+    enforce(
+        project,
+        study_id,
+        confirmed=bool(getattr(args, "confirm_trial", False)),
+        planned=max(1, planned),
+    )
     try:
         return handler(args)
     finally:
         register_project(project)
 
 
-HANDOFF_COMMAND = ("aq handoff {root} --project {project} (--run ID | --report ID | --dossier ID) "
-                   "--valid-from YYYY-MM-DD --valid-until YYYY-MM-DD --review-date YYYY-MM-DD "
-                   "[--assumption TEXT] [--unsupported-claim TEXT] "
-                   "[--external-holdout-digest SHA256 --external-holdout-status STATUS] --json")
+HANDOFF_COMMAND = (
+    "aq handoff {root} --project {project} (--run ID | --report ID | --dossier ID) "
+    "--valid-from YYYY-MM-DD --valid-until YYYY-MM-DD --review-date YYYY-MM-DD "
+    "[--assumption TEXT] [--unsupported-claim TEXT] "
+    "[--external-holdout-digest SHA256 --external-holdout-status STATUS] --json"
+)
 
 
 def desk_research_projection(project: ProjectContext) -> dict[str, Any]:
@@ -150,30 +203,54 @@ def desk_research_projection(project: ProjectContext) -> dict[str, Any]:
 
     from .trial_families import project_family_summary
 
-    keys = ("id", "deskTrialCount", "otherProjectTrials", "joinedBy", "declaration",
-            "declarationRequired", "possibleRelatedFamilies", "registered")
+    keys = (
+        "id",
+        "deskTrialCount",
+        "otherProjectTrials",
+        "joinedBy",
+        "declaration",
+        "declarationRequired",
+        "possibleRelatedFamilies",
+        "registered",
+    )
     try:
         families = []
         for item in project_family_summary(project):
             state = gate_state(project, item["studyId"])
-            families.append({"studyId": item["studyId"], **{k: item[k] for k in keys},
-                             # windowStart is time-varying; orientation stays deterministic.
-                             "budget": ({k: v for k, v in state["budget"].items() if k != "windowStart"}
-                                        if state else None),
-                             "nextTrial": state["nextTrial"] if state else None,
-                             "refusal": state["refusal"] if state else None})
+            families.append(
+                {
+                    "studyId": item["studyId"],
+                    **{k: item[k] for k in keys},
+                    # windowStart is time-varying; orientation stays deterministic.
+                    "budget": (
+                        {k: v for k, v in state["budget"].items() if k != "windowStart"}
+                        if state
+                        else None
+                    ),
+                    "nextTrial": state["nextTrial"] if state else None,
+                    "refusal": state["refusal"] if state else None,
+                }
+            )
         status, reason = "available", None
     except (CliCommandError, AutoQuantValidationError) as error:
         families, status, reason = [], "invalid", str(error)
     return {
-        "status": status, "reason": reason,
+        "status": status,
+        "reason": reason,
         "trialFamilies": families,
-        "trialGate": {"commands": sorted(TRIAL_COMMANDS), "acknowledgement": "--confirm-trial",
-                      "policyFile": POLICY_FILE,
-                      "declare": f"aq family declare {project.root_dir} --study STUDY (--same-family FAMILY_ID | --new-hypothesis) --json",
-                      "show": f"aq family show {project.root_dir} --json"},
-        "handoff": {"command": HANDOFF_COMMAND.format(root=project.root_dir, project=project.manifest.id),
-                    "schema": "aq schema research-handoff",
-                    "callerOwned": ["validFrom", "validUntil", "reviewDate"],
-                    "plainTextEnding": "Primary deliverable directory: <absolute path>"},
+        "trialGate": {
+            "commands": sorted(TRIAL_COMMANDS),
+            "acknowledgement": "--confirm-trial",
+            "policyFile": POLICY_FILE,
+            "declare": f"aq family declare {project.root_dir} --study STUDY (--same-family FAMILY_ID | --new-hypothesis) --json",
+            "show": f"aq family show {project.root_dir} --json",
+        },
+        "handoff": {
+            "command": HANDOFF_COMMAND.format(
+                root=project.root_dir, project=project.manifest.id
+            ),
+            "schema": "aq schema research-handoff",
+            "callerOwned": ["validFrom", "validUntil", "reviewDate"],
+            "plainTextEnding": "Primary deliverable directory: <absolute path>",
+        },
     }

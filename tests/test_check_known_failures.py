@@ -99,7 +99,9 @@ class CheckKnownFailuresTests(unittest.TestCase):
         (self.root / "tests" / "test_fake.py").write_text(FAKE_TESTS, encoding="utf-8")
         patches = (
             mock.patch.object(self.script, "ROOT", self.root),
-            mock.patch.object(self.script, "REGISTRY", self.root / "tests" / "known_failures.json"),
+            mock.patch.object(
+                self.script, "REGISTRY", self.root / "tests" / "known_failures.json"
+            ),
             mock.patch.dict(os.environ, {"FAKE_SLEEP": "0"}),
         )
         for patch in patches:
@@ -107,8 +109,19 @@ class CheckKnownFailuresTests(unittest.TestCase):
             self.addCleanup(patch.stop)
 
     def register(self, *ids: str) -> None:
-        entries = [{"id": test, "platform": "all", "category": "unexplained", "cause": "fake", "issue": 0} for test in ids]
-        (self.root / "tests" / "known_failures.json").write_text(json.dumps({"failures": entries}), encoding="utf-8")
+        entries = [
+            {
+                "id": test,
+                "platform": "all",
+                "category": "unexplained",
+                "cause": "fake",
+                "issue": 0,
+            }
+            for test in ids
+        ]
+        (self.root / "tests" / "known_failures.json").write_text(
+            json.dumps({"failures": entries}), encoding="utf-8"
+        )
 
     def check(self, *arguments: str) -> tuple[int, TimedOutput, float]:
         out = TimedOutput()
@@ -121,25 +134,49 @@ class CheckKnownFailuresTests(unittest.TestCase):
         path.write_text(textwrap.dedent(text).lstrip(), encoding="utf-8")
         return str(path)
 
-    def test_hung_looking_test_streams_and_dumps_stacks_without_killing_the_run(self) -> None:
+    def test_hung_looking_test_streams_and_dumps_stacks_without_killing_the_run(
+        self,
+    ) -> None:
         self.register(FAILING)
         with mock.patch.dict(os.environ, {"FAKE_SLEEP": "1.6"}):
             code, out, finished = self.check("--watchdog", "0.5", "--slow", "1.0")
         text = out.getvalue()
 
         # The first test line reached stdout well before the run ended: output is live.
-        self.assertGreaterEqual(finished - out.first_seen("test_always_fails ("), 1.5, text)
+        self.assertGreaterEqual(
+            finished - out.first_seen("test_always_fails ("), 1.5, text
+        )
         # The stack dump of the stuck test was streamed while it ran, not at the end.
-        self.assertGreaterEqual(out.first_seen("Ran 3 tests") - out.first_seen("Timeout ("), 0.5, text)
-        self.assertRegex(text, re.compile(r'Timeout \([^)]*\)!.*?File ".*test_fake\.py", line \d+ in test_sleeps_past_the_watchdog', re.DOTALL))
+        self.assertGreaterEqual(
+            out.first_seen("Ran 3 tests") - out.first_seen("Timeout ("), 0.5, text
+        )
+        self.assertRegex(
+            text,
+            re.compile(
+                r'Timeout \([^)]*\)!.*?File ".*test_fake\.py", line \d+ in test_sleeps_past_the_watchdog',
+                re.DOTALL,
+            ),
+        )
         # The watchdog only reports: the slow test still passes and the verdict is unchanged.
         # The dump lands inside the half-written result line; "ok" follows it, so the run was not killed.
-        self.assertRegex(text, rf"(?s)test_sleeps_past_the_watchdog \(.*{SLEEPING}\) \.\.\. Timeout \(.*\nok\n")
-        self.assertIn("tests run: 3; first pass failures: 1; persistent after rerun: 1; known: 1", text)
+        self.assertRegex(
+            text,
+            rf"(?s)test_sleeps_past_the_watchdog \(.*{SLEEPING}\) \.\.\. Timeout \(.*\nok\n",
+        )
+        self.assertIn(
+            "tests run: 3; first pass failures: 1; persistent after rerun: 1; known: 1",
+            text,
+        )
         self.assertEqual(code, 0)
         # The slow test is marked after its result and listed again in the summary.
-        self.assertRegex(text, rf"(?m)^\[slow \d+\.\d+s\] test_sleeps_past_the_watchdog \(.*{SLEEPING}\)$")
-        self.assertRegex(text, r"(?m)^slow tests, slowest first:\n +\d+\.\d+s  test_sleeps_past_the_watchdog")
+        self.assertRegex(
+            text,
+            rf"(?m)^\[slow \d+\.\d+s\] test_sleeps_past_the_watchdog \(.*{SLEEPING}\)$",
+        )
+        self.assertRegex(
+            text,
+            r"(?m)^slow tests, slowest first:\n +\d+\.\d+s  test_sleeps_past_the_watchdog",
+        )
 
     def test_unregistered_failure_exits_one_and_a_registered_one_does_not(self) -> None:
         self.register()
@@ -147,7 +184,10 @@ class CheckKnownFailuresTests(unittest.TestCase):
         text = out.getvalue()
         self.assertEqual(code, 1, text)
         self.assertIn(f"NEW failures:\n  {FAILING}\n", text)
-        self.assertIn("tests run: 3; first pass failures: 1; persistent after rerun: 1; known: 0", text)
+        self.assertIn(
+            "tests run: 3; first pass failures: 1; persistent after rerun: 1; known: 0",
+            text,
+        )
         self.assertIn("== rerun: 1 first-pass failures in one process", text)
         # The traceback of the failure is now visible in the run output.
         self.assertIn("AssertionError: fake failure", text)
@@ -183,7 +223,10 @@ class CheckKnownFailuresTests(unittest.TestCase):
         self.register(FAILING)
         code, out, _ = self.check("--log", log, "--no-rerun")
         self.assertEqual(code, 0, out.getvalue())
-        self.assertEqual(out.getvalue().splitlines()[0], "tests run: 2; first pass failures: 1; persistent after rerun: 1; known: 1")
+        self.assertEqual(
+            out.getvalue().splitlines()[0],
+            "tests run: 2; first pass failures: 1; persistent after rerun: 1; known: 1",
+        )
         self.assertNotIn("slow tests", out.getvalue())
 
         self.register()
@@ -194,7 +237,10 @@ class CheckKnownFailuresTests(unittest.TestCase):
         self.register(FAILING, "test_fake.FakeTests.test_fast")
         code, out, _ = self.check("--log", log, "--no-rerun")
         self.assertEqual(code, 0, out.getvalue())
-        self.assertIn("known failures now passing; remove them:\n  test_fake.FakeTests.test_fast\n", out.getvalue())
+        self.assertIn(
+            "known failures now passing; remove them:\n  test_fake.FakeTests.test_fast\n",
+            out.getvalue(),
+        )
 
     def test_log_without_a_summary_line_is_an_error(self) -> None:
         log = self.write_log("test_fast (tests.test_fake.FakeTests.test_fast) ... ok\n")
@@ -203,8 +249,13 @@ class CheckKnownFailuresTests(unittest.TestCase):
             self.check("--log", log)
         self.assertIn("did not report a 'Ran N tests' line", str(raised.exception))
 
-    def test_slow_markers_in_a_log_are_summarised_slowest_first_and_capped(self) -> None:
-        markers = "".join(f"[slow {seconds}.5s] test_{seconds} (tests.test_fake.FakeTests.test_{seconds})\n" for seconds in range(30, 50))
+    def test_slow_markers_in_a_log_are_summarised_slowest_first_and_capped(
+        self,
+    ) -> None:
+        markers = "".join(
+            f"[slow {seconds}.5s] test_{seconds} (tests.test_fake.FakeTests.test_{seconds})\n"
+            for seconds in range(30, 50)
+        )
         log = self.write_log("Ran 20 tests in 99s\n\nOK\n" + markers)
         self.register()
         code, out, _ = self.check("--log", log)
@@ -218,7 +269,12 @@ class CheckKnownFailuresTests(unittest.TestCase):
     def test_runner_exit_code_follows_unittest(self) -> None:
         def run(*selection: str) -> int:
             return subprocess.run(
-                [sys.executable, str(SCRIPTS / "unittest_watchdog.py"), *selection, "-v"],
+                [
+                    sys.executable,
+                    str(SCRIPTS / "unittest_watchdog.py"),
+                    *selection,
+                    "-v",
+                ],
                 cwd=self.root,
                 capture_output=True,
                 check=False,
@@ -231,7 +287,11 @@ class CheckKnownFailuresTests(unittest.TestCase):
         parts: list[str] = []
         echoed = io.StringIO()
         with contextlib.redirect_stdout(echoed):
-            self.script.pump(FakeSource(b"ok\r", b"\nsl\xc3", b"\xa9ep\n"), parts, self.script.threading.Lock())
+            self.script.pump(
+                FakeSource(b"ok\r", b"\nsl\xc3", b"\xa9ep\n"),
+                parts,
+                self.script.threading.Lock(),
+            )
         expected = "ok\nsl\N{LATIN SMALL LETTER E WITH ACUTE}ep\n"
         self.assertEqual("".join(parts), expected)
         self.assertEqual(echoed.getvalue(), expected)
@@ -243,7 +303,9 @@ class CheckKnownFailuresTests(unittest.TestCase):
 
         parts: list[str] = []
         with contextlib.redirect_stdout(BrokenStdout()):
-            self.script.pump(FakeSource(b"one\n", b"two\n"), parts, self.script.threading.Lock())
+            self.script.pump(
+                FakeSource(b"one\n", b"two\n"), parts, self.script.threading.Lock()
+            )
         self.assertEqual("".join(parts), "one\ntwo\n")
 
     def test_echo_survives_a_stdout_that_cannot_encode_the_text(self) -> None:
@@ -254,8 +316,15 @@ class CheckKnownFailuresTests(unittest.TestCase):
         self.assertEqual(raw.getvalue(), b"sl?ep\n")
 
     def test_script_and_runner_agree_on_their_settings(self) -> None:
-        for name in ("WATCHDOG_ENV", "SLOW_ENV", "DEFAULT_WATCHDOG_SECONDS", "DEFAULT_SLOW_SECONDS"):
-            self.assertEqual(getattr(self.script, name), getattr(self.runner, name), name)
+        for name in (
+            "WATCHDOG_ENV",
+            "SLOW_ENV",
+            "DEFAULT_WATCHDOG_SECONDS",
+            "DEFAULT_SLOW_SECONDS",
+        ):
+            self.assertEqual(
+                getattr(self.script, name), getattr(self.runner, name), name
+            )
 
 
 if __name__ == "__main__":

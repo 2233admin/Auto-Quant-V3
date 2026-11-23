@@ -37,8 +37,7 @@ class LinkFailure:
 
     def render(self) -> str:
         return (
-            f"{self.source.relative_to(ROOT)}:{self.line}: "
-            f"unresolved [[{self.target}]]"
+            f"{self.source.relative_to(ROOT)}:{self.line}: unresolved [[{self.target}]]"
         )
 
 

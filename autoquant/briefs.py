@@ -183,9 +183,7 @@ def _normalize_position_snapshot(
     issues: list[ValidationIssue],
 ) -> dict[str, Any] | None:
     if not isinstance(value, dict):
-        issues.append(
-            _issue(path, "schema.type", "positionSnapshot must be an object")
-        )
+        issues.append(_issue(path, "schema.type", "positionSnapshot must be an object"))
         return None
     issues.extend(
         _strict_keys(
@@ -216,9 +214,7 @@ def _normalize_position_snapshot(
         )
     else:
         try:
-            parsed_as_of = datetime.fromisoformat(
-                as_of.strip().replace("Z", "+00:00")
-            )
+            parsed_as_of = datetime.fromisoformat(as_of.strip().replace("Z", "+00:00"))
         except ValueError:
             parsed_as_of = None
         if parsed_as_of is None or parsed_as_of.tzinfo is None:
@@ -312,8 +308,7 @@ def _normalize_position_snapshot(
             _issue(
                 f"{path}/cashWeight",
                 "request.position-snapshot-cash",
-                "Position snapshot cashWeight must be finite and between "
-                "-3 and 3",
+                "Position snapshot cashWeight must be finite and between -3 and 3",
             )
         )
     elif weights:
@@ -351,9 +346,7 @@ def _normalize_position_snapshot(
         "kind": kind,
         "asOf": parsed_as_of.isoformat().replace("+00:00", "Z"),
         "baseCurrency": currency.strip().upper(),
-        "weights": {
-            symbol: weights[symbol] for symbol in sorted(weights)
-        },
+        "weights": {symbol: weights[symbol] for symbol in sorted(weights)},
         "cashWeight": float(cash_weight),
     }
 
@@ -446,11 +439,7 @@ def _normalize_position_scenarios(
             )
         else:
             identifiers.add(identifier)
-        if (
-            not isinstance(name, str)
-            or not name.strip()
-            or len(name.strip()) > 120
-        ):
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 120:
             issues.append(
                 _issue(
                     f"{item_path}/name",
@@ -541,9 +530,7 @@ def _normalize_position_sizing(
     issues: list[ValidationIssue],
 ) -> dict[str, Any] | None:
     if not isinstance(value, dict):
-        issues.append(
-            _issue(path, "schema.type", "positionSizing must be an object")
-        )
+        issues.append(_issue(path, "schema.type", "positionSizing must be an object"))
         return None
     issues.extend(
         _strict_keys(
@@ -651,8 +638,7 @@ def _normalize_position_sizing(
                 _issue(
                     f"{path}/asset",
                     "request.position-sizing-held-long",
-                    "A decreased asset must be a strictly positive baseline "
-                    "holding",
+                    "A decreased asset must be a strictly positive baseline holding",
                 )
             )
         if "minimumWeight" not in value:
@@ -682,8 +668,7 @@ def _normalize_position_sizing(
                 _issue(
                     f"{path}/minimumWeight",
                     "request.position-sizing-directional-bound",
-                    "minimumWeight must be non-negative and below the "
-                    "baseline holding",
+                    "minimumWeight must be non-negative and below the baseline holding",
                 )
             )
     elif direction == "increase":
@@ -732,8 +717,7 @@ def _normalize_position_sizing(
                 _issue(
                     f"{path}/direction",
                     "request.position-sizing-positive-cash",
-                    "An increased asset requires strictly positive baseline "
-                    "cash",
+                    "An increased asset requires strictly positive baseline cash",
                 )
             )
     if (
@@ -831,7 +815,9 @@ def validate_research_request(
     if value.get("schemaVersion") != SCHEMA_VERSION:
         issues.append(_issue(f"{path}/schemaVersion", "schema.version", "Expected V1"))
     if value.get("kind") != REQUEST_KIND:
-        issues.append(_issue(f"{path}/kind", "request.kind", f"Expected {REQUEST_KIND}"))
+        issues.append(
+            _issue(f"{path}/kind", "request.kind", f"Expected {REQUEST_KIND}")
+        )
     for key in ("title", "question", "decisionContext", "horizon"):
         issues.extend(_non_empty(value.get(key), f"{path}/{key}"))
     if value.get("direction") not in REQUEST_DIRECTIONS:
@@ -911,8 +897,7 @@ def validate_research_request(
             _issue(
                 path,
                 "request.position-sizing-scenarios",
-                "positionSizing and positionScenarios cannot be requested "
-                "together",
+                "positionSizing and positionScenarios cannot be requested together",
             )
         )
     benchmark_policy = value.get("benchmarkPolicy")
@@ -967,10 +952,7 @@ def validate_research_request(
                         "kind": "cash",
                         "symbol": None,
                     }
-            elif (
-                not isinstance(benchmark_symbol, str)
-                or not benchmark_symbol.strip()
-            ):
+            elif not isinstance(benchmark_symbol, str) or not benchmark_symbol.strip():
                 issues.append(
                     _issue(
                         f"{benchmark_path}/symbol",
@@ -1040,10 +1022,7 @@ def validate_research_request(
                         )
                     )
                 for symbol, item in raw_asset_caps.items():
-                    cap_path = (
-                        f"{path}/portfolioPolicy/"
-                        f"assetMaxAbsWeights/{symbol}"
-                    )
+                    cap_path = f"{path}/portfolioPolicy/assetMaxAbsWeights/{symbol}"
                     if not isinstance(symbol, str) or not symbol.strip():
                         issues.append(
                             _issue(
@@ -1106,8 +1085,7 @@ def validate_research_request(
                     ):
                         issues.append(
                             _issue(
-                                f"{path}/portfolioPolicy/"
-                                "decisionSchedule/bars",
+                                f"{path}/portfolioPolicy/decisionSchedule/bars",
                                 "request.decision-cadence",
                                 "Every-bars schedule bars must be an integer "
                                 "from 1 to 252",
@@ -1116,8 +1094,7 @@ def validate_research_request(
                     if anchor not in DECISION_ANCHORS:
                         issues.append(
                             _issue(
-                                f"{path}/portfolioPolicy/"
-                                "decisionSchedule/anchor",
+                                f"{path}/portfolioPolicy/decisionSchedule/anchor",
                                 "request.decision-anchor",
                                 "Every-bars schedule anchor must be "
                                 "dataset-start or session-start",
@@ -1174,9 +1151,7 @@ def validate_research_request(
                 )
                 for key, lower, upper, inclusive_lower in bounds:
                     item = numeric[key]
-                    lower_ok = (
-                        item >= lower if inclusive_lower else item > lower
-                    )
+                    lower_ok = item >= lower if inclusive_lower else item > lower
                     if not lower_ok or item > upper:
                         issues.append(
                             _issue(
@@ -1198,12 +1173,10 @@ def validate_research_request(
                     else []
                 )
                 has_long = any(
-                    role in {"long-only", "two-sided"}
-                    for role in explicit_roles
+                    role in {"long-only", "two-sided"} for role in explicit_roles
                 )
                 has_short = any(
-                    role in {"short-only", "two-sided"}
-                    for role in explicit_roles
+                    role in {"short-only", "two-sided"} for role in explicit_roles
                 )
                 maximum_cap = (
                     gross / 2.0
@@ -1235,8 +1208,7 @@ def validate_research_request(
                     **numeric,
                     "decisionSchedule": decision_schedule,
                     "assetMaxAbsWeights": {
-                        symbol: asset_caps[symbol]
-                        for symbol in sorted(asset_caps)
+                        symbol: asset_caps[symbol] for symbol in sorted(asset_caps)
                     },
                 }
     horizon_policy = value.get("horizonPolicy")
@@ -1264,16 +1236,13 @@ def validate_research_request(
             if (
                 not isinstance(primary, int)
                 or isinstance(primary, bool)
-                or not MIN_FORWARD_BARS
-                <= primary
-                <= MAX_FORWARD_BARS
+                or not MIN_FORWARD_BARS <= primary <= MAX_FORWARD_BARS
             ):
                 issues.append(
                     _issue(
                         f"{horizon_path}/primaryForwardBars",
                         "request.horizon-primary",
-                        "primaryForwardBars must be a supported positive "
-                        "integer",
+                        "primaryForwardBars must be a supported positive integer",
                     )
                 )
             if (
@@ -1292,9 +1261,7 @@ def validate_research_request(
             elif any(
                 not isinstance(item, int)
                 or isinstance(item, bool)
-                or not MIN_FORWARD_BARS
-                <= item
-                <= MAX_FORWARD_BARS
+                or not MIN_FORWARD_BARS <= item <= MAX_FORWARD_BARS
                 for item in diagnostics
             ):
                 issues.append(
@@ -1315,8 +1282,7 @@ def validate_research_request(
                 )
             elif (
                 isinstance(primary, int)
-                and len({primary, *diagnostics})
-                > MAX_DIAGNOSTIC_HORIZONS
+                and len({primary, *diagnostics}) > MAX_DIAGNOSTIC_HORIZONS
             ):
                 issues.append(
                     _issue(
@@ -1329,9 +1295,7 @@ def validate_research_request(
             else:
                 normalized_horizon_policy = {
                     "primaryForwardBars": primary,
-                    "diagnosticForwardBars": sorted(
-                        {primary, *diagnostics}
-                    ),
+                    "diagnosticForwardBars": sorted({primary, *diagnostics}),
                 }
     for key, allow_empty in (
         ("hypotheses", True),
@@ -1394,9 +1358,7 @@ def validate_research_request(
                 )
             elif role != "context-only":
                 position_capable_roles += 1
-        asset_identities.append(
-            (asset.get("assetClass"), asset.get("symbol"), venue)
-        )
+        asset_identities.append((asset.get("assetClass"), asset.get("symbol"), venue))
     if len(asset_identities) != len(set(asset_identities)):
         issues.append(
             _issue(f"{path}/assets", "request.duplicate-asset", "Assets must be unique")
@@ -1429,16 +1391,10 @@ def validate_research_request(
         )
     if declared_position_roles == len(assets):
         valid_roles = {
-            asset.get("positionRole")
-            for asset in assets
-            if isinstance(asset, dict)
+            asset.get("positionRole") for asset in assets if isinstance(asset, dict)
         }
-        has_long_role = bool(
-            valid_roles & {"long-only", "two-sided"}
-        )
-        has_short_role = bool(
-            valid_roles & {"short-only", "two-sided"}
-        )
+        has_long_role = bool(valid_roles & {"long-only", "two-sided"})
+        has_short_role = bool(valid_roles & {"short-only", "two-sided"})
         direction = value.get("direction")
         if direction == "long" and not has_long_role:
             issues.append(
@@ -1456,9 +1412,8 @@ def validate_research_request(
                     "A short request requires at least one short-capable asset",
                 )
             )
-        if (
-            direction in {"long-short", "relative-value"}
-            and not (has_long_role and has_short_role)
+        if direction in {"long-short", "relative-value"} and not (
+            has_long_role and has_short_role
         ):
             issues.append(
                 _issue(
@@ -1474,8 +1429,7 @@ def validate_research_request(
         requested_symbols = [
             asset.get("symbol")
             for asset in assets
-            if isinstance(asset, dict)
-            and isinstance(asset.get("symbol"), str)
+            if isinstance(asset, dict) and isinstance(asset.get("symbol"), str)
         ]
         if claim == "decision-signal" and prediction_assets is None:
             issues.append(
@@ -1497,9 +1451,7 @@ def validate_research_request(
             )
         elif isinstance(prediction_assets, list):
             unknown = [
-                asset
-                for asset in prediction_assets
-                if asset not in requested_symbols
+                asset for asset in prediction_assets if asset not in requested_symbols
             ]
             if unknown:
                 issues.append(
@@ -1512,9 +1464,7 @@ def validate_research_request(
                 )
     if normalized_event_policy is not None:
         requested_symbols = {
-            identity[1]
-            for identity in asset_identities
-            if isinstance(identity[1], str)
+            identity[1] for identity in asset_identities if isinstance(identity[1], str)
         }
         for key in ("asset", "referenceAsset"):
             symbol = normalized_event_policy[key]
@@ -1528,23 +1478,16 @@ def validate_research_request(
                 )
     if normalized_policy is not None:
         requested_symbols = {
-            identity[1]
-            for identity in asset_identities
-            if isinstance(identity[1], str)
+            identity[1] for identity in asset_identities if isinstance(identity[1], str)
         }
         requested_roles = {
             asset.get("symbol"): asset.get("positionRole")
             for asset in assets
-            if isinstance(asset, dict)
-            and isinstance(asset.get("symbol"), str)
+            if isinstance(asset, dict) and isinstance(asset.get("symbol"), str)
         }
         global_cap = normalized_policy["maxAbsWeight"]
-        for symbol, asset_cap in normalized_policy[
-            "assetMaxAbsWeights"
-        ].items():
-            cap_path = (
-                f"{path}/portfolioPolicy/assetMaxAbsWeights/{symbol}"
-            )
+        for symbol, asset_cap in normalized_policy["assetMaxAbsWeights"].items():
+            cap_path = f"{path}/portfolioPolicy/assetMaxAbsWeights/{symbol}"
             if symbol not in requested_symbols:
                 issues.append(
                     _issue(
@@ -1577,8 +1520,7 @@ def validate_research_request(
         requested_roles = {
             asset.get("symbol"): asset.get("positionRole")
             for asset in assets
-            if isinstance(asset, dict)
-            and isinstance(asset.get("symbol"), str)
+            if isinstance(asset, dict) and isinstance(asset.get("symbol"), str)
         }
         for symbol in normalized_benchmark_policy["weights"]:
             weight_path = f"{path}/benchmarkPolicy/weights/{symbol}"
@@ -1594,8 +1536,7 @@ def validate_research_request(
         requested_roles = {
             asset.get("symbol"): asset.get("positionRole")
             for asset in assets
-            if isinstance(asset, dict)
-            and isinstance(asset.get("symbol"), str)
+            if isinstance(asset, dict) and isinstance(asset.get("symbol"), str)
         }
         for symbol in normalized_position_snapshot["weights"]:
             if symbol not in requested_roles:
@@ -1614,9 +1555,7 @@ def validate_research_request(
                         "A context-only asset cannot appear in the position snapshot",
                     )
                 )
-        for index, scenario in enumerate(
-            normalized_position_scenarios or []
-        ):
+        for index, scenario in enumerate(normalized_position_scenarios or []):
             for symbol in scenario["weights"]:
                 if symbol not in requested_roles:
                     issues.append(
@@ -1631,8 +1570,7 @@ def validate_research_request(
                         _issue(
                             f"{path}/positionScenarios/{index}/weights/{symbol}",
                             "request.position-scenario-context-only",
-                            "A context-only asset cannot appear in a "
-                            "position scenario",
+                            "A context-only asset cannot appear in a position scenario",
                         )
                     )
         if normalized_position_sizing is not None:
@@ -1657,13 +1595,10 @@ def validate_research_request(
                 normalized_policy is not None
                 and normalized_position_sizing["direction"] == "increase"
             ):
-                effective_cap = normalized_policy[
-                    "assetMaxAbsWeights"
-                ].get(sizing_asset, normalized_policy["maxAbsWeight"])
-                if (
-                    normalized_position_sizing["maximumWeight"]
-                    > effective_cap + 1e-12
-                ):
+                effective_cap = normalized_policy["assetMaxAbsWeights"].get(
+                    sizing_asset, normalized_policy["maxAbsWeight"]
+                )
+                if normalized_position_sizing["maximumWeight"] > effective_cap + 1e-12:
                     issues.append(
                         _issue(
                             f"{path}/positionSizing/maximumWeight",
@@ -1675,7 +1610,9 @@ def validate_research_request(
 
     source = value.get("source")
     if not isinstance(source, dict):
-        issues.append(_issue(f"{path}/source", "schema.type", "Source must be an object"))
+        issues.append(
+            _issue(f"{path}/source", "schema.type", "Source must be an object")
+        )
     else:
         issues.extend(
             _strict_keys(
@@ -1726,9 +1663,7 @@ def validate_research_request(
                 "symbol": asset["symbol"].strip(),
                 "assetClass": asset["assetClass"],
                 "venue": (
-                    asset["venue"].strip()
-                    if isinstance(asset["venue"], str)
-                    else None
+                    asset["venue"].strip() if isinstance(asset["venue"], str) else None
                 ),
                 **(
                     {"positionRole": asset["positionRole"]}
@@ -1745,9 +1680,7 @@ def validate_research_request(
             else {}
         ),
         **(
-            {"portfolioPolicy": normalized_policy}
-            if "portfolioPolicy" in value
-            else {}
+            {"portfolioPolicy": normalized_policy} if "portfolioPolicy" in value else {}
         ),
         **(
             {"allocationPolicy": normalized_allocation_policy}
@@ -1779,11 +1712,7 @@ def validate_research_request(
             if "positionSizing" in value
             else {}
         ),
-        **(
-            {"eventPolicy": normalized_event_policy}
-            if "eventPolicy" in value
-            else {}
-        ),
+        **({"eventPolicy": normalized_event_policy} if "eventPolicy" in value else {}),
         **(
             {"pathStressPolicy": normalized_path_stress_policy}
             if "pathStressPolicy" in value
@@ -1866,11 +1795,7 @@ def build_research_brief(
             "judgeHash": session_manifest["locks"]["judgeHash"],
             "datasetHash": session_manifest["locks"]["datasetHash"],
             **(
-                {
-                    "dependencyHash": session_manifest["locks"][
-                        "dependencyHash"
-                    ]
-                }
+                {"dependencyHash": session_manifest["locks"]["dependencyHash"]}
                 if "dependencyHash" in session_manifest["locks"]
                 else {}
             ),
@@ -1921,7 +1846,13 @@ def validate_session_brief(
     issues: list[ValidationIssue] = []
     if not isinstance(pointer, dict):
         raise AutoQuantValidationError(
-            [_issue(f"{session_root}/brief", "schema.type", "Brief pointer must be an object")]
+            [
+                _issue(
+                    f"{session_root}/brief",
+                    "schema.type",
+                    "Brief pointer must be an object",
+                )
+            ]
         )
     issues.extend(
         _strict_keys(
@@ -1934,7 +1865,10 @@ def validate_session_brief(
         if (
             not isinstance(pointer.get(key), str)
             or len(pointer.get(key, "")) != 64
-            or any(character not in "0123456789abcdef" for character in pointer.get(key, ""))
+            or any(
+                character not in "0123456789abcdef"
+                for character in pointer.get(key, "")
+            )
         ):
             issues.append(
                 _issue(
@@ -1965,9 +1899,13 @@ def validate_session_brief(
     }
     issues.extend(_strict_keys(brief, brief_required, brief_path))
     if brief.get("schemaVersion") != SCHEMA_VERSION or brief.get("kind") != BRIEF_KIND:
-        issues.append(_issue(brief_path, "brief.schema", "Invalid Research Brief schema"))
+        issues.append(
+            _issue(brief_path, "brief.schema", "Invalid Research Brief schema")
+        )
     if not isinstance(brief.get("createdAt"), str) or not brief["createdAt"]:
-        issues.append(_issue(f"{brief_path}/createdAt", "schema.string", "Invalid createdAt"))
+        issues.append(
+            _issue(f"{brief_path}/createdAt", "schema.string", "Invalid createdAt")
+        )
     if issues:
         raise AutoQuantValidationError(issues)
     expected = build_research_brief(
@@ -1980,10 +1918,14 @@ def validate_session_brief(
     request_hash = hash_json(request)
     brief_hash = hash_json(brief)
     if request_hash != pointer.get("requestHash"):
-        issues.append(_issue(request_path, "brief.request-hash", "Request hash mismatch"))
+        issues.append(
+            _issue(request_path, "brief.request-hash", "Request hash mismatch")
+        )
     if brief != expected:
         issues.append(
-            _issue(brief_path, "brief.derived", "Research Brief differs from fixed inputs")
+            _issue(
+                brief_path, "brief.derived", "Research Brief differs from fixed inputs"
+            )
         )
     if brief.get("id") != pointer.get("id"):
         issues.append(_issue(brief_path, "brief.id", "Research Brief id mismatch"))
@@ -2282,18 +2224,14 @@ RESEARCH_REQUEST_JSON_SCHEMA: dict[str, Any] = {
             },
             "allOf": [
                 {
-                    "if": {
-                        "properties": {"direction": {"const": "increase"}}
-                    },
+                    "if": {"properties": {"direction": {"const": "increase"}}},
                     "then": {
                         "required": ["maximumWeight"],
                         "not": {"required": ["minimumWeight"]},
                     },
                 },
                 {
-                    "if": {
-                        "properties": {"direction": {"const": "decrease"}}
-                    },
+                    "if": {"properties": {"direction": {"const": "decrease"}}},
                     "then": {
                         "required": ["minimumWeight"],
                         "not": {"required": ["maximumWeight"]},
@@ -2429,9 +2367,7 @@ RESEARCH_REQUEST_JSON_SCHEMA: dict[str, Any] = {
                                             "maximum": 252,
                                         },
                                         "anchor": {
-                                            "enum": sorted(
-                                                DECISION_ANCHORS
-                                            ),
+                                            "enum": sorted(DECISION_ANCHORS),
                                         },
                                     },
                                 },
@@ -2544,7 +2480,7 @@ RESEARCH_REQUEST_JSON_SCHEMA: dict[str, Any] = {
                     "anyOf": [
                         {"type": "null"},
                         {"type": "string", "minLength": 1},
-                    ]
+                    ],
                 },
                 "artifactRevision": {
                     "description": (
@@ -2556,7 +2492,7 @@ RESEARCH_REQUEST_JSON_SCHEMA: dict[str, Any] = {
                     "anyOf": [
                         {"type": "null"},
                         {"type": "string", "minLength": 1},
-                    ]
+                    ],
                 },
             },
             "oneOf": [

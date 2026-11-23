@@ -1,4 +1,5 @@
 """Strategy routing and local actions; synthetic transport fixtures are not research evidence."""
+
 from __future__ import annotations
 
 import json
@@ -20,19 +21,52 @@ from tests.test_studio_actions import FakeSpawn
 
 def admitted_program(project):
     # Explicitly mocked Core admission, not a fabricated market outcome.
-    return {"lanes": [{"id": "portfolio", "studyId": "portfolio-quality", "phase": "not-started",
-                       "currentRun": False, "latestRun": None, "latestSession": None, "commands": [
-                           {"id": "session.start", "argv": ["aq", "session", "start", str(project.root_dir),
-                            "--study", "portfolio-quality", "--json"], "display": "aq session start ..."}]}],
-            "progression": {"gates": [{"id": "factor-to-portfolio", "status": "passed", "explanation": "Mocked Core gate."}]},
-            "conflicts": []}
+    return {
+        "lanes": [
+            {
+                "id": "portfolio",
+                "studyId": "portfolio-quality",
+                "phase": "not-started",
+                "currentRun": False,
+                "latestRun": None,
+                "latestSession": None,
+                "commands": [
+                    {
+                        "id": "session.start",
+                        "argv": [
+                            "aq",
+                            "session",
+                            "start",
+                            str(project.root_dir),
+                            "--study",
+                            "portfolio-quality",
+                            "--json",
+                        ],
+                        "display": "aq session start ...",
+                    }
+                ],
+            }
+        ],
+        "progression": {
+            "gates": [
+                {
+                    "id": "factor-to-portfolio",
+                    "status": "passed",
+                    "explanation": "Mocked Core gate.",
+                }
+            ]
+        },
+        "conflicts": [],
+    }
 
 
 class StudioStrategyTests(unittest.TestCase):
     def test_risk_forecast_cannot_be_routed_to_a_return_research_desk(self):
         with tempfile.TemporaryDirectory() as directory:
             workspace, project = make_project(directory)
-            route = observed_strategy_route(project, None, workspace.root_dir, outcome="forward-realized-volatility")
+            route = observed_strategy_route(
+                project, None, workspace.root_dir, outcome="forward-realized-volatility"
+            )
             self.assertEqual(route["mode"], "blocked")
             self.assertEqual(route["reasonCode"], "risk-outcome")
             self.assertEqual(route["argv"], ["aq", "project", "templates", "--json"])
@@ -52,36 +86,95 @@ class StudioStrategyTests(unittest.TestCase):
         summary = snapshot["library"]["strategy"]
         # Issue #21: the sample has one evaluation and only the pre-declared neighbourhood, so it is Backtested.
         self.assertEqual(summary["state"], "Backtested")
-        self.assertEqual(summary["evidence"]["runId"], snapshot["portfolioExplorer"]["run"]["id"])
+        self.assertEqual(
+            summary["evidence"]["runId"], snapshot["portfolioExplorer"]["run"]["id"]
+        )
         self.assertIsNotNone(summary["evidence"]["selectionAdjustment"])
 
-    def test_lifecycle_needs_published_net_run_and_a_counted_tuning_task_not_positive_signs(self):
+    def test_lifecycle_needs_published_net_run_and_a_counted_tuning_task_not_positive_signs(
+        self,
+    ):
         with tempfile.TemporaryDirectory() as directory:
             workspace, project = make_project(directory)
-            state = lambda snap: library_projection(project, snap, workspace.root_dir)["strategy"]["state"]
-            snapshot = {"studies": [{"id": "portfolio", "primaryMetric": "validation_net_sharpe"}],
-                        "runs": [], "portfolioExplorer": None}
+            state = lambda snap: library_projection(project, snap, workspace.root_dir)[
+                "strategy"
+            ]["state"]
+            snapshot = {
+                "studies": [
+                    {"id": "portfolio", "primaryMetric": "validation_net_sharpe"}
+                ],
+                "runs": [],
+                "portfolioExplorer": None,
+            }
             self.assertEqual(state(snapshot), "Defined")
-            snapshot["runs"] = [{"id": "run-base", "studyId": "portfolio", "status": "succeeded", "startedAt": "2026-01-01"},
-                                {"id": "run-rejected", "studyId": "portfolio", "status": "failed", "startedAt": "2026-02-01"}]
-            snapshot["portfolioExplorer"] = {"run": {"id": "run-base"}, "strategyViability": {"validation": {"net": {"sharpe": -2.0}}}}
+            snapshot["runs"] = [
+                {
+                    "id": "run-base",
+                    "studyId": "portfolio",
+                    "status": "succeeded",
+                    "startedAt": "2026-01-01",
+                },
+                {
+                    "id": "run-rejected",
+                    "studyId": "portfolio",
+                    "status": "failed",
+                    "startedAt": "2026-02-01",
+                },
+            ]
+            snapshot["portfolioExplorer"] = {
+                "run": {"id": "run-base"},
+                "strategyViability": {"validation": {"net": {"sharpe": -2.0}}},
+            }
             self.assertEqual(state(snapshot), "Backtested")
             # The pre-declared neighbourhood every Portfolio Run publishes is not a tuning task (issue #21).
             snapshot["portfolioExplorer"]["parameterNeighborhood"] = {"available": True}
             self.assertEqual(state(snapshot), "Backtested")
             # Starting a Session only records the baseline: still Backtested.
-            snapshot["sessions"] = [{"session": {"id": "s0", "studyId": "portfolio", "status": "active"},
-                                     "selectionIntegrity": {"candidateTrials": 0}, "experiments": []}]
+            snapshot["sessions"] = [
+                {
+                    "session": {"id": "s0", "studyId": "portfolio", "status": "active"},
+                    "selectionIntegrity": {"candidateTrials": 0},
+                    "experiments": [],
+                }
+            ]
             self.assertEqual(state(snapshot), "Backtested")
             # A candidate Experiment on the Portfolio Study is a counted tuning task.
-            snapshot["sessions"] = [{"session": {"id": "s1", "studyId": "portfolio", "status": "active"},
-                                     "selectionIntegrity": {"candidateTrials": 2}, "experiments": [{}, {}]}]
+            snapshot["sessions"] = [
+                {
+                    "session": {"id": "s1", "studyId": "portfolio", "status": "active"},
+                    "selectionIntegrity": {"candidateTrials": 2},
+                    "experiments": [{}, {}],
+                }
+            ]
             self.assertEqual(state(snapshot), "Tuned")
-            snapshot["sessions"] = [{"session": {"id": "s2", "studyId": "other-study", "status": "active"},
-                                     "selectionIntegrity": {"candidateTrials": 2}, "experiments": [{}, {}]}]
+            snapshot["sessions"] = [
+                {
+                    "session": {
+                        "id": "s2",
+                        "studyId": "other-study",
+                        "status": "active",
+                    },
+                    "selectionIntegrity": {"candidateTrials": 2},
+                    "experiments": [{}, {}],
+                }
+            ]
             self.assertEqual(state(snapshot), "Backtested")
             # Several unique source trials in the research family are also counted tuning.
-            with patch("autoquant.studio_library.load_run"),                  patch("autoquant.studio_library.build_research_family", return_value=type("F", (), {"projection": {"uniqueSourceTrials": 3, "totalExecutions": 3}})()),                  patch("autoquant.studio_library.build_selection_adjustment", return_value={"passes": False}):
+            with (
+                patch("autoquant.studio_library.load_run"),
+                patch(
+                    "autoquant.studio_library.build_research_family",
+                    return_value=type(
+                        "F",
+                        (),
+                        {"projection": {"uniqueSourceTrials": 3, "totalExecutions": 3}},
+                    )(),
+                ),
+                patch(
+                    "autoquant.studio_library.build_selection_adjustment",
+                    return_value={"passes": False},
+                ),
+            ):
                 self.assertEqual(state(snapshot), "Tuned")
             snapshot["portfolioExplorer"]["run"]["id"] = "run-rejected"
             self.assertEqual(state(snapshot), "Defined")
@@ -90,9 +183,18 @@ class StudioStrategyTests(unittest.TestCase):
         workspace, project = make_project(directory)
         create_study(project, study_definition(study_id="portfolio-quality"))
         spawn = FakeSpawn(out=b'{"ok":true,"data":{}}')
-        service = ActionService(workspace.root_dir, scope="workspace", load_projects=lambda: {project.manifest.id: project},
-                                fingerprint=lambda _: "fixed-test-fingerprint", spawn=spawn)
-        body = {"actionId": "strategy.build", "project": project.manifest.id, "params": {}}
+        service = ActionService(
+            workspace.root_dir,
+            scope="workspace",
+            load_projects=lambda: {project.manifest.id: project},
+            fingerprint=lambda _: "fixed-test-fingerprint",
+            spawn=spawn,
+        )
+        body = {
+            "actionId": "strategy.build",
+            "project": project.manifest.id,
+            "params": {},
+        }
         return workspace, project, service, spawn, body
 
     def test_standalone_factor_refuses_conversion_with_research_desk_cli(self):
@@ -103,10 +205,18 @@ class StudioStrategyTests(unittest.TestCase):
             self.assertIn("standalone Factor Lab", route["reason"])
             self.assertIn("ohlcv-research-desk", route["argv"])
             self.assertNotIn("ohlcv-portfolio-lab", route["argv"])
-            with patch("autoquant.studio_strategy.load_research_program", return_value=None):
-                with self.assertRaisesRegex(ActionError, "not a request-bound standalone Factor Lab"):
+            with patch(
+                "autoquant.studio_strategy.load_research_program", return_value=None
+            ):
+                with self.assertRaisesRegex(
+                    ActionError, "not a request-bound standalone Factor Lab"
+                ):
                     service.preview(body)
-                entry = next(a for a in service.catalog()["actions"] if a["id"] == "strategy.build")
+                entry = next(
+                    a
+                    for a in service.catalog()["actions"]
+                    if a["id"] == "strategy.build"
+                )
                 self.assertFalse(entry["targets"][0]["available"])
             self.assertEqual(spawn.calls, [])
 
@@ -114,18 +224,31 @@ class StudioStrategyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             workspace, project = make_project(directory)
             program = admitted_program(project)
-            program["progression"]["gates"][0].update(status="blocked", explanation="Exact Core admission reason.")
+            program["progression"]["gates"][0].update(
+                status="blocked", explanation="Exact Core admission reason."
+            )
             route = strategy_route(project, program, workspace.root_dir)
             self.assertEqual(route["reason"], "Exact Core admission reason.")
             self.assertEqual(route["mode"], "blocked")
             program["progression"]["gates"][0]["status"] = "passed"
-            program["lanes"].append({"id": "factor", "latestSession": {"status": "active"}})
-            self.assertEqual(strategy_route(project, program, workspace.root_dir)["reasonCode"], "active-session")
+            program["lanes"].append(
+                {"id": "factor", "latestSession": {"status": "active"}}
+            )
+            self.assertEqual(
+                strategy_route(project, program, workspace.root_dir)["reasonCode"],
+                "active-session",
+            )
             program["lanes"].pop()
             program["lanes"][0]["phase"] = "scientific-limit"
-            self.assertEqual(strategy_route(project, program, workspace.root_dir)["reasonCode"], "failed-evidence")
+            self.assertEqual(
+                strategy_route(project, program, workspace.root_dir)["reasonCode"],
+                "failed-evidence",
+            )
             program["lanes"][0]["currentRun"] = True
-            program["lanes"][0]["latestRun"] = {"id": "run-current", "status": "succeeded"}
+            program["lanes"][0]["latestRun"] = {
+                "id": "run-current",
+                "status": "succeeded",
+            }
             route = strategy_route(project, program, workspace.root_dir)
             self.assertEqual((route["mode"], route["runId"]), ("open", "run-current"))
 
@@ -133,19 +256,35 @@ class StudioStrategyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             workspace, project, service, spawn, body = self.setup_service(directory)
             program = admitted_program(project)
-            with patch("autoquant.studio_strategy.load_research_program", return_value=program):
+            with patch(
+                "autoquant.studio_strategy.load_research_program", return_value=program
+            ):
                 preview = service.preview(body)
                 self.assertEqual(spawn.calls, [])
-                self.assertEqual(preview["argv"][1:5], ["-m", "autoquant", "session", "start"])
-                self.assertEqual(preview["argv"][5:], [str(project.root_dir), "--study", "portfolio-quality", "--json"])
+                self.assertEqual(
+                    preview["argv"][1:5], ["-m", "autoquant", "session", "start"]
+                )
+                self.assertEqual(
+                    preview["argv"][5:],
+                    [str(project.root_dir), "--study", "portfolio-quality", "--json"],
+                )
                 self.assertTrue(preview["requiresSecondConfirm"])
-                self.assertIn("unless an identical successful one is reused", preview["trial"]["notice"])
-                launch = {**body, "confirm": True, "commandHash": preview["commandHash"]}
+                self.assertIn(
+                    "unless an identical successful one is reused",
+                    preview["trial"]["notice"],
+                )
+                launch = {
+                    **body,
+                    "confirm": True,
+                    "commandHash": preview["commandHash"],
+                }
                 with self.assertRaisesRegex(ActionError, "confirm must be true"):
                     service.create({**launch, "confirm": False})
                 with self.assertRaisesRegex(ActionError, "secondConfirm"):
                     service.create(launch)
-                program["progression"]["gates"][0]["explanation"] = "Changed Core gate binding."
+                program["progression"]["gates"][0]["explanation"] = (
+                    "Changed Core gate binding."
+                )
                 with self.assertRaisesRegex(ActionError, "changed since the preview"):
                     service.create({**launch, "secondConfirm": True})
                 program["progression"]["gates"][0]["status"] = "blocked"
@@ -153,18 +292,42 @@ class StudioStrategyTests(unittest.TestCase):
                     service.create({**launch, "secondConfirm": True})
                 program["progression"]["gates"][0]["status"] = "passed"
                 refreshed = service.preview(body)
-                job = service.create({**body, "confirm": True, "secondConfirm": True, "commandHash": refreshed["commandHash"]})
+                job = service.create(
+                    {
+                        **body,
+                        "confirm": True,
+                        "secondConfirm": True,
+                        "commandHash": refreshed["commandHash"],
+                    }
+                )
                 deadline = time.monotonic() + 3
                 while not spawn.calls and time.monotonic() < deadline:
-                    time.sleep(.01)
+                    time.sleep(0.01)
                 self.assertEqual(spawn.calls[0][0], refreshed["argv"])
                 self.assertTrue(job["jobId"])
-                while service.runner.active_job(project.manifest.id) and time.monotonic() < deadline:
-                    time.sleep(.01)
+                while (
+                    service.runner.active_job(project.manifest.id)
+                    and time.monotonic() < deadline
+                ):
+                    time.sleep(0.01)
                 self.assertIsNone(service.runner.active_job(project.manifest.id))
-            audit = [json.loads(line) for line in (workspace.root_dir / ".autoquant/studio-actions.jsonl").read_text().splitlines()]
-            self.assertTrue(any(e.get("event") == "started" and e.get("actionId") == "strategy.build" for e in audit))
-            self.assertFalse((project.root_dir / "runs").exists() and list((project.root_dir / "runs").glob("run-*")))
+            audit = [
+                json.loads(line)
+                for line in (workspace.root_dir / ".autoquant/studio-actions.jsonl")
+                .read_text()
+                .splitlines()
+            ]
+            self.assertTrue(
+                any(
+                    e.get("event") == "started"
+                    and e.get("actionId") == "strategy.build"
+                    for e in audit
+                )
+            )
+            self.assertFalse(
+                (project.root_dir / "runs").exists()
+                and list((project.root_dir / "runs").glob("run-*"))
+            )
 
     def test_untyped_strategy_parameters_and_unknown_projects_are_refused(self):
         with tempfile.TemporaryDirectory() as directory:

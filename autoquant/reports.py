@@ -53,9 +53,7 @@ REPORT_ANALYSIS_KIND = "autoquant-research-report-analysis"
 REPORT_ANALYSIS_AUTHORING_STATES = {"draft", "final"}
 REPORT_DRAFT_FINDING_ID = "draft-replace-with-evidence-backed-finding"
 REPORT_KIND = "autoquant-research-report"
-REPORT_ID = re.compile(
-    r"^report-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$"
-)
+REPORT_ID = re.compile(r"^report-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$")
 FINDING_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 CONFIDENCE_LEVELS = {"low", "medium", "high"}
 EVIDENCE_KINDS = {"run", "experiment", "campaign"}
@@ -231,9 +229,7 @@ def _validate_evidence_refs(
                 _issue(ref_path, "schema.type", "Evidence reference must be an object")
             )
             continue
-        issues.extend(
-            _strict_keys(reference, {"kind", "id", "artifactPath"}, ref_path)
-        )
+        issues.extend(_strict_keys(reference, {"kind", "id", "artifactPath"}, ref_path))
         if reference.get("kind") not in EVIDENCE_KINDS:
             issues.append(
                 _issue(f"{ref_path}/kind", "schema.choice", "Invalid evidence kind")
@@ -279,7 +275,9 @@ def _validate_evidence_refs(
         )
     if len(identities) != len(set(identities)):
         issues.append(
-            _issue(path, "report.duplicate-evidence", "Evidence references must be unique")
+            _issue(
+                path, "report.duplicate-evidence", "Evidence references must be unique"
+            )
         )
     return normalized, issues
 
@@ -329,9 +327,7 @@ def validate_report_analysis(
             )
         )
     for key in ("limitations", "unresolvedQuestions"):
-        issues.extend(
-            _string_list(value.get(key), f"{path}/{key}", allow_empty=True)
-        )
+        issues.extend(_string_list(value.get(key), f"{path}/{key}", allow_empty=True))
 
     findings = value.get("findings")
     normalized_findings: list[dict[str, Any]] = []
@@ -398,7 +394,11 @@ def validate_report_analysis(
         )
     if len(finding_ids) != len(set(finding_ids)):
         issues.append(
-            _issue(f"{path}/findings", "report.duplicate-finding", "Finding ids must be unique")
+            _issue(
+                f"{path}/findings",
+                "report.duplicate-finding",
+                "Finding ids must be unique",
+            )
         )
 
     recommendations = value.get("recommendations")
@@ -482,9 +482,7 @@ def validate_report_analysis(
         "findings": normalized_findings,
         "recommendations": normalized_recommendations,
         "limitations": [item.strip() for item in value["limitations"]],
-        "unresolvedQuestions": [
-            item.strip() for item in value["unresolvedQuestions"]
-        ],
+        "unresolvedQuestions": [item.strip() for item in value["unresolvedQuestions"]],
     }
     if authoring_state is not None:
         normalized["authoringState"] = authoring_state
@@ -509,8 +507,7 @@ def validate_publishable_report_analysis(
             )
         )
     if any(
-        finding["id"] == REPORT_DRAFT_FINDING_ID
-        for finding in normalized["findings"]
+        finding["id"] == REPORT_DRAFT_FINDING_ID for finding in normalized["findings"]
     ):
         issues.append(
             _issue(
@@ -538,8 +535,7 @@ def build_report_analysis_draft(
             "artifactPath": artifact["path"],
         }
         for artifact in run.result.get("artifacts", [])
-        if isinstance(artifact, dict)
-        and isinstance(artifact.get("path"), str)
+        if isinstance(artifact, dict) and isinstance(artifact.get("path"), str)
     ]
     if not references:
         references = [
@@ -820,11 +816,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
     assets = ", ".join(
         f"{item['symbol']} ({item['assetClass']}"
         + (f", {item['venue']}" if item["venue"] else "")
-        + (
-            f", {item['positionRole']}"
-            if item.get("positionRole")
-            else ""
-        )
+        + (f", {item['positionRole']}" if item.get("positionRole") else "")
         + ")"
         for item in request["assets"]
     )
@@ -849,8 +841,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
             f"primary `{research_horizon['primaryForwardBars']}` decision "
             "bars; diagnostics "
             + ", ".join(
-                f"`{item}`"
-                for item in research_horizon["diagnosticForwardBars"]
+                f"`{item}`" for item in research_horizon["diagnosticForwardBars"]
             )
             + f" bars (`{research_horizon['source']['horizonPolicy']}`)"
             if isinstance(research_horizon, dict)
@@ -865,10 +856,8 @@ def _render_markdown(report: dict[str, Any]) -> str:
         "",
         "## Evidence state",
         "",
-        f"- Baseline: `{baseline['runId']}` — "
-        f"{baseline['metric']}={baseline['value']}",
-        f"- Leader: `{leader['runId']}` — "
-        f"{leader['metric']}={leader['value']}",
+        f"- Baseline: `{baseline['runId']}` — {baseline['metric']}={baseline['value']}",
+        f"- Leader: `{leader['runId']}` — {leader['metric']}={leader['value']}",
         f"- Experiments: {len(evidence['experiments'])}",
         f"- Campaigns: {len(evidence['campaigns'])}",
         "",
@@ -893,9 +882,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
         )
         named_caps = {
             asset: value
-            for asset, value in construction[
-                "assetMaxAbsWeights"
-            ].items()
+            for asset, value in construction["assetMaxAbsWeights"].items()
             if asset in mandate["tradableAssets"]
             and value != construction["maxAbsWeight"]
         }
@@ -912,9 +899,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
                 "- Asset position roles: "
                 + ", ".join(
                     f"`{asset}`=`{role}`"
-                    for asset, role in construction[
-                        "assetPositionRoles"
-                    ].items()
+                    for asset, role in construction["assetPositionRoles"].items()
                 ),
                 f"- Role source / long-side limit / short-side limit: "
                 f"`{mandate['source']['assetPositionRoles']}` / "
@@ -922,9 +907,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
                 f"`{construction['shortGrossLimit']}`",
                 "- Context-only research assets: "
                 + (
-                    ", ".join(
-                        f"`{item}`" for item in mandate["contextAssets"]
-                    )
+                    ", ".join(f"`{item}`" for item in mandate["contextAssets"])
                     if mandate["contextAssets"]
                     else "none"
                 ),
@@ -935,8 +918,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
                 "- Named per-asset cap overrides: "
                 + (
                     ", ".join(
-                        f"`{asset}`=`{value}`"
-                        for asset, value in named_caps.items()
+                        f"`{asset}`=`{value}`" for asset, value in named_caps.items()
                     )
                     if named_caps
                     else "none"
@@ -946,8 +928,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
                 f"`{benchmark_label}`",
                 f"- Benchmark source / authority: "
                 f"`{benchmark['source']}` / evaluation-only",
-                f"- Portfolio policy source: "
-                f"`{mandate['source']['portfolioPolicy']}`",
+                f"- Portfolio policy source: `{mandate['source']['portfolioPolicy']}`",
                 f"- Base cost / one-way no-trade band / reference NAV: "
                 f"`{implementation['baseCostBps']}` bps / "
                 f"`{implementation['noTradeOneWay']}` / "
@@ -976,9 +957,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
             )
         capacity = leader_run["metrics"].get("liquidity_capacity")
         validation_capacity = (
-            capacity.get("validation")
-            if isinstance(capacity, dict)
-            else None
+            capacity.get("validation") if isinstance(capacity, dict) else None
         )
         conservative = (
             validation_capacity.get("capacity_1pct")
@@ -1025,9 +1004,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
             )
         lifecycle = leader_run["metrics"].get("position_lifecycle")
         validation_lifecycle = (
-            lifecycle.get("validation")
-            if isinstance(lifecycle, dict)
-            else None
+            lifecycle.get("validation") if isinstance(lifecycle, dict) else None
         )
         if isinstance(validation_lifecycle, dict):
             lines.extend(
@@ -1050,13 +1027,9 @@ def _render_markdown(report: dict[str, Any]) -> str:
                     "not standalone compounded trade returns; no trading authority.",
                 ]
             )
-        neighborhood = leader_run["metrics"].get(
-            "parameter_neighborhood"
-        )
+        neighborhood = leader_run["metrics"].get("parameter_neighborhood")
         validation_neighborhood = (
-            neighborhood.get("validation")
-            if isinstance(neighborhood, dict)
-            else None
+            neighborhood.get("validation") if isinstance(neighborhood, dict) else None
         )
         aggregate = (
             validation_neighborhood.get("aggregate")
@@ -1085,13 +1058,9 @@ def _render_markdown(report: dict[str, Any]) -> str:
                     "authority.",
                 ]
             )
-        translation = leader_run["metrics"].get(
-            "translation_robustness"
-        )
+        translation = leader_run["metrics"].get("translation_robustness")
         translation_diagnosis = (
-            translation.get("diagnosis")
-            if isinstance(translation, dict)
-            else None
+            translation.get("diagnosis") if isinstance(translation, dict) else None
         )
         if isinstance(translation_diagnosis, dict):
             if translation.get("applicable") is True:
@@ -1151,9 +1120,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
         lines.extend(
             diversification_stress_markdown_lines(
                 leader_decision_support,
-                heading=(
-                    "## Frozen leader-Run diversification stress"
-                ),
+                heading=("## Frozen leader-Run diversification stress"),
             )
         )
         lines.extend(
@@ -1165,9 +1132,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
         lines.extend(
             signal_monetization_markdown_lines(
                 leader_decision_support,
-                heading=(
-                    "## Frozen leader-Run signal monetization bridge"
-                ),
+                heading=("## Frozen leader-Run signal monetization bridge"),
             )
         )
         lines.extend(
@@ -1230,8 +1195,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
             [
                 "## RL simple-policy challenger",
                 "",
-                "- Contextual baseline: "
-                "`iterative-same-pretrade-contextual-ridge-v1`",
+                "- Contextual baseline: `iterative-same-pretrade-contextual-ridge-v1`",
                 "- Training scope / anchor / fixed iterations: "
                 f"`{rl_configuration['contextualRidgeLabelScope']}` / "
                 f"`{rl_configuration['contextualRidgeAnchorAction']}` / "
@@ -1248,9 +1212,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
         )
     incremental = leader_run["metrics"].get("incremental_attribution")
     validation_incremental = (
-        incremental.get("validation")
-        if isinstance(incremental, dict)
-        else None
+        incremental.get("validation") if isinstance(incremental, dict) else None
     )
     if isinstance(validation_incremental, dict):
         largest_assets = sorted(
@@ -1285,8 +1247,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
                 f"`{validation_incremental['p05_net_active_return']}`",
                 "- Largest absolute asset gross contributions: "
                 + ", ".join(
-                    f"`{asset}` "
-                    f"({values['total_gross_active_contribution']})"
+                    f"`{asset}` ({values['total_gross_active_contribution']})"
                     for asset, values in largest_assets
                 ),
                 "- Gross edge minus incremental cost reconciles net active "
@@ -1357,12 +1318,10 @@ def _render_markdown(report: dict[str, Any]) -> str:
             f"CRASH={integrity['verdicts']['CRASH']}",
             f"- Test role / enters selection: `{integrity['testRole']}` / "
             f"`{integrity['testEntersSelection']}`",
-            f"- External holdout required: "
-            f"`{integrity['externalHoldoutRequired']}`",
+            f"- External holdout required: `{integrity['externalHoldoutRequired']}`",
             *(
                 [
-                    f"- Test exposure state: "
-                    f"`{integrity['testExposureState']}`",
+                    f"- Test exposure state: `{integrity['testExposureState']}`",
                     f"- Candidate iterations after first candidate audit: "
                     f"`{integrity['postAuditCandidateIterations']}`",
                     f"- Test guidance observability: "
@@ -1381,8 +1340,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
     if isinstance(family, dict):
         lines.extend(
             [
-                f"- Research family: `{family['id']}` "
-                f"(`{family['boundary']}`)",
+                f"- Research family: `{family['id']}` (`{family['boundary']}`)",
                 f"- Project-family unique trials / executions / duplicates: "
                 f"{family['uniqueSourceTrials']} / "
                 f"{family['totalExecutions']} / "
@@ -1400,23 +1358,18 @@ def _render_markdown(report: dict[str, Any]) -> str:
             f"passes {adjustment['confidenceLevel']:.0%}="
             f"`{adjustment['passes']}`"
         )
-        lines.append(
-            f"- Adjustment interpretation: "
-            f"{adjustment['interpretation']}"
-        )
+        lines.append(f"- Adjustment interpretation: {adjustment['interpretation']}")
         statistics = adjustment.get("statistics")
-        if (
-            adjustment.get("method") == "bonferroni-hac-v1"
-            and isinstance(statistics, dict)
+        if adjustment.get("method") == "bonferroni-hac-v1" and isinstance(
+            statistics, dict
         ):
             lines.append(
                 f"- Family-wise HAC p / confidence: "
                 f"`{statistics['familywiseAdjustedPValue']:.6g}` / "
                 f"`{statistics['familywiseConfidence']:.2%}`"
             )
-        elif (
-            adjustment.get("method") == "deflated-sharpe-ratio-v1"
-            and isinstance(statistics, dict)
+        elif adjustment.get("method") == "deflated-sharpe-ratio-v1" and isinstance(
+            statistics, dict
         ):
             lines.extend(
                 [
@@ -1433,10 +1386,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
                 ]
             )
         elif adjustment.get("reason"):
-            lines.append(
-                f"- Adjustment unavailable reason: "
-                f"`{adjustment['reason']}`"
-            )
+            lines.append(f"- Adjustment unavailable reason: `{adjustment['reason']}`")
     lines.extend(["", "## Findings", ""])
     for finding in analysis["findings"]:
         refs = ", ".join(_evidence_label(item) for item in finding["evidenceRefs"])
@@ -1679,21 +1629,38 @@ def _validate_report_result(
         or value.get("authority") != "quantitative-decision-support"
         or value.get("tradingAuthority") != "none"
     ):
-        issues.append(_issue(path, "report.identity", "Invalid Research Report identity"))
+        issues.append(
+            _issue(path, "report.identity", "Invalid Research Report identity")
+        )
     if value.get("project") != {
         "id": session.manifest["projectId"],
         "name": session.baseline_run.result["project"]["name"],
     }:
-        issues.append(_issue(f"{path}/project", "report.project", "Report Project differs"))
-    if value.get("brief") != session.manifest.get("brief"):
-        issues.append(_issue(f"{path}/brief", "report.brief", "Report Brief differs from Session"))
-    if session.delegation is None or value.get("request") != session.delegation["request"]:
         issues.append(
-            _issue(f"{path}/request", "report.request", "Report request differs from Session")
+            _issue(f"{path}/project", "report.project", "Report Project differs")
+        )
+    if value.get("brief") != session.manifest.get("brief"):
+        issues.append(
+            _issue(f"{path}/brief", "report.brief", "Report Brief differs from Session")
+        )
+    if (
+        session.delegation is None
+        or value.get("request") != session.delegation["request"]
+    ):
+        issues.append(
+            _issue(
+                f"{path}/request",
+                "report.request",
+                "Report request differs from Session",
+            )
         )
     if value.get("harness") != session.manifest["locks"]["harness"]:
         issues.append(
-            _issue(f"{path}/harness", "report.harness", "Report Harness differs from Session")
+            _issue(
+                f"{path}/harness",
+                "report.harness",
+                "Report Harness differs from Session",
+            )
         )
     if value.get("openAliceHandoff") != {
         "document": REPORT_MARKDOWN,
@@ -1715,25 +1682,40 @@ def _validate_report_result(
             normalized = validate_report_analysis(analysis, f"{path}/analysis")
             if hash_json(normalized) != value.get("analysisHash"):
                 issues.append(
-                    _issue(f"{path}/analysisHash", "report.analysis-hash", "Analysis hash mismatch")
+                    _issue(
+                        f"{path}/analysisHash",
+                        "report.analysis-hash",
+                        "Analysis hash mismatch",
+                    )
                 )
         except AutoQuantValidationError as error:
             issues.extend(error.issues)
     evidence = value.get("evidence")
-    if not isinstance(evidence, dict) or hash_json(evidence) != value.get("evidenceHash"):
+    if not isinstance(evidence, dict) or hash_json(evidence) != value.get(
+        "evidenceHash"
+    ):
         issues.append(
-            _issue(f"{path}/evidenceHash", "report.evidence-hash", "Evidence hash mismatch")
+            _issue(
+                f"{path}/evidenceHash", "report.evidence-hash", "Evidence hash mismatch"
+            )
         )
     for key in ("analysisHash", "evidenceHash"):
-        if not isinstance(value.get(key), str) or not SHA256.fullmatch(value.get(key, "")):
+        if not isinstance(value.get(key), str) or not SHA256.fullmatch(
+            value.get(key, "")
+        ):
             issues.append(_issue(f"{path}/{key}", "schema.hash", f"Invalid {key}"))
     published_at = value.get("publishedAt")
     if not isinstance(published_at, str):
-        issues.append(_issue(f"{path}/publishedAt", "schema.string", "Invalid publishedAt"))
+        issues.append(
+            _issue(f"{path}/publishedAt", "schema.string", "Invalid publishedAt")
+        )
     else:
         try:
             published = datetime.fromisoformat(published_at)
-            if published.utcoffset() is None or published.utcoffset().total_seconds() != 0:
+            if (
+                published.utcoffset() is None
+                or published.utcoffset().total_seconds() != 0
+            ):
                 raise ValueError("publishedAt must be UTC")
             stamp = published.strftime("%Y%m%dT%H%M%S%fZ")
             identity = hash_json(
@@ -1747,7 +1729,9 @@ def _validate_report_result(
             )
             if report_id != f"report-{stamp}-{identity[:12]}":
                 issues.append(
-                    _issue(path, "report.derived-id", "Research Report id is not derived")
+                    _issue(
+                        path, "report.derived-id", "Research Report id is not derived"
+                    )
                 )
         except ValueError:
             issues.append(
@@ -1797,7 +1781,9 @@ def _verify_frozen_evidence(
     campaigns = evidence.get("campaigns")
     if not all(isinstance(items, list) for items in (runs, experiments, campaigns)):
         issues.append(
-            _issue(f"{path}/evidence", "schema.array", "Evidence catalogs must be arrays")
+            _issue(
+                f"{path}/evidence", "schema.array", "Evidence catalogs must be arrays"
+            )
         )
     if issues:
         raise AutoQuantValidationError(issues)
@@ -1834,7 +1820,9 @@ def _verify_frozen_evidence(
     expected_leader = dict(session.manifest["baseline"])
     for index, item in enumerate(experiments):
         if not isinstance(item, dict) or not isinstance(item.get("id"), str):
-            issues.append(_issue(path, "report.experiment", "Invalid frozen Experiment evidence"))
+            issues.append(
+                _issue(path, "report.experiment", "Invalid frozen Experiment evidence")
+            )
             continue
         experiment = load_experiment(project, session, item["id"])
         expected = {
@@ -1854,7 +1842,10 @@ def _verify_frozen_evidence(
                     f"Frozen Experiment differs: {item['id']}",
                 )
             )
-        if index >= len(current_experiments) or current_experiments[index].id != item["id"]:
+        if (
+            index >= len(current_experiments)
+            or current_experiments[index].id != item["id"]
+        ):
             issues.append(
                 _issue(
                     path,
@@ -1864,7 +1855,11 @@ def _verify_frozen_evidence(
             )
         if experiment.result["leader"] != expected_leader:
             issues.append(
-                _issue(path, "report.leader-chain", "Frozen Experiment leader chain is invalid")
+                _issue(
+                    path,
+                    "report.leader-chain",
+                    "Frozen Experiment leader chain is invalid",
+                )
             )
         if experiment.result["verdict"] == "KEEP":
             expected_leader = dict(experiment.result["candidate"])
@@ -1872,7 +1867,9 @@ def _verify_frozen_evidence(
     current_campaigns = list_campaigns(project, session)
     for index, item in enumerate(campaigns):
         if not isinstance(item, dict) or not isinstance(item.get("id"), str):
-            issues.append(_issue(path, "report.campaign", "Invalid frozen Campaign evidence"))
+            issues.append(
+                _issue(path, "report.campaign", "Invalid frozen Campaign evidence")
+            )
             continue
         campaign = load_campaign(project, session, item["id"])
         expected = {
@@ -1934,13 +1931,21 @@ def _verify_frozen_evidence(
         for key, value in expected_fixed.items():
             if frozen_session.get(key) != value:
                 issues.append(
-                    _issue(path, "report.session-evidence", f"Frozen Session {key} differs")
+                    _issue(
+                        path, "report.session-evidence", f"Frozen Session {key} differs"
+                    )
                 )
         if frozen_session.get("status") not in {"active", "promoted"}:
-            issues.append(_issue(path, "report.session-status", "Invalid frozen Session status"))
+            issues.append(
+                _issue(path, "report.session-status", "Invalid frozen Session status")
+            )
         if frozen_session.get("leader") != expected_leader:
             issues.append(
-                _issue(path, "report.leader-chain", "Frozen leader differs from KEEP prefix")
+                _issue(
+                    path,
+                    "report.leader-chain",
+                    "Frozen leader differs from KEEP prefix",
+                )
             )
         if "leaderDecisionSupport" in evidence:
             try:
@@ -1980,7 +1985,9 @@ def _verify_frozen_evidence(
             [
                 item["verdict"]
                 for item in experiments
-                if isinstance(item, dict) and item.get("verdict") in {
+                if isinstance(item, dict)
+                and item.get("verdict")
+                in {
                     "KEEP",
                     "REVERT",
                     "CRASH",
@@ -1995,13 +2002,12 @@ def _verify_frozen_evidence(
             "declaredExternalHoldoutRule",
             "externalHoldoutReason",
         }
-        if (
-            isinstance(frozen_integrity, dict)
-            and selection_v3_keys.isdisjoint(frozen_integrity)
+        if isinstance(frozen_integrity, dict) and selection_v3_keys.isdisjoint(
+            frozen_integrity
         ):
-            expected_integrity["externalHoldoutRule"] = (
-                expected_integrity["declaredExternalHoldoutRule"]
-            )
+            expected_integrity["externalHoldoutRule"] = expected_integrity[
+                "declaredExternalHoldoutRule"
+            ]
             if expected_integrity["externalHoldoutRequired"]:
                 expected_integrity["warning"] = (
                     "Visible test evidence and candidate iteration share this "
@@ -2020,9 +2026,8 @@ def _verify_frozen_evidence(
             "selectionAdjustment",
             "verdictAuthority",
         }
-        if (
-            isinstance(frozen_integrity, dict)
-            and selection_v2_keys.isdisjoint(frozen_integrity)
+        if isinstance(frozen_integrity, dict) and selection_v2_keys.isdisjoint(
+            frozen_integrity
         ):
             expected_integrity = {
                 key: value
@@ -2071,13 +2076,21 @@ def load_report(
         or manifest.get("sessionId") != session.manifest["id"]
         or manifest.get("completed") is not True
     ):
-        issues.append(_issue(root / REPORT_MANIFEST, "report.manifest", "Invalid terminal manifest"))
+        issues.append(
+            _issue(
+                root / REPORT_MANIFEST, "report.manifest", "Invalid terminal manifest"
+            )
+        )
     files = manifest.get("files")
     actual = _report_files(root)
     if not isinstance(files, dict) or files != actual:
         issues.append(_issue(root, "report.tampered", "Research Report files changed"))
-    if isinstance(files, dict) and files.get(REPORT_RESULT) != manifest.get("reportHash"):
-        issues.append(_issue(root, "report.result-hash", "Research Report hash mismatch"))
+    if isinstance(files, dict) and files.get(REPORT_RESULT) != manifest.get(
+        "reportHash"
+    ):
+        issues.append(
+            _issue(root, "report.result-hash", "Research Report hash mismatch")
+        )
     if issues:
         raise AutoQuantValidationError(issues)
     analysis = validate_report_analysis(
@@ -2092,7 +2105,13 @@ def load_report(
         )
     if (root / REPORT_MARKDOWN).read_text(encoding="utf-8") != _render_markdown(report):
         raise AutoQuantValidationError(
-            [_issue(root / REPORT_MARKDOWN, "report.markdown", "Report Markdown is not canonical")]
+            [
+                _issue(
+                    root / REPORT_MARKDOWN,
+                    "report.markdown",
+                    "Report Markdown is not canonical",
+                )
+            ]
         )
     _verify_frozen_evidence(project, session, report, root / REPORT_RESULT)
     return ReportContext(root, manifest, report, analysis)
@@ -2112,7 +2131,11 @@ def list_reports(
             continue
         if entry.is_symlink() or not entry.is_dir():
             raise AutoQuantValidationError(
-                [_issue(entry, "report.entry", "Report entries must be real directories")]
+                [
+                    _issue(
+                        entry, "report.entry", "Report entries must be real directories"
+                    )
+                ]
             )
         report = load_report(project, session, entry.name)
         summaries.append(
@@ -2129,13 +2152,9 @@ def list_reports(
                 executive_summary=report.analysis["executiveSummary"],
                 authority=report.report["authority"],
                 leader_decision_support=summarize_leader_decision_support(
-                    report.report["evidence"].get(
-                        "leaderDecisionSupport"
-                    )
+                    report.report["evidence"].get("leaderDecisionSupport")
                 ),
-                selection_integrity=report.report["evidence"][
-                    "selectionIntegrity"
-                ],
+                selection_integrity=report.report["evidence"]["selectionIntegrity"],
                 anchor_kind="session",
                 study_id=session.manifest["studyId"],
             )
@@ -2309,16 +2328,12 @@ REPORT_ANALYSIS_JSON_SCHEMA: dict[str, Any] = {
             "findings": [
                 {
                     "id": "validation-edge-absent",
-                    "claim": (
-                        "The candidate did not improve validation evidence."
-                    ),
+                    "claim": ("The candidate did not improve validation evidence."),
                     "confidence": "medium",
                     "evidenceRefs": [
                         {
                             "kind": "run",
-                            "id": (
-                                "run-20260730T120000000000Z-0123456789ab"
-                            ),
+                            "id": ("run-20260730T120000000000Z-0123456789ab"),
                             "artifactPath": "artifacts/factor-report.json",
                         }
                     ],
@@ -2337,9 +2352,7 @@ REPORT_ANALYSIS_JSON_SCHEMA: dict[str, Any] = {
                     "evidenceRefs": [
                         {
                             "kind": "run",
-                            "id": (
-                                "run-20260730T120000000000Z-0123456789ab"
-                            ),
+                            "id": ("run-20260730T120000000000Z-0123456789ab"),
                             "artifactPath": "artifacts/factor-report.json",
                         }
                     ],

@@ -94,7 +94,9 @@ class _Undo:
         for path in reversed(self.fresh):
             self._remove(path)
         for directory, before in self.kept.items():
-            later = sorted(directory.rglob("*"), key=lambda p: len(p.parts), reverse=True)
+            later = sorted(
+                directory.rglob("*"), key=lambda p: len(p.parts), reverse=True
+            )
             for path in later:
                 if path not in before:
                     self._remove(path)
@@ -156,7 +158,11 @@ def apply_intake(root: Path, nb: Notebook, spec: IntakeSpec, data: Path) -> Appl
         spec_path.write_bytes(canonical_json(spec).encode("utf-8"))
 
         split = prepare_data(
-            root, nb, Path(data), spec.backtest.timestamp_col, spec.backtest.lockbox_fraction
+            root,
+            nb,
+            Path(data),
+            spec.backtest.timestamp_col,
+            spec.backtest.lockbox_fraction,
         )
         cfg = QuantConfig(
             data_path=split.dev_path,
@@ -174,7 +180,9 @@ def apply_intake(root: Path, nb: Notebook, spec: IntakeSpec, data: Path) -> Appl
 
         digest = file_sha256(spec_path)
         try:
-            dev_rel = Path(split.dev_path).resolve().relative_to(root.resolve()).as_posix()
+            dev_rel = (
+                Path(split.dev_path).resolve().relative_to(root.resolve()).as_posix()
+            )
         except ValueError:
             raise IntakeError(
                 f"{split.dev_path}: the development data lies outside the direction"
@@ -199,9 +207,13 @@ def apply_intake(root: Path, nb: Notebook, spec: IntakeSpec, data: Path) -> Appl
         )
     except BaseException as error:
         undo.undo()
-        if isinstance(error, (ValueError, OSError)) and not isinstance(error, IntakeError):
+        if isinstance(error, (ValueError, OSError)) and not isinstance(
+            error, IntakeError
+        ):
             # The data or the split is not what the spec needs (other data,
             # too few bars, a file that is gone): a refusal, not a crash.
             raise IntakeError(str(error)) from error
         raise
-    return Applied(hyp.id, exp.id, task_dir, spec_path, digest, plan.rule, list(spec.defaulted))
+    return Applied(
+        hyp.id, exp.id, task_dir, spec_path, digest, plan.rule, list(spec.defaulted)
+    )

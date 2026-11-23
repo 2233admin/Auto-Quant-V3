@@ -43,19 +43,32 @@ def market_data_identity(project, run):
     if not snapshots:
         return None
     try:
-        data_root = confined_path(project.root_dir, project.manifest.directories["data"],
-                                  "project/directories/data")
+        data_root = confined_path(
+            project.root_dir,
+            project.manifest.directories["data"],
+            "project/directories/data",
+        )
         manifests = {}
         for relative in snapshots:
             path = confined_path(data_root, relative, "dataset/snapshot")
             # Only the exact content-locked bytes may define the identity.
-            if path.is_symlink() or not path.is_file() or hash_file(path) != hashes[relative]:
+            if (
+                path.is_symlink()
+                or not path.is_file()
+                or hash_file(path) != hashes[relative]
+            ):
                 return None
             snapshot = json.loads(path.read_text(encoding="utf-8"))
-            if not isinstance(snapshot, dict) or snapshot.get("kind") != DATASET_SNAPSHOT_KIND:
+            if (
+                not isinstance(snapshot, dict)
+                or snapshot.get("kind") != DATASET_SNAPSHOT_KIND
+            ):
                 return None
-            manifests[relative] = {k: v for k, v in snapshot.items()
-                                   if k not in REQUEST_ONLY_SNAPSHOT_FIELDS}
+            manifests[relative] = {
+                k: v
+                for k, v in snapshot.items()
+                if k not in REQUEST_ONLY_SNAPSHOT_FIELDS
+            }
     except (OSError, ValueError, KeyError, TypeError, AutoQuantValidationError):
         return None
     definition = {k: v for k, v in dataset.items() if k not in {"hash", "sourceHashes"}}
@@ -95,6 +108,7 @@ OPENALICE_SOURCE_URI_PREFIX = "openalice-bars:v1?"
 def encode_openalice_source_uri(bar_ids, *, interval, timezone, adjustment):
     """Deterministic provider ``sourceUri`` for a symbol -> barId mapping."""
     from urllib.parse import urlencode
+
     pairs = [("interval", interval), ("timezone", timezone), ("adjustment", adjustment)]
     pairs += [(f"bar.{symbol}", bar_ids[symbol]) for symbol in sorted(bar_ids)]
     return OPENALICE_SOURCE_URI_PREFIX + urlencode(pairs)
@@ -103,10 +117,15 @@ def encode_openalice_source_uri(bar_ids, *, interval, timezone, adjustment):
 def decode_openalice_source_uri(source_uri):
     """``{"barIds": {...}, "interval", "timezone", "adjustment"}`` or ``None``."""
     from urllib.parse import parse_qsl
-    if not isinstance(source_uri, str) or not source_uri.startswith(OPENALICE_SOURCE_URI_PREFIX):
+
+    if not isinstance(source_uri, str) or not source_uri.startswith(
+        OPENALICE_SOURCE_URI_PREFIX
+    ):
         return None
     fields, bar_ids = {}, {}
-    for key, value in parse_qsl(source_uri[len(OPENALICE_SOURCE_URI_PREFIX):], keep_blank_values=True):
+    for key, value in parse_qsl(
+        source_uri[len(OPENALICE_SOURCE_URI_PREFIX) :], keep_blank_values=True
+    ):
         if key.startswith("bar."):
             bar_ids[key[4:]] = value
         else:
@@ -124,22 +143,43 @@ def run_instruments(project, run):
     hashes = dataset.get("sourceHashes")
     if not isinstance(hashes, dict):
         universe = dataset.get("universe")
-        return [{"symbol": s, "barId": None} for s in universe] if isinstance(universe, list) else None
+        return (
+            [{"symbol": s, "barId": None} for s in universe]
+            if isinstance(universe, list)
+            else None
+        )
     try:
-        data_root = confined_path(project.root_dir, project.manifest.directories["data"], "project/directories/data")
-        for relative in sorted(k for k in hashes if PurePosixPath(k).name == SNAPSHOT_NAME):
+        data_root = confined_path(
+            project.root_dir,
+            project.manifest.directories["data"],
+            "project/directories/data",
+        )
+        for relative in sorted(
+            k for k in hashes if PurePosixPath(k).name == SNAPSHOT_NAME
+        ):
             path = confined_path(data_root, relative, "dataset/snapshot")
-            if path.is_symlink() or not path.is_file() or hash_file(path) != hashes[relative]:
+            if (
+                path.is_symlink()
+                or not path.is_file()
+                or hash_file(path) != hashes[relative]
+            ):
                 return None
             snapshot = json.loads(path.read_text(encoding="utf-8"))
-            providers = [snapshot.get("provider")] + [s.get("provider") for s in snapshot.get("sources") or [] if isinstance(s, dict)]
+            providers = [snapshot.get("provider")] + [
+                s.get("provider")
+                for s in snapshot.get("sources") or []
+                if isinstance(s, dict)
+            ]
             bar_ids = {}
             for provider in providers:
                 decoded = decode_openalice_source_uri((provider or {}).get("sourceUri"))
                 if decoded:
                     bar_ids.update(decoded["barIds"])
-            return [{"symbol": asset["symbol"], "barId": bar_ids.get(asset["symbol"])}
-                    for asset in snapshot.get("assets", []) if isinstance(asset, dict)]
+            return [
+                {"symbol": asset["symbol"], "barId": bar_ids.get(asset["symbol"])}
+                for asset in snapshot.get("assets", [])
+                if isinstance(asset, dict)
+            ]
     except (OSError, ValueError, KeyError, TypeError, AutoQuantValidationError):
         return None
     return None

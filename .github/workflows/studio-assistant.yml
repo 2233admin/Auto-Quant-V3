@@ -23,6 +23,8 @@ jobs:
           node-version: '22'
       - run: python -m pip install uv
       - run: uv sync --locked
+      - run: python -m pip install ruff==0.15.21
+      - run: ruff format --check .
       - run: uv run python scripts/check_doc_links.py
       - run: uv run python -m unittest tests.test_studio_assistant tests.test_studio_assistant_providers -v
       - run: pnpm install --frozen-lockfile

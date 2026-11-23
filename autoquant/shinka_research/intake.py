@@ -227,12 +227,18 @@ def _check_param(param: Param, value: Any) -> Any:
             raise IntakeError(f"{label} must be one of {', '.join(param.choices)}")
         return value
     number = isinstance(value, (int, float)) and not isinstance(value, bool)
-    if param.kind == "int" and not (isinstance(value, int) and not isinstance(value, bool)):
+    if param.kind == "int" and not (
+        isinstance(value, int) and not isinstance(value, bool)
+    ):
         number = False
     if not number or not math.isfinite(value):
-        raise IntakeError(f"{label} must be a{'n integer' if param.kind == 'int' else ' number'}")
+        raise IntakeError(
+            f"{label} must be a{'n integer' if param.kind == 'int' else ' number'}"
+        )
     if not param.minimum <= value <= param.maximum:
-        raise IntakeError(f"{label} must be within [{param.minimum:g}, {param.maximum:g}]")
+        raise IntakeError(
+            f"{label} must be within [{param.minimum:g}, {param.maximum:g}]"
+        )
     return float(value) if param.kind == "float" else value
 
 
@@ -265,7 +271,9 @@ def _signal_params(
             continue
         values[param.name] = template.default(param)
         if param.open:
-            questions.append(Question(path, param.description, values[param.name], param.choices))
+            questions.append(
+                Question(path, param.description, values[param.name], param.choices)
+            )
         else:
             defaulted.append(path)
     problem = template.spec.check(values)
@@ -302,7 +310,9 @@ def resolve(template_id: str | None, draft: Mapping[str, Any]) -> Resolution:
         raise IntakeError(f"no template given; choose one of {', '.join(TEMPLATES)}")
     template = TEMPLATES.get(tid)
     if template is None:
-        raise IntakeError(f"unknown template {tid!r}; choose one of {', '.join(TEMPLATES)}")
+        raise IntakeError(
+            f"unknown template {tid!r}; choose one of {', '.join(TEMPLATES)}"
+        )
 
     questions: list[Question] = []
     answered: list[str] = []
@@ -340,7 +350,9 @@ def resolve(template_id: str | None, draft: Mapping[str, Any]) -> Resolution:
             )
         )
 
-    params, param_questions, param_answered, param_defaulted = _signal_params(template, draft)
+    params, param_questions, param_answered, param_defaulted = _signal_params(
+        template, draft
+    )
     questions += param_questions
     answered += param_answered
     defaulted += param_defaulted

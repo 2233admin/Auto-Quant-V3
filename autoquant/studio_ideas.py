@@ -11,8 +11,13 @@ import sys
 from shlex import join
 
 from .studio_actions import (
-    ActionError, CANDIDATE_RELATIVE, _is_link, _params_object, _sha256,
-    confine_workspace_path, validate_save_params,
+    ActionError,
+    CANDIDATE_RELATIVE,
+    _is_link,
+    _params_object,
+    _sha256,
+    confine_workspace_path,
+    validate_save_params,
 )
 from .intake import quantile_intake_issues
 from .runs import list_runs
@@ -33,10 +38,18 @@ WORDING = {
 
 
 def text_param(value, label, minimum=1, maximum=500):
-    if (not isinstance(value, str) or not minimum <= len(value) <= maximum
-            or value != value.strip() or value.startswith("-")
-            or re.search(r"[\x00-\x1f\x7f]", value)):
-        raise ActionError(422, "validation.failed", f"{label}: expected {minimum} to {maximum} plain characters")
+    if (
+        not isinstance(value, str)
+        or not minimum <= len(value) <= maximum
+        or value != value.strip()
+        or value.startswith("-")
+        or re.search(r"[\x00-\x1f\x7f]", value)
+    ):
+        raise ActionError(
+            422,
+            "validation.failed",
+            f"{label}: expected {minimum} to {maximum} plain characters",
+        )
     return value
 
 
@@ -50,7 +63,9 @@ def safe_path(service, relative):
     current = original
     while current != service.root:
         if _is_link(current):
-            raise ActionError(422, "studio.path", "Symlinks and junctions are not permitted")
+            raise ActionError(
+                422, "studio.path", "Symlinks and junctions are not permitted"
+            )
         if current.parent == current:
             raise ActionError(422, "studio.path", "Path must be inside the Workspace")
         current = current.parent
@@ -60,14 +75,25 @@ def safe_path(service, relative):
 def package_info(service, relative):
     path = safe_path(service, relative)
     staging = safe_path(service, "staging")
-    if not path.is_relative_to(staging) or not path.is_file() or path.stat().st_size > 1_000_000:
-        raise ActionError(422, "studio.dataset", "Select a dataset manifest under Workspace staging")
+    if (
+        not path.is_relative_to(staging)
+        or not path.is_file()
+        or path.stat().st_size > 1_000_000
+    ):
+        raise ActionError(
+            422, "studio.dataset", "Select a dataset manifest under Workspace staging"
+        )
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(data, dict) or data.get("kind") != "autoquant-ohlcv-dataset-package":
+        if (
+            not isinstance(data, dict)
+            or data.get("kind") != "autoquant-ohlcv-dataset-package"
+        ):
             raise ValueError("not a dataset package")
         if data.get("schemaVersion") != 1:
-            raise ValueError("This first-idea flow currently supports aligned daily V1 packages only; use CLI intake for other contracts")
+            raise ValueError(
+                "This first-idea flow currently supports aligned daily V1 packages only; use CLI intake for other contracts"
+            )
         digest = hashlib.sha256(path.read_bytes())
         for asset in data["assets"]:
             raw = Path(asset["path"])
@@ -100,46 +126,104 @@ def datasets(service):
                     continue
                 try:
                     raw = json.loads(file.read_text(encoding="utf-8"))
-                    if not isinstance(raw, dict) or raw.get("kind") != "autoquant-ohlcv-dataset-package":
+                    if (
+                        not isinstance(raw, dict)
+                        or raw.get("kind") != "autoquant-ohlcv-dataset-package"
+                    ):
                         continue
                     relative = file.relative_to(service.root).as_posix()
                     data, digest = package_info(service, relative)
-                    items.append({"path": relative, "sha256": digest, "id": data["id"],
-                                  "assets": [a["symbol"] for a in data["assets"]],
-                                  "provider": data["provider"]["name"],
-                                  "adjustment": data["priceAdjustment"], "frequency": data["frequency"]})
+                    items.append(
+                        {
+                            "path": relative,
+                            "sha256": digest,
+                            "id": data["id"],
+                            "assets": [a["symbol"] for a in data["assets"]],
+                            "provider": data["provider"]["name"],
+                            "adjustment": data["priceAdjustment"],
+                            "frequency": data["frequency"],
+                        }
+                    )
                 except ActionError as error:
-                    rejected.append({"path": str(file.relative_to(service.root)), "reason": error.message})
+                    rejected.append(
+                        {
+                            "path": str(file.relative_to(service.root)),
+                            "reason": error.message,
+                        }
+                    )
                 except (ValueError, KeyError, TypeError, OSError):
                     continue
-    return {"datasets": items, "unavailable": rejected, "templates": list(TEMPLATES),
-            "stagingCommand": f'New-Item -ItemType Directory -Force "{staging}"; Copy-Item -Recurse "<complete-package-directory>" "{staging}"',
-            "stagingNote": "Copy a complete dataset package directory, including its manifest and referenced CSV files. No data is downloaded or invented by Studio."}
+    return {
+        "datasets": items,
+        "unavailable": rejected,
+        "templates": list(TEMPLATES),
+        "stagingCommand": f'New-Item -ItemType Directory -Force "{staging}"; Copy-Item -Recurse "<complete-package-directory>" "{staging}"',
+        "stagingNote": "Copy a complete dataset package directory, including its manifest and referenced CSV files. No data is downloaded or invented by Studio.",
+    }
 
 
 def request_for(project, package, horizon, assets):
     hypothesis = project.manifest.description
-    return {"schemaVersion": 1, "kind": "autoquant-research-request",
-            "title": project.manifest.name, "question": hypothesis,
-            "decisionContext": "Test whether the authored Factor ranks forward returns on the explicitly selected population; no trading decision.",
-            "assets": [{"symbol": a["symbol"], "assetClass": package["assetClass"], "venue": a["venue"]} for a in package["assets"]],
-            "direction": "research-only", "horizon": f"{horizon} completed daily bars",
-            "horizonPolicy": {"primaryForwardBars": horizon, "diagnosticForwardBars": [5 if horizon != 5 else 20]},
-            "factorPolicy": {"claim": "decision-signal", "knownStyle": None, "outcome": "forward-return", "predictionAssets": assets},
-            "hypotheses": [hypothesis], "constraints": ["Factor research only. No trading authority. No sealed-tail confirmation."],
-            "deliverables": ["Validation Factor evidence with counted trials"],
-            "source": {"system": "local", "workspaceId": None, "sessionId": None, "artifactPath": None, "artifactRevision": None}}
+    return {
+        "schemaVersion": 1,
+        "kind": "autoquant-research-request",
+        "title": project.manifest.name,
+        "question": hypothesis,
+        "decisionContext": "Test whether the authored Factor ranks forward returns on the explicitly selected population; no trading decision.",
+        "assets": [
+            {
+                "symbol": a["symbol"],
+                "assetClass": package["assetClass"],
+                "venue": a["venue"],
+            }
+            for a in package["assets"]
+        ],
+        "direction": "research-only",
+        "horizon": f"{horizon} completed daily bars",
+        "horizonPolicy": {
+            "primaryForwardBars": horizon,
+            "diagnosticForwardBars": [5 if horizon != 5 else 20],
+        },
+        "factorPolicy": {
+            "claim": "decision-signal",
+            "knownStyle": None,
+            "outcome": "forward-return",
+            "predictionAssets": assets,
+        },
+        "hypotheses": [hypothesis],
+        "constraints": [
+            "Factor research only. No trading authority. No sealed-tail confirmation."
+        ],
+        "deliverables": ["Validation Factor evidence with counted trials"],
+        "source": {
+            "system": "local",
+            "workspaceId": None,
+            "sessionId": None,
+            "artifactPath": None,
+            "artifactRevision": None,
+        },
+    }
 
 
 def prepare(service, body):
     if service.scope != "workspace":
-        raise ActionError(409, "studio.blocked", "Idea creation requires serving a Workspace")
+        raise ActionError(
+            409, "studio.blocked", "Idea creation requires serving a Workspace"
+        )
     action = body["actionId"]
     if action == CREATE_ID:
-        params = _params_object(body.get("params"), {"id", "name", "description", "template"})
+        params = _params_object(
+            body.get("params"), {"id", "name", "description", "template"}
+        )
         pid = params.get("id")
-        if not isinstance(pid, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", pid):
-            raise ActionError(422, "validation.failed", "id must contain lowercase letters, digits and dashes")
+        if not isinstance(pid, str) or not re.fullmatch(
+            r"[a-z0-9][a-z0-9-]{0,63}", pid
+        ):
+            raise ActionError(
+                422,
+                "validation.failed",
+                "id must contain lowercase letters, digits and dashes",
+            )
         name = text_param(params.get("name"), "name", maximum=120)
         description = text_param(params.get("description"), "hypothesis", minimum=8)
         template = params.get("template")
@@ -148,46 +232,117 @@ def prepare(service, body):
         workspace = load_workspace(service.root)
         target = safe_path(service, str(workspace.projects_dir / pid))
         if target.exists():
-            raise ActionError(409, "studio.project-exists", "This Project id already exists; choose a new id")
-        argv = [sys.executable, "-m", "autoquant", "project", "create", str(service.root), pid,
-                "--name", name, "--description", description, "--template", template, "--json"]
+            raise ActionError(
+                409,
+                "studio.project-exists",
+                "This Project id already exists; choose a new id",
+            )
+        argv = [
+            sys.executable,
+            "-m",
+            "autoquant",
+            "project",
+            "create",
+            str(service.root),
+            pid,
+            "--name",
+            name,
+            "--description",
+            description,
+            "--template",
+            template,
+            "--json",
+        ]
         fingerprint = str(workspace.projects_dir)
         request = None
         writes = "Creates one dedicated Project and stores the hypothesis in its description and research.md. No trial or Run."
     else:
-        params = _params_object(body.get("params"), {"dataset", "horizon", "predictionAssets", "quantiles"})
+        params = _params_object(
+            body.get("params"), {"dataset", "horizon", "predictionAssets", "quantiles"}
+        )
         project = service._project(body.get("project"))
         pid = project.manifest.id
-        if list_runs(project) or list_sessions(project) or (project.root_dir / "request.json").exists():
-            raise ActionError(409, "studio.blocked", "Data intake is only available before the first binding or Run")
+        if (
+            list_runs(project)
+            or list_sessions(project)
+            or (project.root_dir / "request.json").exists()
+        ):
+            raise ActionError(
+                409,
+                "studio.blocked",
+                "Data intake is only available before the first binding or Run",
+            )
         package, digest = package_info(service, params.get("dataset"))
         horizon = params.get("horizon")
         assets = params.get("predictionAssets")
         if type(horizon) is not int or not 1 <= horizon <= 60:
-            raise ActionError(422, "validation.failed", "Choose a forward horizon from 1 to 60 bars")
+            raise ActionError(
+                422, "validation.failed", "Choose a forward horizon from 1 to 60 bars"
+            )
         universe = [a["symbol"] for a in package["assets"]]
-        if (not isinstance(assets, list) or not assets or any(not isinstance(a, str) or a not in universe for a in assets)
-                or len(set(assets)) != len(assets)):
-            raise ActionError(422, "validation.failed", "Choose an explicit prediction population from the package")
+        if (
+            not isinstance(assets, list)
+            or not assets
+            or any(not isinstance(a, str) or a not in universe for a in assets)
+            or len(set(assets)) != len(assets)
+        ):
+            raise ActionError(
+                422,
+                "validation.failed",
+                "Choose an explicit prediction population from the package",
+            )
         request = request_for(project, package, horizon, assets)
         from .briefs import validate_research_request
+
         validate_research_request(request)
         if "quantiles" in params:
             # The same allowed set and population rule `aq project intake --quantiles` applies.
-            refused = quantile_intake_issues(TEMPLATES[1], params["quantiles"], request, universe)
+            refused = quantile_intake_issues(
+                TEMPLATES[1], params["quantiles"], request, universe
+            )
             if refused:
                 raise ActionError(422, "validation.failed", refused[0].message)
         request_path = safe_path(service, f".autoquant/idea-inputs/{pid}.json")
-        argv = [sys.executable, "-m", "autoquant", "project", "intake", str(service.root), pid,
-                "--request", str(request_path), "--dataset", str(safe_path(service, params["dataset"])),
-                "--template", "ohlcv-factor-lab", "--name", project.manifest.name,
-                *(["--quantiles", str(params["quantiles"])] if "quantiles" in params else []), "--json"]
-        fingerprint = service._fingerprint(project) + digest + json.dumps(request, sort_keys=True)
+        argv = [
+            sys.executable,
+            "-m",
+            "autoquant",
+            "project",
+            "intake",
+            str(service.root),
+            pid,
+            "--request",
+            str(request_path),
+            "--dataset",
+            str(safe_path(service, params["dataset"])),
+            "--template",
+            "ohlcv-factor-lab",
+            "--name",
+            project.manifest.name,
+            *(
+                ["--quantiles", str(params["quantiles"])]
+                if "quantiles" in params
+                else []
+            ),
+            "--json",
+        ]
+        fingerprint = (
+            service._fingerprint(project) + digest + json.dumps(request, sort_keys=True)
+        )
         writes = "Writes the displayed request and binds a normalized Project-local snapshot through strict Core intake. No trial."
-    preview = {"actionId": action, "project": pid, "params": params, "argv": argv,
-               "display": join(argv), "commandHash": service.command_hash(action, pid, argv, fingerprint),
-               "writes": writes, "trial": None, "requiresSecondConfirm": action == INTAKE_ID, "timeoutSeconds": 120,
-               "request": request}
+    preview = {
+        "actionId": action,
+        "project": pid,
+        "params": params,
+        "argv": argv,
+        "display": join(argv),
+        "commandHash": service.command_hash(action, pid, argv, fingerprint),
+        "writes": writes,
+        "trial": None,
+        "requiresSecondConfirm": action == INTAKE_ID,
+        "timeoutSeconds": 120,
+        "request": request,
+    }
     return preview
 
 
@@ -198,18 +353,34 @@ def launch(service, body):
     if body.get("commandHash") != preview["commandHash"]:
         raise ActionError(409, "studio.stale-preview", "Inputs changed; preview again")
     if preview["requiresSecondConfirm"] and body.get("secondConfirm") is not True:
-        raise ActionError(400, "studio.second-confirm-required", "Acknowledge binding the Project snapshot")
+        raise ActionError(
+            400,
+            "studio.second-confirm-required",
+            "Acknowledge binding the Project snapshot",
+        )
     pid = preview["project"]
     if service.runner.active_job(pid):
         raise ActionError(409, "studio.busy", "This Project already has a running job")
     if preview["request"] is not None:
         target = safe_path(service, f".autoquant/idea-inputs/{pid}.json")
         target.parent.mkdir(parents=True, exist_ok=True)
-        service._atomic_write(target, (json.dumps(preview["request"], indent=2) + "\n").encode())
-    job = service.runner.create(action_id=preview["actionId"], project=pid, argv=preview["argv"],
-                                display=preview["display"], command_hash=preview["commandHash"],
-                                timeout=120, cwd=str(service.root))
-    return {"jobId": job.id, "status": job.status, "commandHash": preview["commandHash"]}
+        service._atomic_write(
+            target, (json.dumps(preview["request"], indent=2) + "\n").encode()
+        )
+    job = service.runner.create(
+        action_id=preview["actionId"],
+        project=pid,
+        argv=preview["argv"],
+        display=preview["display"],
+        command_hash=preview["commandHash"],
+        timeout=120,
+        cwd=str(service.root),
+    )
+    return {
+        "jobId": job.id,
+        "status": job.status,
+        "commandHash": preview["commandHash"],
+    }
 
 
 def question(service, project):
@@ -221,27 +392,50 @@ def question(service, project):
 
 def binding(service, project, trial_hypothesis=None):
     original = question(service, project)
-    return {"hypothesis": original, "hypothesisSha256": _sha256(original.encode()),
-            "verdictPolicy": POLICY, "verdictWording": WORDING, "trialHypothesis": trial_hypothesis,
-            "trialHypothesisSha256": _sha256(trial_hypothesis.encode()) if trial_hypothesis else None}
+    return {
+        "hypothesis": original,
+        "hypothesisSha256": _sha256(original.encode()),
+        "verdictPolicy": POLICY,
+        "verdictWording": WORDING,
+        "trialHypothesis": trial_hypothesis,
+        "trialHypothesisSha256": _sha256(trial_hypothesis.encode())
+        if trial_hypothesis
+        else None,
+    }
 
 
 def initial_path(service, project):
     if list_runs(project) or list_sessions(project):
-        raise ActionError(409, "studio.blocked", "Initial candidate is frozen after the first Run; edit through its Session")
+        raise ActionError(
+            409,
+            "studio.blocked",
+            "Initial candidate is frozen after the first Run; edit through its Session",
+        )
     if not safe_path(service, str(project.root_dir / "request.json")).is_file():
-        raise ActionError(409, "studio.blocked", "Bind a staged dataset before authoring the first candidate")
+        raise ActionError(
+            409,
+            "studio.blocked",
+            "Bind a staged dataset before authoring the first candidate",
+        )
     candidate = safe_path(service, str(project.root_dir / CANDIDATE_RELATIVE))
     if not candidate.is_file():
-        raise ActionError(409, "studio.blocked", "No Factor candidate exists in this Project")
+        raise ActionError(
+            409, "studio.blocked", "No Factor candidate exists in this Project"
+        )
     return candidate
 
 
 def initial_candidate(service, project):
     path = initial_path(service, project)
     raw = path.read_bytes()
-    return {"path": str(path.relative_to(service.root)), "source": raw.decode("utf-8"),
-            "sha256": _sha256(raw), "bytes": len(raw), "editable": True, "blockedReason": None}
+    return {
+        "path": str(path.relative_to(service.root)),
+        "source": raw.decode("utf-8"),
+        "sha256": _sha256(raw),
+        "bytes": len(raw),
+        "editable": True,
+        "blockedReason": None,
+    }
 
 
 def save_initial(service, body):
@@ -252,15 +446,29 @@ def save_initial(service, body):
     with service.runner.hold(project.manifest.id):
         path = initial_path(service, project)
         if _sha256(path.read_bytes()) != params["baseSha256"]:
-            raise ActionError(409, "studio.conflict", "The candidate changed; reload before saving")
+            raise ActionError(
+                409, "studio.conflict", "The candidate changed; reload before saving"
+            )
         raw = params["source"].encode()
-        record = {"project": project.manifest.id, "sourceSha256": _sha256(raw), **binding(service, project)}
-        service.audit.append({"event": "initial-candidate-save-started", **record}, fsync=True)
+        record = {
+            "project": project.manifest.id,
+            "sourceSha256": _sha256(raw),
+            **binding(service, project),
+        }
+        service.audit.append(
+            {"event": "initial-candidate-save-started", **record}, fsync=True
+        )
         try:
             service._atomic_write(path, raw)
         except OSError as error:
-            service.audit.append({"event": "initial-candidate-save-failed", **record}, fsync=True)
-            raise ActionError(500, "studio.write-failed", f"Cannot save the initial candidate: {error}") from error
+            service.audit.append(
+                {"event": "initial-candidate-save-failed", **record}, fsync=True
+            )
+            raise ActionError(
+                500,
+                "studio.write-failed",
+                f"Cannot save the initial candidate: {error}",
+            ) from error
         service.audit.append({"event": "initial-candidate-saved", **record}, fsync=True)
     return {"sha256": _sha256(raw), "bytes": len(raw)}
 
@@ -268,7 +476,11 @@ def save_initial(service, body):
 def idea_view(service, project_id):
     project = service._project(project_id)
     request_path = safe_path(service, str(project.root_dir / "request.json"))
-    request = json.loads(request_path.read_text(encoding="utf-8")) if request_path.is_file() else None
+    request = (
+        json.loads(request_path.read_text(encoding="utf-8"))
+        if request_path.is_file()
+        else None
+    )
     records = []
     finished = {}
     authored_hashes = set()
@@ -279,36 +491,64 @@ def idea_view(service, project_id):
                 entry = json.loads(line)
                 if entry.get("event") == "finished":
                     finished[entry["jobId"]] = entry
-                if entry.get("event") == "initial-candidate-saved" and entry.get("project") == project_id:
+                if (
+                    entry.get("event") == "initial-candidate-saved"
+                    and entry.get("project") == project_id
+                ):
                     authored_hashes.add(entry["sourceSha256"])
-                if entry.get("project") == project_id and entry.get("hypothesisSha256") and entry.get("event") == "started":
+                if (
+                    entry.get("project") == project_id
+                    and entry.get("hypothesisSha256")
+                    and entry.get("event") == "started"
+                ):
                     records.append(entry)
             except ValueError:
                 continue
     from .runs import load_run
     from .selection import build_research_family, build_selection_adjustment
+
     runs = list_runs(project, "ohlcv-factor-quality")
     evidence = None
     if runs:
         latest = max(runs, key=lambda r: (r.started_at, r.id))
         run = load_run(project, latest.id)
         family = build_research_family(project, run)
-        evidence = {"runId": latest.id, "researchFamily": family.projection,
-                    "selectionAdjustment": build_selection_adjustment(run, family)}
-    jobs = {j.id: j.to_dict() for j in service.runner.recent() if j.project == project_id}
+        evidence = {
+            "runId": latest.id,
+            "researchFamily": family.projection,
+            "selectionAdjustment": build_selection_adjustment(run, family),
+        }
+    jobs = {
+        j.id: j.to_dict() for j in service.runner.recent() if j.project == project_id
+    }
     for record in records:
         receipt = finished.get(record["jobId"])
         if receipt and record["jobId"] not in jobs:
-            jobs[record["jobId"]] = {"jobId": record["jobId"], "actionId": record["actionId"],
-                                     "project": project_id, "status": receipt["status"],
-                                     "startedAt": record["startedAt"], "endedAt": receipt["endedAt"],
-                                     "createdRefs": receipt["createdRefs"], "result": None,
-                                     "stderrTail": "", "stdoutTail": "", "stages": []}
+            jobs[record["jobId"]] = {
+                "jobId": record["jobId"],
+                "actionId": record["actionId"],
+                "project": project_id,
+                "status": receipt["status"],
+                "startedAt": record["startedAt"],
+                "endedAt": receipt["endedAt"],
+                "createdRefs": receipt["createdRefs"],
+                "result": None,
+                "stderrTail": "",
+                "stdoutTail": "",
+                "stages": [],
+            }
         if receipt:
             record["runId"] = receipt["createdRefs"].get("runId")
     candidate_path = safe_path(service, str(project.root_dir / CANDIDATE_RELATIVE))
-    return {**binding(service, project), "bound": request is not None, "request": request,
-            "frozen": bool(records or list_runs(project)), "bindings": records,
-            "evidence": evidence,
-            "initialAuthored": _sha256(candidate_path.read_bytes()) in authored_hashes if candidate_path.is_file() else False,
-            "jobs": sorted(jobs.values(), key=lambda j: j["startedAt"] or "", reverse=True)}
+    return {
+        **binding(service, project),
+        "bound": request is not None,
+        "request": request,
+        "frozen": bool(records or list_runs(project)),
+        "bindings": records,
+        "evidence": evidence,
+        "initialAuthored": _sha256(candidate_path.read_bytes()) in authored_hashes
+        if candidate_path.is_file()
+        else False,
+        "jobs": sorted(jobs.values(), key=lambda j: j["startedAt"] or "", reverse=True),
+    }

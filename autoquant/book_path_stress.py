@@ -43,9 +43,13 @@ def normalize_path_stress_policy(
             [_issue(path, "path-stress.type", "pathStressPolicy must be an object")]
         )
     for key in sorted(required - set(value)):
-        issues.append(_issue(f"{path}/{key}", "schema.missing", f"Missing required field '{key}'"))
+        issues.append(
+            _issue(f"{path}/{key}", "schema.missing", f"Missing required field '{key}'")
+        )
     for key in sorted(set(value) - required):
-        issues.append(_issue(f"{path}/{key}", "schema.unknown", f"Unknown field '{key}'"))
+        issues.append(
+            _issue(f"{path}/{key}", "schema.unknown", f"Unknown field '{key}'")
+        )
     if value.get("kind") != PATH_STRESS_POLICY_KIND:
         issues.append(
             _issue(
@@ -59,7 +63,11 @@ def normalize_path_stress_policy(
         ("episodeCount", MIN_EPISODES, MAX_EPISODES),
     ):
         item = value.get(key)
-        if not isinstance(item, int) or isinstance(item, bool) or not lower <= item <= upper:
+        if (
+            not isinstance(item, int)
+            or isinstance(item, bool)
+            or not lower <= item <= upper
+        ):
             issues.append(
                 _issue(
                     f"{path}/{key}",
@@ -198,13 +206,25 @@ def validate_book_path_stress_policy(
         or not SHA256.fullmatch(value["source"]["requestHash"])
     ):
         raise AutoQuantValidationError(
-            [_issue(path, "path-stress.contract", "Path Stress authority differs from the fixed contract")]
+            [
+                _issue(
+                    path,
+                    "path-stress.contract",
+                    "Path Stress authority differs from the fixed contract",
+                )
+            ]
         )
     payload = {key: value[key] for key in required - {"id"}}
     expected_id = f"book-path-stress-{hash_json(payload)[:16]}"
     if value["id"] != expected_id:
         raise AutoQuantValidationError(
-            [_issue(f"{path}/id", "path-stress.id", "Path Stress authority id does not reconcile")]
+            [
+                _issue(
+                    f"{path}/id",
+                    "path-stress.id",
+                    "Path Stress authority id does not reconcile",
+                )
+            ]
         )
     return value
 
@@ -214,7 +234,13 @@ def load_book_path_stress_policy(path: Path) -> dict[str, Any]:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise AutoQuantValidationError(
-            [_issue(path, "path-stress.json", f"Cannot read Path Stress authority: {error}")]
+            [
+                _issue(
+                    path,
+                    "path-stress.json",
+                    f"Cannot read Path Stress authority: {error}",
+                )
+            ]
         ) from None
     return validate_book_path_stress_policy(value, path)
 
@@ -225,8 +251,14 @@ BOOK_PATH_STRESS_POLICY_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
     "required": [
-        "schemaVersion", "kind", "id", "path", "ranking",
-        "attribution", "authority", "source",
+        "schemaVersion",
+        "kind",
+        "id",
+        "path",
+        "ranking",
+        "attribution",
+        "authority",
+        "source",
     ],
     "properties": {
         "schemaVersion": {"const": SCHEMA_VERSION},

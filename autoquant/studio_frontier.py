@@ -92,8 +92,7 @@ def factor_noise_frontier(
         item["selectionIntegrity"]
         for item in sessions
         if isinstance(item.get("selectionIntegrity"), dict)
-        and item["selectionIntegrity"].get("selectionMetric")
-        == "validation_mean_ic"
+        and item["selectionIntegrity"].get("selectionMetric") == "validation_mean_ic"
     ]
     if not candidates:
         return _unavailable(FACTOR_KIND, "no-factor-ledger")
@@ -257,9 +256,7 @@ def portfolio_noise_frontier(
         "expectedAtTrials": expected_at_trials,
         "trialCountAssumption": (family or {}).get("trialCountAssumption"),
         "totalExecutions": (family or {}).get("totalExecutions"),
-        "curve": [
-            {"trials": count, "expected": expected(count)} for count in curve
-        ],
+        "curve": [{"trials": count, "expected": expected(count)} for count in curve],
         "table": [
             {"trials": float(count), "expected": expected(float(count))}
             for count in table

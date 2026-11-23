@@ -406,9 +406,7 @@ class CandidateCheckTests(unittest.TestCase):
     def test_keep_handoff_retains_exact_passed_check_pointer(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project, session = self._session(directory)
-            candidate = (
-                session.worktree_project.root_dir / "factors" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text("SCORE = 2.0\n", encoding="utf-8")
             passed = execute_candidate_check(project, session.manifest["id"])
             experiment = evaluate_experiment(
@@ -451,9 +449,7 @@ class CandidateCheckTests(unittest.TestCase):
                 directory,
                 request=delegated_request(),
             )
-            candidate = (
-                session.worktree_project.root_dir / "factors" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text("SCORE = 0.5\n", encoding="utf-8")
             passed = execute_candidate_check(project, session.manifest["id"])
             experiment = evaluate_experiment(
@@ -485,9 +481,7 @@ class CandidateCheckTests(unittest.TestCase):
                     "id": experiment.result["id"],
                     "verdict": "REVERT",
                     "runId": experiment.result["candidate"]["runId"],
-                    "candidateSourceHash": experiment.result["candidate"][
-                        "sourceHash"
-                    ],
+                    "candidateSourceHash": experiment.result["candidate"]["sourceHash"],
                     "completedAt": experiment.result["completedAt"],
                     "verdictAuthority": "session-objective-only",
                     "candidateCheck": {
@@ -500,9 +494,7 @@ class CandidateCheckTests(unittest.TestCase):
             report = publish_report(
                 project,
                 session.manifest["id"],
-                baseline_report_analysis(
-                    session.manifest["baseline"]["runId"]
-                ),
+                baseline_report_analysis(session.manifest["baseline"]["runId"]),
             )
             ready = build_agent_work_brief(project)
             self.assertEqual(
@@ -542,9 +534,7 @@ class CandidateCheckTests(unittest.TestCase):
     ) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project, session = self._session(directory)
-            candidate = (
-                session.worktree_project.root_dir / "factors" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text("SCORE = 0.5\n", encoding="utf-8")
             experiment = evaluate_experiment(
                 project,
@@ -561,9 +551,7 @@ class CandidateCheckTests(unittest.TestCase):
                 brief["evidence"]["candidateCheckId"],
                 later.result["id"],
             )
-            self.assertIsNone(
-                brief["evidence"]["latestExperiment"]["candidateCheck"]
-            )
+            self.assertIsNone(brief["evidence"]["latestExperiment"]["candidateCheck"])
 
     def test_worktree_preserves_fixed_preflight_authority(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -599,9 +587,7 @@ class CandidateCheckTests(unittest.TestCase):
                 study = load_study(project, TEMPLATE_STUDY_IDS[template])
                 preflight = load_candidate_preflight(project, study)
                 self.assertIsNotNone(preflight)
-                self.assertFalse(
-                    set(preflight.source_hashes) & set(study.judge_hashes)
-                )
+                self.assertFalse(set(preflight.source_hashes) & set(study.judge_hashes))
                 output = project.root_dir / f".{template}-preflight.json"
                 environment = dict(os.environ)
                 environment.update(
@@ -669,9 +655,7 @@ class CandidateCheckTests(unittest.TestCase):
                         0,
                         advertised.stderr,
                     )
-                    advertised_result = json.loads(
-                        output.read_text(encoding="utf-8")
-                    )
+                    advertised_result = json.loads(output.read_text(encoding="utf-8"))
                     self.assertEqual(
                         advertised_result["status"],
                         "passed",
@@ -763,11 +747,7 @@ class CandidateCheckTests(unittest.TestCase):
                 TEMPLATE_STUDY_IDS["ohlcv-factor-lab"],
                 request=request,
             )
-            candidate = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(
                 "import numpy as np\n"
                 "import pandas as pd\n\n"
@@ -820,11 +800,7 @@ class CandidateCheckTests(unittest.TestCase):
                 project,
                 TEMPLATE_STUDY_IDS["ohlcv-factor-lab"],
             )
-            candidate = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(
                 "import pandas as pd\n\n"
                 "FACTOR_COMPONENTS = {\n"

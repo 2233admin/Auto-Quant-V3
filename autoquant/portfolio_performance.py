@@ -11,8 +11,13 @@ import pandas as pd
 from .intervals import annualization_periods
 from .project_templates.ohlcv_portfolio_lab.portfolio_core import performance_metrics
 from .portfolio_projection import (
-    BREAK_EVEN_COST_SEARCH_MAX_BPS, STRATEGY_VIABILITY_METHOD, ParsedDaily,
-    _fail, _finite, _sample_indices, _split_for,
+    BREAK_EVEN_COST_SEARCH_MAX_BPS,
+    STRATEGY_VIABILITY_METHOD,
+    ParsedDaily,
+    _fail,
+    _finite,
+    _sample_indices,
+    _split_for,
 )
 
 
@@ -59,7 +64,6 @@ def _reconcile_performance_metrics(
             )
 
 
-
 def _project_performance(value: dict[str, Any]) -> dict[str, Any]:
     return {
         "observations": int(value["observations"]),
@@ -77,13 +81,10 @@ def _project_performance(value: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-
 def _break_even_cost(
     rows: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    gross_total_return = math.prod(
-        1.0 + row["gross_return"] for row in rows
-    ) - 1.0
+    gross_total_return = math.prod(1.0 + row["gross_return"] for row in rows) - 1.0
     traded = sum(row["traded_notional"] for row in rows)
     if gross_total_return <= 0.0:
         return {
@@ -102,8 +103,7 @@ def _break_even_cost(
         growth = 1.0
         for row in rows:
             net_return = (
-                row["gross_return"]
-                - row["traded_notional"] * cost_bps / 10_000.0
+                row["gross_return"] - row["traded_notional"] * cost_bps / 10_000.0
             )
             if net_return <= -1.0:
                 return None
@@ -133,16 +133,13 @@ def _break_even_cost(
     }
 
 
-
 def _temporal_viability(rows: list[dict[str, Any]]) -> dict[str, Any]:
     monthly: dict[str, float] = {}
     for row in rows:
         month = row["timestamp"][:7]
-        monthly[month] = (
-            (1.0 + monthly.get(month, 0.0))
-            * (1.0 + row["net_return"])
-            - 1.0
-        )
+        monthly[month] = (1.0 + monthly.get(month, 0.0)) * (
+            1.0 + row["net_return"]
+        ) - 1.0
     ordered_months = sorted(monthly.items())
     best_month = max(ordered_months, key=lambda item: (item[1], item[0]))
     worst_month = min(ordered_months, key=lambda item: (item[1], item[0]))
@@ -178,16 +175,18 @@ def _temporal_viability(rows: list[dict[str, Any]]) -> dict[str, Any]:
     best_dates = {row["timestamp"] for row in best_days}
     total_absolute = sum(abs(row["net_return"]) for row in rows)
     best_absolute = sum(abs(row["net_return"]) for row in best_days)
-    without_best = math.prod(
-        1.0 + row["net_return"]
-        for row in rows
-        if row["timestamp"] not in best_dates
-    ) - 1.0
+    without_best = (
+        math.prod(
+            1.0 + row["net_return"]
+            for row in rows
+            if row["timestamp"] not in best_dates
+        )
+        - 1.0
+    )
     return {
         "months": len(ordered_months),
         "positiveNetMonthRate": (
-            sum(value > 0.0 for _, value in ordered_months)
-            / len(ordered_months)
+            sum(value > 0.0 for _, value in ordered_months) / len(ordered_months)
         ),
         "bestNetMonth": {
             "month": best_month[0],
@@ -203,13 +202,10 @@ def _temporal_viability(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "currentUnderwaterBars": current_bars,
         "bestDayCount": best_day_count,
         "bestDaysAbsoluteReturnShare": (
-            best_absolute / total_absolute
-            if total_absolute > 1e-12
-            else 0.0
+            best_absolute / total_absolute if total_absolute > 1e-12 else 0.0
         ),
         "netTotalReturnWithoutBestDays": without_best,
     }
-
 
 
 def _strategy_viability_projection(
@@ -270,9 +266,7 @@ def _strategy_viability_projection(
     base_cost_bps = active_cost_bps[0]
     mandate = metrics.get("portfolio_mandate")
     implementation_policy = (
-        mandate.get("implementationPolicy")
-        if isinstance(mandate, dict)
-        else None
+        mandate.get("implementationPolicy") if isinstance(mandate, dict) else None
     )
     declared_base_cost = (
         implementation_policy.get("baseCostBps")
@@ -361,17 +355,11 @@ def _strategy_viability_projection(
             "annualized_one_way_turnover": (
                 sum(row["one_way_turnover"] for row in rows)
                 / len(rows)
-                * annualization_periods(
-                    [row["timestamp"] for row in rows]
-                )
+                * annualization_periods([row["timestamp"] for row in rows])
             ),
             "total_cost_drag": sum(row["cost"] for row in rows),
-            "rebalance_rate": (
-                sum(row["rebalanced"] for row in rows) / len(rows)
-            ),
-            "no_trade_rate": (
-                sum(not row["rebalanced"] for row in rows) / len(rows)
-            ),
+            "rebalance_rate": (sum(row["rebalanced"] for row in rows) / len(rows)),
+            "no_trade_rate": (sum(not row["rebalanced"] for row in rows) / len(rows)),
         }
         for key, expected_value in expected_implementation.items():
             if not math.isclose(
@@ -423,8 +411,7 @@ def _strategy_viability_projection(
             _reconcile_performance_metrics(
                 raw_stress,
                 reconstructed_stress,
-                "RunResult/metrics/robustness/cost_stress/"
-                f"{key}/{split_name}",
+                f"RunResult/metrics/robustness/cost_stress/{key}/{split_name}",
             )
             projected_stress.append(
                 {
@@ -456,9 +443,7 @@ def _strategy_viability_projection(
                 f"RunResult/metrics/robustness/extra_delay/{split_name}/sharpe",
             ),
         }
-        total_one_way_turnover = sum(
-            row["one_way_turnover"] for row in rows
-        )
+        total_one_way_turnover = sum(row["one_way_turnover"] for row in rows)
         gross_arithmetic = sum(row["gross_return"] for row in rows)
         net_arithmetic = sum(row["net_return"] for row in rows)
         split_output[split_name] = {
@@ -469,14 +454,10 @@ def _strategy_viability_projection(
             ),
             "gross": _project_performance(reconstructed["gross"]),
             "net": _project_performance(reconstructed["net"]),
-            "benchmark": _project_performance(
-                reconstructed["benchmark"]
-            ),
+            "benchmark": _project_performance(reconstructed["benchmark"]),
             "friction": {
                 "baseCostBps": base_cost_bps,
-                "totalCostDrag": expected_implementation[
-                    "total_cost_drag"
-                ],
+                "totalCostDrag": expected_implementation["total_cost_drag"],
                 "annualizedOneWayTurnover": expected_implementation[
                     "annualized_one_way_turnover"
                 ],
@@ -489,8 +470,7 @@ def _strategy_viability_projection(
                     - reconstructed["net"]["annual_return"]
                 ),
                 "grossToNetSharpeDelta": (
-                    reconstructed["net"]["sharpe"]
-                    - reconstructed["gross"]["sharpe"]
+                    reconstructed["net"]["sharpe"] - reconstructed["gross"]["sharpe"]
                 ),
                 "grossReturnPerOneWayTurnoverBps": (
                     gross_arithmetic / total_one_way_turnover * 10_000.0
@@ -508,8 +488,7 @@ def _strategy_viability_projection(
             "extraDelay": {
                 **delay_projection,
                 "netSharpeDelta": (
-                    delay_projection["netSharpe"]
-                    - reconstructed["net"]["sharpe"]
+                    delay_projection["netSharpe"] - reconstructed["net"]["sharpe"]
                 ),
             },
             "temporal": _temporal_viability(rows),
@@ -560,7 +539,6 @@ def _strategy_viability_projection(
         "validation": validation,
         "test": split_output["test"],
     }
-
 
 
 def _path_projection(
@@ -618,9 +596,7 @@ def _path_projection(
                 "executionRiskCeilingAnnualized": row[
                     "execution_risk_ceiling_annualized"
                 ],
-                "riskRebalanceOverride": row[
-                    "risk_rebalance_override"
-                ],
+                "riskRebalanceOverride": row["risk_rebalance_override"],
                 "weights": weights[row["timestamp"]],
             }
         )
@@ -660,6 +636,3 @@ def _path_projection(
         },
         "points": [full[index] for index in selected],
     }
-
-
-

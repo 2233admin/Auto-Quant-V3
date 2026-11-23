@@ -51,9 +51,7 @@ class GovernedResearchSessionTests(unittest.TestCase):
                 study_definition(
                     study_id="drawdown-recovery",
                     dependencies=["requests/recovery.json"],
-                    research_request=StudyResearchRequest(
-                        "requests/recovery.json"
-                    ),
+                    research_request=StudyResearchRequest("requests/recovery.json"),
                     upstream_evidence=bind_upstream_evidence(
                         project,
                         prior.result["id"],
@@ -103,14 +101,18 @@ class GovernedResearchSessionTests(unittest.TestCase):
                 "SCORE = 1.25\n",
             )
             self.assertEqual(
-                (session.worktree_project.root_dir / "factors/candidate.py").read_text(),
+                (
+                    session.worktree_project.root_dir / "factors/candidate.py"
+                ).read_text(),
                 "SCORE = 1.25\n",
             )
             snapshot = session_snapshot(project, session)
             self.assertTrue(snapshot["authority"]["valid"])
             self.assertFalse(snapshot["candidate"]["differsFromLeader"])
             self.assertEqual(len(list_runs(project)), 1)
-            self.assertEqual([item.id for item in list_sessions(project)], [session.manifest["id"]])
+            self.assertEqual(
+                [item.id for item in list_sessions(project)], [session.manifest["id"]]
+            )
 
     def test_worktree_marker_resolves_only_its_exact_locked_owner(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -129,9 +131,7 @@ class GovernedResearchSessionTests(unittest.TestCase):
                     [SESSION_WORKTREE_MARKER],
                 ),
             )
-            resolved = resolve_session_worktree_owner(
-                session.worktree_project
-            )
+            resolved = resolve_session_worktree_owner(session.worktree_project)
             self.assertIsNotNone(resolved)
             owner, owning_session = resolved
             self.assertEqual(owner.root_dir, project.root_dir)
@@ -140,11 +140,7 @@ class GovernedResearchSessionTests(unittest.TestCase):
                 session.manifest["id"],
             )
 
-            detached_root = (
-                Path(directory)
-                / "detached"
-                / project.manifest.id
-            )
+            detached_root = Path(directory) / "detached" / project.manifest.id
             detached_root.parent.mkdir()
             shutil.copytree(
                 session.worktree_project.root_dir,
@@ -164,9 +160,7 @@ class GovernedResearchSessionTests(unittest.TestCase):
             value = json.loads(marker.read_text(encoding="utf-8"))
             value["projectId"] = "forged-project"
             marker.write_text(json.dumps(value), encoding="utf-8")
-            forged = session_module.load_project(
-                session.worktree_project.root_dir
-            )
+            forged = session_module.load_project(session.worktree_project.root_dir)
             with self.assertRaisesRegex(
                 AutoQuantValidationError,
                 "Project id mismatch",
@@ -194,9 +188,7 @@ class GovernedResearchSessionTests(unittest.TestCase):
             target.write_text("{}", encoding="utf-8")
             marker.unlink()
             marker.symlink_to(target)
-            linked = session_module.load_project(
-                session.worktree_project.root_dir
-            )
+            linked = session_module.load_project(session.worktree_project.root_dir)
             with self.assertRaisesRegex(
                 AutoQuantValidationError,
                 "marker must be a real file",
@@ -207,9 +199,7 @@ class GovernedResearchSessionTests(unittest.TestCase):
             _, session = self._setup(directory)
             marker = session.worktree_project.root_dir / SESSION_WORKTREE_MARKER
             marker.unlink()
-            unmarked = session_module.load_project(
-                session.worktree_project.root_dir
-            )
+            unmarked = session_module.load_project(session.worktree_project.root_dir)
             with self.assertRaisesRegex(
                 AutoQuantValidationError,
                 "missing its locked owner marker",
@@ -225,9 +215,7 @@ class GovernedResearchSessionTests(unittest.TestCase):
                         "schemaVersion": 1,
                         "kind": "autoquant-session-worktree",
                         "projectId": ordinary.manifest.id,
-                        "sessionId": (
-                            "session-20260729T120000000000Z-aaaaaaaaaaaa"
-                        ),
+                        "sessionId": ("session-20260729T120000000000Z-aaaaaaaaaaaa"),
                     }
                 ),
                 encoding="utf-8",
@@ -399,11 +387,7 @@ class GovernedResearchSessionTests(unittest.TestCase):
                 ),
             )
             session = start_session(project, "factor-quality")
-            dependency = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            dependency = session.worktree_project.root_dir / "factors" / "candidate.py"
             self.assertTrue(dependency.is_file())
             dependency.write_text("SCORE = 9.0\n", encoding="utf-8")
             with self.assertRaisesRegex(
@@ -452,7 +436,9 @@ class GovernedResearchSessionTests(unittest.TestCase):
             evaluate_experiment(project, session.manifest["id"], "Improve")
 
             receipt = promote_session(project, session.manifest["id"])
-            self.assertEqual(receipt["beforeSourceHash"], session.manifest["leader"]["sourceHash"])
+            self.assertEqual(
+                receipt["beforeSourceHash"], session.manifest["leader"]["sourceHash"]
+            )
             self.assertNotEqual(receipt["afterSourceHash"], receipt["beforeSourceHash"])
             self.assertEqual(
                 (project.root_dir / "factors/candidate.py").read_text(),

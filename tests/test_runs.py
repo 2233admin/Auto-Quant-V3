@@ -62,9 +62,7 @@ class ImmutableRunTests(unittest.TestCase):
                 path.write_text(original)
                 self.assertEqual(_harness_source_hash(package), baseline)
 
-            (package / "_build_identity.py").write_text(
-                "BUILD_COMMIT = 'a' * 40\n"
-            )
+            (package / "_build_identity.py").write_text("BUILD_COMMIT = 'a' * 40\n")
             cache = package / "__pycache__"
             cache.mkdir()
             (cache / "runtime.cpython-311.pyc").write_bytes(b"cache")
@@ -97,18 +95,13 @@ class ImmutableRunTests(unittest.TestCase):
                 study_definition(
                     study_id="drawdown-recovery",
                     dependencies=["requests/recovery.json"],
-                    research_request=StudyResearchRequest(
-                        "requests/recovery.json"
-                    ),
+                    research_request=StudyResearchRequest("requests/recovery.json"),
                     upstream_evidence=upstream,
                 ),
             )
             run = execute_study(project, study.definition.id)
             evidence_root = (
-                run.root_dir
-                / "inputs"
-                / "upstream-evidence"
-                / prior.result["id"]
+                run.root_dir / "inputs" / "upstream-evidence" / prior.result["id"]
             )
 
             self.assertEqual(

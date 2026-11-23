@@ -284,10 +284,7 @@ class ResearchFamilyTests(unittest.TestCase):
             judge_hash="9" * 64,
             completed_at="2026-07-24T00:00:04+00:00",
         )
-        runs = {
-            item.result["id"]: item
-            for item in (anchor, repeated, failed, outside)
-        }
+        runs = {item.result["id"]: item for item in (anchor, repeated, failed, outside)}
         summaries = [SimpleNamespace(id=run_id) for run_id in runs]
 
         with (
@@ -321,11 +318,7 @@ class ResearchFamilyTests(unittest.TestCase):
             _, project = make_project(directory)
             create_study(project, study_definition())
             first = start_session(project, "factor-quality")
-            candidate = (
-                first.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = first.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text("SCORE = 2.0\n", encoding="utf-8")
             evaluate_experiment(
                 project,

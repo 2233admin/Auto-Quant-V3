@@ -103,9 +103,7 @@ def _report_lineage_projection(
     return {
         "current": report["current"],
         "correctsReportId": (
-            correction["corrects"]["reportId"]
-            if isinstance(correction, dict)
-            else None
+            correction["corrects"]["reportId"] if isinstance(correction, dict) else None
         ),
         "governingReviewId": (
             correction["governingReview"]["id"]
@@ -231,10 +229,7 @@ def _question_projection(
     studies: list[StudySummary],
     focus_study=None,
 ) -> dict[str, Any]:
-    if (
-        focus_study is not None
-        and focus_study.definition.research_request is not None
-    ):
+    if focus_study is not None and focus_study.definition.research_request is not None:
         relative = focus_study.definition.research_request.path
         path = project.root_dir / relative
         request = load_research_request(path)
@@ -251,12 +246,8 @@ def _question_projection(
             "title": request["title"],
             "text": request["question"],
             "origin": "delegated-request",
-            "sourcePath": str(
-                project.root_dir / intake["manifest"]["requestPath"]
-            ),
-            "requestPath": str(
-                project.root_dir / intake["manifest"]["requestPath"]
-            ),
+            "sourcePath": str(project.root_dir / intake["manifest"]["requestPath"]),
+            "requestPath": str(project.root_dir / intake["manifest"]["requestPath"]),
         }
 
     bound_request = _project_request(project, studies)
@@ -309,9 +300,7 @@ def _factor_split_contrast(
     diagnostics = load_factor_diagnostics(project, run_id, point_limit=40)
     primary = diagnostics["researchHorizon"]["primaryForwardBars"]
     horizon = next(
-        item
-        for item in diagnostics["horizonProfile"]
-        if item["horizon"] == primary
+        item for item in diagnostics["horizonProfile"] if item["horizon"] == primary
     )
     train = horizon["train"]["meanRankIc"]
     validation = horizon["validation"]["meanRankIc"]
@@ -644,8 +633,7 @@ def _session_actions(
                 "code": "candidate-check-required",
                 "category": "evidence",
                 "message": (
-                    "The changed candidate has no current bounded preflight "
-                    "evidence."
+                    "The changed candidate has no current bounded preflight evidence."
                 ),
             }
         ]
@@ -717,19 +705,12 @@ def _latest_experiment_projection(
         session,
         experiments[-1].id,
     ).result
-    started_at = datetime.fromisoformat(
-        latest["startedAt"].replace("Z", "+00:00")
-    )
+    started_at = datetime.fromisoformat(latest["startedAt"].replace("Z", "+00:00"))
     matching_check = None
-    for check in reversed(
-        list_candidate_checks(project, session.manifest["id"])
-    ):
-        completed_at = datetime.fromisoformat(
-            check.completed_at.replace("Z", "+00:00")
-        )
+    for check in reversed(list_candidate_checks(project, session.manifest["id"])):
+        completed_at = datetime.fromisoformat(check.completed_at.replace("Z", "+00:00"))
         if (
-            check.candidate_source_hash
-            == latest["candidate"]["sourceHash"]
+            check.candidate_source_hash == latest["candidate"]["sourceHash"]
             and completed_at <= started_at
         ):
             matching_check = {
@@ -777,10 +758,7 @@ def _program_orientation(
     check_state: dict[str, Any] = {"current": None}
     session_authority_valid = True
     session_summary = focus_lane["latestSession"]
-    if (
-        session_summary is not None
-        and session_summary["status"] == "active"
-    ):
+    if session_summary is not None and session_summary["status"] == "active":
         session = load_session(project, session_summary["id"])
 
     dossier_status = load_dossier_status(project, optional=True)
@@ -874,8 +852,7 @@ def _program_orientation(
                 (
                     report
                     for report in reversed(focus_lane["reports"])
-                    if report["leaderRunId"]
-                    == session.manifest["leader"]["runId"]
+                    if report["leaderRunId"] == session.manifest["leader"]["runId"]
                 ),
                 None,
             )
@@ -886,10 +863,7 @@ def _program_orientation(
             )
     elif program["recommendedAction"] is not None:
         primary_raw = program["recommendedAction"]
-        if (
-            focus_lane["phase"] == "scientific-limit"
-            and focus_lane["reports"]
-        ):
+        if focus_lane["phase"] == "scientific-limit" and focus_lane["reports"]:
             supporting_raw.extend(
                 command
                 for command in focus_lane["commands"]
@@ -973,14 +947,9 @@ def _program_orientation(
             code = "report-required"
             message = primary_raw["description"]
             category = "evidence"
-        reasons.append(
-            {"code": code, "category": category, "message": message}
-        )
+        reasons.append({"code": code, "category": category, "message": message})
     else:
-        if (
-            dossier_status is not None
-            and dossier_status["nextAction"] is not None
-        ):
+        if dossier_status is not None and dossier_status["nextAction"] is not None:
             primary_raw = dossier_status["nextAction"]
         reasons.append(
             {
@@ -992,19 +961,13 @@ def _program_orientation(
 
     operating_root = (
         session.worktree_project.root_dir
-        if session is not None
-        and not program["conflicts"]
-        and session_authority_valid
+        if session is not None and not program["conflicts"] and session_authority_valid
         else project.root_dir
     )
     writable = (
-        session is not None
-        and not program["conflicts"]
-        and session_authority_valid
+        session is not None and not program["conflicts"] and session_authority_valid
     )
-    editable_paths = (
-        list(session.manifest["editablePaths"]) if writable else []
-    )
+    editable_paths = list(session.manifest["editablePaths"]) if writable else []
     declared_editable = list(focus_lane["editablePaths"])
     primary = (
         _action(primary_raw, working_directory=operating_root)
@@ -1012,19 +975,15 @@ def _program_orientation(
         else None
     )
     supporting = [
-        _action(item, working_directory=operating_root)
-        for item in supporting_raw[:3]
+        _action(item, working_directory=operating_root) for item in supporting_raw[:3]
     ]
     run = focus_lane["latestRun"]
-    latest_report = (
-        focus_lane["reports"][-1] if focus_lane["reports"] else None
-    )
+    latest_report = focus_lane["reports"][-1] if focus_lane["reports"] else None
     visible_check = _orientation_candidate_check(check_state, reasons)
-    if (
-        writable
-        and reasons[0]["code"]
-        in {"candidate-edit-required", "candidate-check-failed"}
-    ):
+    if writable and reasons[0]["code"] in {
+        "candidate-edit-required",
+        "candidate-check-failed",
+    }:
         operating_mode = "edit-and-evaluate"
     elif reasons[0]["code"] in {
         "report-required",
@@ -1050,7 +1009,8 @@ def _program_orientation(
         or not session_authority_valid
         or any(reason["code"] == "scientific-gate-blocked" for reason in reasons)
         else "complete"
-        if reasons[0]["code"] in {
+        if reasons[0]["code"]
+        in {
             "required-research-complete",
             "scientific-limit-reported",
         }
@@ -1086,18 +1046,12 @@ def _program_orientation(
                 session_summary["id"] if session_summary is not None else None
             ),
             "sessionStatus": (
-                session_summary["status"]
-                if session_summary is not None
-                else None
+                session_summary["status"] if session_summary is not None else None
             ),
             "leaderRunId": (
-                session_summary["leaderRunId"]
-                if session_summary is not None
-                else None
+                session_summary["leaderRunId"] if session_summary is not None else None
             ),
-            "reportId": (
-                latest_report["id"] if latest_report is not None else None
-            ),
+            "reportId": (latest_report["id"] if latest_report is not None else None),
             "reportLineage": _report_lineage_projection(latest_report),
             "candidateCheckId": (
                 visible_check["id"] if visible_check is not None else None
@@ -1167,9 +1121,7 @@ def _single_study_orientation(
 ) -> dict[str, Any]:
     if len(study_summaries) != 1:
         has_studies = bool(study_summaries)
-        reason_code = (
-            "study-selection-required" if has_studies else "study-required"
-        )
+        reason_code = "study-selection-required" if has_studies else "study-required"
         supporting = [
             _action(
                 _command(
@@ -1265,15 +1217,11 @@ def _single_study_orientation(
     study_summary = study_summaries[0]
     study = load_study(project, study_summary.id)
     sessions = [
-        item
-        for item in list_sessions(project)
-        if item.study_id == study.definition.id
+        item for item in list_sessions(project) if item.study_id == study.definition.id
     ]
     latest_session = sessions[-1] if sessions else None
     latest_session_context = (
-        load_session(project, latest_session.id)
-        if latest_session is not None
-        else None
+        load_session(project, latest_session.id) if latest_session is not None else None
     )
     active_session = (
         latest_session_context
@@ -1296,16 +1244,13 @@ def _single_study_orientation(
             completion["report"]["id"]
             if completion is not None
             else promotion["report"]["id"]
-            if promotion is not None
-            and isinstance(promotion.get("report"), dict)
+            if promotion is not None and isinstance(promotion.get("report"), dict)
             else None
         )
         current_report = next(
             (
                 report.to_dict()
-                for report in reversed(
-                    list_reports(project, latest_session_context)
-                )
+                for report in reversed(list_reports(project, latest_session_context))
                 if (
                     report.id == terminal_report_id
                     if terminal_report_id is not None
@@ -1324,9 +1269,7 @@ def _single_study_orientation(
             current_attempts.append(item)
     current_attempt = current_attempts[-1] if current_attempts else None
     current_attempt_context = (
-        load_run(project, current_attempt.id)
-        if current_attempt is not None
-        else None
+        load_run(project, current_attempt.id) if current_attempt is not None else None
     )
     current_run = (
         current_attempt
@@ -1342,8 +1285,7 @@ def _single_study_orientation(
         current_run.id
         if current_run is not None
         else current_attempt.id
-        if current_attempt is not None
-        and failure_disposition == "scientific-limit"
+        if current_attempt is not None and failure_disposition == "scientific-limit"
         else None
     )
     if (
@@ -1354,11 +1296,8 @@ def _single_study_orientation(
         current_report = next(
             (
                 report.to_dict()
-                for report in reversed(
-                    list_run_reports(project, study.definition.id)
-                )
-                if report.leader_run_id == report_anchor_id
-                and report.current is True
+                for report in reversed(list_run_reports(project, study.definition.id))
+                if report.leader_run_id == report_anchor_id and report.current is True
             ),
             None,
         )
@@ -1383,8 +1322,7 @@ def _single_study_orientation(
         editable = list(active_session.manifest["editablePaths"])
         mode = (
             "promote"
-            if primary_raw is not None
-            and primary_raw["id"] == "session.promote"
+            if primary_raw is not None and primary_raw["id"] == "session.promote"
             else "publish-evidence"
             if reasons[0]["code"] == "report-required"
             else "edit-and-evaluate"
@@ -1608,23 +1546,24 @@ def _single_study_orientation(
         editable = []
         mode = "observe"
         phase = "evidence-ready"
-    elif study.definition.objective.metric in {
-        "current_component_risk_hhi",
-        "primary_eligible_event_count",
-        "validation_net_sharpe_advantage",
-        "worst_terminal_book_return",
-    } or not study.definition.editable["paths"]:
+    elif (
+        study.definition.objective.metric
+        in {
+            "current_component_risk_hhi",
+            "primary_eligible_event_count",
+            "validation_net_sharpe_advantage",
+            "worst_terminal_book_return",
+        }
+        or not study.definition.editable["paths"]
+    ):
         event_study = (
-            study.definition.objective.metric
-            == "primary_eligible_event_count"
+            study.definition.objective.metric == "primary_eligible_event_count"
         )
         allocation_study = (
-            study.definition.objective.metric
-            == "validation_net_sharpe_advantage"
+            study.definition.objective.metric == "validation_net_sharpe_advantage"
         )
         path_stress_study = (
-            study.definition.objective.metric
-            == "worst_terminal_book_return"
+            study.definition.objective.metric == "worst_terminal_book_return"
         )
         generic_fixed_study = study.definition.objective.metric not in {
             "current_component_risk_hhi",
@@ -1654,16 +1593,17 @@ def _single_study_orientation(
                     "Inspect verified complete-window ranking, fixed-unit paths, "
                     "non-overlap selection, and exact holding attribution."
                     if path_stress_study
-                else (
-                    "Inspect verified same-clock allocation/reference, ERC "
-                    "solver, risk, implementation, and current target evidence."
-                    if allocation_study
                     else (
-                        "Inspect verified reported-book crowding, reduction, "
-                        "caller-supplied scenarios, and any caller-bounded "
-                        "target-position sizing evidence."
+                        "Inspect verified same-clock allocation/reference, ERC "
+                        "solver, risk, implementation, and current target evidence."
+                        if allocation_study
+                        else (
+                            "Inspect verified reported-book crowding, reduction, "
+                            "caller-supplied scenarios, and any caller-bounded "
+                            "target-position sizing evidence."
+                        )
                     )
-                ))
+                )
             ),
             [
                 "aq",
@@ -1703,15 +1643,16 @@ def _single_study_orientation(
                         "The fixed reported-book Path Stress Study is complete "
                         "and ready for historical evidence review."
                         if path_stress_study
-                    else (
-                        "The fixed allocation Study is complete and ready for "
-                        "decision-support review."
-                        if allocation_study
                         else (
-                            "The fixed reported-book audit is complete and ready "
-                            "for decision-support review."
+                            "The fixed allocation Study is complete and ready for "
+                            "decision-support review."
+                            if allocation_study
+                            else (
+                                "The fixed reported-book audit is complete and ready "
+                                "for decision-support review."
+                            )
                         )
-                    ))
+                    )
                 ),
             }
         ]
@@ -1725,13 +1666,9 @@ def _single_study_orientation(
         and latest_authority_valid
         and (
             current_report is not None
-            or (
-                promotion is not None
-                and not isinstance(promotion.get("report"), dict)
-            )
+            or (promotion is not None and not isinstance(promotion.get("report"), dict))
         )
-        and latest_session_context.manifest["leader"]["runId"]
-        == current_run.id
+        and latest_session_context.manifest["leader"]["runId"] == current_run.id
     ):
         primary_raw = None
         supporting_raw = [
@@ -1887,16 +1824,12 @@ def _single_study_orientation(
             "operatingMode": mode,
         },
         "evidence": {
-            "runId": (
-                current_attempt.id if current_attempt is not None else None
-            ),
+            "runId": (current_attempt.id if current_attempt is not None else None),
             "runStatus": (
                 current_attempt.status if current_attempt is not None else None
             ),
             "failureDisposition": failure_disposition,
-            "sessionId": (
-                latest_session.id if latest_session is not None else None
-            ),
+            "sessionId": (latest_session.id if latest_session is not None else None),
             "sessionStatus": (
                 latest_session.status if latest_session is not None else None
             ),
@@ -1909,9 +1842,7 @@ def _single_study_orientation(
                     else None
                 )
             ),
-            "reportId": (
-                current_report["id"] if current_report is not None else None
-            ),
+            "reportId": (current_report["id"] if current_report is not None else None),
             "reportLineage": _report_lineage_projection(current_report),
             "candidateCheckId": (
                 visible_check["id"] if visible_check is not None else None
@@ -1923,9 +1854,7 @@ def _single_study_orientation(
         "reasons": reasons,
         "filesystem": {
             "operatingRoot": str(operating_root),
-            "writable": (
-                active_session is not None and active_authority_valid
-            ),
+            "writable": (active_session is not None and active_authority_valid),
             "editablePaths": editable,
             "declaredEditablePaths": list(study.definition.editable["paths"]),
             "protectedCategories": PROTECTED_CATEGORIES,
@@ -1968,8 +1897,7 @@ def _single_study_orientation(
         },
         "primaryAction": primary,
         "supportingActions": [
-            _action(item, working_directory=operating_root)
-            for item in supporting_raw
+            _action(item, working_directory=operating_root) for item in supporting_raw
         ],
         "review": {
             "status": (
@@ -2020,21 +1948,19 @@ def _single_study_orientation(
                 and not study.definition.editable["paths"]
                 else (
                     (
-                        (
-                            "Review the latest immutable trial; publish and "
-                            "complete the current evidence, or explicitly "
-                            "declare another bounded hypothesis."
-                        )
-                        if reasons[0]["code"] == "trial-review-required"
-                        else "Edit one falsifiable candidate hypothesis in the declared worktree closure."
-                        if reasons[0]["code"] == "candidate-edit-required"
+                        "Review the latest immutable trial; publish and "
+                        "complete the current evidence, or explicitly "
+                        "declare another bounded hypothesis."
+                    )
+                    if reasons[0]["code"] == "trial-review-required"
+                    else "Edit one falsifiable candidate hypothesis in the declared worktree closure."
+                    if reasons[0]["code"] == "candidate-edit-required"
+                    else (
+                        "Revise the candidate to address the failed bounded preflight."
+                        if reasons[0]["code"] == "candidate-check-failed"
                         else (
-                            "Revise the candidate to address the failed bounded preflight."
-                            if reasons[0]["code"] == "candidate-check-failed"
-                            else (
-                                "Prepare and publish an exact current Research "
-                                "Report for the KEEP leader before promotion."
-                            )
+                            "Prepare and publish an exact current Research "
+                            "Report for the KEEP leader before promotion."
                         )
                     )
                 )
@@ -2132,9 +2058,7 @@ def _holdout_orientation(
             "runId": run_id,
             "runStatus": result["status"] if result is not None else None,
             "failureDisposition": (
-                run_failure_disposition(result)
-                if isinstance(result, dict)
-                else None
+                run_failure_disposition(result) if isinstance(result, dict) else None
             ),
             "sessionId": None,
             "sessionStatus": None,
@@ -2153,14 +2077,10 @@ def _holdout_orientation(
             "operatingRoot": str(project.root_dir),
             "writable": result_complete and not assessed,
             "editablePaths": (
-                ["holdout-analysis.json"]
-                if result_complete and not assessed
-                else []
+                ["holdout-analysis.json"] if result_complete and not assessed else []
             ),
             "declaredEditablePaths": (
-                ["holdout-analysis.json"]
-                if result_complete and not assessed
-                else []
+                ["holdout-analysis.json"] if result_complete and not assessed else []
             ),
             "protectedCategories": [
                 *PROTECTED_CATEGORIES,
@@ -2237,16 +2157,12 @@ def build_agent_work_brief(project: ProjectContext) -> dict[str, Any]:
         if program is not None
         else _single_study_orientation(
             project,
-            [terminal_continuation]
-            if terminal_continuation is not None
-            else studies,
+            [terminal_continuation] if terminal_continuation is not None else studies,
         )
     )
     focus_study_id = projected["focus"]["studyId"]
     focus_study = (
-        load_study(project, focus_study_id)
-        if focus_study_id is not None
-        else None
+        load_study(project, focus_study_id) if focus_study_id is not None else None
     )
     projected["continuation"] = (
         focus_study.definition.to_dict().get("upstream_evidence")
@@ -2284,9 +2200,7 @@ def build_agent_work_brief(project: ProjectContext) -> dict[str, Any]:
         else None
     )
     event_descriptive = descriptive_metric == "primary_eligible_event_count"
-    allocation_fixed = (
-        descriptive_metric == "validation_net_sharpe_advantage"
-    )
+    allocation_fixed = descriptive_metric == "validation_net_sharpe_advantage"
     path_stress_fixed = descriptive_metric == "worst_terminal_book_return"
     fixed_descriptive = descriptive_metric in {
         "current_component_risk_hhi",
@@ -2314,8 +2228,7 @@ def build_agent_work_brief(project: ProjectContext) -> dict[str, Any]:
         )
         if (
             len(studies) > 1
-            and projected["focus"]["scientificStage"]
-            == "study-selection-required"
+            and projected["focus"]["scientificStage"] == "study-selection-required"
         )
         else failed_run_research_agenda(
             project,
@@ -2353,18 +2266,19 @@ def build_agent_work_brief(project: ProjectContext) -> dict[str, Any]:
                     "holding attribution; do not manufacture forecasts, "
                     "optimization, account reconstruction, or execution."
                     if path_stress_fixed
-                else (
-                    "Portfolio-native allocation is a fixed construction "
-                    "evaluation. Review the verified candidate/reference, "
-                    "solver, risk, and current-target evidence; do not "
-                    "manufacture a Factor, RL, or execution agenda."
-                    if allocation_fixed
                     else (
-                        "Reported-book risk is a fixed descriptive audit. Review "
-                        "the verified evidence and any bounded target position; "
-                        "do not manufacture an optimization or execution agenda."
+                        "Portfolio-native allocation is a fixed construction "
+                        "evaluation. Review the verified candidate/reference, "
+                        "solver, risk, and current-target evidence; do not "
+                        "manufacture a Factor, RL, or execution agenda."
+                        if allocation_fixed
+                        else (
+                            "Reported-book risk is a fixed descriptive audit. Review "
+                            "the verified evidence and any bounded target position; "
+                            "do not manufacture an optimization or execution agenda."
+                        )
                     )
-                ))
+                )
             ),
             test_role=(
                 "event-population-and-reference-context"
@@ -2456,17 +2370,14 @@ def build_agent_work_brief(project: ProjectContext) -> dict[str, Any]:
         else None
     )
     freeze_experiments = (
-        list_experiments(project, freeze_session)
-        if freeze_session is not None
-        else []
+        list_experiments(project, freeze_session) if freeze_session is not None else []
     )
     if (
         research_agenda["moves"]
         and projected["primaryAction"] is None
         and (
             bool(freeze_experiments)
-            or projected["reasons"][0]["code"]
-            == "required-research-complete"
+            or projected["reasons"][0]["code"] == "required-research-complete"
         )
     ):
         research_agenda["moveRole"] = "optional-follow-up"
@@ -2832,9 +2743,7 @@ AGENT_WORK_BRIEF_JSON_SCHEMA: dict[str, Any] = {
                         "method": {"const": FACTOR_SPLIT_CONTRAST_METHOD},
                         "status": {"const": "material-divergence"},
                         "runId": {"type": "string", "pattern": "^run-"},
-                        "metric": {
-                            "const": "primary-horizon-mean-rank-ic"
-                        },
+                        "metric": {"const": "primary-horizon-mean-rank-ic"},
                         "primaryForwardBars": {
                             "type": "integer",
                             "minimum": 1,
@@ -2985,9 +2894,7 @@ AGENT_WORK_BRIEF_JSON_SCHEMA: dict[str, Any] = {
                             ],
                             "properties": {
                                 "id": {"type": "string", "minLength": 1},
-                                "verdict": {
-                                    "enum": ["KEEP", "REVERT", "CRASH"]
-                                },
+                                "verdict": {"enum": ["KEEP", "REVERT", "CRASH"]},
                                 "runId": {"type": "string", "minLength": 1},
                                 "candidateSourceHash": {
                                     "type": "string",
@@ -2997,9 +2904,7 @@ AGENT_WORK_BRIEF_JSON_SCHEMA: dict[str, Any] = {
                                     "type": "string",
                                     "minLength": 1,
                                 },
-                                "verdictAuthority": {
-                                    "const": "session-objective-only"
-                                },
+                                "verdictAuthority": {"const": "session-objective-only"},
                                 "candidateCheck": {
                                     "oneOf": [
                                         {"type": "null"},
@@ -3130,9 +3035,7 @@ AGENT_WORK_BRIEF_JSON_SCHEMA: dict[str, Any] = {
                 {"type": "null"},
             ]
         },
-        "primaryAction": {
-            "anyOf": [ACTION_SCHEMA, {"type": "null"}]
-        },
+        "primaryAction": {"anyOf": [ACTION_SCHEMA, {"type": "null"}]},
         "supportingActions": {
             "type": "array",
             "maxItems": 3,
@@ -3150,9 +3053,7 @@ AGENT_WORK_BRIEF_JSON_SCHEMA: dict[str, Any] = {
                 "boundary",
             ],
             "properties": {
-                "status": {
-                    "enum": ["pending", "active", "blocked", "complete"]
-                },
+                "status": {"enum": ["pending", "active", "blocked", "complete"]},
                 "label": {"type": "string", "minLength": 1},
                 "title": {"type": "string", "minLength": 1},
                 "detail": {"type": "string", "minLength": 1},

@@ -208,9 +208,7 @@ class AgentCliTests(unittest.TestCase):
             self.assertFalse(
                 (project.root_dir / "data" / "studies" / "rollback-proof").exists()
             )
-            self.assertFalse(
-                (project.root_dir / "studies" / "rollback-proof").exists()
-            )
+            self.assertFalse((project.root_dir / "studies" / "rollback-proof").exists())
             self.assertEqual(preserved.read_bytes(), before)
 
     def test_study_create_external_and_manual_dataset_forms_are_exclusive(
@@ -511,10 +509,7 @@ class AgentCliTests(unittest.TestCase):
             )
             self.assertEqual(
                 envelope["data"]["frameworkNeedsPath"],
-                str(
-                    Path(envelope["data"]["projectDir"])
-                    / "framework-needs.md"
-                ),
+                str(Path(envelope["data"]["projectDir"]) / "framework-needs.md"),
             )
             self.assertEqual(
                 [action["id"] for action in envelope["nextActions"]],
@@ -530,10 +525,7 @@ class AgentCliTests(unittest.TestCase):
             )
             study = json.loads(
                 (
-                    project
-                    / "studies"
-                    / "ohlcv-factor-quality"
-                    / "study.json"
+                    project / "studies" / "ohlcv-factor-quality" / "study.json"
                 ).read_text()
             )
             self.assertEqual(study["dataset"]["paths"], ["ohlcv/**"])
@@ -547,9 +539,7 @@ class AgentCliTests(unittest.TestCase):
                 "--json",
             )
             self.assertEqual(inspected.returncode, 0, inspected.stderr)
-            inspected_contract = json_output(inspected)["data"][
-                "candidateContract"
-            ]
+            inspected_contract = json_output(inspected)["data"]["candidateContract"]
             self.assertEqual(inspected_contract["data"]["baseInterval"], "1d")
             self.assertEqual(
                 inspected_contract["data"]["featureIntervals"],
@@ -571,8 +561,7 @@ class AgentCliTests(unittest.TestCase):
                 human_inspect.stdout,
             )
             self.assertIn(
-                "Observation semantics: session-date · rectangular · "
-                "shared-base-bars",
+                "Observation semantics: session-date · rectangular · shared-base-bars",
                 human_inspect.stdout,
             )
             self.assertIn(
@@ -611,8 +600,7 @@ class AgentCliTests(unittest.TestCase):
                 {
                     "title": "ohlcv-lab",
                     "text": (
-                        "Does the shipped factor survive the fixed validation "
-                        "Study?"
+                        "Does the shipped factor survive the fixed validation Study?"
                     ),
                     "origin": "project-research-brief",
                     "sourcePath": str(research_path),
@@ -623,9 +611,7 @@ class AgentCliTests(unittest.TestCase):
                 orientation["data"]["primaryAction"]["id"],
                 "session.start",
             )
-            self.assertFalse(
-                orientation["data"]["filesystem"]["writable"]
-            )
+            self.assertFalse(orientation["data"]["filesystem"]["writable"])
             self.assertEqual(
                 orientation["data"]["candidateContract"]["data"],
                 {
@@ -753,9 +739,7 @@ class AgentCliTests(unittest.TestCase):
                     "factor-components",
                 },
             )
-            self.assertTrue(
-                projected["data"]["factorComponents"]["available"]
-            )
+            self.assertTrue(projected["data"]["factorComponents"]["available"])
 
     def test_orient_reenters_exact_session_worktree_without_copying_data(
         self,
@@ -909,9 +893,7 @@ class AgentCliTests(unittest.TestCase):
             )
             self.assertEqual(projected["data"]["path"]["sampledRows"], 48)
             self.assertEqual(
-                projected["data"]["mechanicalDecision"][
-                    "tradingAuthority"
-                ],
+                projected["data"]["mechanicalDecision"]["tradingAuthority"],
                 "none",
             )
             self.assertEqual(
@@ -919,29 +901,18 @@ class AgentCliTests(unittest.TestCase):
                 projected["data"]["currentBook"]["timestamp"],
             )
             self.assertEqual(
-                len(
-                    projected["data"]["mechanicalDecision"][
-                        "positions"
-                    ]
-                ),
+                len(projected["data"]["mechanicalDecision"]["positions"]),
                 len(projected["data"]["universe"]),
             )
             self.assertTrue(projected["data"]["riskGovernor"]["available"])
-            self.assertTrue(
-                projected["data"]["executedBookRisk"]["available"]
-            )
+            self.assertTrue(projected["data"]["executedBookRisk"]["available"])
             self.assertEqual(
                 projected["data"]["diversificationStress"]["authority"],
                 "context-only",
             )
             self.assertEqual(
-                projected["data"]["diversificationStress"]["shock"][
-                    "method"
-                ],
-                (
-                    "observed-to-perfect-position-aligned-"
-                    "covariance-blend-ladder"
-                ),
+                projected["data"]["diversificationStress"]["shock"]["method"],
+                ("observed-to-perfect-position-aligned-covariance-blend-ladder"),
             )
             self.assertEqual(
                 projected["data"]["executedBookRisk"]["validation"][
@@ -949,30 +920,22 @@ class AgentCliTests(unittest.TestCase):
                 ],
                 0,
             )
-            self.assertTrue(
-                projected["data"]["liquidityCapacity"]["available"]
-            )
+            self.assertTrue(projected["data"]["liquidityCapacity"]["available"])
             self.assertEqual(
-                projected["data"]["liquidityCapacity"][
-                    "selectionAuthority"
-                ],
+                projected["data"]["liquidityCapacity"]["selectionAuthority"],
                 "context-only",
             )
             self.assertEqual(
                 projected["data"]["mandate"]["riskPolicy"]["method"],
                 "trailing-covariance-volatility-ceiling-v1",
             )
+            self.assertTrue(projected["data"]["positionLifecycle"]["available"])
             self.assertTrue(
-                projected["data"]["positionLifecycle"]["available"]
+                projected["data"]["positionLifecycle"]["validation"]["reconciliation"][
+                    "passed"
+                ]
             )
-            self.assertTrue(
-                projected["data"]["positionLifecycle"]["validation"][
-                    "reconciliation"
-                ]["passed"]
-            )
-            self.assertTrue(
-                projected["data"]["parameterNeighborhood"]["available"]
-            )
+            self.assertTrue(projected["data"]["parameterNeighborhood"]["available"])
             self.assertEqual(
                 {item["kind"] for item in projected["artifacts"]},
                 {
@@ -1062,8 +1025,7 @@ class AgentCliTests(unittest.TestCase):
             )
             self.assertIn("Supporting: aq run allocation", human.stdout)
             self.assertIn(
-                "Supporting effect: read-only · produces "
-                "allocation-diagnostics",
+                "Supporting effect: read-only · produces allocation-diagnostics",
                 human.stdout,
             )
 
@@ -1146,10 +1108,7 @@ class AgentCliTests(unittest.TestCase):
                 "factor-evidence-required",
             )
             self.assertEqual(
-                [
-                    gate["status"]
-                    for gate in status["data"]["progression"]["gates"]
-                ],
+                [gate["status"] for gate in status["data"]["progression"]["gates"]],
                 ["waiting-current-evidence", "blocked-prerequisite"],
             )
             self.assertEqual(status["nextActions"][0]["id"], "session.start")
@@ -1266,9 +1225,7 @@ class AgentCliTests(unittest.TestCase):
                 "handoff",
             ],
         )
-        self.assertEqual(
-            envelope["data"]["harness"]["version"], current_version()
-        )
+        self.assertEqual(envelope["data"]["harness"]["version"], current_version())
         self.assertIn(
             envelope["data"]["harness"]["buildProvenance"],
             {"source-checkout", "embedded-distribution"},
@@ -1276,9 +1233,7 @@ class AgentCliTests(unittest.TestCase):
         study_create = next(
             command for command in commands if command["id"] == "study.create"
         )
-        argument_names = {
-            argument["name"] for argument in study_create["arguments"]
-        }
+        argument_names = {argument["name"] for argument in study_create["arguments"]}
         self.assertTrue(
             {
                 "editable",
@@ -1292,9 +1247,7 @@ class AgentCliTests(unittest.TestCase):
             }.issubset(argument_names)
         )
         workspace_init = next(
-            command
-            for command in commands
-            if command["id"] == "workspace.init"
+            command for command in commands if command["id"] == "workspace.init"
         )
         adopt_existing = next(
             argument
@@ -1324,10 +1277,7 @@ class AgentCliTests(unittest.TestCase):
             )
             self.assertEqual(command["exitCodes"]["success"], 0)
             self.assertEqual(command["exitCodes"]["usage"], 2)
-        commands_by_id = {
-            command["id"]: command
-            for command in commands
-        }
+        commands_by_id = {command["id"]: command for command in commands}
         run_project_argument = next(
             argument
             for argument in commands_by_id["run.execute"]["arguments"]
@@ -1544,9 +1494,7 @@ class AgentCliTests(unittest.TestCase):
         agenda_schema = run_cli("schema", "research-agenda", "--json")
         self.assertEqual(agenda_schema.returncode, 0, agenda_schema.stderr)
         self.assertEqual(
-            json_output(agenda_schema)["data"]["schema"]["properties"]["kind"][
-                "const"
-            ],
+            json_output(agenda_schema)["data"]["schema"]["properties"]["kind"]["const"],
             "autoquant-evidence-driven-research-agenda",
         )
         holdout_schema = run_cli("schema", "holdout-result", "--json")
@@ -1576,9 +1524,9 @@ class AgentCliTests(unittest.TestCase):
         response_schema = run_cli("schema", "researcher-response", "--json")
         self.assertEqual(response_schema.returncode, 0, response_schema.stderr)
         self.assertEqual(
-            json_output(response_schema)["data"]["schema"]["oneOf"][0][
-                "properties"
-            ]["action"]["const"],
+            json_output(response_schema)["data"]["schema"]["oneOf"][0]["properties"][
+                "action"
+            ]["const"],
             "propose",
         )
         campaign_schema = run_cli("schema", "campaign-result", "--json")
@@ -1607,9 +1555,9 @@ class AgentCliTests(unittest.TestCase):
             "artifactPath and artifactRevision are a pair",
             source_schema["description"],
         )
-        horizon_schema = request_schema_value["properties"]["horizonPolicy"][
-            "anyOf"
-        ][1]["properties"]
+        horizon_schema = request_schema_value["properties"]["horizonPolicy"]["anyOf"][
+            1
+        ]["properties"]
         self.assertIn(
             "always evaluates",
             horizon_schema["primaryForwardBars"]["description"],
@@ -1647,9 +1595,7 @@ class AgentCliTests(unittest.TestCase):
         report_schema = run_cli("schema", "report-analysis", "--json")
         self.assertEqual(report_schema.returncode, 0, report_schema.stderr)
         self.assertEqual(
-            json_output(report_schema)["data"]["schema"]["properties"]["kind"][
-                "const"
-            ],
+            json_output(report_schema)["data"]["schema"]["properties"]["kind"]["const"],
             "autoquant-research-report-analysis",
         )
         report_schema_value = json_output(report_schema)["data"]["schema"]
@@ -1663,9 +1609,9 @@ class AgentCliTests(unittest.TestCase):
             set(report_example["recommendations"][0]),
             {"action", "rationale", "conditions", "evidenceRefs"},
         )
-        evidence_ref_schema = report_schema_value["properties"]["findings"][
-            "items"
-        ]["properties"]["evidenceRefs"]["items"]
+        evidence_ref_schema = report_schema_value["properties"]["findings"]["items"][
+            "properties"
+        ]["evidenceRefs"]["items"]
         self.assertIn(
             "result.artifacts",
             evidence_ref_schema["description"],
@@ -1723,17 +1669,15 @@ class AgentCliTests(unittest.TestCase):
         studio_schema = run_cli("schema", "studio-snapshot", "--json")
         self.assertEqual(studio_schema.returncode, 0, studio_schema.stderr)
         self.assertEqual(
-            json_output(studio_schema)["data"]["schema"]["properties"]["kind"][
-                "const"
-            ],
+            json_output(studio_schema)["data"]["schema"]["properties"]["kind"]["const"],
             "autoquant-studio-snapshot",
         )
         dataset_schema = run_cli("schema", "ohlcv-dataset-package", "--json")
         self.assertEqual(dataset_schema.returncode, 0, dataset_schema.stderr)
         self.assertEqual(
-            json_output(dataset_schema)["data"]["schema"]["properties"][
-                "frequency"
-            ]["const"],
+            json_output(dataset_schema)["data"]["schema"]["properties"]["frequency"][
+                "const"
+            ],
             "1d",
         )
         self.assertEqual(
@@ -1751,21 +1695,21 @@ class AgentCliTests(unittest.TestCase):
             "manifest at staged files' common ancestor",
             package_schema["description"],
         )
-        v1_asset_path = package_schema["oneOf"][0]["properties"]["assets"][
-            "oneOf"
-        ][0]["items"]["properties"]["path"]["description"]
+        v1_asset_path = package_schema["oneOf"][0]["properties"]["assets"]["oneOf"][0][
+            "items"
+        ]["properties"]["path"]["description"]
         self.assertIn(
             "resolved from the directory containing the dataset-package manifest",
             v1_asset_path,
         )
         self.assertIn("raw-ohlcv/AAPL.csv", v1_asset_path)
-        v5_asset_path = package_schema["oneOf"][4]["properties"]["assets"][
-            "items"
-        ]["properties"]["path"]["description"]
+        v5_asset_path = package_schema["oneOf"][4]["properties"]["assets"]["items"][
+            "properties"
+        ]["path"]["description"]
         self.assertEqual(v5_asset_path, v1_asset_path)
-        v6_asset_path = package_schema["oneOf"][5]["properties"]["assets"][
-            "items"
-        ]["properties"]["path"]["description"]
+        v6_asset_path = package_schema["oneOf"][5]["properties"]["assets"]["items"][
+            "properties"
+        ]["path"]["description"]
         self.assertEqual(v6_asset_path, v1_asset_path)
         self.assertIn(
             "Only valid with project intake --template ohlcv-factor-lab",
@@ -1782,21 +1726,21 @@ class AgentCliTests(unittest.TestCase):
             portfolio_schema.stderr,
         )
         self.assertEqual(
-            json_output(
-                run_cli("schema", "factor-diagnostics", "--json")
-            )["data"]["schema"]["properties"]["kind"]["const"],
+            json_output(run_cli("schema", "factor-diagnostics", "--json"))["data"][
+                "schema"
+            ]["properties"]["kind"]["const"],
             "autoquant-factor-diagnostics",
         )
         self.assertEqual(
-            json_output(portfolio_schema)["data"]["schema"]["properties"][
-                "kind"
-            ]["const"],
+            json_output(portfolio_schema)["data"]["schema"]["properties"]["kind"][
+                "const"
+            ],
             "autoquant-portfolio-diagnostics",
         )
         self.assertEqual(
-            json_output(
-                run_cli("schema", "rl-policy-diagnostics", "--json")
-            )["data"]["schema"]["properties"]["kind"]["const"],
+            json_output(run_cli("schema", "rl-policy-diagnostics", "--json"))["data"][
+                "schema"
+            ]["properties"]["kind"]["const"],
             "autoquant-rl-policy-diagnostics",
         )
         comparison_schema = run_cli(
@@ -1810,9 +1754,9 @@ class AgentCliTests(unittest.TestCase):
             comparison_schema.stderr,
         )
         self.assertEqual(
-            json_output(comparison_schema)["data"]["schema"]["properties"][
-                "kind"
-            ]["const"],
+            json_output(comparison_schema)["data"]["schema"]["properties"]["kind"][
+                "const"
+            ],
             "autoquant-session-decision-matrix",
         )
         completion_schema = run_cli(
@@ -1826,9 +1770,9 @@ class AgentCliTests(unittest.TestCase):
             completion_schema.stderr,
         )
         self.assertEqual(
-            json_output(completion_schema)["data"]["schema"]["properties"][
-                "kind"
-            ]["const"],
+            json_output(completion_schema)["data"]["schema"]["properties"]["kind"][
+                "const"
+            ],
             "autoquant-session-completion",
         )
         mandate_schema = run_cli(
@@ -1842,9 +1786,9 @@ class AgentCliTests(unittest.TestCase):
             mandate_schema.stderr,
         )
         self.assertEqual(
-            json_output(mandate_schema)["data"]["schema"]["properties"][
-                "kind"
-            ]["const"],
+            json_output(mandate_schema)["data"]["schema"]["properties"]["kind"][
+                "const"
+            ],
             "autoquant-portfolio-mandate",
         )
         horizon_schema = run_cli(
@@ -1858,9 +1802,9 @@ class AgentCliTests(unittest.TestCase):
             horizon_schema.stderr,
         )
         self.assertEqual(
-            json_output(horizon_schema)["data"]["schema"]["properties"][
-                "kind"
-            ]["const"],
+            json_output(horizon_schema)["data"]["schema"]["properties"]["kind"][
+                "const"
+            ],
             "autoquant-research-horizon",
         )
 
@@ -1989,9 +1933,7 @@ class AgentCliTests(unittest.TestCase):
                 research_path.read_text(encoding="utf-8"),
                 research,
             )
-            self.assertTrue(
-                (workspace / "projects/brief-first/intake.json").is_file()
-            )
+            self.assertTrue((workspace / "projects/brief-first/intake.json").is_file())
             started = run_cli(
                 "session",
                 "start",
@@ -2135,16 +2077,12 @@ class AgentCliTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     created_json["data"]["researchBriefPath"],
-                    str(
-                        Path(created_json["data"]["projectDir"])
-                        / "research.md"
-                    ),
+                    str(Path(created_json["data"]["projectDir"]) / "research.md"),
                 )
                 self.assertEqual(
                     created_json["data"]["frameworkNeedsPath"],
                     str(
-                        Path(created_json["data"]["projectDir"])
-                        / "framework-needs.md"
+                        Path(created_json["data"]["projectDir"]) / "framework-needs.md"
                     ),
                 )
                 self.assertEqual(
@@ -2681,15 +2619,11 @@ class AgentCliTests(unittest.TestCase):
                 {
                     "id": experiment_id,
                     "verdict": "KEEP",
-                    "runId": evaluated_json["data"]["experiment"]["candidate"][
-                        "runId"
-                    ],
-                    "candidateSourceHash": evaluated_json["data"][
-                        "experiment"
-                    ]["candidate"]["sourceHash"],
-                    "completedAt": evaluated_json["data"]["experiment"][
-                        "completedAt"
-                    ],
+                    "runId": evaluated_json["data"]["experiment"]["candidate"]["runId"],
+                    "candidateSourceHash": evaluated_json["data"]["experiment"][
+                        "candidate"
+                    ]["sourceHash"],
+                    "completedAt": evaluated_json["data"]["experiment"]["completedAt"],
                     "verdictAuthority": "session-objective-only",
                     "candidateCheck": None,
                 },
@@ -2835,9 +2769,7 @@ class AgentCliTests(unittest.TestCase):
             )
             self.assertEqual(inapplicable_completion.returncode, 1)
             self.assertEqual(
-                json_output(inapplicable_completion)["error"]["issues"][0][
-                    "code"
-                ],
+                json_output(inapplicable_completion)["error"]["issues"][0]["code"],
                 "completion.already-promoted",
             )
 
@@ -2846,9 +2778,9 @@ class AgentCliTests(unittest.TestCase):
             _, project = make_project(directory)
             create_study(project, study_definition())
             session = start_session(project, "factor-quality")
-            (
-                session.worktree_project.root_dir / "factors/candidate.py"
-            ).write_text("SCORE = 2.0\n", encoding="utf-8")
+            (session.worktree_project.root_dir / "factors/candidate.py").write_text(
+                "SCORE = 2.0\n", encoding="utf-8"
+            )
 
             evaluated = run_cli(
                 "experiment",
@@ -2930,9 +2862,7 @@ print(json.dumps({
 """,
                 encoding="utf-8",
             )
-            command = (
-                python_command(researcher)
-            )
+            command = python_command(researcher)
 
             executed = run_cli(
                 "research",
@@ -3113,9 +3043,9 @@ print(json.dumps({
                 {
                     "kind": "session",
                     "studyId": "factor-quality",
-                    "runId": published_json["data"]["report"]["evidence"][
-                        "session"
-                    ]["leader"]["runId"],
+                    "runId": published_json["data"]["report"]["evidence"]["session"][
+                        "leader"
+                    ]["runId"],
                     "sessionId": session_id,
                 },
             )
@@ -3191,10 +3121,7 @@ print(json.dumps({
             )
             self.assertNotIn(
                 "experiment.evaluate",
-                {
-                    action["id"]
-                    for action in completed_json["nextActions"]
-                },
+                {action["id"] for action in completed_json["nextActions"]},
             )
 
 

@@ -24,7 +24,13 @@ from pathlib import Path
 from typing import Any
 
 from .runs import list_runs, load_run
-from .workspace import AutoQuantValidationError, ProjectContext, ValidationIssue, load_project, load_workspace
+from .workspace import (
+    AutoQuantValidationError,
+    ProjectContext,
+    ValidationIssue,
+    load_project,
+    load_workspace,
+)
 
 
 LEDGER_DIRECTORY = "trial-families"
@@ -100,15 +106,27 @@ def _sorted_strings(values: Any) -> list[str] | None:
     return sorted({item for item in values if isinstance(item, str)})
 
 
-def _study_paths(project: ProjectContext, study_id: str) -> tuple[Path, dict[str, Any] | None]:
+def _study_paths(
+    project: ProjectContext, study_id: str
+) -> tuple[Path, dict[str, Any] | None]:
     root = project.root_dir / project.manifest.directories["studies"] / study_id
     return root, _read_cached_json(root / "study.json")
 
 
-def _dependency(project: ProjectContext, study: dict[str, Any], suffix: str, fallback: str) -> Any:
-    paths = ((study.get("dependencies") or {}).get("paths") or []) if isinstance(study, dict) else []
+def _dependency(
+    project: ProjectContext, study: dict[str, Any], suffix: str, fallback: str
+) -> Any:
+    paths = (
+        ((study.get("dependencies") or {}).get("paths") or [])
+        if isinstance(study, dict)
+        else []
+    )
     for relative in paths:
-        if isinstance(relative, str) and relative.endswith(suffix) and "*" not in relative:
+        if (
+            isinstance(relative, str)
+            and relative.endswith(suffix)
+            and "*" not in relative
+        ):
             return _read_cached_json(project.root_dir / relative)
     return _read_cached_json(project.root_dir / fallback)
 
@@ -118,14 +136,21 @@ def bar_interval(project: ProjectContext) -> str | None:
 
     intake = _read_cached_json(project.root_dir / "intake.json")
     relative = intake.get("datasetSnapshotPath") if isinstance(intake, dict) else None
-    if not isinstance(relative, str) or relative.startswith(("/", "\\")) or ".." in Path(relative).parts:
+    if (
+        not isinstance(relative, str)
+        or relative.startswith(("/", "\\"))
+        or ".." in Path(relative).parts
+    ):
         return None
     snapshot = _read_cached_json(project.root_dir / relative)
     if not isinstance(snapshot, dict):
         return None
     surface = snapshot.get("intervalSurface")
-    for value in (surface.get("baseInterval") if isinstance(surface, dict) else None,
-                  snapshot.get("baseInterval"), snapshot.get("frequency")):
+    for value in (
+        surface.get("baseInterval") if isinstance(surface, dict) else None,
+        snapshot.get("baseInterval"),
+        snapshot.get("frequency"),
+    ):
         if isinstance(value, str) and value:
             return value
     return None
@@ -158,20 +183,28 @@ def study_fingerprint(project: ProjectContext, study_id: str) -> dict[str, Any] 
         return None
     request = _dependency(project, study, f"/{study_id}/request.json", "request.json")
     request = request if isinstance(request, dict) else None
-    horizon = _dependency(project, study, "research-horizon.json", "strategies/research-horizon.json")
+    horizon = _dependency(
+        project, study, "research-horizon.json", "strategies/research-horizon.json"
+    )
     factor_policy = (request or {}).get("factorPolicy") if request else None
     factor_policy = factor_policy if isinstance(factor_policy, dict) else {}
-    objective = study.get("objective") if isinstance(study.get("objective"), dict) else {}
+    objective = (
+        study.get("objective") if isinstance(study.get("objective"), dict) else {}
+    )
     metric = objective.get("metric")
     assets = None
     if request and isinstance(request.get("assets"), list):
-        assets = _sorted_strings([item.get("symbol") for item in request["assets"] if isinstance(item, dict)])
+        assets = _sorted_strings(
+            [item.get("symbol") for item in request["assets"] if isinstance(item, dict)]
+        )
     elif isinstance((study.get("dataset") or {}).get("universe"), list):
         assets = _sorted_strings(study["dataset"]["universe"])
     primary = horizon.get("primaryForwardBars") if isinstance(horizon, dict) else None
     if primary is None and request and isinstance(request.get("horizonPolicy"), dict):
         primary = request["horizonPolicy"].get("primaryForwardBars")
-    question = normalize_question(request.get("question") if request else project.manifest.description)
+    question = normalize_question(
+        request.get("question") if request else project.manifest.description
+    )
     scope = {
         "objectKind": (study.get("subject") or {}).get("kind"),
         "objective": {"metric": metric, "direction": objective.get("direction")},
@@ -180,16 +213,29 @@ def study_fingerprint(project: ProjectContext, study_id: str) -> dict[str, Any] 
             "outcome": factor_policy.get("outcome"),
             "direction": request.get("direction") if request else None,
         },
-        "universe": {"assets": assets, "predictionAssets": _sorted_strings(factor_policy.get("predictionAssets"))},
-        "horizon": {"primaryForwardBars": primary if isinstance(primary, int) and not isinstance(primary, bool) else None,
-                    "barInterval": bar_interval(project)},
+        "universe": {
+            "assets": assets,
+            "predictionAssets": _sorted_strings(factor_policy.get("predictionAssets")),
+        },
+        "horizon": {
+            "primaryForwardBars": primary
+            if isinstance(primary, int) and not isinstance(primary, bool)
+            else None,
+            "barInterval": bar_interval(project),
+        },
         "splitProtocol": {
-            "selectionSplit": metric.split("_", 1)[0] if isinstance(metric, str) and "_" in metric else None,
+            "selectionSplit": metric.split("_", 1)[0]
+            if isinstance(metric, str) and "_" in metric
+            else None,
             "judgeEntrypoint": (study.get("judge") or {}).get("entrypoint"),
         },
     }
-    fingerprint = {"method": FINGERPRINT_METHOD, "question": question, "scope": scope,
-                   "questionSource": "request" if request else "project-description"}
+    fingerprint = {
+        "method": FINGERPRINT_METHOD,
+        "question": question,
+        "scope": scope,
+        "questionSource": "request" if request else "project-description",
+    }
     hashed = json.loads(json.dumps(scope))
     if hashed["horizon"]["barInterval"] is None:
         del hashed["horizon"]["barInterval"]
@@ -201,14 +247,22 @@ def study_fingerprint(project: ProjectContext, study_id: str) -> dict[str, Any] 
 
 def editable_study(project: ProjectContext, study_id: str) -> bool:
     _, study = _study_paths(project, study_id)
-    paths = ((study or {}).get("editable") or {}).get("paths") if isinstance(study, dict) else None
+    paths = (
+        ((study or {}).get("editable") or {}).get("paths")
+        if isinstance(study, dict)
+        else None
+    )
     return bool(paths)
 
 
 def _study_ids(project: ProjectContext) -> list[str]:
     root = project.root_dir / project.manifest.directories["studies"]
     try:
-        return sorted(p.name for p in root.iterdir() if p.is_dir() and not p.is_symlink() and (p / "study.json").is_file())
+        return sorted(
+            p.name
+            for p in root.iterdir()
+            if p.is_dir() and not p.is_symlink() and (p / "study.json").is_file()
+        )
     except OSError:
         return []
 
@@ -224,7 +278,10 @@ def _holdout_bound(project: ProjectContext) -> bool:
 def workspace_root_for(project: ProjectContext) -> Path | None:
     """Owning Workspace root when ``project`` is a directly discovered Project."""
 
-    root = next((p for p in project.root_dir.parents if (p / WORKSPACE_MANIFEST).is_file()), None)
+    root = next(
+        (p for p in project.root_dir.parents if (p / WORKSPACE_MANIFEST).is_file()),
+        None,
+    )
     if root is None:
         return None
     try:
@@ -250,16 +307,60 @@ def _workspace_projects(root: Path) -> list[ProjectContext]:
 
 
 def _validate_family(raw: Any, path: Path) -> dict[str, Any]:
-    keys = {"schemaVersion", "kind", "id", "fingerprint", "createdAt", "members", "declarations", "trials"}
-    if not isinstance(raw, dict) or not keys <= set(raw) <= keys | {"migratedFrom"} or raw["kind"] != FAMILY_KIND or raw["schemaVersion"] != SCHEMA_VERSION:
-        raise _issue(path, "trial-family.schema", "Trial-family ledger file has an unsupported shape")
-    if not isinstance(raw["id"], str) or not FAMILY_ID.fullmatch(raw["id"]) or path.stem != raw["id"]:
-        raise _issue(path, "trial-family.id", "Trial-family file name must equal its id")
-    if not all(isinstance(raw[key], list) for key in ("members", "declarations", "trials")):
-        raise _issue(path, "trial-family.schema", "Trial-family members, declarations and trials must be arrays")
+    keys = {
+        "schemaVersion",
+        "kind",
+        "id",
+        "fingerprint",
+        "createdAt",
+        "members",
+        "declarations",
+        "trials",
+    }
+    if (
+        not isinstance(raw, dict)
+        or not keys <= set(raw) <= keys | {"migratedFrom"}
+        or raw["kind"] != FAMILY_KIND
+        or raw["schemaVersion"] != SCHEMA_VERSION
+    ):
+        raise _issue(
+            path,
+            "trial-family.schema",
+            "Trial-family ledger file has an unsupported shape",
+        )
+    if (
+        not isinstance(raw["id"], str)
+        or not FAMILY_ID.fullmatch(raw["id"])
+        or path.stem != raw["id"]
+    ):
+        raise _issue(
+            path, "trial-family.id", "Trial-family file name must equal its id"
+        )
+    if not all(
+        isinstance(raw[key], list) for key in ("members", "declarations", "trials")
+    ):
+        raise _issue(
+            path,
+            "trial-family.schema",
+            "Trial-family members, declarations and trials must be arrays",
+        )
     for trial in raw["trials"]:
-        if not isinstance(trial, dict) or not all(isinstance(trial.get(k), str) for k in ("projectId", "studyId", "runId", "sourceHash", "completedAt", "registeredAt")):
-            raise _issue(path, "trial-family.trial", "Every registered trial needs Project, Study, Run, source and timestamps")
+        if not isinstance(trial, dict) or not all(
+            isinstance(trial.get(k), str)
+            for k in (
+                "projectId",
+                "studyId",
+                "runId",
+                "sourceHash",
+                "completedAt",
+                "registeredAt",
+            )
+        ):
+            raise _issue(
+                path,
+                "trial-family.trial",
+                "Every registered trial needs Project, Study, Run, source and timestamps",
+            )
     return raw
 
 
@@ -270,14 +371,22 @@ def load_ledger(root: Path) -> dict[str, dict[str, Any]]:
     if not directory.exists():
         return {}
     if directory.is_symlink() or not directory.is_dir():
-        raise _issue(directory, "trial-family.path", "Trial-family ledger must be a real directory")
+        raise _issue(
+            directory,
+            "trial-family.path",
+            "Trial-family ledger must be a real directory",
+        )
     families = {}
     for path in sorted(directory.glob("tf-*.json")):
         if path.is_symlink() or not path.is_file():
-            raise _issue(path, "trial-family.path", "Trial-family entries must be real files")
+            raise _issue(
+                path, "trial-family.path", "Trial-family entries must be real files"
+            )
         raw = _read_cached_json(path)
         if raw is None:
-            raise _issue(path, "trial-family.json", "Cannot read trial-family ledger file")
+            raise _issue(
+                path, "trial-family.json", "Cannot read trial-family ledger file"
+            )
         families[path.stem] = _validate_family(raw, path)
     return families
 
@@ -285,7 +394,9 @@ def load_ledger(root: Path) -> dict[str, dict[str, Any]]:
 # -- resolution --------------------------------------------------------------
 
 
-def _declared(ledger: dict[str, dict[str, Any]], project_id: str, study_id: str) -> dict[str, Any] | None:
+def _declared(
+    ledger: dict[str, dict[str, Any]], project_id: str, study_id: str
+) -> dict[str, Any] | None:
     for family in ledger.values():
         for item in family["declarations"]:
             if item.get("projectId") == project_id and item.get("studyId") == study_id:
@@ -301,17 +412,24 @@ def _live_index(root: Path) -> dict[tuple[str, str], dict[str, Any]]:
         for study_id in _study_ids(owner):
             fingerprint = study_fingerprint(owner, study_id)
             if fingerprint is not None:
-                index[(owner.manifest.id, study_id)] = {"project": owner, "fingerprint": fingerprint}
+                index[(owner.manifest.id, study_id)] = {
+                    "project": owner,
+                    "fingerprint": fingerprint,
+                }
     return index
 
 
-def _resolve(ledger, live, project_id: str, study_id: str, fingerprint: dict[str, Any]) -> dict[str, Any]:
+def _resolve(
+    ledger, live, project_id: str, study_id: str, fingerprint: dict[str, Any]
+) -> dict[str, Any]:
     declaration = _declared(ledger, project_id, study_id)
     if declaration is not None and declaration["declaration"] == "same-family":
         family_id, joined = declaration["familyId"], "declared-same-family"
     else:
         family_id, joined = fingerprint["familyId"], "fingerprint"
-    acknowledged = set(declaration.get("relatedFamilyIds", [])) if declaration else set()
+    acknowledged = (
+        set(declaration.get("relatedFamilyIds", [])) if declaration else set()
+    )
     scopes: dict[str, dict[str, Any]] = {}
     for family in ledger.values():
         owners = {(m["projectId"], m["studyId"]) for m in family["members"]}
@@ -326,22 +444,41 @@ def _resolve(ledger, live, project_id: str, study_id: str, fingerprint: dict[str
             scopes.setdefault(entry["fingerprint"]["familyId"], entry["fingerprint"])
     related = []
     for other_id, other in sorted(scopes.items()):
-        if other_id == family_id or other.get("scopeHash") != fingerprint["scopeHash"] or other_id in acknowledged:
+        if (
+            other_id == family_id
+            or other.get("scopeHash") != fingerprint["scopeHash"]
+            or other_id in acknowledged
+        ):
             continue
         # A new-hypothesis declaration is symmetric: the other side need not repeat it.
-        reverse = any(item.get("declaration") == "new-hypothesis" and family_id in item.get("relatedFamilyIds", [])
-                      for item in ledger.get(other_id, {}).get("declarations", []))
+        reverse = any(
+            item.get("declaration") == "new-hypothesis"
+            and family_id in item.get("relatedFamilyIds", [])
+            for item in ledger.get(other_id, {}).get("declarations", [])
+        )
         if not reverse:
             related.append({"familyId": other_id, "question": other.get("question")})
-    return {"familyId": family_id, "joinedBy": joined, "declaration": declaration["declaration"] if declaration else None,
-            "possibleRelatedFamilies": related, "declarationRequired": bool(related)}
+    return {
+        "familyId": family_id,
+        "joinedBy": joined,
+        "declaration": declaration["declaration"] if declaration else None,
+        "possibleRelatedFamilies": related,
+        "declarationRequired": bool(related),
+    }
 
 
 def _members(ledger, live, family_id: str) -> set[tuple[str, str]]:
-    members = {(m["projectId"], m["studyId"]) for m in ledger.get(family_id, {}).get("members", [])}
+    members = {
+        (m["projectId"], m["studyId"])
+        for m in ledger.get(family_id, {}).get("members", [])
+    }
     for (pid, sid), entry in live.items():
         declaration = _declared(ledger, pid, sid)
-        resolved = declaration["familyId"] if declaration and declaration["declaration"] == "same-family" else entry["fingerprint"]["familyId"]
+        resolved = (
+            declaration["familyId"]
+            if declaration and declaration["declaration"] == "same-family"
+            else entry["fingerprint"]["familyId"]
+        )
         if resolved == family_id:
             members.add((pid, sid))
     return members
@@ -363,9 +500,17 @@ def _live_trials(live, members) -> list[dict[str, Any]]:
                 run = load_run(owner, summary.id)
             except (OSError, AutoQuantValidationError):
                 continue
-            trials.append({"projectId": key[0], "studyId": key[1], "runId": run.result["id"],
-                           "sourceHash": run.result["subject"]["sourceHash"], "status": run.result["status"],
-                           "completedAt": run.result["completedAt"], "registeredAt": None})
+            trials.append(
+                {
+                    "projectId": key[0],
+                    "studyId": key[1],
+                    "runId": run.result["id"],
+                    "sourceHash": run.result["subject"]["sourceHash"],
+                    "status": run.result["status"],
+                    "completedAt": run.result["completedAt"],
+                    "registeredAt": None,
+                }
+            )
     return trials
 
 
@@ -373,8 +518,13 @@ def _parse_time(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def family_state(project: ProjectContext, study_id: str, *, cutoff: str | None = None,
-                 exclude_projects: frozenset[str] = frozenset()) -> dict[str, Any] | None:
+def family_state(
+    project: ProjectContext,
+    study_id: str,
+    *,
+    cutoff: str | None = None,
+    exclude_projects: frozenset[str] = frozenset(),
+) -> dict[str, Any] | None:
     """Desk-wide family projection for one Project Study, or ``None`` outside a Workspace.
 
     ``cutoff`` (an ISO timestamp) restricts counting to trials registered in
@@ -393,22 +543,45 @@ def family_state(project: ProjectContext, study_id: str, *, cutoff: str | None =
     members = _members(ledger, live, family_id) | {(project.manifest.id, study_id)}
     registered = list(ledger.get(family_id, {}).get("trials", []))
     known = {(t["projectId"], t["studyId"], t["runId"]) for t in registered}
-    trials = registered + ([t for t in _live_trials(live, members) if (t["projectId"], t["studyId"], t["runId"]) not in known]
-                           if cutoff is None else [])
+    trials = registered + (
+        [
+            t
+            for t in _live_trials(live, members)
+            if (t["projectId"], t["studyId"], t["runId"]) not in known
+        ]
+        if cutoff is None
+        else []
+    )
     if cutoff is not None:
         limit = _parse_time(cutoff)
-        trials = [t for t in trials if _parse_time(t["registeredAt"]) <= limit and _parse_time(t["completedAt"]) <= limit]
+        trials = [
+            t
+            for t in trials
+            if _parse_time(t["registeredAt"]) <= limit
+            and _parse_time(t["completedAt"]) <= limit
+        ]
     first_seen: dict[tuple[str, str, str], str] = {}
     for trial in trials:
         key = (trial["projectId"], trial["studyId"], trial["sourceHash"])
-        if key not in first_seen or _parse_time(trial["completedAt"]) < _parse_time(first_seen[key]):
+        if key not in first_seen or _parse_time(trial["completedAt"]) < _parse_time(
+            first_seen[key]
+        ):
             first_seen[key] = trial["completedAt"]
-    other = sorted(k for k in first_seen if k[0] != project.manifest.id and k[0] not in exclude_projects)
+    other = sorted(
+        k
+        for k in first_seen
+        if k[0] != project.manifest.id and k[0] not in exclude_projects
+    )
     return {
-        "schemaVersion": SCHEMA_VERSION, "kind": FAMILY_KIND, "id": family_id,
-        "fingerprintMethod": FINGERPRINT_METHOD, "fingerprintHash": fingerprint["hash"],
-        "question": fingerprint["question"], "scope": fingerprint["scope"],
-        "joinedBy": resolution["joinedBy"], "declaration": resolution["declaration"],
+        "schemaVersion": SCHEMA_VERSION,
+        "kind": FAMILY_KIND,
+        "id": family_id,
+        "fingerprintMethod": FINGERPRINT_METHOD,
+        "fingerprintHash": fingerprint["hash"],
+        "question": fingerprint["question"],
+        "scope": fingerprint["scope"],
+        "joinedBy": resolution["joinedBy"],
+        "declaration": resolution["declaration"],
         "declarationRequired": resolution["declarationRequired"],
         "possibleRelatedFamilies": resolution["possibleRelatedFamilies"],
         "memberProjects": sorted({pid for pid, _ in members}),
@@ -423,16 +596,26 @@ def family_state(project: ProjectContext, study_id: str, *, cutoff: str | None =
     }
 
 
-def desk_inheritance(project: ProjectContext, study_id: str, *, cutoff: str | None,
-                     exclude_projects: frozenset[str]) -> dict[str, Any] | None:
+def desk_inheritance(
+    project: ProjectContext,
+    study_id: str,
+    *,
+    cutoff: str | None,
+    exclude_projects: frozenset[str],
+) -> dict[str, Any] | None:
     """Compact block merged into a research-family projection when other Projects tried this question."""
 
-    state = family_state(project, study_id, cutoff=cutoff, exclude_projects=exclude_projects)
+    state = family_state(
+        project, study_id, cutoff=cutoff, exclude_projects=exclude_projects
+    )
     if state is None or state["otherProjectTrials"] == 0:
         return None
     return {
-        "kind": FAMILY_KIND, "id": state["id"], "fingerprintHash": state["fingerprintHash"],
-        "deskTrialCount": state["deskTrialCount"], "otherProjectTrials": state["otherProjectTrials"],
+        "kind": FAMILY_KIND,
+        "id": state["id"],
+        "fingerprintHash": state["fingerprintHash"],
+        "deskTrialCount": state["deskTrialCount"],
+        "otherProjectTrials": state["otherProjectTrials"],
         "otherProjectTrialsHash": state["otherProjectTrialsHash"],
         "countAssumption": state["trialCountAssumption"],
     }
@@ -450,4 +633,3 @@ def project_family_summary(project: ProjectContext) -> list[dict[str, Any]]:
             state = {k: v for k, v in state.items() if k != "trialTimes"}
             summary.append({"studyId": study_id, **state})
     return summary
-

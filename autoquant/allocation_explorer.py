@@ -57,9 +57,7 @@ DAILY_COLUMNS = (
 
 
 def _fail(path: str | Path, code: str, message: str) -> None:
-    raise AutoQuantValidationError(
-        [ValidationIssue(str(path), code, message)]
-    )
+    raise AutoQuantValidationError([ValidationIssue(str(path), code, message)])
 
 
 def _object(path: Path) -> dict[str, Any]:
@@ -121,8 +119,7 @@ def _performance(
                 candidate_metrics["sharpe"] - reference_metrics["sharpe"]
             ),
             "annualReturnAdvantage": float(
-                candidate_metrics["annual_return"]
-                - reference_metrics["annual_return"]
+                candidate_metrics["annual_return"] - reference_metrics["annual_return"]
             ),
             "annualVolatilityDifference": float(
                 candidate_metrics["annual_volatility"]
@@ -169,21 +166,15 @@ def _construction_fidelity(
     *,
     tolerance: float,
 ) -> dict[str, Any]:
-    solver_rows = decisions.drop_duplicates("timestamp").sort_values(
-        "timestamp"
-    )
+    solver_rows = decisions.drop_duplicates("timestamp").sort_values("timestamp")
     by_split: dict[str, Any] = {}
     for name, split in split_protocol["splits"].items():
         selected = solver_rows[
             (solver_rows["timestamp"] >= pd.Timestamp(split["start"]))
             & (solver_rows["timestamp"] <= pd.Timestamp(split["end"]))
         ]
-        eligible = selected[
-            selected["solver_status"] != "insufficient-history"
-        ]
-        within = int(
-            (eligible["solver_status"] == "within-tolerance").sum()
-        )
+        eligible = selected[selected["solver_status"] != "insufficient-history"]
+        within = int((eligible["solver_status"] == "within-tolerance").sum())
         latest = None
         if not eligible.empty:
             row = eligible.iloc[-1]
@@ -191,12 +182,8 @@ def _construction_fidelity(
                 "asOf": row["timestamp"].date().isoformat(),
                 "status": str(row["solver_status"]),
                 "solverConverged": bool(row["solver_converged"]),
-                "withinTolerance": bool(
-                    row["solver_status"] == "within-tolerance"
-                ),
-                "maximumContributionError": float(
-                    row["maximum_contribution_error"]
-                ),
+                "withinTolerance": bool(row["solver_status"] == "within-tolerance"),
+                "maximumContributionError": float(row["maximum_contribution_error"]),
                 "capBindingAssets": (
                     str(row["cap_binding_assets"]).split(",")
                     if str(row["cap_binding_assets"])
@@ -208,22 +195,13 @@ def _construction_fidelity(
             "eligibleDecisions": int(len(eligible)),
             "withinToleranceDecisions": within,
             "capInducedParityGapDecisions": int(
-                (
-                    eligible["solver_status"]
-                    == "cap-induced-parity-gap"
-                ).sum()
+                (eligible["solver_status"] == "cap-induced-parity-gap").sum()
             ),
             "withinToleranceRate": (
-                float(within / len(eligible))
-                if len(eligible)
-                else None
+                float(within / len(eligible)) if len(eligible) else None
             ),
             "maximumContributionError": (
-                float(
-                    pd.to_numeric(
-                        eligible["maximum_contribution_error"]
-                    ).max()
-                )
+                float(pd.to_numeric(eligible["maximum_contribution_error"]).max())
                 if len(eligible)
                 else None
             ),
@@ -298,10 +276,7 @@ def load_allocation_diagnostics(
             .get("sourceHashes", {})
             .get("ohlcv/snapshot.json")
         )
-        if (
-            frozen_snapshot_hash
-            != intake["manifest"]["datasetSnapshotHash"]
-        ):
+        if frozen_snapshot_hash != intake["manifest"]["datasetSnapshotHash"]:
             _fail(
                 paths["allocation-report"],
                 "allocation.dataset-context",
@@ -331,7 +306,11 @@ def load_allocation_diagnostics(
             keep_default_na=False,
         )
     except (OSError, ValueError) as error:
-        _fail(paths["allocation-daily"], "allocation.csv", f"Cannot read evidence: {error}")
+        _fail(
+            paths["allocation-daily"],
+            "allocation.csv",
+            f"Cannot read evidence: {error}",
+        )
     universe = contract["universe"]
     if (
         tuple(daily.columns) != DAILY_COLUMNS
@@ -352,13 +331,14 @@ def load_allocation_diagnostics(
         )
     numeric_daily = daily.drop(columns=["candidate_risk_status"]).to_numpy(dtype=float)
     if not np.isfinite(numeric_daily).all():
-        _fail(paths["allocation-daily"], "allocation.number", "Daily path is non-finite")
+        _fail(
+            paths["allocation-daily"], "allocation.number", "Daily path is non-finite"
+        )
     if not np.allclose(
         daily["excess_net_return"].to_numpy(dtype=float),
-        (
-            daily["candidate_net_return"]
-            - daily["reference_net_return"]
-        ).to_numpy(dtype=float),
+        (daily["candidate_net_return"] - daily["reference_net_return"]).to_numpy(
+            dtype=float
+        ),
         rtol=1e-10,
         atol=1e-12,
     ):
@@ -385,13 +365,9 @@ def load_allocation_diagnostics(
         for asset in tradable
     }
     if any(
-        (weights[asset] < -1e-10).any()
-        or (weights[asset] > caps[asset] + 1e-10).any()
+        (weights[asset] < -1e-10).any() or (weights[asset] > caps[asset] + 1e-10).any()
         for asset in tradable
-    ) or any(
-        weights[asset].abs().max() > 1e-10
-        for asset in set(universe) - tradable
-    ):
+    ) or any(weights[asset].abs().max() > 1e-10 for asset in set(universe) - tradable):
         _fail(
             paths["allocation-weights"],
             "allocation.constraints",
@@ -405,9 +381,7 @@ def load_allocation_diagnostics(
         )
     periods = int(report["dataset"]["annualizationPeriods"])
     for name, split in report["splitProtocol"]["splits"].items():
-        selected = daily.loc[
-            pd.Timestamp(split["start"]) : pd.Timestamp(split["end"])
-        ]
+        selected = daily.loc[pd.Timestamp(split["start"]) : pd.Timestamp(split["end"])]
         if len(selected) != split["observations"]:
             _fail(
                 paths["allocation-daily"],
@@ -438,9 +412,7 @@ def load_allocation_diagnostics(
             "candidateRiskBreaches": int(
                 (
                     selected["candidate_forecast_volatility"]
-                    > float(
-                        contract["portfolioPolicy"]["annualizedVolatilityCeiling"]
-                    )
+                    > float(contract["portfolioPolicy"]["annualizedVolatilityCeiling"])
                     + 1e-10
                 ).sum()
             ),
@@ -510,24 +482,17 @@ def load_allocation_diagnostics(
             (eligible_solver["solver_status"] == "within-tolerance").sum()
         ),
         "capInducedParityGapDecisions": int(
-            (
-                eligible_solver["solver_status"]
-                == "cap-induced-parity-gap"
-            ).sum()
+            (eligible_solver["solver_status"] == "cap-induced-parity-gap").sum()
         ),
         "maximumContributionError": float(
-            pd.to_numeric(
-                eligible_solver["maximum_contribution_error"]
-            ).max()
+            pd.to_numeric(eligible_solver["maximum_contribution_error"]).max()
         ),
     }
     _reconcile(report["solver"], derived_solver, "report/solver")
     construction_fidelity = _construction_fidelity(
         decisions,
         report["splitProtocol"],
-        tolerance=float(
-            contract["method"]["contributionTolerance"]
-        ),
+        tolerance=float(contract["method"]["contributionTolerance"]),
     )
     if "constructionFidelity" in report:
         _reconcile(
@@ -551,8 +516,7 @@ def load_allocation_diagnostics(
         ("targetRiskContributionShares", "target_risk_contribution_share"),
     ):
         derived = {
-            row["asset"]: float(row[column])
-            for _, row in latest_rows.iterrows()
+            row["asset"]: float(row[column]) for _, row in latest_rows.iterrows()
         }
         _reconcile(latest[report_key], derived, f"report/latestDecision/{report_key}")
     latest_solver = eligible_solver[
@@ -563,13 +527,11 @@ def load_allocation_diagnostics(
         for _, row in latest_rows.iterrows()
     }
     tradable_contributions = [
-        raw_contribution_shares[asset]
-        for asset in contract["tradableAssets"]
+        raw_contribution_shares[asset] for asset in contract["tradableAssets"]
     ]
     target_share = 1.0 / len(contract["tradableAssets"])
     derived_latest_error = max(
-        abs(value - target_share)
-        for value in tradable_contributions
+        abs(value - target_share) for value in tradable_contributions
     )
     _close(
         latest["maximumContributionError"],
@@ -578,8 +540,7 @@ def load_allocation_diagnostics(
     )
     if (
         latest["status"] != latest_solver["solver_status"]
-        or bool(latest["solverConverged"])
-        != bool(latest_solver["solver_converged"])
+        or bool(latest["solverConverged"]) != bool(latest_solver["solver_converged"])
         or not math.isclose(
             sum(tradable_contributions),
             1.0,
@@ -635,8 +596,7 @@ def load_allocation_diagnostics(
     scheduled = current.get("scheduledTargetWeights")
     if current["ordinaryRebalanceDue"]:
         expected_scheduled = {
-            asset: float(targets.iloc[-1][asset])
-            for asset in universe
+            asset: float(targets.iloc[-1][asset]) for asset in universe
         }
         _reconcile(
             scheduled,
@@ -681,11 +641,7 @@ def load_allocation_diagnostics(
         "contract": contract,
         "dataset": {
             **report["dataset"],
-            **(
-                dataset_class_context
-                if dataset_class_context is not None
-                else {}
-            ),
+            **(dataset_class_context if dataset_class_context is not None else {}),
         },
         "splitProtocol": report["splitProtocol"],
         "splits": report["splits"],
@@ -699,10 +655,7 @@ def load_allocation_diagnostics(
         },
         "constructionFidelity": construction_fidelity,
         "path": _sample(daily, points),
-        "artifacts": {
-            kind: {"path": declared[kind]}
-            for kind in sorted(declared)
-        },
+        "artifacts": {kind: {"path": declared[kind]} for kind in sorted(declared)},
         "verification": {
             "strict": True,
             "accountingReconciled": True,
@@ -715,6 +668,7 @@ def load_allocation_diagnostics(
             "tradingAuthority": "none",
         },
     }
+
 
 CONSTRUCTION_FIDELITY_SPLIT_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",

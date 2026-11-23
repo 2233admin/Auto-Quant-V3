@@ -68,11 +68,7 @@ def _metadata(module: Any) -> dict[str, dict[str, Any]] | None:
             "FACTOR_COMPONENTS and callable compute_factor_components(panel) "
             "must be exported together",
         )
-    if (
-        not isinstance(raw, dict)
-        or not raw
-        or len(raw) > MAX_COMPONENT_METADATA
-    ):
+    if not isinstance(raw, dict) or not raw or len(raw) > MAX_COMPONENT_METADATA:
         raise FactorComponentError(
             "factor.components-metadata",
             "FACTOR_COMPONENTS must contain 1..24 component metadata entries",
@@ -82,8 +78,7 @@ def _metadata(module: Any) -> dict[str, dict[str, Any]] | None:
         if not isinstance(name, str) or COMPONENT_NAME.fullmatch(name) is None:
             raise FactorComponentError(
                 "factor.component-name",
-                "Component metadata names must match "
-                "^[a-z][a-z0-9_]{0,47}$",
+                "Component metadata names must match ^[a-z][a-z0-9_]{0,47}$",
             )
         if not isinstance(value, dict) or set(value) != {
             "label",
@@ -100,8 +95,7 @@ def _metadata(module: Any) -> dict[str, dict[str, Any]] | None:
         if role not in COMPONENT_ROLES:
             raise FactorComponentError(
                 "factor.component-role",
-                f"{name} role must be one of "
-                + ", ".join(sorted(COMPONENT_ROLES)),
+                f"{name} role must be one of " + ", ".join(sorted(COMPONENT_ROLES)),
             )
         label = value["label"]
         hypothesis = value["hypothesis"]
@@ -122,8 +116,7 @@ def _metadata(module: Any) -> dict[str, dict[str, Any]] | None:
         ):
             raise FactorComponentError(
                 "factor.component-hypothesis",
-                f"{name} hypothesis must contain "
-                f"1..{MAX_HYPOTHESIS_LENGTH} characters",
+                f"{name} hypothesis must contain 1..{MAX_HYPOTHESIS_LENGTH} characters",
             )
         if (
             not isinstance(intervals, list)
@@ -136,8 +129,7 @@ def _metadata(module: Any) -> dict[str, dict[str, Any]] | None:
             raise FactorComponentError(
                 "factor.component-intervals",
                 f"{name} intervals must contain 1..{MAX_INTERVAL_CLAIMS} "
-                "unique values from base, "
-                + ", ".join(SUPPORTED_INTERVALS),
+                "unique values from base, " + ", ".join(SUPPORTED_INTERVALS),
             )
         normalized[name] = {
             "label": label.strip(),
@@ -172,8 +164,7 @@ def compute_factor_components(
     except Exception as error:
         raise FactorComponentError(
             "factor.components-execution",
-            "compute_factor_components raised "
-            f"{type(error).__name__}: {error}",
+            f"compute_factor_components raised {type(error).__name__}: {error}",
         ) from error
     if not panel.equals(before):
         raise FactorComponentError(
@@ -206,8 +197,7 @@ def compute_factor_components(
     ):
         raise FactorComponentError(
             "factor.component-name",
-            "Materialized component names must match "
-            "^[a-z][a-z0-9_]{0,47}$",
+            "Materialized component names must match ^[a-z][a-z0-9_]{0,47}$",
         )
     undeclared = [name for name in columns if name not in metadata]
     if undeclared:
@@ -224,8 +214,7 @@ def compute_factor_components(
         unavailable = [
             interval
             for interval in metadata[name]["intervals"]
-            if interval != BASE_INTERVAL_CLAIM
-            and interval not in available_intervals
+            if interval != BASE_INTERVAL_CLAIM and interval not in available_intervals
         ]
         if unavailable:
             raise FactorComponentError(
@@ -266,7 +255,10 @@ def compute_factor_components(
                 and observed.groupby(
                     "timestamp",
                     sort=False,
-                )["value"].nunique(dropna=True).gt(1).any()
+                )["value"]
+                .nunique(dropna=True)
+                .gt(1)
+                .any()
             ):
                 raise FactorComponentError(
                     "factor.component-context-variation",

@@ -56,7 +56,15 @@ def test_every_form_of_the_project_reaches_the_same_notebook(
     body = tmp_path / "h.md"
     body.write_text("Claim: vol-scaled momentum keeps a positive Sharpe.\n")
     cli.main(
-        ["hypothesis", "add", "momentum-desk", "--title", "vol-scaled", "--file", str(body)]
+        [
+            "hypothesis",
+            "add",
+            "momentum-desk",
+            "--title",
+            "vol-scaled",
+            "--file",
+            str(body),
+        ]
     )
     capsys.readouterr()
     cli.main(["status", str(project_dir)])

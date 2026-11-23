@@ -30,9 +30,7 @@ def request(workspace: Path, path: str) -> tuple[int, str]:
                 direction = ui._direction_root(root, ids[0])
             except FileNotFoundError:
                 return 404, "Unknown direction"
-            payload = ui.snapshot(
-                direction, library_dir=root / library.LIBRARY_DIRNAME
-            )
+            payload = ui.snapshot(direction, library_dir=root / library.LIBRARY_DIRNAME)
         else:
             return 404, "Not found"
     except (OSError, ValueError, sqlite3.Error) as error:

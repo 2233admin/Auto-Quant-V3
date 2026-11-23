@@ -22,7 +22,11 @@ from autoquant.runs import execute_study
 from autoquant.studio import build_studio_snapshot
 from autoquant.studies import hash_file
 from autoquant.templates import OHLCV_STUDY_ID, PORTFOLIO_STUDY_ID
-from autoquant.workspace import AutoQuantValidationError, create_project, initialize_workspace
+from autoquant.workspace import (
+    AutoQuantValidationError,
+    create_project,
+    initialize_workspace,
+)
 
 
 def make_lab(root: Path, *, template: str = "ohlcv-portfolio-lab"):
@@ -33,9 +37,7 @@ def make_lab(root: Path, *, template: str = "ohlcv-portfolio-lab"):
         template=template,
     )
     study_id = (
-        PORTFOLIO_STUDY_ID
-        if template == "ohlcv-portfolio-lab"
-        else OHLCV_STUDY_ID
+        PORTFOLIO_STUDY_ID if template == "ohlcv-portfolio-lab" else OHLCV_STUDY_ID
     )
     return workspace, project, execute_study(project, study_id)
 
@@ -80,14 +82,10 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
         }
         decisions = {}
         for timestamp in dates:
-            variance = (
-                0.000025 if timestamp == "2026-01-03" else 0.0
-            )
+            variance = 0.000025 if timestamp == "2026-01-03" else 0.0
             for asset in universe:
                 component = (
-                    variance
-                    if timestamp == "2026-01-03" and asset == "AAA"
-                    else 0.0
+                    variance if timestamp == "2026-01-03" and asset == "AAA" else 0.0
                 )
                 decisions[(timestamp, asset)] = {
                     "asset": asset,
@@ -147,9 +145,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
         self.assertAlmostEqual(maximum["stressMultiplier"], 1.0)
         self.assertAlmostEqual(maximum["effectiveRiskBets"], 1.0)
         self.assertEqual(projection["test"]["flatDates"], 1)
-        self.assertIsNone(
-            projection["test"]["maximumStressMultiplier"]
-        )
+        self.assertIsNone(projection["test"]["maximumStressMultiplier"])
 
     def test_state_dependent_next_signal_triggers_are_explicit(self) -> None:
         parameters = {
@@ -347,9 +343,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
             )
             self.assertEqual(diagnostics["run"]["inputHash"], run.result["inputHash"])
             self.assertTrue(diagnostics["mandate"]["available"])
-            self.assertFalse(
-                diagnostics["mandate"]["riskPolicy"]["scaleUp"]
-            )
+            self.assertFalse(diagnostics["mandate"]["riskPolicy"]["scaleUp"])
             self.assertTrue(diagnostics["riskGovernor"]["available"])
             self.assertEqual(
                 diagnostics["riskGovernor"]["selectionAuthority"],
@@ -361,18 +355,14 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 "context-only",
             )
             self.assertEqual(
-                diagnostics["executedBookRisk"]["validation"][
-                    "executedBreachDates"
-                ],
+                diagnostics["executedBookRisk"]["validation"]["executedBreachDates"],
                 0,
             )
             self.assertLessEqual(
                 diagnostics["executedBookRisk"]["validation"][
                     "maximumExecutedForecastAnnualized"
                 ],
-                diagnostics["mandate"]["riskPolicy"][
-                    "annualizedVolatilityCeiling"
-                ]
+                diagnostics["mandate"]["riskPolicy"]["annualizedVolatilityCeiling"]
                 + 1e-12,
             )
             self.assertTrue(diagnostics["liquidityCapacity"]["available"])
@@ -385,71 +375,55 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 20,
             )
             self.assertAlmostEqual(
-                diagnostics["liquidityCapacity"]["validation"][
-                    "capacity1Pct"
-                ]["tenthPercentileNav"],
+                diagnostics["liquidityCapacity"]["validation"]["capacity1Pct"][
+                    "tenthPercentileNav"
+                ],
                 run.result["metrics"]["liquidity_capacity"]["validation"][
                     "capacity_1pct"
                 ]["tenth_percentile_nav"],
                 places=5,
             )
-            self.assertIsNotNone(
-                diagnostics["liquidityCapacity"]["latestTrade"]
-            )
-            self.assertTrue(
-                diagnostics["positionLifecycle"]["available"]
-            )
+            self.assertIsNotNone(diagnostics["liquidityCapacity"]["latestTrade"])
+            self.assertTrue(diagnostics["positionLifecycle"]["available"])
             self.assertEqual(
                 diagnostics["positionLifecycle"]["selectionAuthority"],
                 "context-only",
             )
             self.assertTrue(
-                diagnostics["positionLifecycle"]["validation"][
-                    "reconciliation"
-                ]["passed"]
+                diagnostics["positionLifecycle"]["validation"]["reconciliation"][
+                    "passed"
+                ]
             )
             self.assertGreater(
-                diagnostics["positionLifecycle"]["validation"][
-                    "activeSegments"
-                ],
+                diagnostics["positionLifecycle"]["validation"]["activeSegments"],
                 0,
             )
-            self.assertTrue(
-                diagnostics["parameterNeighborhood"]["available"]
-            )
+            self.assertTrue(diagnostics["parameterNeighborhood"]["available"])
             self.assertEqual(
-                diagnostics["parameterNeighborhood"]["policy"][
-                    "selectionAuthority"
-                ],
+                diagnostics["parameterNeighborhood"]["policy"]["selectionAuthority"],
                 "context-only",
             )
             self.assertEqual(
-                diagnostics["parameterNeighborhood"]["policy"][
-                    "configurationCount"
-                ],
+                diagnostics["parameterNeighborhood"]["policy"]["configurationCount"],
                 15,
             )
             self.assertEqual(
                 len(
-                    diagnostics["parameterNeighborhood"]["validation"][
-                        "configurations"
-                    ]
+                    diagnostics["parameterNeighborhood"]["validation"]["configurations"]
                 ),
                 15,
             )
             base_cell = next(
                 item
-                for item in diagnostics["parameterNeighborhood"][
-                    "validation"
-                ]["configurations"]
+                for item in diagnostics["parameterNeighborhood"]["validation"][
+                    "configurations"
+                ]
                 if item["isBase"]
             )
             self.assertEqual(base_cell["id"], "base__band-005")
             self.assertAlmostEqual(
                 base_cell["netSharpe"],
-                run.result["metrics"]["portfolio"]["validation"]["net"][
-                    "sharpe"
-                ],
+                run.result["metrics"]["portfolio"]["validation"]["net"]["sharpe"],
             )
             self.assertEqual(diagnostics["path"]["sampledRows"], 64)
             self.assertGreater(diagnostics["path"]["totalRows"], 64)
@@ -476,7 +450,9 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
             daily_path = run.root_dir / "artifacts" / "daily-portfolio.csv"
             with daily_path.open(encoding="utf-8", newline="") as handle:
                 daily = list(csv.DictReader(handle))
-            expected_net = math.prod(1.0 + float(row["net_return"]) for row in daily) - 1.0
+            expected_net = (
+                math.prod(1.0 + float(row["net_return"]) for row in daily) - 1.0
+            )
             self.assertAlmostEqual(
                 diagnostics["path"]["summary"]["netTotalReturn"],
                 expected_net,
@@ -513,8 +489,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 decision["executionGate"]["proposedOneWayTurnover"],
                 0.5
                 * sum(
-                    abs(item["proposedTradeWeight"])
-                    for item in decision["positions"]
+                    abs(item["proposedTradeWeight"]) for item in decision["positions"]
                 ),
                 places=9,
             )
@@ -547,17 +522,13 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 places=9,
             )
             self.assertAlmostEqual(
-                sum(
-                    item["componentRiskShare"]
-                    for item in sizing["positions"]
-                ),
+                sum(item["componentRiskShare"] for item in sizing["positions"]),
                 1.0,
                 places=9,
             )
             for position in sizing["positions"]:
                 expected_strength = (
-                    position["conviction"]
-                    / position["trailingVolatility"]
+                    position["conviction"] / position["trailingVolatility"]
                     if (
                         position["conviction"] > 0.0
                         and position["trailingVolatility"] is not None
@@ -571,8 +542,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 )
                 self.assertAlmostEqual(
                     position["governedWeight"],
-                    position["rawWeight"]
-                    * position["riskGovernorScale"],
+                    position["rawWeight"] * position["riskGovernorScale"],
                     places=9,
                 )
             diversification = diagnostics["diversificationStress"]
@@ -591,10 +561,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
             self.assertFalse(diversification["testEntersSelection"])
             self.assertEqual(
                 diversification["shock"]["method"],
-                (
-                    "observed-to-perfect-position-aligned-"
-                    "covariance-blend-ladder"
-                ),
+                ("observed-to-perfect-position-aligned-covariance-blend-ladder"),
             )
             self.assertEqual(
                 [
@@ -623,26 +590,19 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 places=9,
             )
             self.assertAlmostEqual(
-                sum(
-                    item["stressRiskShare"]
-                    for item in current_stress["positions"]
-                ),
+                sum(item["stressRiskShare"] for item in current_stress["positions"]),
                 1.0,
                 places=9,
             )
             scenario_forecasts = [
-                item["forecastAnnualized"]
-                for item in current_stress["scenarios"]
+                item["forecastAnnualized"] for item in current_stress["scenarios"]
             ]
             self.assertEqual(
                 scenario_forecasts,
                 sorted(scenario_forecasts),
             )
             self.assertEqual(
-                [
-                    item["id"]
-                    for item in current_stress["scenarios"]
-                ],
+                [item["id"] for item in current_stress["scenarios"]],
                 [
                     "quarter-breakdown",
                     "half-breakdown",
@@ -651,9 +611,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
             )
             self.assertAlmostEqual(
                 scenario_forecasts[-1],
-                current_stress[
-                    "perfectCorrelationForecastAnnualized"
-                ],
+                current_stress["perfectCorrelationForecastAnnualized"],
                 places=9,
             )
             for split_name, role in (
@@ -675,10 +633,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                     split_stress["maximumStressBook"],
                 )
                 self.assertEqual(
-                    [
-                        item["id"]
-                        for item in split_stress["scenarios"]
-                    ],
+                    [item["id"] for item in split_stress["scenarios"]],
                     [
                         "quarter-breakdown",
                         "half-breakdown",
@@ -691,9 +646,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 "research-prioritization-only",
             )
             self.assertEqual(viability["tradingAuthority"], "none")
-            self.assertFalse(
-                viability["diagnosis"]["testEntersDiagnosis"]
-            )
+            self.assertFalse(viability["diagnosis"]["testEntersDiagnosis"])
             self.assertEqual(viability["validation"]["role"], "selection")
             self.assertEqual(viability["test"]["role"], "visible-audit")
             self.assertEqual(
@@ -741,9 +694,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 monetization["tradingAuthority"],
                 "none",
             )
-            self.assertFalse(
-                monetization["semantics"]["counterfactualCompounding"]
-            )
+            self.assertFalse(monetization["semantics"]["counterfactualCompounding"])
             self.assertEqual(
                 monetization["semantics"]["evaluationMode"],
                 "cross-sectional",
@@ -752,9 +703,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 monetization["semantics"]["intentConstruction"],
                 "mandate-equal-active-side-budget",
             )
-            self.assertFalse(
-                monetization["diagnosis"]["testEntersDiagnosis"]
-            )
+            self.assertFalse(monetization["diagnosis"]["testEntersDiagnosis"])
             self.assertEqual(
                 monetization["validation"]["role"],
                 "selection",
@@ -775,10 +724,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 0.0,
             )
             self.assertEqual(
-                [
-                    item["id"]
-                    for item in monetization["validation"]["stages"]
-                ],
+                [item["id"] for item in monetization["validation"]["stages"]],
                 [
                     "equalIntent",
                     "preGovernorSizing",
@@ -788,10 +734,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 ],
             )
             self.assertEqual(
-                [
-                    item["id"]
-                    for item in monetization["validation"]["deltas"]
-                ],
+                [item["id"] for item in monetization["validation"]["deltas"]],
                 [
                     "sizingAndCaps",
                     "riskGovernor",
@@ -799,9 +742,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                     "tradingCost",
                 ],
             )
-            self.assertTrue(
-                monetization["validation"]["reconciliation"]["passed"]
-            )
+            self.assertTrue(monetization["validation"]["reconciliation"]["passed"])
             self.assertEqual(
                 len(monetization["validation"]["byAsset"]),
                 len(diagnostics["universe"]),
@@ -837,25 +778,17 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
             with path.open(encoding="utf-8", newline="") as handle:
                 rows = list(csv.DictReader(handle))
                 fields = list(rows[0])
-            validation = run.result["metrics"]["split_protocol"]["splits"][
-                "validation"
-            ]
+            validation = run.result["metrics"]["split_protocol"]["splits"]["validation"]
             timestamp = next(
                 row["timestamp"]
                 for row in rows
                 if (
-                    validation["start"]
-                    <= row["timestamp"]
-                    <= validation["signalEnd"]
+                    validation["start"] <= row["timestamp"] <= validation["signalEnd"]
                     and float(row["portfolio_variance"]) > 1e-12
                 )
             )
-            selected = [
-                row for row in rows if row["timestamp"] == timestamp
-            ][:2]
-            portfolio_variance = float(
-                selected[0]["portfolio_variance"]
-            )
+            selected = [row for row in rows if row["timestamp"] == timestamp][:2]
+            portfolio_variance = float(selected[0]["portfolio_variance"])
             offset = portfolio_variance * 0.01
             for sign, row in zip((1.0, -1.0), selected):
                 row["component_variance"] = str(
@@ -886,22 +819,16 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
             with path.open(encoding="utf-8", newline="") as handle:
                 rows = list(csv.DictReader(handle))
                 fields = list(rows[0])
-            validation = run.result["metrics"]["split_protocol"]["splits"][
-                "validation"
-            ]
+            validation = run.result["metrics"]["split_protocol"]["splits"]["validation"]
             timestamp = next(
                 row["timestamp"]
                 for row in rows
                 if (
-                    validation["start"]
-                    <= row["timestamp"]
-                    <= validation["signalEnd"]
+                    validation["start"] <= row["timestamp"] <= validation["signalEnd"]
                     and abs(float(row["gross_return_contribution"])) > 1e-12
                 )
             )
-            selected = [
-                row for row in rows if row["timestamp"] == timestamp
-            ][:2]
+            selected = [row for row in rows if row["timestamp"] == timestamp][:2]
             offset = 0.001
             for sign, row in zip((1.0, -1.0), selected):
                 row["gross_return_contribution"] = str(
@@ -926,9 +853,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
             with path.open(encoding="utf-8", newline="") as handle:
                 rows = list(csv.DictReader(handle))
                 fields = list(rows[0])
-            selected = next(
-                row for row in rows if row["translation_score"]
-            )
+            selected = next(row for row in rows if row["translation_score"])
             selected["translation_score"] = str(
                 float(selected["translation_score"]) + 0.01
             )
@@ -949,9 +874,9 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
             _, project, run = make_lab(Path(directory))
             path = run.root_dir / "result.json"
             payload = json.loads(path.read_text(encoding="utf-8"))
-            payload["metrics"]["robustness"]["cost_stress"]["25bps"][
-                "validation"
-            ]["sharpe"] += 1.0
+            payload["metrics"]["robustness"]["cost_stress"]["25bps"]["validation"][
+                "sharpe"
+            ] += 1.0
             path.write_text(
                 json.dumps(payload, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
@@ -982,9 +907,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                     and int(row["signal_state"]) != 0
                 )
             )
-            active["risk_strength"] = str(
-                float(active["risk_strength"]) + 1.0
-            )
+            active["risk_strength"] = str(float(active["risk_strength"]) + 1.0)
             with path.open("w", encoding="utf-8", newline="") as handle:
                 writer = csv.DictWriter(handle, fieldnames=fields)
                 writer.writeheader()
@@ -1002,11 +925,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
     ) -> None:
         with tempfile.TemporaryDirectory() as directory:
             _, project, run = make_lab(Path(directory))
-            path = (
-                run.root_dir
-                / "artifacts"
-                / "portfolio-parameter-neighborhood.json"
-            )
+            path = run.root_dir / "artifacts" / "portfolio-parameter-neighborhood.json"
             payload = json.loads(path.read_text(encoding="utf-8"))
             payload["rows"][0]["netReturn"] += 0.01
             path.write_text(
@@ -1130,12 +1049,8 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
             with path.open(encoding="utf-8", newline="") as handle:
                 rows = list(csv.DictReader(handle))
                 fields = list(rows[0])
-            active = next(
-                row for row in rows if int(row["decision_bars"]) > 0
-            )
-            active["net_contribution"] = str(
-                float(active["net_contribution"]) + 0.01
-            )
+            active = next(row for row in rows if int(row["decision_bars"]) > 0)
+            active["net_contribution"] = str(float(active["net_contribution"]) + 0.01)
             with path.open("w", encoding="utf-8", newline="") as handle:
                 writer = csv.DictWriter(handle, fieldnames=fields)
                 writer.writeheader()
@@ -1165,18 +1080,14 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 json.dumps(result, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
-            report_path = (
-                run.root_dir / "artifacts" / "portfolio-report.json"
-            )
+            report_path = run.root_dir / "artifacts" / "portfolio-report.json"
             report = json.loads(report_path.read_text(encoding="utf-8"))
             report["metrics"].pop("position_lifecycle")
             report_path.write_text(
                 json.dumps(report, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
-            (
-                run.root_dir / "artifacts" / "position-episodes.csv"
-            ).unlink()
+            (run.root_dir / "artifacts" / "position-episodes.csv").unlink()
             rehash_run(run.root_dir)
 
             diagnostics = load_portfolio_diagnostics(
@@ -1184,19 +1095,13 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 run.result["id"],
             )
 
-            self.assertFalse(
-                diagnostics["positionLifecycle"]["available"]
-            )
-            self.assertIsNone(
-                diagnostics["positionLifecycle"]["validation"]
-            )
+            self.assertFalse(diagnostics["positionLifecycle"]["available"])
+            self.assertIsNone(diagnostics["positionLifecycle"]["validation"])
 
     def test_run_without_capacity_evidence_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             _, project, run = make_lab(Path(directory))
-            decisions_path = (
-                run.root_dir / "artifacts" / "portfolio-decisions.csv"
-            )
+            decisions_path = run.root_dir / "artifacts" / "portfolio-decisions.csv"
             with decisions_path.open(
                 encoding="utf-8",
                 newline="",
@@ -1277,9 +1182,7 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                 path = run.root_dir / "artifacts" / name
                 with path.open(encoding="utf-8", newline="") as handle:
                     rows = list(csv.DictReader(handle))
-                    fields = [
-                        field for field in rows[0] if field not in new_fields
-                    ]
+                    fields = [field for field in rows[0] if field not in new_fields]
                 if name == "daily-portfolio.csv":
                     fields.remove("execution_reason")
                 with path.open("w", encoding="utf-8", newline="") as handle:
@@ -1328,12 +1231,15 @@ class PortfolioDecisionExplorerTests(unittest.TestCase):
                     run.result["id"],
                     point_limit=39,
                 )
-            with patch(
-                "autoquant.portfolio_explorer.MAX_ARTIFACT_BYTES",
-                1,
-            ), self.assertRaisesRegex(
-                AutoQuantValidationError,
-                "exceeds 1 bytes",
+            with (
+                patch(
+                    "autoquant.portfolio_explorer.MAX_ARTIFACT_BYTES",
+                    1,
+                ),
+                self.assertRaisesRegex(
+                    AutoQuantValidationError,
+                    "exceeds 1 bytes",
+                ),
             ):
                 load_portfolio_diagnostics(project, run.result["id"])
 

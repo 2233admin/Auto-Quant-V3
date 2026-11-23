@@ -44,7 +44,11 @@ def normalize_allocation_policy(
     }
     if not isinstance(value, dict):
         raise AutoQuantValidationError(
-            [_issue(path, "allocation-policy.type", "allocationPolicy must be an object")]
+            [
+                _issue(
+                    path, "allocation-policy.type", "allocationPolicy must be an object"
+                )
+            ]
         )
     for key in sorted(required - set(value)):
         issues.append(
@@ -253,15 +257,8 @@ def build_allocation_contract(
     portfolio = request.get("portfolioPolicy")
     if not isinstance(portfolio, dict):
         raise ValueError("allocation request requires portfolioPolicy")
-    roles = {
-        item["symbol"]: item.get("positionRole")
-        for item in request["assets"]
-    }
-    tradable = [
-        symbol
-        for symbol in universe
-        if roles.get(symbol) == "long-only"
-    ]
+    roles = {item["symbol"]: item.get("positionRole") for item in request["assets"]}
+    tradable = [symbol for symbol in universe if roles.get(symbol) == "long-only"]
     context = [symbol for symbol in universe if symbol not in tradable]
     if not tradable:
         raise ValueError("allocation request has no long-only assets")
@@ -277,8 +274,7 @@ def build_allocation_contract(
         "tradableAssets": tradable,
         "contextAssets": context,
         "assetPositionRoles": {
-            symbol: roles.get(symbol, "context-only")
-            for symbol in universe
+            symbol: roles.get(symbol, "context-only") for symbol in universe
         },
         "portfolioPolicy": portfolio,
         "benchmark": benchmark,
@@ -345,8 +341,7 @@ def validate_allocation_contract(
         or not isinstance(roles, dict)
         or set(roles) != set(universe)
         or any(
-            roles[symbol]
-            != ("long-only" if symbol in tradable else "context-only")
+            roles[symbol] != ("long-only" if symbol in tradable else "context-only")
             for symbol in universe
         )
         or not isinstance(value.get("annualizationPeriods"), int)
@@ -361,7 +356,13 @@ def validate_allocation_contract(
         or value.get("tradingAuthority") != "none"
     ):
         raise AutoQuantValidationError(
-            [_issue(path, "allocation-contract.contract", "Allocation contract is invalid")]
+            [
+                _issue(
+                    path,
+                    "allocation-contract.contract",
+                    "Allocation contract is invalid",
+                )
+            ]
         )
     method = normalize_allocation_policy(value.get("method"), f"{path}/method")
     benchmark = normalize_fixed_weight_benchmark(
@@ -372,7 +373,13 @@ def validate_allocation_contract(
     portfolio = value.get("portfolioPolicy")
     if not isinstance(portfolio, dict):
         raise AutoQuantValidationError(
-            [_issue(f"{path}/portfolioPolicy", "allocation-contract.portfolio", "Invalid portfolioPolicy")]
+            [
+                _issue(
+                    f"{path}/portfolioPolicy",
+                    "allocation-contract.portfolio",
+                    "Invalid portfolioPolicy",
+                )
+            ]
         )
     payload = {key: value[key] for key in required - {"id"}}
     payload["method"] = method
@@ -380,7 +387,13 @@ def validate_allocation_contract(
     expected_id = f"allocation-{hash_json(payload)[:16]}"
     if value.get("id") != expected_id:
         raise AutoQuantValidationError(
-            [_issue(f"{path}/id", "allocation-contract.id", "Contract id does not reconcile")]
+            [
+                _issue(
+                    f"{path}/id",
+                    "allocation-contract.id",
+                    "Contract id does not reconcile",
+                )
+            ]
         )
     return {**payload, "id": expected_id}
 
@@ -391,7 +404,11 @@ def load_allocation_contract(path: str | Path) -> dict[str, Any]:
         value = json.loads(target.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise AutoQuantValidationError(
-            [_issue(target, "allocation-contract.json", f"Cannot read contract: {error}")]
+            [
+                _issue(
+                    target, "allocation-contract.json", f"Cannot read contract: {error}"
+                )
+            ]
         ) from error
     if not isinstance(value, dict):
         raise AutoQuantValidationError(

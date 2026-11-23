@@ -5,7 +5,10 @@ from pathlib import Path
 import numpy as np
 
 import pytest
-pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
+
+pytest.importorskip(
+    "shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)"
+)
 from autoquant.shinka_research import library, ui
 from autoquant.shinka_research.notebook import (
     Experiment,

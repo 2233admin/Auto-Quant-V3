@@ -10,7 +10,12 @@ from autoquant.research import list_campaigns, load_campaign, run_campaign
 from autoquant.sessions import list_experiments, load_session, start_session
 from autoquant.studies import create_study, hash_file
 from autoquant.workspace import AutoQuantValidationError
-from tests.study_helpers import SUCCESS_JUDGE, make_project, python_command, study_definition
+from tests.study_helpers import (
+    SUCCESS_JUDGE,
+    make_project,
+    python_command,
+    study_definition,
+)
 
 
 RESEARCHER = """\
@@ -80,9 +85,7 @@ class ExternalResearchCampaignTests(unittest.TestCase):
             self.assertEqual(campaign.result["verdicts"]["KEEP"], 1)
             self.assertEqual(campaign.result["verdicts"]["REVERT"], 1)
             self.assertEqual(len(campaign.result["experiments"]), 2)
-            progress = json.loads(
-                (campaign.root_dir / "progress.json").read_text()
-            )
+            progress = json.loads((campaign.root_dir / "progress.json").read_text())
             self.assertEqual(progress["status"], "stopped")
             self.assertEqual(progress["phase"], "terminal")
             self.assertEqual(progress["experiments"], campaign.result["experiments"])

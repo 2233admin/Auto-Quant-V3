@@ -58,9 +58,7 @@ class SessionDecisionMatrixTests(unittest.TestCase):
                 template="ohlcv-portfolio-lab",
             )
             session = start_session(project, PORTFOLIO_STUDY_ID)
-            candidate = (
-                session.worktree_project.root_dir / "factors" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(IMPROVED_FACTOR, encoding="utf-8")
             kept = evaluate_experiment(
                 project,
@@ -69,9 +67,7 @@ class SessionDecisionMatrixTests(unittest.TestCase):
             )
             self.assertEqual(kept.result["verdict"], "KEEP")
             session = load_session(project, kept.result["sessionId"])
-            candidate = (
-                session.worktree_project.root_dir / "factors" / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(LOOKAHEAD_FACTOR, encoding="utf-8")
             crashed = evaluate_experiment(
                 project,
@@ -114,27 +110,19 @@ class SessionDecisionMatrixTests(unittest.TestCase):
             )
             self.assertEqual(crash["status"], "failed")
             self.assertTrue(crash["errors"])
-            self.assertTrue(
-                all(value is None for value in crash["metrics"].values())
-            )
+            self.assertTrue(all(value is None for value in crash["metrics"].values()))
             self.assertEqual(
                 crash["vsBaseline"]["validationStateChangeRate"],
                 "unavailable",
             )
-            descriptors = {
-                item["key"]: item for item in complete["metrics"]
-            }
+            descriptors = {item["key"]: item for item in complete["metrics"]}
             self.assertTrue(descriptors["validationNetSharpe"]["primary"])
             self.assertFalse(descriptors["testNetSharpe"]["selectionEligible"])
             self.assertFalse(
-                descriptors["validationStateChangeRate"][
-                    "selectionEligible"
-                ]
+                descriptors["validationStateChangeRate"]["selectionEligible"]
             )
             self.assertFalse(
-                descriptors["validationRiskLimitedRate"][
-                    "selectionEligible"
-                ]
+                descriptors["validationRiskLimitedRate"]["selectionEligible"]
             )
             self.assertEqual(
                 descriptors["validationStateChangeRate"]["preference"],
@@ -159,16 +147,10 @@ class SessionDecisionMatrixTests(unittest.TestCase):
                     descriptors[key]["preference"],
                     "context",
                 )
-                self.assertFalse(
-                    descriptors[key]["selectionEligible"]
-                )
+                self.assertFalse(descriptors[key]["selectionEligible"])
             baseline_metrics = complete["trials"][0]["metrics"]
-            self.assertIsNotNone(
-                baseline_metrics["validationRiskLimitedRate"]
-            )
-            self.assertIsNotNone(
-                baseline_metrics["validationAverageActiveRiskScale"]
-            )
+            self.assertIsNotNone(baseline_metrics["validationRiskLimitedRate"])
+            self.assertIsNotNone(baseline_metrics["validationAverageActiveRiskScale"])
             self.assertIsNotNone(
                 baseline_metrics["validationPreGovernorForecastMaximum"]
             )
@@ -176,34 +158,24 @@ class SessionDecisionMatrixTests(unittest.TestCase):
                 baseline_metrics["validationPostGovernorForecastMaximum"]
             )
             self.assertIsNotNone(
-                baseline_metrics[
-                    "validationCapacity1PctTenthPercentile"
-                ]
+                baseline_metrics["validationCapacity1PctTenthPercentile"]
             )
             self.assertIsNotNone(
                 baseline_metrics["validationCapacityTradeDateCoverage"]
             )
             self.assertIsNotNone(
-                baseline_metrics[
-                    "validationExecutedRiskForecastCoverage"
-                ]
+                baseline_metrics["validationExecutedRiskForecastCoverage"]
             )
-            self.assertIsNotNone(
-                baseline_metrics["validationRiskRebalanceOverrides"]
-            )
+            self.assertIsNotNone(baseline_metrics["validationRiskRebalanceOverrides"])
             self.assertEqual(
                 baseline_metrics["validationExecutedRiskBreaches"],
                 0.0,
             )
             self.assertIsNotNone(
-                baseline_metrics[
-                    "validationNeighborhoodMinimumNetSharpe"
-                ]
+                baseline_metrics["validationNeighborhoodMinimumNetSharpe"]
             )
             self.assertIsNotNone(
-                baseline_metrics[
-                    "validationNeighborhoodPositiveSharpeRate"
-                ]
+                baseline_metrics["validationNeighborhoodPositiveSharpeRate"]
             )
             self.assertTrue(complete["tradeoffs"]["testExcluded"])
             self.assertNotIn(
@@ -267,12 +239,8 @@ class SessionDecisionMatrixTests(unittest.TestCase):
             self.assertIsNotNone(values["validationOneStepOracleHitRate"])
             self.assertIsNotNone(values["validationMeanSelectedActionRank"])
             self.assertIsNotNone(values["validationMeanOneStepRegret"])
-            self.assertIsNotNone(
-                values["validationCandidateOracleFrequency"]
-            )
-            self.assertIsNotNone(
-                values["validationCandidateMissedOpportunityRate"]
-            )
+            self.assertIsNotNone(values["validationCandidateOracleFrequency"])
+            self.assertIsNotNone(values["validationCandidateMissedOpportunityRate"])
             self.assertEqual(values["failureRate"], 0.0)
             self.assertFalse(
                 next(

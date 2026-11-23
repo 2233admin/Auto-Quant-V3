@@ -12,7 +12,9 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
+pytest.importorskip(
+    "shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)"
+)
 from autoquant.shinka_research import cli, grants, rounds
 from autoquant.shinka_research.grants import LEDGER
 from autoquant.shinka_research.notebook import LockboxOpening, LockboxTarget, Notebook

@@ -60,10 +60,7 @@ def _write_json(path: Path, value: dict[str, Any]) -> None:
 
 def _book_risk_judge_source() -> bytes:
     return (
-        Path(__file__).parent
-        / "project_templates"
-        / "ohlcv_book_risk_lab"
-        / "judge.py"
+        Path(__file__).parent / "project_templates" / "ohlcv_book_risk_lab" / "judge.py"
     ).read_bytes()
 
 
@@ -97,27 +94,17 @@ def _same_dataset_request(
         )
     elif require_retained_range:
         try:
-            as_of = datetime.fromisoformat(
-                snapshot["asOf"].replace("Z", "+00:00")
-            )
+            as_of = datetime.fromisoformat(snapshot["asOf"].replace("Z", "+00:00"))
             if len(primary.definition.dataset.time_range.start) == 10:
                 as_of = as_of.date()
-                start = date.fromisoformat(
-                    primary.definition.dataset.time_range.start
-                )
-                end = date.fromisoformat(
-                    primary.definition.dataset.time_range.end
-                )
+                start = date.fromisoformat(primary.definition.dataset.time_range.start)
+                end = date.fromisoformat(primary.definition.dataset.time_range.end)
             else:
                 start = datetime.fromisoformat(
-                    primary.definition.dataset.time_range.start.replace(
-                        "Z", "+00:00"
-                    )
+                    primary.definition.dataset.time_range.start.replace("Z", "+00:00")
                 )
                 end = datetime.fromisoformat(
-                    primary.definition.dataset.time_range.end.replace(
-                        "Z", "+00:00"
-                    )
+                    primary.definition.dataset.time_range.end.replace("Z", "+00:00")
                 )
             if not start <= as_of <= end:
                 raise ValueError
@@ -154,8 +141,7 @@ def _validate_refresh_dataset(
                 _issue(
                     dataset_path,
                     f"study-intake.dataset-{key}",
-                    f"Refreshed dataset {key} must match the original "
-                    "Project dataset",
+                    f"Refreshed dataset {key} must match the original Project dataset",
                 )
             )
     if (
@@ -195,9 +181,7 @@ def _validate_refresh_dataset(
             newer = datetime.fromisoformat(
                 prepared.end.replace("Z", "+00:00")
             ) > datetime.fromisoformat(
-                primary.definition.dataset.time_range.end.replace(
-                    "Z", "+00:00"
-                )
+                primary.definition.dataset.time_range.end.replace("Z", "+00:00")
             )
     except ValueError:
         newer = False
@@ -354,9 +338,7 @@ def create_book_risk_study_intake(
             )
         _write_json(project.root_dir / snapshot_relative, position_snapshot)
         (project.root_dir / method_relative).write_bytes(method_source.read_bytes())
-        (project.root_dir / entrypoint_relative).write_bytes(
-            _book_risk_judge_source()
-        )
+        (project.root_dir / entrypoint_relative).write_bytes(_book_risk_judge_source())
         definition = StudyDefinition(
             schema_version=SCHEMA_VERSION,
             id=study_id,
@@ -486,9 +468,7 @@ def create_book_risk_study_intake(
         "datasetHash": study.dataset_hash,
         "sourceProjectStudyId": primary.definition.id,
         "datasetMode": (
-            "study-owned-refresh"
-            if prepared is not None
-            else "retained-project-intake"
+            "study-owned-refresh" if prepared is not None else "retained-project-intake"
         ),
     }
     if prepared is not None:

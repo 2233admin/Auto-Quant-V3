@@ -4,6 +4,7 @@ The fixtures are synthetic selection ledgers fed through Core's real
 ``build_selection_adjustment``; they are transport fixtures, not research
 evidence.
 """
+
 from __future__ import annotations
 
 import json
@@ -29,11 +30,14 @@ from tests.test_selection import fake_run, family
 # Values the former browser implementation (studio-app/src/pages/factorMath.ts before this change) produced
 # for the same four ledgers. Captured by running that code unmodified; (trials, expected, passLine) rows.
 LEGACY_CLIENT_FRONTIER = {
-    'A': {
-        'ic': 0.045, 'raw_p': 0.0042, 'trials': 12, 'axis_maximum': 50,
-        'standard_error': 0.01571922658576952,
-        'cleared': False,
-        'table': (
+    "A": {
+        "ic": 0.045,
+        "raw_p": 0.0042,
+        "trials": 12,
+        "axis_maximum": 50,
+        "standard_error": 0.01571922658576952,
+        "cleared": False,
+        "table": (
             (1.0, 0, 0.03080911799777137),
             (2.0, 0.008170152022794086, 0.035233117327269414),
             (5.0, 0.01874665533562495, 0.04049004451425763),
@@ -42,18 +46,21 @@ LEGACY_CLIENT_FRONTIER = {
             (20.0, 0.029877658925804188, 0.047524589126443764),
             (50.0, 0.03578172411073276, 0.051724535228031866),
         ),
-        'curve': {
+        "curve": {
             0: (1, 0, 0.03080911799777137),
             1: (1.050765849261233, 0, 0.03114075975713324),
             40: (7.24833032243024, 0.022099241715839917, 0.042468980982108655),
             79: (49.99999999999999, 0.03578172411073276, 0.05172453522803091),
         },
     },
-    'B': {
-        'ic': 0.0321, 'raw_p': 0.03, 'trials': 1, 'axis_maximum': 50,
-        'standard_error': 0.014792010675263714,
-        'cleared': True,
-        'table': (
+    "B": {
+        "ic": 0.0321,
+        "raw_p": 0.03,
+        "trials": 1,
+        "axis_maximum": 50,
+        "standard_error": 0.014792010675263714,
+        "cleared": True,
+        "table": (
             (1.0, 0, 0.028991808205822346),
             (2.0, 0.00768822659819057, 0.03315485305743971),
             (5.0, 0.017640863202588584, 0.03810169459857569),
@@ -61,18 +68,21 @@ LEGACY_CLIENT_FRONTIER = {
             (20.0, 0.028115292274142667, 0.04472129884127274),
             (50.0, 0.03367109966494509, 0.04867350649164564),
         ),
-        'curve': {
+        "curve": {
             0: (1, 0, 0.028991808205822346),
             1: (1.050765849261233, 0, 0.02930388771037539),
             40: (7.24833032243024, 0.020795693578962084, 0.03996390131710605),
             79: (49.99999999999999, 0.03367109966494509, 0.048673506491644744),
         },
     },
-    'C': {
-        'ic': -0.03, 'raw_p': 0.01, 'trials': 5, 'axis_maximum': 50,
-        'standard_error': 0.011646734480793933,
-        'cleared': False,
-        'table': (
+    "C": {
+        "ic": -0.03,
+        "raw_p": 0.01,
+        "trials": 5,
+        "axis_maximum": 50,
+        "standard_error": 0.011646734480793933,
+        "cleared": False,
+        "table": (
             (1.0, 0, 0.022827180138260395),
             (2.0, 0.006053452487500099, 0.026105022419668784),
             (5.0, 0.013889825679759686, 0.03),
@@ -80,18 +90,21 @@ LEGACY_CLIENT_FRONTIER = {
             (20.0, 0.022137040809093303, 0.03521205498530071),
             (50.0, 0.02651149773233743, 0.03832389110598652),
         ),
-        'curve': {
+        "curve": {
             0: (1, 0, 0.022827180138260395),
             1: (1.050765849261233, 0, 0.02307290110251749),
             40: (7.24833032243024, 0.016373833603510746, 0.03146623928789769),
             79: (49.99999999999999, 0.02651149773233743, 0.03832389110598581),
         },
     },
-    'D': {
-        'ic': 0.0187, 'raw_p': 0.2, 'trials': 40, 'axis_maximum': 160,
-        'standard_error': 0.014591687547544427,
-        'cleared': False,
-        'table': (
+    "D": {
+        "ic": 0.0187,
+        "raw_p": 0.2,
+        "trials": 40,
+        "axis_maximum": 160,
+        "standard_error": 0.014591687547544427,
+        "cleared": False,
+        "table": (
             (1.0, 0, 0.028599182089905587),
             (2.0, 0.007584107582015192, 0.03270584825279565),
             (5.0, 0.017401959042093337, 0.03758569641543784),
@@ -100,7 +113,7 @@ LEGACY_CLIENT_FRONTIER = {
             (40.0, 0.031948211388819044, 0.04709056287882477),
             (50.0, 0.033215103509540114, 0.04801433788559691),
         ),
-        'curve': {
+        "curve": {
             0: (1, 0, 0.028599182089905587),
             1: (1.0663511777420858, 0, 0.028998099326325043),
             40: (13.062013184755777, 0.02488764271348807, 0.04219926293308372),
@@ -110,7 +123,9 @@ LEGACY_CLIENT_FRONTIER = {
 }
 
 
-def factor_sessions(ic: float, raw_p: float, trials: int, *, run_id: str = "run-leader"):
+def factor_sessions(
+    ic: float, raw_p: float, trials: int, *, run_id: str = "run-leader"
+):
     """One Factor Session ledger whose adjustment is Core output for these inputs."""
 
     leader = fake_run(
@@ -169,16 +184,17 @@ def portfolio_adjustment(successful_sharpes, *, unique_trials=None, reproducible
         successful_values=tuple(successful_sharpes),
         reproducible=reproducible,
     )
-    return build_selection_adjustment(leader, research_family), research_family.projection
+    return build_selection_adjustment(
+        leader, research_family
+    ), research_family.projection
 
 
 class ExpectedMaximumZTests(unittest.TestCase):
     def test_closed_form_and_the_sharpe_expectation_built_from_it(self) -> None:
         for trials in (2, 3, 12, 250):
-            reference = (
-                (1.0 - EULER_MASCHERONI) * NORMAL.inv_cdf(1.0 - 1.0 / trials)
-                + EULER_MASCHERONI * NORMAL.inv_cdf(1.0 - 1.0 / (trials * math.e))
-            )
+            reference = (1.0 - EULER_MASCHERONI) * NORMAL.inv_cdf(
+                1.0 - 1.0 / trials
+            ) + EULER_MASCHERONI * NORMAL.inv_cdf(1.0 - 1.0 / (trials * math.e))
             self.assertEqual(expected_maximum_z(trials), reference)
         self.assertEqual(expected_maximum_z(1), 0.0)
         self.assertEqual(expected_maximum_z(0.4), 0.0)
@@ -200,7 +216,9 @@ class FactorFrontierPinTests(unittest.TestCase):
                 self.assertEqual(frontier["trials"], legacy["trials"])
                 self.assertEqual(frontier["axisMaximumTrials"], legacy["axis_maximum"])
                 self.assertAlmostEqual(
-                    frontier["standardError"] / legacy["standard_error"], 1.0, delta=1e-8
+                    frontier["standardError"] / legacy["standard_error"],
+                    1.0,
+                    delta=1e-8,
                 )
                 self.assertEqual(len(frontier["curve"]), CURVE_POINTS)
                 # The old browser compared the selected IC with its own pass line. The server now
@@ -210,7 +228,9 @@ class FactorFrontierPinTests(unittest.TestCase):
                     [row["trials"] for row in frontier["table"]],
                     [row[0] for row in legacy["table"]],
                 )
-                for row, (_, expected, pass_line) in zip(frontier["table"], legacy["table"]):
+                for row, (_, expected, pass_line) in zip(
+                    frontier["table"], legacy["table"]
+                ):
                     self.assertAlmostEqual(row["expected"], expected, delta=1e-8)
                     self.assertAlmostEqual(row["passLine"] / pass_line, 1.0, delta=1e-8)
                 for index, (trials, expected, pass_line) in legacy["curve"].items():
@@ -219,7 +239,9 @@ class FactorFrontierPinTests(unittest.TestCase):
                     self.assertAlmostEqual(row["expected"], expected, delta=1e-8)
                     self.assertAlmostEqual(row["passLine"] / pass_line, 1.0, delta=1e-8)
                 at_ledger = next(
-                    row for row in frontier["table"] if row["trials"] == legacy["trials"]
+                    row
+                    for row in frontier["table"]
+                    if row["trials"] == legacy["trials"]
                 )
                 self.assertEqual(frontier["expectedAtTrials"], at_ledger["expected"])
                 self.assertEqual(frontier["passLineAtTrials"], at_ledger["passLine"])
@@ -238,7 +260,9 @@ class FactorFrontierPinTests(unittest.TestCase):
         self.assertTrue(all(math.isfinite(value) for value in expected))
         self.assertEqual(expected[0], 0.0)
 
-    def test_selected_run_is_named_only_when_exactly_one_run_holds_the_value(self) -> None:
+    def test_selected_run_is_named_only_when_exactly_one_run_holds_the_value(
+        self,
+    ) -> None:
         sessions = factor_sessions(0.045, 0.0042, 12)
         runs = [
             {"id": "run-a", "primaryValue": 0.045},
@@ -250,13 +274,18 @@ class FactorFrontierPinTests(unittest.TestCase):
         self.assertIsNone(factor_noise_frontier(sessions, runs)["leaderRunId"])
         self.assertIsNone(factor_noise_frontier(sessions, [])["leaderRunId"])
 
-    def test_the_ledger_with_statistics_wins_over_an_earlier_unsupported_one(self) -> None:
+    def test_the_ledger_with_statistics_wins_over_an_earlier_unsupported_one(
+        self,
+    ) -> None:
         good = factor_sessions(0.045, 0.0042, 12)
         bad = [
             {
                 "selectionIntegrity": {
                     "selectionMetric": "validation_mean_ic",
-                    "researchFamily": {"trialCountAssumption": "x", "totalExecutions": 1},
+                    "researchFamily": {
+                        "trialCountAssumption": "x",
+                        "totalExecutions": 1,
+                    },
                     "selectionAdjustment": {
                         "status": "unsupported",
                         "reason": "missing-factor-hac-evidence",
@@ -277,12 +306,16 @@ class FactorFrontierUnavailableTests(unittest.TestCase):
 
         def with_statistics(**overrides):
             sessions = copy(good)
-            sessions[0]["selectionIntegrity"]["selectionAdjustment"]["statistics"].update(overrides)
+            sessions[0]["selectionIntegrity"]["selectionAdjustment"][
+                "statistics"
+            ].update(overrides)
             return sessions
 
         unsupported = copy(good)
         adjustment = unsupported[0]["selectionIntegrity"]["selectionAdjustment"]
-        adjustment.update(status="unsupported", reason="missing-factor-hac-evidence", statistics=None)
+        adjustment.update(
+            status="unsupported", reason="missing-factor-hac-evidence", statistics=None
+        )
         no_family = copy(good)
         del no_family[0]["selectionIntegrity"]["researchFamily"]
         cases = {
@@ -301,10 +334,16 @@ class FactorFrontierUnavailableTests(unittest.TestCase):
                 self.assertEqual(frontier["reasonCode"], code)
                 self.assertEqual(frontier["detail"], detail)
                 self.assertNotIn("curve", frontier)
-        for overrides in ({"rawHacPValue": 0.0}, {"observedMeanIc": 0.0}, {"uniqueTrials": 0}):
+        for overrides in (
+            {"rawHacPValue": 0.0},
+            {"observedMeanIc": 0.0},
+            {"uniqueTrials": 0},
+        ):
             with self.subTest(overrides=overrides):
                 self.assertEqual(
-                    factor_noise_frontier(with_statistics(**overrides), [])["reasonCode"],
+                    factor_noise_frontier(with_statistics(**overrides), [])[
+                        "reasonCode"
+                    ],
                     "degenerate-p-value",
                 )
         # A HAC p this small rounds 1 - p/2 to 1.0; the frontier must still
@@ -313,11 +352,15 @@ class FactorFrontierUnavailableTests(unittest.TestCase):
             with self.subTest(rawHacPValue=tiny):
                 frontier = factor_noise_frontier(with_statistics(rawHacPValue=tiny), [])
                 self.assertEqual(frontier["status"], "available", frontier)
-                self.assertTrue(all(row["expected"] >= 0.0 for row in frontier["curve"]))
+                self.assertTrue(
+                    all(row["expected"] >= 0.0 for row in frontier["curve"])
+                )
         frontier = factor_noise_frontier(with_statistics(rawHacPValue=5e-324), [])
         self.assertEqual(frontier["reasonCode"], "degenerate-p-value")
         other_metric = copy(good)
-        other_metric[0]["selectionIntegrity"]["selectionMetric"] = "validation_net_sharpe"
+        other_metric[0]["selectionIntegrity"]["selectionMetric"] = (
+            "validation_net_sharpe"
+        )
         self.assertEqual(
             factor_noise_frontier(other_metric, [])["reasonCode"], "no-factor-ledger"
         )
@@ -333,23 +376,32 @@ class PortfolioFrontierTests(unittest.TestCase):
         self.assertEqual(frontier["trials"], 4)
         self.assertEqual(frontier["axisMaximumTrials"], 50)
         self.assertEqual(frontier["selectedValue"], stats["observedAnnualizedSharpe"])
-        self.assertEqual(frontier["expectedAtTrials"], stats["expectedMaximumAnnualizedSharpe"])
+        self.assertEqual(
+            frontier["expectedAtTrials"], stats["expectedMaximumAnnualizedSharpe"]
+        )
         self.assertIs(frontier["passes"], adjustment["passes"])
-        self.assertEqual(frontier["deflatedSharpeProbability"], stats["deflatedSharpeProbability"])
+        self.assertEqual(
+            frontier["deflatedSharpeProbability"], stats["deflatedSharpeProbability"]
+        )
         dispersion = stats["trialSharpeDispersionAnnualized"]
         self.assertEqual(frontier["trialDispersion"], dispersion)
         self.assertEqual(len(frontier["curve"]), CURVE_POINTS)
         for row in frontier["curve"]:
             self.assertEqual(
-                row["expected"], dispersion * max(0.0, expected_maximum_z(row["trials"]))
+                row["expected"],
+                dispersion * max(0.0, expected_maximum_z(row["trials"])),
             )
         # The series passes through the value Core published at the trial count of the ledger.
         row = next(item for item in frontier["table"] if item["trials"] == 4.0)
-        self.assertAlmostEqual(row["expected"], stats["expectedMaximumAnnualizedSharpe"], places=12)
+        self.assertAlmostEqual(
+            row["expected"], stats["expectedMaximumAnnualizedSharpe"], places=12
+        )
         self.assertEqual(frontier["trialCountAssumption"], "unique-source-upper-bound")
 
     def test_no_series_without_core_evidence_or_trial_spread(self) -> None:
-        self.assertEqual(portfolio_noise_frontier(None, None)["reasonCode"], "no-adjustment")
+        self.assertEqual(
+            portfolio_noise_frontier(None, None)["reasonCode"], "no-adjustment"
+        )
 
         single, projection = portfolio_adjustment([1.6])
         self.assertEqual(single["status"], "available")
@@ -360,10 +412,13 @@ class PortfolioFrontierTests(unittest.TestCase):
 
         identical, projection = portfolio_adjustment([1.0, 1.0, 1.0])
         self.assertEqual(
-            portfolio_noise_frontier(identical, projection)["reasonCode"], "no-trial-dispersion"
+            portfolio_noise_frontier(identical, projection)["reasonCode"],
+            "no-trial-dispersion",
         )
 
-        refused, projection = portfolio_adjustment([0.8, 1.0, 1.2, 1.6], reproducible=False)
+        refused, projection = portfolio_adjustment(
+            [0.8, 1.0, 1.2, 1.6], reproducible=False
+        )
         frontier = portfolio_noise_frontier(refused, projection)
         self.assertEqual(frontier["reasonCode"], "adjustment-unavailable")
         self.assertEqual(
@@ -395,7 +450,9 @@ class PortfolioFrontierTests(unittest.TestCase):
         )
 
 
-FRONTEND_FIXTURE = Path(__file__).resolve().parents[1] / "studio-app/tests/noise-frontier.fixture.json"
+FRONTEND_FIXTURE = (
+    Path(__file__).resolve().parents[1] / "studio-app/tests/noise-frontier.fixture.json"
+)
 
 
 def frontend_fixture() -> dict:
@@ -405,7 +462,9 @@ def frontend_fixture() -> dict:
     single, projection = portfolio_adjustment([1.6])
     adjustment, family_projection = portfolio_adjustment([0.8, 1.0, 1.2, 1.6])
     return {
-        "factor": factor_noise_frontier(factor, [{"id": "run-leader", "primaryValue": 0.045}]),
+        "factor": factor_noise_frontier(
+            factor, [{"id": "run-leader", "primaryValue": 0.045}]
+        ),
         "factorUnavailable": factor_noise_frontier([], []),
         "portfolio": portfolio_noise_frontier(adjustment, family_projection),
         "portfolioUnavailable": portfolio_noise_frontier(single, projection),
@@ -422,7 +481,9 @@ def assert_close(test: unittest.TestCase, actual, expected, path: str = "") -> N
         for index, (left, right) in enumerate(zip(actual, expected)):
             assert_close(test, left, right, f"{path}[{index}]")
     elif isinstance(expected, float):
-        test.assertAlmostEqual(actual, expected, delta=1e-12 * max(1.0, abs(expected)), msg=path)
+        test.assertAlmostEqual(
+            actual, expected, delta=1e-12 * max(1.0, abs(expected)), msg=path
+        )
     else:
         test.assertEqual(actual, expected, path)
 

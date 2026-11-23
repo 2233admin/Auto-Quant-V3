@@ -141,6 +141,7 @@ AVAILABILITY_COLUMNS = [
 ]
 _HORIZON_CONFIGURATION_LOCK = threading.RLock()
 
+
 def _configure_horizons(
     run: RunContext,
     report: dict[str, Any],
@@ -168,8 +169,7 @@ def _configure_horizons(
     if (
         not isinstance(dependencies, dict)
         or RESEARCH_HORIZON not in dependencies.get("paths", [])
-        or RESEARCH_HORIZON
-        not in dependencies.get("sourceHashes", {})
+        or RESEARCH_HORIZON not in dependencies.get("sourceHashes", {})
     ):
         _fail(
             "RunResult/dependencies",
@@ -206,11 +206,14 @@ def _configure_horizons(
     ]
     return horizon
 
+
 def _issue(path: Path | str, code: str, message: str) -> ValidationIssue:
     return ValidationIssue(str(path), code, message)
 
+
 def _fail(path: Path | str, code: str, message: str) -> None:
     raise AutoQuantValidationError([_issue(path, code, message)])
+
 
 def _finite(value: Any, path: Path | str) -> float:
     try:
@@ -246,11 +249,7 @@ def _bounded(
 
 
 def _integer(value: Any, path: Path | str, *, minimum: int = 0) -> int:
-    if (
-        not isinstance(value, int)
-        or isinstance(value, bool)
-        or value < minimum
-    ):
+    if not isinstance(value, int) or isinstance(value, bool) or value < minimum:
         _fail(path, "factor.integer", f"Expected an integer >= {minimum}")
     return value
 
@@ -373,9 +372,7 @@ def _artifact_paths(
             "Run does not declare the fixed Factor artifact set: "
             + ", ".join(sorted(missing)),
         )
-    qualification_metrics = run.result.get("metrics", {}).get(
-        "factor_qualification"
-    )
+    qualification_metrics = run.result.get("metrics", {}).get("factor_qualification")
     has_qualification_artifact = QUALIFICATION_ARTIFACT_KIND in paths
     if (qualification_metrics is not None) != has_qualification_artifact:
         _fail(
@@ -383,9 +380,7 @@ def _artifact_paths(
             "factor.qualification-artifact",
             "Factor qualification metrics and artifact must appear together",
         )
-    component_metrics = run.result.get("metrics", {}).get(
-        "factor_components"
-    )
+    component_metrics = run.result.get("metrics", {}).get("factor_components")
     has_component_artifact = COMPONENT_ARTIFACT_KIND in paths
     if (component_metrics is not None) != has_component_artifact:
         _fail(
@@ -393,16 +388,13 @@ def _artifact_paths(
             "factor.component-artifact",
             "Factor component metrics and artifact must appear together",
         )
-    availability_metrics = run.result.get("metrics", {}).get(
-        "input_availability"
-    )
+    availability_metrics = run.result.get("metrics", {}).get("input_availability")
     has_availability_artifact = AVAILABILITY_ARTIFACT_KIND in paths
     if (availability_metrics is not None) != has_availability_artifact:
         _fail(
             run.root_dir,
             "factor.availability-artifact",
-            "Factor input-availability metrics and artifact must appear "
-            "together",
+            "Factor input-availability metrics and artifact must appear together",
         )
     return paths, identities
 
@@ -577,8 +569,10 @@ def _csv_integer(
         parsed = int(value)
     except (TypeError, ValueError):
         _fail(path, "factor.integer", "Expected an integer")
-    if str(parsed) != value or parsed < minimum or (
-        maximum is not None and parsed > maximum
+    if (
+        str(parsed) != value
+        or parsed < minimum
+        or (maximum is not None and parsed > maximum)
     ):
         _fail(path, "factor.integer", "Integer is outside the fixed bounds")
     return parsed
@@ -665,9 +659,7 @@ def _availability(
         median = (
             float(ordered[midpoint])
             if len(ordered) % 2
-            else float(
-                (ordered[midpoint - 1] + ordered[midpoint]) / 2
-            )
+            else float((ordered[midpoint - 1] + ordered[midpoint]) / 2)
         )
         expected = {
             "minimum": min(values),
@@ -699,9 +691,7 @@ def _availability(
         )
     observed_rows = sum(row["inputAssets"] for row in rows)
     possible_rows = len(rows) * maximum_assets
-    minimum_assets = raw_metrics.get(
-        "minimum_assets_per_factor_timestamp"
-    )
+    minimum_assets = raw_metrics.get("minimum_assets_per_factor_timestamp")
     if (
         raw_metrics.get("method") != "observed-only-no-fill-v1"
         or raw_metrics.get("missing_observation") != "absent-no-fill"
@@ -723,10 +713,9 @@ def _availability(
         "input observation coverage",
     )
     raw_eligible = raw_metrics.get("eligible_factor_timestamps")
-    if (
-        not isinstance(raw_eligible, dict)
-        or set(raw_eligible) != {str(item) for item in HORIZONS}
-    ):
+    if not isinstance(raw_eligible, dict) or set(raw_eligible) != {
+        str(item) for item in HORIZONS
+    }:
         _fail(
             "input_availability/eligible_factor_timestamps",
             "factor.availability",
@@ -736,16 +725,12 @@ def _availability(
         {
             "horizon": horizon,
             "timestamps": sum(
-                row["pairedAssets"][str(horizon)] >= minimum_assets
-                for row in rows
+                row["pairedAssets"][str(horizon)] >= minimum_assets for row in rows
             ),
         }
         for horizon in HORIZONS
     ]
-    if {
-        str(item["horizon"]): item["timestamps"]
-        for item in eligible
-    } != raw_eligible:
+    if {str(item["horizon"]): item["timestamps"] for item in eligible} != raw_eligible:
         _fail(
             "input_availability/eligible_factor_timestamps",
             "factor.availability-reconciliation",
@@ -770,19 +755,13 @@ def _availability(
             "input_availability/assets_per_timestamp/factor",
         ),
         "primaryPair": count_summary(
-            [
-                row["pairedAssets"][str(PRIMARY_HORIZON)]
-                for row in rows
-            ],
+            [row["pairedAssets"][str(PRIMARY_HORIZON)] for row in rows],
             raw_counts.get("primary_pair"),
             "input_availability/assets_per_timestamp/primary_pair",
         ),
     }
     raw_by_asset = raw_metrics.get("by_asset")
-    if (
-        not isinstance(raw_by_asset, dict)
-        or set(raw_by_asset) != set(universe)
-    ):
+    if not isinstance(raw_by_asset, dict) or set(raw_by_asset) != set(universe):
         _fail(
             "input_availability/by_asset",
             "factor.availability-universe",
@@ -887,9 +866,7 @@ def _prediction_universe(
             "researchAssets": population["research_assets"],
             "predictionAssets": population["prediction_assets"],
             "contextAssets": population["context_assets"],
-            "assetPredictionRoles": population[
-                "asset_prediction_roles"
-            ],
+            "assetPredictionRoles": population["asset_prediction_roles"],
             "evaluationAuthority": population["evaluation_authority"],
             "portfolioAuthority": population["portfolio_authority"],
             "relativeValuePair": population["relative_value_pair"],
@@ -903,15 +880,11 @@ def _prediction_universe(
         "asset_position_roles",
         "trading_authority",
     }
-    if (
-        not isinstance(raw, dict)
-        or frozenset(raw)
-        not in {
-            frozenset(required),
-            frozenset(required | {"evaluation_mode"}),
-            frozenset(required | {"evaluation_mode", "relative_value_pair"}),
-        }
-    ):
+    if not isinstance(raw, dict) or frozenset(raw) not in {
+        frozenset(required),
+        frozenset(required | {"evaluation_mode"}),
+        frozenset(required | {"evaluation_mode", "relative_value_pair"}),
+    }:
         _fail(
             "RunResult/metrics/prediction_universe",
             "factor.prediction-universe",
@@ -971,10 +944,7 @@ def _prediction_universe(
             evaluation_mode == TWO_ASSET_RELATIVE_VALUE_MODE
             and len(prediction_assets) != 2
         )
-        or (
-            evaluation_mode == CROSS_SECTIONAL_MODE
-            and len(prediction_assets) < 4
-        )
+        or (evaluation_mode == CROSS_SECTIONAL_MODE and len(prediction_assets) < 4)
         or relative_value_pair != expected_relative_value_pair
     ):
         _fail(
@@ -1115,8 +1085,7 @@ def _reconcile_daily(
             rank = [
                 row[f"rankIcH{horizon}"]
                 for row in daily.rows
-                if row["split"] == split_name
-                and row[f"rankIcH{horizon}"] is not None
+                if row["split"] == split_name and row[f"rankIcH{horizon}"] is not None
             ]
             pearson = [
                 row[f"pearsonIcH{horizon}"]
@@ -1137,10 +1106,9 @@ def _reconcile_daily(
                 "mean rank IC",
             )
             expected_pearson = expected.get("pearson_ic")
-            if (
-                not isinstance(expected_pearson, dict)
-                or len(pearson) != expected_pearson.get("observations")
-            ):
+            if not isinstance(expected_pearson, dict) or len(
+                pearson
+            ) != expected_pearson.get("observations"):
                 _fail(
                     f"{split_name}/{horizon}/pearson",
                     "factor.reconciliation",
@@ -1268,8 +1236,7 @@ def _monotonicity(means: list[float]) -> float | None:
     center_x = 1.0
     center_y = sum(ranks) / 3.0
     numerator = sum(
-        (index - center_x) * (rank - center_y)
-        for index, rank in enumerate(ranks)
+        (index - center_x) * (rank - center_y) for index, rank in enumerate(ranks)
     )
     left = sum((index - center_x) ** 2 for index in range(3))
     right = sum((rank - center_y) ** 2 for rank in ranks)
@@ -1307,9 +1274,8 @@ def _reconcile_quantiles(
                 if row["horizon"] == horizon and row["split"] == split_name
             ]
             expected = raw_horizon[split_name]
-            if (
-                not isinstance(expected, dict)
-                or len(selected) != expected.get("observations")
+            if not isinstance(expected, dict) or len(selected) != expected.get(
+                "observations"
             ):
                 _fail(
                     f"quantiles/{horizon}/{split_name}",
@@ -1441,8 +1407,7 @@ def _parse_factor_qualification(
                 ),
                 "meanAbsoluteRankCorrelation": _optional_finite(
                     value.get("mean_absolute_rank_correlation"),
-                    f"qualification/candidates/{style}/"
-                    "mean_absolute_rank_correlation",
+                    f"qualification/candidates/{style}/mean_absolute_rank_correlation",
                 ),
                 "observations": _integer(
                     value.get("observations"),
@@ -1497,10 +1462,7 @@ def _parse_factor_qualification(
     ):
         row_path = f"{path}:{row_number}"
         timestamp = _session_date(raw["timestamp"], f"{row_path}/timestamp")
-        if (
-            timestamp != daily_row["timestamp"]
-            or raw["split"] != daily_row["split"]
-        ):
+        if timestamp != daily_row["timestamp"] or raw["split"] != daily_row["split"]:
             _fail(
                 row_path,
                 "factor.qualification-identity",
@@ -1561,10 +1523,7 @@ def _parse_factor_qualification(
         )
     for horizon in HORIZONS:
         horizon_value = quality[str(horizon)]
-        if (
-            not isinstance(horizon_value, dict)
-            or set(horizon_value) != set(SPLITS)
-        ):
+        if not isinstance(horizon_value, dict) or set(horizon_value) != set(SPLITS):
             _fail(
                 f"factor_qualification/horizon_quality/{horizon}",
                 "factor.qualification-quality",
@@ -1572,9 +1531,8 @@ def _parse_factor_qualification(
             )
         for split_name in SPLITS:
             split_value = horizon_value[split_name]
-            if (
-                not isinstance(split_value, dict)
-                or set(split_value) != set(QUALIFICATION_SIGNALS)
+            if not isinstance(split_value, dict) or set(split_value) != set(
+                QUALIFICATION_SIGNALS
             ):
                 _fail(
                     f"factor_qualification/{horizon}/{split_name}",
@@ -1589,9 +1547,8 @@ def _parse_factor_qualification(
                     if row["split"] == split_name
                     and row[f"{signal}RankIcH{horizon}"] is not None
                 ]
-                if (
-                    not isinstance(expected, dict)
-                    or len(observed) != expected.get("observations")
+                if not isinstance(expected, dict) or len(observed) != expected.get(
+                    "observations"
                 ):
                     _fail(
                         f"factor_qualification/{horizon}/{split_name}/{signal}",
@@ -1673,9 +1630,7 @@ def _ic_summary(value: Any, path: str) -> dict[str, Any]:
 def _factor_qualification_projection(
     parsed: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    method = (
-        parsed["method"] if parsed is not None else QUALIFICATION_METHOD
-    )
+    method = parsed["method"] if parsed is not None else QUALIFICATION_METHOD
     base = {
         "method": method,
         "authority": "research-prioritization-only",
@@ -1703,13 +1658,10 @@ def _factor_qualification_projection(
     )
     if (
         not isinstance(semantics, dict)
-        or semantics.get("neutralization")
-        != expected_neutralization
-        or semantics.get("blend")
-        != expected_blend
+        or semantics.get("neutralization") != expected_neutralization
+        or semantics.get("blend") != expected_blend
         or semantics.get("target_enters_neutralization") is not False
-        or semantics.get("selection_authority")
-        != "research-context-only"
+        or semantics.get("selection_authority") != "research-context-only"
         or semantics.get("trading_authority") != "none"
     ):
         _fail(
@@ -1729,11 +1681,7 @@ def _factor_qualification_projection(
         if isinstance(stability, dict)
         else None
     )
-    expected_folds = {
-        f"{split}_{number}"
-        for split in SPLITS
-        for number in (1, 2)
-    }
+    expected_folds = {f"{split}_{number}" for split in SPLITS for number in (1, 2)}
     if (
         not isinstance(candidate_folds, dict)
         or set(candidate_folds) != expected_folds
@@ -1771,10 +1719,7 @@ def _factor_qualification_projection(
         residual_ic = summaries["styleNeutralCandidate"]["meanRankIc"]
         style_ic = summaries["dominantStyle"]["meanRankIc"]
         blend_ic = summaries["equalRankBlend"]["meanRankIc"]
-        if any(
-            value is None
-            for value in (raw_ic, residual_ic, style_ic, blend_ic)
-        ):
+        if any(value is None for value in (raw_ic, residual_ic, style_ic, blend_ic)):
             _fail(
                 f"factor_qualification/{primary}/{split}",
                 "factor.qualification-evidence",
@@ -1807,14 +1752,10 @@ def _factor_qualification_projection(
             if name.startswith(f"{split}_")
         ]
         finite_candidate_folds = [
-            item
-            for item in candidate_fold_rows
-            if item["meanRankIc"] is not None
+            item for item in candidate_fold_rows if item["meanRankIc"] is not None
         ]
         finite_residual_folds = [
-            item
-            for item in residual_fold_rows
-            if item["meanRankIc"] is not None
+            item for item in residual_fold_rows if item["meanRankIc"] is not None
         ]
         worst_candidate_fold = (
             min(
@@ -1837,9 +1778,7 @@ def _factor_qualification_projection(
             **summaries,
             "incremental": {
                 "styleNeutralIcRetention": (
-                    residual_ic / raw_ic
-                    if abs(raw_ic) > 1e-12
-                    else None
+                    residual_ic / raw_ic if abs(raw_ic) > 1e-12 else None
                 ),
                 "styleNeutralIcDelta": residual_ic - raw_ic,
                 "blendUpliftVsStyle": blend_ic - style_ic,
@@ -1860,15 +1799,11 @@ def _factor_qualification_projection(
     blend_uplift = validation["incremental"]["blendUpliftVsStyle"]
     worst_residual = validation["weakestStyleNeutralFold"]
     worst_residual_ic = (
-        worst_residual["meanRankIc"]
-        if worst_residual is not None
-        else None
+        worst_residual["meanRankIc"] if worst_residual is not None else None
     )
     worst_candidate = validation["weakestCandidateFold"]
     worst_candidate_ic = (
-        worst_candidate["meanRankIc"]
-        if worst_candidate is not None
-        else None
+        worst_candidate["meanRankIc"] if worst_candidate is not None else None
     )
     selected_candidate = next(
         item
@@ -1876,12 +1811,8 @@ def _factor_qualification_projection(
         if item["style"] == parsed["dominantStyle"]
     )
     identity_correlation = selected_candidate["meanRankCorrelation"]
-    if (
-        claim["claim"] == "known-style-validation"
-        and (
-            identity_correlation is None
-            or identity_correlation < 0.95
-        )
+    if claim["claim"] == "known-style-validation" and (
+        identity_correlation is None or identity_correlation < 0.95
     ):
         stage = "known-style-identity-mismatch"
         focus = "known-style-implementation-identity"
@@ -1896,10 +1827,7 @@ def _factor_qualification_projection(
             "Validation raw candidate rank IC is non-positive; style "
             "neutralization and blending cannot rescue the first missing edge."
         )
-    elif (
-        raw_hac_t is None
-        or raw_hac_t < QUALIFICATION_MIN_POSITIVE_HAC_T
-    ):
+    elif raw_hac_t is None or raw_hac_t < QUALIFICATION_MIN_POSITIVE_HAC_T:
         stage = "raw-statistical-evidence-weak"
         focus = "independent-sample-and-effect-size"
         explanation = (
@@ -1908,16 +1836,10 @@ def _factor_qualification_projection(
             f"{QUALIFICATION_MIN_POSITIVE_HAC_T:.2f}; do not spend complexity "
             "on neutralization, Portfolio, or RL yet."
         )
-    elif (
-        claim["claim"] in {
-            "decision-signal",
-            "known-style-validation",
-        }
-        and (
-            worst_candidate_ic is None
-            or worst_candidate_ic <= 0.0
-        )
-    ):
+    elif claim["claim"] in {
+        "decision-signal",
+        "known-style-validation",
+    } and (worst_candidate_ic is None or worst_candidate_ic <= 0.0):
         stage = (
             "decision-signal-temporal-instability"
             if claim["claim"] == "decision-signal"
@@ -1928,10 +1850,7 @@ def _factor_qualification_projection(
             "Aggregate validation raw candidate IC is positive, but at least "
             "one fixed chronological candidate fold is non-positive."
         )
-    elif (
-        claim["claim"] == "decision-signal"
-        and outcome_kind != FORWARD_RETURN_OUTCOME
-    ):
+    elif claim["claim"] == "decision-signal" and outcome_kind != FORWARD_RETURN_OUTCOME:
         stage = "risk-forecast-positive"
         focus = "risk-model-report-and-external-holdout"
         explanation = (
@@ -1976,10 +1895,7 @@ def _factor_qualification_projection(
             "Validation raw rank IC is positive but becomes non-positive after "
             "removing the train-selected dominant style exposure."
         )
-    elif (
-        residual_hac_t is None
-        or residual_hac_t < QUALIFICATION_MIN_POSITIVE_HAC_T
-    ):
+    elif residual_hac_t is None or residual_hac_t < QUALIFICATION_MIN_POSITIVE_HAC_T:
         stage = "style-neutral-statistical-evidence-weak"
         focus = "residual-sample-and-effect-size"
         explanation = (
@@ -2031,9 +1947,7 @@ def _factor_qualification_projection(
                         {
                             "candidate": "candidate",
                             "dominant_style": "dominantStyle",
-                            "style_neutral_candidate": (
-                                "styleNeutralCandidate"
-                            ),
+                            "style_neutral_candidate": ("styleNeutralCandidate"),
                             "equal_rank_blend": "equalRankBlend",
                         }[signal]: _rank_summary(
                             quality[str(horizon)][split][signal],
@@ -2077,9 +1991,7 @@ def _factor_qualification_projection(
             "factorPromotionAuthority": False,
             "rlAdmissionAuthority": False,
             "diagnosticThresholds": {
-                "minimumPositiveHacTStatistic": (
-                    QUALIFICATION_MIN_POSITIVE_HAC_T
-                ),
+                "minimumPositiveHacTStatistic": (QUALIFICATION_MIN_POSITIVE_HAC_T),
                 "minimumKnownStyleRankIdentity": 0.95,
                 "selectionAdjustedSignificanceRequiredSeparately": True,
             },
@@ -2140,10 +2052,7 @@ def _association_summary(value: Any, path: str) -> dict[str, Any]:
 
 
 def _component_horizon_quality(value: Any, path: str) -> list[dict[str, Any]]:
-    if (
-        not isinstance(value, dict)
-        or set(value) != {str(item) for item in HORIZONS}
-    ):
+    if not isinstance(value, dict) or set(value) != {str(item) for item in HORIZONS}:
         _fail(
             path,
             "factor.component-horizons",
@@ -2174,9 +2083,7 @@ def _quality_split(
 ) -> dict[str, Any]:
     if horizon is None:
         horizon = PRIMARY_HORIZON
-    return next(
-        row[split] for row in profile if row["horizon"] == horizon
-    )
+    return next(row[split] for row in profile if row["horizon"] == horizon)
 
 
 def _context_distribution_projection(value: Any, path: str) -> dict[str, Any]:
@@ -2275,7 +2182,9 @@ def _timestamp_context_projection(
         _fail(path, "factor.component-context", "Context thresholds are unordered")
     raw_splits = value.get("splits")
     if not isinstance(raw_splits, dict) or set(raw_splits) != set(SPLITS):
-        _fail(path, "factor.component-context", "Context evidence must cover every split")
+        _fail(
+            path, "factor.component-context", "Context evidence must cover every split"
+        )
     projected_splits: dict[str, Any] = {}
     for split in SPLITS:
         raw = raw_splits[split]
@@ -2286,7 +2195,9 @@ def _timestamp_context_projection(
             "transitions",
             "conditional_factor_horizon_quality",
         }:
-            _fail(split_path, "factor.component-context", "Invalid context split evidence")
+            _fail(
+                split_path, "factor.component-context", "Invalid context split evidence"
+            )
         distribution = _context_distribution_projection(
             raw["distribution"],
             f"{split_path}/distribution",
@@ -2327,7 +2238,9 @@ def _timestamp_context_projection(
                 "rate": rate,
             }
         if total != distribution["observations"]:
-            _fail(split_path, "factor.component-context", "Occupancy does not reconcile")
+            _fail(
+                split_path, "factor.component-context", "Occupancy does not reconcile"
+            )
         transitions = raw["transitions"]
         if not isinstance(transitions, dict) or set(transitions) != {
             "observations",
@@ -2354,13 +2267,16 @@ def _timestamp_context_projection(
             else None
         )
         if changes > transition_observations:
-            _fail(split_path, "factor.component-context", "Transition count is impossible")
+            _fail(
+                split_path, "factor.component-context", "Transition count is impossible"
+            )
         conditional = raw["conditional_factor_horizon_quality"]
-        if (
-            not isinstance(conditional, dict)
-            or set(conditional) != {str(item) for item in HORIZONS}
-        ):
-            _fail(split_path, "factor.component-context", "Invalid conditional horizons")
+        if not isinstance(conditional, dict) or set(conditional) != {
+            str(item) for item in HORIZONS
+        }:
+            _fail(
+                split_path, "factor.component-context", "Invalid conditional horizons"
+            )
         conditional_profile = [
             {
                 "horizon": horizon,
@@ -2464,10 +2380,7 @@ def _factor_components_projection(
             "source inference",
         )
     declared = declaration.get("components")
-    if (
-        not isinstance(declared, list)
-        or not 1 <= len(declared) <= MAX_COMPONENTS
-    ):
+    if not isinstance(declared, list) or not 1 <= len(declared) <= MAX_COMPONENTS:
         _fail(
             "factor_components/declaration/components",
             "factor.components-count",
@@ -2496,8 +2409,7 @@ def _factor_components_projection(
             or component_id in declared_by_id
             or not isinstance(item.get("label"), str)
             or not item["label"]
-            or item.get("role")
-            not in {"cross-sectional-score", "timestamp-context"}
+            or item.get("role") not in {"cross-sectional-score", "timestamp-context"}
             or not isinstance(item.get("hypothesis"), str)
             or not item["hypothesis"]
             or not isinstance(intervals, list)
@@ -2560,9 +2472,8 @@ def _factor_components_projection(
         )
 
     raw_components = evidence.get("components")
-    if (
-        not isinstance(raw_components, list)
-        or len(raw_components) != len(declared_by_id)
+    if not isinstance(raw_components, list) or len(raw_components) != len(
+        declared_by_id
     ):
         _fail(
             "factor_components/components",
@@ -2642,8 +2553,7 @@ def _factor_components_projection(
             maximum=1.0,
         )
         _close(
-            sum(item["coverage"] for item in coverage_rows)
-            / len(coverage_rows),
+            sum(item["coverage"] for item in coverage_rows) / len(coverage_rows),
             mean_coverage,
             f"{path}/mean_coverage",
             "mean component coverage",
@@ -2744,9 +2654,7 @@ def _factor_components_projection(
             f"{path}/raw_horizon_quality",
         )
         associations = raw.get("composite_association")
-        if not isinstance(associations, dict) or set(associations) != set(
-            SPLITS
-        ):
+        if not isinstance(associations, dict) or set(associations) != set(SPLITS):
             _fail(
                 f"{path}/composite_association",
                 "factor.component-association",
@@ -2773,9 +2681,7 @@ def _factor_components_projection(
                 "Nearest-peer evidence is invalid",
             )
         peer = nearest.get("id")
-        if peer is not None and (
-            peer not in declared_by_id or peer == component_id
-        ):
+        if peer is not None and (peer not in declared_by_id or peer == component_id):
             _fail(
                 f"{path}/nearest_peer/id",
                 "factor.component-peer",
@@ -2788,16 +2694,20 @@ def _factor_components_projection(
                 minimum=0.0,
                 maximum=1.0,
             )
-            if nearest.get("train_mean_absolute_rank_association")
-            is not None
+            if nearest.get("train_mean_absolute_rank_association") is not None
             else None
         )
         residual = raw.get("nearest_peer_residual")
-        if not isinstance(residual, dict) or set(residual) != {
-            "peer",
-            "selection",
-            "horizon_quality",
-        } or residual.get("peer") != peer:
+        if (
+            not isinstance(residual, dict)
+            or set(residual)
+            != {
+                "peer",
+                "selection",
+                "horizon_quality",
+            }
+            or residual.get("peer") != peer
+        ):
             _fail(
                 f"{path}/nearest_peer_residual",
                 "factor.component-residual",
@@ -2842,9 +2752,7 @@ def _factor_components_projection(
                 "factor.component-priority",
                 "Validation component priority inputs are invalid",
             )
-        raw_validation = _quality_split(raw_profile, "validation")[
-            "meanRankIc"
-        ]
+        raw_validation = _quality_split(raw_profile, "validation")["meanRankIc"]
         _close(
             raw_validation,
             priority["raw_mean_ic"],
@@ -2859,14 +2767,12 @@ def _factor_components_projection(
         _close(
             residual_validation,
             priority["nearest_peer_residual_mean_ic"],
-            f"{path}/validation_priority_inputs/"
-            "nearest_peer_residual_mean_ic",
+            f"{path}/validation_priority_inputs/nearest_peer_residual_mean_ic",
             "validation nearest-peer residual IC",
         )
         removal_deltas = ablation.get("removal_delta_mean_ic")
         if ablation.get("available") is True and (
-            not isinstance(removal_deltas, dict)
-            or set(removal_deltas) != set(SPLITS)
+            not isinstance(removal_deltas, dict) or set(removal_deltas) != set(SPLITS)
         ):
             _fail(
                 f"{path}/fixed_blend_ablation/removal_delta_mean_ic",
@@ -2908,18 +2814,14 @@ def _factor_components_projection(
                             for split in SPLITS
                         }
                         if ablation.get("available") is True
-                        and isinstance(
-                            ablation.get("removal_delta_mean_ic"), dict
-                        )
+                        and isinstance(ablation.get("removal_delta_mean_ic"), dict)
                         else None
                     ),
                 },
                 "timestampContext": None,
                 "validation": {
                     "raw": _quality_split(raw_profile, "validation"),
-                    "compositeAssociation": projected_association[
-                        "validation"
-                    ],
+                    "compositeAssociation": projected_association["validation"],
                     "nearestPeerResidual": (
                         _quality_split(residual_profile, "validation")
                         if residual_profile is not None
@@ -2927,16 +2829,10 @@ def _factor_components_projection(
                     ),
                     "fixedBlendRemovalDeltaMeanIc": (
                         _finite(
-                            priority[
-                                "removal_delta_mean_ic"
-                            ],
-                            f"{path}/validation_priority_inputs/"
-                            "removal_delta_mean_ic",
+                            priority["removal_delta_mean_ic"],
+                            f"{path}/validation_priority_inputs/removal_delta_mean_ic",
                         )
-                        if priority[
-                            "removal_delta_mean_ic"
-                        ]
-                        is not None
+                        if priority["removal_delta_mean_ic"] is not None
                         else None
                     ),
                     "context": None,
@@ -2953,8 +2849,7 @@ def _factor_components_projection(
                     "fixedBlendRemovalDeltaMeanIc": (
                         _finite(
                             ablation["removal_delta_mean_ic"]["test"],
-                            f"{path}/fixed_blend_ablation/"
-                            "removal_delta_mean_ic/test",
+                            f"{path}/fixed_blend_ablation/removal_delta_mean_ic/test",
                         )
                         if ablation.get("available") is True
                         else None
@@ -3040,7 +2935,7 @@ def _factor_components_projection(
     if not isinstance(fixed_blend, dict) or set(fixed_blend) != {
         "available",
         "reason",
-        "horizon_quality"
+        "horizon_quality",
     }:
         _fail(
             "factor_components/fixed_blend",
@@ -3056,17 +2951,12 @@ def _factor_components_projection(
         else None
     )
     if (
-        (fixed_blend.get("available") is True)
-        != bool(score_ids)
-        or (
-            score_ids
-            and fixed_blend.get("reason") is not None
-        )
+        (fixed_blend.get("available") is True) != bool(score_ids)
+        or (score_ids and fixed_blend.get("reason") is not None)
         or (
             not score_ids
             and (
-                fixed_blend.get("reason")
-                != "no-cross-sectional-score-components"
+                fixed_blend.get("reason") != "no-cross-sectional-score-components"
                 or fixed_blend.get("horizon_quality") is not None
             )
         )
@@ -3112,18 +3002,22 @@ def _factor_components_projection(
             "Component trial disclosure does not reconcile",
         )
     diagnosis = evidence.get("validation_diagnosis")
-    if not isinstance(diagnosis, dict) or set(diagnosis) != {
-        "strongest_raw_component",
-        "strongest_raw_mean_ic",
-        "strongest_residual_component",
-        "strongest_residual_mean_ic",
-        "removal_most_improves_fixed_blend",
-        "best_removal_delta_mean_ic",
-        "most_redundant_pair",
-        "authority",
-        "test_enters_diagnosis",
-    } or diagnosis.get("authority") != "research-prioritization-only" or (
-        diagnosis.get("test_enters_diagnosis") is not False
+    if (
+        not isinstance(diagnosis, dict)
+        or set(diagnosis)
+        != {
+            "strongest_raw_component",
+            "strongest_raw_mean_ic",
+            "strongest_residual_component",
+            "strongest_residual_mean_ic",
+            "removal_most_improves_fixed_blend",
+            "best_removal_delta_mean_ic",
+            "most_redundant_pair",
+            "authority",
+            "test_enters_diagnosis",
+        }
+        or diagnosis.get("authority") != "research-prioritization-only"
+        or (diagnosis.get("test_enters_diagnosis") is not False)
     ):
         _fail(
             "factor_components/validation_diagnosis",
@@ -3155,8 +3049,7 @@ def _factor_components_projection(
     )
     if diagnosis["strongest_raw_component"] != expected_raw_id:
         _fail(
-            "factor_components/validation_diagnosis/"
-            "strongest_raw_component",
+            "factor_components/validation_diagnosis/strongest_raw_component",
             "factor.component-diagnosis",
             "Strongest raw component does not reconcile validation evidence",
         )
@@ -3175,11 +3068,7 @@ def _factor_components_projection(
         max(
             residual_rows,
             key=lambda row: (
-                float(
-                    row["validation"]["nearestPeerResidual"][
-                        "meanRankIc"
-                    ]
-                ),
+                float(row["validation"]["nearestPeerResidual"]["meanRankIc"]),
                 row["id"],
             ),
         )
@@ -3190,24 +3079,20 @@ def _factor_components_projection(
         strongest_residual["id"] if strongest_residual is not None else None
     )
     expected_residual_ic = (
-        strongest_residual["validation"]["nearestPeerResidual"][
-            "meanRankIc"
-        ]
+        strongest_residual["validation"]["nearestPeerResidual"]["meanRankIc"]
         if strongest_residual is not None
         else None
     )
     if diagnosis["strongest_residual_component"] != expected_residual_id:
         _fail(
-            "factor_components/validation_diagnosis/"
-            "strongest_residual_component",
+            "factor_components/validation_diagnosis/strongest_residual_component",
             "factor.component-diagnosis",
             "Strongest residual component does not reconcile",
         )
     _close(
         expected_residual_ic,
         diagnosis["strongest_residual_mean_ic"],
-        "factor_components/validation_diagnosis/"
-        "strongest_residual_mean_ic",
+        "factor_components/validation_diagnosis/strongest_residual_mean_ic",
         "strongest residual component IC",
     )
     removal_rows = [
@@ -3219,18 +3104,14 @@ def _factor_components_projection(
         max(
             removal_rows,
             key=lambda row: (
-                float(
-                    row["validation"]["fixedBlendRemovalDeltaMeanIc"]
-                ),
+                float(row["validation"]["fixedBlendRemovalDeltaMeanIc"]),
                 row["id"],
             ),
         )
         if removal_rows
         else None
     )
-    expected_removal_id = (
-        best_removal["id"] if best_removal is not None else None
-    )
+    expected_removal_id = best_removal["id"] if best_removal is not None else None
     expected_removal_delta = (
         best_removal["validation"]["fixedBlendRemovalDeltaMeanIc"]
         if best_removal is not None
@@ -3238,16 +3119,14 @@ def _factor_components_projection(
     )
     if diagnosis["removal_most_improves_fixed_blend"] != expected_removal_id:
         _fail(
-            "factor_components/validation_diagnosis/"
-            "removal_most_improves_fixed_blend",
+            "factor_components/validation_diagnosis/removal_most_improves_fixed_blend",
             "factor.component-diagnosis",
             "Best fixed-blend removal does not reconcile",
         )
     _close(
         expected_removal_delta,
         diagnosis["best_removal_delta_mean_ic"],
-        "factor_components/validation_diagnosis/"
-        "best_removal_delta_mean_ic",
+        "factor_components/validation_diagnosis/best_removal_delta_mean_ic",
         "best fixed-blend removal delta",
     )
     finite_pair_rows = [
@@ -3259,9 +3138,7 @@ def _factor_components_projection(
         max(
             finite_pair_rows,
             key=lambda row: (
-                float(
-                    row["train"]["meanAbsoluteRankAssociation"] or -1.0
-                ),
+                float(row["train"]["meanAbsoluteRankAssociation"] or -1.0),
                 row["left"],
                 row["right"],
             ),
@@ -3274,9 +3151,9 @@ def _factor_components_projection(
         {
             "left": redundant_pair["left"],
             "right": redundant_pair["right"],
-            "train_mean_absolute_rank_association": redundant_pair[
-                "train"
-            ]["meanAbsoluteRankAssociation"],
+            "train_mean_absolute_rank_association": redundant_pair["train"][
+                "meanAbsoluteRankAssociation"
+            ],
         }
         if redundant_pair is not None
         else None
@@ -3319,9 +3196,7 @@ def _factor_components_projection(
             "entersPromotionScore": False,
         },
         "validationDiagnosis": {
-            "strongestRawComponent": diagnosis[
-                "strongest_raw_component"
-            ],
+            "strongestRawComponent": diagnosis["strongest_raw_component"],
             "strongestRawMeanIc": (
                 _finite(
                     diagnosis["strongest_raw_mean_ic"],
@@ -3330,14 +3205,11 @@ def _factor_components_projection(
                 if diagnosis["strongest_raw_mean_ic"] is not None
                 else None
             ),
-            "strongestResidualComponent": diagnosis[
-                "strongest_residual_component"
-            ],
+            "strongestResidualComponent": diagnosis["strongest_residual_component"],
             "strongestResidualMeanIc": (
                 _finite(
                     diagnosis["strongest_residual_mean_ic"],
-                    "factor_components/diagnosis/"
-                    "strongest_residual_mean_ic",
+                    "factor_components/diagnosis/strongest_residual_mean_ic",
                 )
                 if diagnosis["strongest_residual_mean_ic"] is not None
                 else None
@@ -3348,8 +3220,7 @@ def _factor_components_projection(
             "bestRemovalDeltaMeanIc": (
                 _finite(
                     diagnosis["best_removal_delta_mean_ic"],
-                    "factor_components/diagnosis/"
-                    "best_removal_delta_mean_ic",
+                    "factor_components/diagnosis/best_removal_delta_mean_ic",
                 )
                 if diagnosis["best_removal_delta_mean_ic"] is not None
                 else None
@@ -3431,13 +3302,9 @@ def _summary(metrics: dict[str, Any]) -> dict[str, Any]:
         for name, value in styles.items()
         if isinstance(value, dict)
     ]
-    finite_styles = [
-        (name, value) for name, value in style_values if value is not None
-    ]
+    finite_styles = [(name, value) for name, value in style_values if value is not None]
     maximum_style = (
-        max(finite_styles, key=lambda item: abs(item[1]))
-        if finite_styles
-        else None
+        max(finite_styles, key=lambda item: abs(item[1])) if finite_styles else None
     )
     mean_coverage = _bounded(
         metrics.get("mean_coverage"),
@@ -3457,9 +3324,7 @@ def _summary(metrics: dict[str, Any]) -> dict[str, Any]:
         "meanCoverage": mean_coverage,
         "meanRankTurnover": mean_turnover,
         "weakestValidationFold": (
-            {"id": worst_fold[0], "meanRankIc": worst_fold[1]}
-            if worst_fold
-            else None
+            {"id": worst_fold[0], "meanRankIc": worst_fold[1]} if worst_fold else None
         ),
         "maximumValidationStyleOverlap": (
             {
@@ -3607,9 +3472,7 @@ def _stability(metrics: dict[str, Any], universe: list[str]) -> dict[str, Any]:
     if not all(isinstance(value, dict) for value in (folds, regimes, assets)):
         _fail("RunResult/metrics/stability", "factor.stability", "Invalid stability")
     expected_folds = {
-        f"{split_name}_{number}"
-        for split_name in SPLITS
-        for number in (1, 2)
+        f"{split_name}_{number}" for split_name in SPLITS for number in (1, 2)
     }
     if set(folds) != expected_folds:
         _fail(
@@ -3635,10 +3498,7 @@ def _stability(metrics: dict[str, Any], universe: list[str]) -> dict[str, Any]:
     regime_rows = []
     for split_name in SPLITS:
         split = regimes.get(split_name)
-        if (
-            not isinstance(split, dict)
-            or set(split) != REGIMES - {"unavailable"}
-        ):
+        if not isinstance(split, dict) or set(split) != REGIMES - {"unavailable"}:
             _fail(
                 f"stability/regimes/{split_name}",
                 "factor.stability",
@@ -3749,17 +3609,13 @@ def _sample_indices(
             "Point limit is smaller than required Factor anchors",
         )
     preferred_candidates = sorted(
-        index
-        for index in preferred
-        if 0 <= index < total and index not in selected
+        index for index in preferred if 0 <= index < total and index not in selected
     )
     preferred_slots = min(limit - len(selected), len(preferred_candidates))
     if preferred_slots and preferred_slots < len(preferred_candidates):
         positions = {
             round(
-                position
-                * (len(preferred_candidates) - 1)
-                / max(1, preferred_slots - 1)
+                position * (len(preferred_candidates) - 1) / max(1, preferred_slots - 1)
             )
             for position in range(preferred_slots)
         }
@@ -3791,6 +3647,8 @@ CUMULATIVE_GROUPS = (
     ("spread", "highMinusLow"),
 )
 CUMULATIVE_BASIS = "compounded per-bar group return, gross of costs and turnover"
+
+
 def _spread_basis() -> str:
     return (
         f"high-minus-low group return at primary horizon {PRIMARY_HORIZON}, "
@@ -3867,9 +3725,7 @@ def _spread_split_summary(split: str, values: list[float]) -> dict[str, Any]:
             sum((value - mean) ** 2 for value in values) / (count - 1)
         )
     sharpe = (
-        mean / volatility
-        if volatility is not None and volatility > 1e-15
-        else None
+        mean / volatility if volatility is not None and volatility > 1e-15 else None
     )
     level = 1.0
     peak = 1.0
@@ -3888,9 +3744,7 @@ def _spread_split_summary(split: str, values: list[float]) -> dict[str, Any]:
         "totalReturn": level - 1.0 if count else None,
         "maximumDrawdown": drawdown if count else None,
         "hitRate": (
-            sum(1 for value in values if value > 0.0) / count
-            if count
-            else None
+            sum(1 for value in values if value > 0.0) / count if count else None
         ),
     }
 
@@ -3949,9 +3803,7 @@ def _paths(
     primary_rank_key = f"rankIcH{PRIMARY_HORIZON}"
     maximum = max(
         range(len(daily.rows)),
-        key=lambda index: abs(
-            daily.rows[index][primary_rank_key] or 0.0
-        ),
+        key=lambda index: abs(daily.rows[index][primary_rank_key] or 0.0),
     )
     required.add(maximum)
     for index in range(1, len(daily.rows)):
@@ -3975,9 +3827,7 @@ def _paths(
         "sampling": "deterministic-even-with-split-regime-extreme-anchors",
         "points": [daily.rows[index] for index in selected],
     }
-    quantile_points = [
-        row for row in quantiles if row["timestamp"] in selected_dates
-    ]
+    quantile_points = [row for row in quantiles if row["timestamp"] in selected_dates]
     return ic_path, {
         "totalRows": len(quantiles),
         "sampledRows": len(quantile_points),
@@ -4112,8 +3962,7 @@ def _load_factor_diagnostics_unlocked(
     if prediction_universe["available"] and (
         report_dataset.get("predictionAssets")
         != prediction_universe["predictionAssets"]
-        or report_dataset.get("contextAssets")
-        != prediction_universe["contextAssets"]
+        or report_dataset.get("contextAssets") != prediction_universe["contextAssets"]
     ):
         _fail(
             paths["factor-report"],
@@ -4169,13 +4018,10 @@ def _load_factor_diagnostics_unlocked(
             )
         if (
             not isinstance(component_artifact, dict)
-            or set(component_artifact)
-            != {"schemaVersion", "inputHash", "evidence"}
+            or set(component_artifact) != {"schemaVersion", "inputHash", "evidence"}
             or component_artifact.get("schemaVersion") != SCHEMA_VERSION
-            or component_artifact.get("inputHash")
-            != run.result["inputHash"]
-            or component_artifact.get("evidence")
-            != metrics.get("factor_components")
+            or component_artifact.get("inputHash") != run.result["inputHash"]
+            or component_artifact.get("evidence") != metrics.get("factor_components")
         ):
             _fail(
                 paths[COMPONENT_ARTIFACT_KIND],
@@ -4185,13 +4031,9 @@ def _load_factor_diagnostics_unlocked(
             )
         component_evidence = component_artifact["evidence"]
     ic_path, quantile_path = _paths(daily, quantiles, point_limit)
-    selected_dates = {
-        row["timestamp"] for row in ic_path["points"]
-    }
+    selected_dates = {row["timestamp"] for row in ic_path["points"]}
     availability_points = [
-        row
-        for row in availability_rows
-        if row["timestamp"] in selected_dates
+        row for row in availability_rows if row["timestamp"] in selected_dates
     ]
     availability_path = {
         "totalRows": len(availability_rows),
@@ -4200,9 +4042,7 @@ def _load_factor_diagnostics_unlocked(
         "points": availability_points,
     }
     semantics = report.get("semantics")
-    declared_styles = (
-        semantics.get("styles") if isinstance(semantics, dict) else None
-    )
+    declared_styles = semantics.get("styles") if isinstance(semantics, dict) else None
     if (
         not isinstance(semantics, dict)
         or semantics.get("horizons") != list(HORIZONS)
@@ -4226,9 +4066,7 @@ def _load_factor_diagnostics_unlocked(
         )
     qualification_semantics = semantics.get("qualification")
     qualification_method = (
-        qualification_parsed["method"]
-        if qualification_parsed is not None
-        else None
+        qualification_parsed["method"] if qualification_parsed is not None else None
     )
     expected_neutralization = (
         "within-split-temporal-centered-rank-ols"
@@ -4243,21 +4081,16 @@ def _load_factor_diagnostics_unlocked(
     if qualification_parsed is not None and (
         not isinstance(qualification_semantics, dict)
         or qualification_semantics.get("method") != qualification_method
-        or qualification_semantics.get("claim")
-        != qualification_parsed["claim"]
+        or qualification_semantics.get("claim") != qualification_parsed["claim"]
         or qualification_semantics.get("styleSelection")
         != (
             "request-predeclared"
-            if qualification_parsed["claim"]["claim"]
-            == "known-style-validation"
+            if qualification_parsed["claim"]["claim"] == "known-style-validation"
             else "train-only"
         )
-        or qualification_semantics.get("neutralization")
-        != expected_neutralization
-        or qualification_semantics.get("blend")
-        != expected_blend
-        or qualification_semantics.get("testRole")
-        != "visible audit only"
+        or qualification_semantics.get("neutralization") != expected_neutralization
+        or qualification_semantics.get("blend") != expected_blend
+        or qualification_semantics.get("testRole") != "visible audit only"
         or qualification_semantics.get("tradingAuthority") != "none"
     ):
         _fail(
@@ -4277,11 +4110,7 @@ def _load_factor_diagnostics_unlocked(
             "evaluationMode": raw_component_semantics["evaluation_mode"],
             "scoreMeasure": raw_component_semantics["score_measure"],
             **(
-                {
-                    "predictionTarget": raw_component_semantics[
-                        "prediction_target"
-                    ]
-                }
+                {"predictionTarget": raw_component_semantics["prediction_target"]}
                 if isinstance(component_semantics, dict)
                 and "predictionTarget" in component_semantics
                 else {}
@@ -4366,9 +4195,7 @@ def _load_factor_diagnostics_unlocked(
         },
         "summary": _summary(metrics),
         "inputAvailability": input_availability,
-        "factorQualification": _factor_qualification_projection(
-            qualification_parsed
-        ),
+        "factorQualification": _factor_qualification_projection(qualification_parsed),
         "factorComponents": _factor_components_projection(
             component_evidence,
             universe,
@@ -4421,10 +4248,15 @@ def load_factor_diagnostics(
 
     from .factor_redundancy import load_factor_redundancy
     from .factor_tearsheet_reader import load_tearsheet
+
     with _HORIZON_CONFIGURATION_LOCK:
-        result = _load_factor_diagnostics_unlocked(project, run_id, point_limit=point_limit)
+        result = _load_factor_diagnostics_unlocked(
+            project, run_id, point_limit=point_limit
+        )
     run = load_run(project, run_id)
-    result["redundancy"] = load_factor_redundancy(project, run, workspace_root=workspace_root)
+    result["redundancy"] = load_factor_redundancy(
+        project, run, workspace_root=workspace_root
+    )
     result["tearSheet"] = load_tearsheet(run, point_limit=point_limit)
     return result
 
@@ -4446,9 +4278,7 @@ _FACTOR_QUALIFICATION_SCHEMA: dict[str, Any] = {
                 "authority": {"const": "research-prioritization-only"},
                 "tradingAuthority": {"const": "none"},
                 "available": {"const": False},
-                "reason": {
-                    "const": "legacy-run-without-factor-qualification"
-                },
+                "reason": {"const": "legacy-run-without-factor-qualification"},
             },
         },
         {
@@ -4489,9 +4319,7 @@ _FACTOR_QUALIFICATION_SCHEMA: dict[str, Any] = {
                     ],
                     "properties": {
                         "split": {"const": "train"},
-                        "role": {
-                            "const": "comparison-style-selection-only"
-                        },
+                        "role": {"const": "comparison-style-selection-only"},
                         "criterion": {
                             "enum": [
                                 "maximum-absolute-mean-daily-rank-overlap",
@@ -4550,13 +4378,9 @@ _FACTOR_QUALIFICATION_SCHEMA: dict[str, Any] = {
                             ],
                             "properties": {
                                 "minimumPositiveHacTStatistic": {
-                                    "const": (
-                                        QUALIFICATION_MIN_POSITIVE_HAC_T
-                                    )
+                                    "const": (QUALIFICATION_MIN_POSITIVE_HAC_T)
                                 },
-                                "minimumKnownStyleRankIdentity": {
-                                    "const": 0.95
-                                },
+                                "minimumKnownStyleRankIdentity": {"const": 0.95},
                                 "selectionAdjustedSignificanceRequiredSeparately": {
                                     "const": True
                                 },
@@ -4650,9 +4474,7 @@ _FACTOR_COMPONENTS_SCHEMA: dict[str, Any] = {
                 "authority": {"const": "research-prioritization-only"},
                 "tradingAuthority": {"const": "none"},
                 "available": {"const": False},
-                "reason": {
-                    "const": "legacy-run-without-factor-components"
-                },
+                "reason": {"const": "legacy-run-without-factor-components"},
             },
         },
         {
@@ -4758,9 +4580,7 @@ _FACTOR_COMPONENTS_SCHEMA: dict[str, Any] = {
                 },
                 "pairwise": {
                     "type": "array",
-                    "maxItems": (
-                        MAX_COMPONENTS * (MAX_COMPONENTS - 1) // 2
-                    ),
+                    "maxItems": (MAX_COMPONENTS * (MAX_COMPONENTS - 1) // 2),
                 },
                 "fixedBlend": {
                     "type": "object",
@@ -4824,9 +4644,7 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                         "blendUpliftVsCandidate",
                     ],
                     "properties": {
-                        "styleNeutralIcRetention": {
-                            "type": ["number", "null"]
-                        },
+                        "styleNeutralIcRetention": {"type": ["number", "null"]},
                         "styleNeutralIcDelta": {"type": "number"},
                         "blendUpliftVsStyle": {"type": "number"},
                         "blendUpliftVsCandidate": {"type": "number"},
@@ -4912,24 +4730,16 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 "explicit": {"type": "boolean"},
                 "label": {"type": "string"},
                 "targetSemantics": {"type": "string"},
-                "scoreDirection": {
-                    "const": "higher-factor-predicts-higher-outcome"
-                },
-                "annualization": {
-                    "enum": ["not-applicable", "none"]
-                },
+                "scoreDirection": {"const": "higher-factor-predicts-higher-outcome"},
+                "annualization": {"enum": ["not-applicable", "none"]},
                 "downstreamMeaning": {
                     "enum": [
                         "expected-return-research-only",
                         "risk-forecast-only-no-return-signal",
                     ]
                 },
-                "portfolioAuthority": {
-                    "enum": ["qualification-gated", "none"]
-                },
-                "rlAuthority": {
-                    "enum": ["portfolio-evidence-gated", "none"]
-                },
+                "portfolioAuthority": {"enum": ["qualification-gated", "none"]},
+                "rlAuthority": {"enum": ["portfolio-evidence-gated", "none"]},
                 "tradingAuthority": {"const": "none"},
             },
         },
@@ -5002,12 +4812,8 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                     ],
                     "properties": {
                         "available": {"const": True},
-                        "method": {
-                            "const": "observed-only-no-fill-v1"
-                        },
-                        "missingObservation": {
-                            "const": "absent-no-fill"
-                        },
+                        "method": {"const": "observed-only-no-fill-v1"},
+                        "missingObservation": {"const": "absent-no-fill"},
                         "timestamps": {
                             "type": "integer",
                             "minimum": 1,
@@ -5029,9 +4835,7 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                             "type": "integer",
                             "minimum": 0,
                         },
-                        "minimumAssetsPerFactorTimestamp": {
-                            "enum": [1, 2, 4]
-                        },
+                        "minimumAssetsPerFactorTimestamp": {"enum": [1, 2, 4]},
                         "eligibleFactorTimestamps": {
                             "type": "array",
                             "minItems": 1,
@@ -5068,9 +4872,7 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 "authority",
             ],
             "properties": {
-                "status": {
-                    "enum": ["available", "protocol-unavailable"]
-                },
+                "status": {"enum": ["available", "protocol-unavailable"]},
                 "evaluationMode": {
                     "enum": [
                         CROSS_SECTIONAL_MODE,
@@ -5086,25 +4888,17 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                 },
                 "artifactKind": {"const": "factor-quantiles"},
                 "artifactRows": {"type": "integer", "minimum": 0},
-                "reasonCode": {
-                    "enum": [None, "temporal-tertiles-not-defined"]
-                },
+                "reasonCode": {"enum": [None, "temporal-tertiles-not-defined"]},
                 "reason": {"type": ["string", "null"]},
                 "authority": {"const": "diagnostic-only"},
             },
             "allOf": [
                 {
-                    "if": {
-                        "properties": {
-                            "status": {"const": "protocol-unavailable"}
-                        }
-                    },
+                    "if": {"properties": {"status": {"const": "protocol-unavailable"}}},
                     "then": {
                         "properties": {
                             "artifactRows": {"const": 0},
-                            "reasonCode": {
-                                "const": "temporal-tertiles-not-defined"
-                            },
+                            "reasonCode": {"const": "temporal-tertiles-not-defined"},
                             "reason": {"type": "string", "minLength": 1},
                         }
                     },
@@ -5163,11 +4957,7 @@ FACTOR_DIAGNOSTICS_JSON_SCHEMA: dict[str, Any] = {
                     "minimum": 0,
                     "maximum": MAX_FACTOR_POINTS,
                 },
-                "sampling": {
-                    "const": (
-                        "source-panel-filtered-to-ic-path-timestamps"
-                    )
-                },
+                "sampling": {"const": ("source-panel-filtered-to-ic-path-timestamps")},
                 "points": {
                     "type": "array",
                     "maxItems": MAX_FACTOR_POINTS,

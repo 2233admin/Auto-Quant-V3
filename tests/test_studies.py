@@ -45,9 +45,7 @@ class StudyContractTests(unittest.TestCase):
                 study_definition(
                     study_id="drawdown-recovery",
                     dependencies=["requests/recovery.json"],
-                    research_request=StudyResearchRequest(
-                        "requests/recovery.json"
-                    ),
+                    research_request=StudyResearchRequest("requests/recovery.json"),
                     upstream_evidence=upstream,
                 ),
             )
@@ -92,9 +90,7 @@ class StudyContractTests(unittest.TestCase):
                     project,
                     study_definition(
                         study_id="missing-request-binding",
-                        research_request=StudyResearchRequest(
-                            "requests/recovery.json"
-                        ),
+                        research_request=StudyResearchRequest("requests/recovery.json"),
                         upstream_evidence=upstream,
                     ),
                 )
@@ -112,9 +108,7 @@ class StudyContractTests(unittest.TestCase):
                     study_definition(
                         study_id="bad-upstream-binding",
                         dependencies=["requests/recovery.json"],
-                        research_request=StudyResearchRequest(
-                            "requests/recovery.json"
-                        ),
+                        research_request=StudyResearchRequest("requests/recovery.json"),
                         upstream_evidence=replace(
                             upstream,
                             artifacts=[
@@ -271,7 +265,10 @@ class StudyContractTests(unittest.TestCase):
 
     def test_editable_closure_cannot_claim_data_runs_or_cache(self) -> None:
         for pattern in ("data/**", "runs/**", ".autoquant/**"):
-            with self.subTest(pattern=pattern), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(pattern=pattern),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 _, project = make_project(directory)
                 with self.assertRaisesRegex(
                     AutoQuantValidationError,

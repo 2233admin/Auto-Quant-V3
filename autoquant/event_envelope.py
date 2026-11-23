@@ -126,8 +126,7 @@ def quantile_summary(values: Sequence[float]) -> dict[str, Any]:
         "minimum": float(array.min()),
         "maximum": float(array.max()),
         "quantiles": {
-            f"p{round(q * 100)}": float(np.quantile(array, q))
-            for q in QUANTILES
+            f"p{round(q * 100)}": float(np.quantile(array, q)) for q in QUANTILES
         },
     }
 
@@ -170,7 +169,9 @@ def build_event_envelope(
     excess_returns = [float(row["excessReturn"]) for row in primary]
     positive_asset = [value > 0.0 for value in asset_returns]
     positive_excess = [value > 0.0 for value in excess_returns]
-    unconditional_positive = sum(1 for value in unconditional_asset_returns if value > 0.0)
+    unconditional_positive = sum(
+        1 for value in unconditional_asset_returns if value > 0.0
+    )
     unconditional_count = len(unconditional_asset_returns)
 
     def outcome(flags: list[bool]) -> dict[str, Any]:

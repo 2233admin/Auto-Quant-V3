@@ -179,9 +179,7 @@ def write_daily_close_time_inputs(
         },
         "calendarAuthority": {
             "library": "exchange_calendars",
-            "version": materializer.distribution_version(
-                "exchange-calendars"
-            ),
+            "version": materializer.distribution_version("exchange-calendars"),
             "closeSemantics": "scheduled-regular-session-close",
             "limitations": [
                 "Library schedules are research authority, not authenticated exchange records."
@@ -310,9 +308,9 @@ def write_observed_composition_inputs(
         closes: list[float] = []
         close = initial_close
         for row_number in range(observations):
-            close *= 1.0 + 0.0003 + 0.002 * (
-                ((row_number + source_number * 3) % 13) - 6
-            ) / 6
+            close *= (
+                1.0 + 0.0003 + 0.002 * (((row_number + source_number * 3) % 13) - 6) / 6
+            )
             closes.append(close)
         frame = pd.DataFrame(
             {
@@ -486,25 +484,17 @@ def yahoo_intraday_payload(
                         "dataGranularity": "1h",
                     },
                     "timestamp": [
-                        int(timestamp.timestamp())
-                        for timestamp, _ in observations
+                        int(timestamp.timestamp()) for timestamp, _ in observations
                     ],
                     "indicators": {
                         "quote": [
                             {
-                                column: [
-                                    values[column]
-                                    for _, values in observations
-                                ]
+                                column: [values[column] for _, values in observations]
                                 for column in route.OHLCV_COLUMNS
                             }
                         ]
                     },
-                    "events": {
-                        "dividends": {
-                            "fixture": {"amount": 0.25}
-                        }
-                    },
+                    "events": {"dividends": {"fixture": {"amount": 0.25}}},
                 }
             ],
         }
@@ -517,10 +507,7 @@ class WorkspaceSkillTests(unittest.TestCase):
     ) -> None:
         runner = load_script(
             "autoquant_skill_route_attempt",
-            SKILLS
-            / "acquire-market-ohlcv"
-            / "scripts"
-            / "run_route_attempt.py",
+            SKILLS / "acquire-market-ohlcv" / "scripts" / "run_route_attempt.py",
         )
         with tempfile.TemporaryDirectory() as directory:
             audit_path = Path(directory) / "route-failure.json"
@@ -531,10 +518,7 @@ class WorkspaceSkillTests(unittest.TestCase):
                     [
                         sys.executable,
                         "-c",
-                        (
-                            "import sys; print('blocked', file=sys.stderr); "
-                            "sys.exit(7)"
-                        ),
+                        ("import sys; print('blocked', file=sys.stderr); sys.exit(7)"),
                     ],
                 )
             self.assertEqual(exit_code, 7)
@@ -584,18 +568,12 @@ class WorkspaceSkillTests(unittest.TestCase):
             )
             for discovery_root in SKILL_DISCOVERY_ROOTS:
                 self.assertEqual(
-                    {
-                        path.name
-                        for path in (root / discovery_root).iterdir()
-                    },
+                    {path.name for path in (root / discovery_root).iterdir()},
                     expected_ids,
                 )
 
             drifted = (
-                root
-                / SKILL_DISCOVERY_ROOTS[0]
-                / "acquire-market-ohlcv"
-                / "SKILL.md"
+                root / SKILL_DISCOVERY_ROOTS[0] / "acquire-market-ohlcv" / "SKILL.md"
             )
             drifted.write_text("drift\n", encoding="utf-8")
             with self.assertRaisesRegex(SkillBundleError, "drifted"):
@@ -664,9 +642,7 @@ class WorkspaceSkillTests(unittest.TestCase):
                 audit["assets"]["SPY"]["outputOhlcvSha256"],
             )
             self.assertTrue(
-                audit["assets"]["7203.T"]["preservation"][
-                    "ohlcvValuesUnchanged"
-                ]
+                audit["assets"]["7203.T"]["preservation"]["ohlcvValuesUnchanged"]
             )
             toyota = pd.read_csv(output / "assets" / "7203.T.csv")
             spy = pd.read_csv(output / "assets" / "SPY.csv")
@@ -779,12 +755,10 @@ class WorkspaceSkillTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            request_path, package_path, authority_path = (
-                write_daily_close_time_inputs(
-                    root,
-                    materializer,
-                    long_history=True,
-                )
+            request_path, package_path, authority_path = write_daily_close_time_inputs(
+                root,
+                materializer,
+                long_history=True,
             )
             output = root / "close-time-output"
             materializer.materialize(package_path, authority_path, output)
@@ -891,10 +865,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
         )
         package_audit = load_script(
             "autoquant_skill_v6_package_audit",
-            SKILLS
-            / "package-autoquant-ohlcv"
-            / "scripts"
-            / "audit_ohlcv_package.py",
+            SKILLS / "package-autoquant-ohlcv" / "scripts" / "audit_ohlcv_package.py",
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -922,10 +893,10 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 package["assets"],
                 strict=True,
             ):
-                source_manifest = json.loads(
-                    source_package.read_text(encoding="utf-8")
+                source_manifest = json.loads(source_package.read_text(encoding="utf-8"))
+                source_asset = (
+                    source_package.parent / source_manifest["assets"][0]["path"]
                 )
-                source_asset = source_package.parent / source_manifest["assets"][0]["path"]
                 self.assertEqual(
                     file_sha256(source_asset),
                     file_sha256(output / asset["path"]),
@@ -999,9 +970,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 template=prepared.template,
                 template_intake=prepared,
             )
-            candidate_contract = build_agent_work_brief(project)[
-                "candidateContract"
-            ]
+            candidate_contract = build_agent_work_brief(project)["candidateContract"]
             self.assertEqual(
                 candidate_contract["data"]["surfaceSource"],
                 "content-locked-snapshot-v6",
@@ -1137,9 +1106,10 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
         def rewrite_hash(authority_path: Path, package_path: Path) -> None:
             authority = json.loads(authority_path.read_text(encoding="utf-8"))
             for source in authority["sourcePackages"]:
-                if source["path"] == package_path.relative_to(
-                    authority_path.parent
-                ).as_posix():
+                if (
+                    source["path"]
+                    == package_path.relative_to(authority_path.parent).as_posix()
+                ):
                     source["sha256"] = file_sha256(package_path)
             authority_path.write_text(json.dumps(authority), encoding="utf-8")
 
@@ -1221,20 +1191,13 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_workspace_init_materializes_skills_and_conflict_rolls_back(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = initialize_workspace(Path(directory) / "new")
-            verified = verify_materialized_workspace_skills(
-                workspace.root_dir
-            )
+            verified = verify_materialized_workspace_skills(workspace.root_dir)
             self.assertTrue((workspace.root_dir / WORKSPACE_SKILLS_MANIFEST).is_file())
             self.assertEqual(len(verified["skills"]), 17)
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "adopted"
-            conflict = (
-                root
-                / ".agents"
-                / "skills"
-                / "acquire-market-ohlcv"
-            )
+            conflict = root / ".agents" / "skills" / "acquire-market-ohlcv"
             conflict.mkdir(parents=True)
             marker = conflict / "caller.txt"
             marker.write_text("preserve\n", encoding="utf-8")
@@ -1251,10 +1214,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_yahoo_adjustment_applies_ratio_to_all_ohlc_only(self) -> None:
         yahoo = load_script(
             "autoquant_skill_yahoo",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_daily.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_daily.py",
         )
         result = {
             "timestamp": [1_704_153_600, 1_704_240_000],
@@ -1286,10 +1246,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_yahoo_session_date_boundary_is_applied_after_parsing(self) -> None:
         yahoo = load_script(
             "autoquant_skill_yahoo_bounds",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_daily.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_daily.py",
         )
         frame = pd.DataFrame(
             {
@@ -1312,14 +1269,9 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_yahoo_uses_exchange_timezone_for_session_date(self) -> None:
         yahoo = load_script(
             "autoquant_skill_yahoo_timezone",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_daily.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_daily.py",
         )
-        timestamp = int(
-            pd.Timestamp("2025-01-01T17:00:00Z").timestamp()
-        )
+        timestamp = int(pd.Timestamp("2025-01-01T17:00:00Z").timestamp())
         result = {
             "meta": {"exchangeTimezoneName": "Asia/Ho_Chi_Minh"},
             "timestamp": [timestamp],
@@ -1349,10 +1301,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_yahoo_intraday_maps_bucket_starts_and_early_close(self) -> None:
         intraday = load_script(
             "autoquant_skill_yahoo_intraday_mapping",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_intraday.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_intraday.py",
         )
         schedule = intraday.requested_schedule(
             intraday.parse_date("2024-11-27"),
@@ -1385,10 +1334,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     ) -> None:
         intraday = load_script(
             "autoquant_skill_yahoo_intraday_gap",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_intraday.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_intraday.py",
         )
         schedule = intraday.requested_schedule(
             intraday.parse_date("2024-11-29"),
@@ -1439,10 +1385,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     ) -> None:
         intraday = load_script(
             "autoquant_skill_yahoo_intraday_defects",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_intraday.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_intraday.py",
         )
         schedule = intraday.requested_schedule(
             intraday.parse_date("2026-04-01"),
@@ -1498,10 +1441,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_yahoo_intraday_range_includes_required_warmup(self) -> None:
         intraday = load_script(
             "autoquant_skill_yahoo_intraday_range",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_intraday.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_intraday.py",
         )
         first_open = pd.Timestamp("2024-08-01T13:30:00Z")
         exact = intraday.range_eligibility(
@@ -1524,10 +1464,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     ) -> None:
         intraday = load_script(
             "autoquant_skill_yahoo_intraday_main",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_intraday.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_intraday.py",
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -1551,9 +1488,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             start = intraday.parse_date("2026-04-01")
             end_exclusive = intraday.parse_date("2026-06-06")
             schedule = intraday.requested_schedule(start, end_exclusive)
-            body = json.dumps(
-                yahoo_intraday_payload(intraday, schedule)
-            ).encode()
+            body = json.dumps(yahoo_intraday_payload(intraday, schedule)).encode()
             output = root / "success"
             argv = [
                 "fetch_yahoo_intraday.py",
@@ -1592,12 +1527,14 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                     "bodySha256": intraday.sha256_bytes(body),
                 }
             ]
-            with mock.patch.object(
-                intraday,
-                "fetch_bytes",
-                return_value=(body, attempts),
-            ), mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(
-                io.StringIO()
+            with (
+                mock.patch.object(
+                    intraday,
+                    "fetch_bytes",
+                    return_value=(body, attempts),
+                ),
+                mock.patch.object(sys, "argv", argv),
+                contextlib.redirect_stdout(io.StringIO()),
             ):
                 intraday.main()
 
@@ -1674,23 +1611,24 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             failed_argv[2] = str(failed_output)
             failed_argv[8] = "2026-04-01"
             failed_argv[10] = "2026-04-04"
-            with mock.patch.object(
-                intraday,
-                "fetch_bytes",
-                side_effect=[
-                    *((body, attempts),) * (len(symbols) - 1),
-                    (failed_body, attempts),
-                ],
-            ), mock.patch.object(sys, "argv", failed_argv):
+            with (
+                mock.patch.object(
+                    intraday,
+                    "fetch_bytes",
+                    side_effect=[
+                        *((body, attempts),) * (len(symbols) - 1),
+                        (failed_body, attempts),
+                    ],
+                ),
+                mock.patch.object(sys, "argv", failed_argv),
+            ):
                 with self.assertRaisesRegex(
                     RuntimeError,
                     "cannot form exact XNYS V3 authority",
                 ):
                     intraday.main()
             failure = json.loads(
-                (failed_output / "provider-failure.json").read_text(
-                    encoding="utf-8"
-                )
+                (failed_output / "provider-failure.json").read_text(encoding="utf-8")
             )
             self.assertEqual(failure["status"], "no-dataset-authority")
             self.assertFalse(failure["packageCreated"])
@@ -1703,10 +1641,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_yahoo_invalid_ohlc_requires_explicit_audited_drop(self) -> None:
         yahoo = load_script(
             "autoquant_skill_yahoo_invalid_ohlc",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_daily.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_daily.py",
         )
         result = {
             "timestamp": [1_704_153_600, 1_704_240_000],
@@ -1817,19 +1752,13 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     ) -> None:
         yahoo = load_script(
             "autoquant_skill_yahoo_transient_scale",
-            SKILLS
-            / "fetch-yahoo-ohlcv"
-            / "scripts"
-            / "fetch_yahoo_daily.py",
+            SKILLS / "fetch-yahoo-ohlcv" / "scripts" / "fetch_yahoo_daily.py",
         )
         rows = 1_001
         closes = [100.0] * rows
         closes[500:503] = [10.0, 10.2, 101.0]
         result = {
-            "timestamp": [
-                1_704_153_600 + offset * 86_400
-                for offset in range(rows)
-            ],
+            "timestamp": [1_704_153_600 + offset * 86_400 for offset in range(rows)],
             "indicators": {
                 "quote": [
                     {
@@ -1886,10 +1815,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_nikkei_keeps_peer_canonical_symbol_separate_from_code(self) -> None:
         nikkei = load_script(
             "autoquant_skill_nikkei_canonical_symbol",
-            SKILLS
-            / "fetch-nikkei-ohlcv"
-            / "scripts"
-            / "fetch_nikkei_daily.py",
+            SKILLS / "fetch-nikkei-ohlcv" / "scripts" / "fetch_nikkei_daily.py",
         )
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "assets.json"
@@ -1916,10 +1842,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_eastmoney_lots_become_shares_only_after_amount_check(self) -> None:
         eastmoney = load_script(
             "autoquant_skill_eastmoney",
-            SKILLS
-            / "fetch-eastmoney-ohlcv"
-            / "scripts"
-            / "fetch_eastmoney_daily.py",
+            SKILLS / "fetch-eastmoney-ohlcv" / "scripts" / "fetch_eastmoney_daily.py",
         )
         payload = {
             "rc": 0,
@@ -1966,10 +1889,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_tencent_lots_become_shares_and_prefix_matches_venue(self) -> None:
         tencent = load_script(
             "autoquant_skill_tencent",
-            SKILLS
-            / "fetch-tencent-ohlcv"
-            / "scripts"
-            / "fetch_tencent_daily.py",
+            SKILLS / "fetch-tencent-ohlcv" / "scripts" / "fetch_tencent_daily.py",
         )
         payload = {
             "code": 0,
@@ -2081,10 +2001,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_twse_monthly_rows_preserve_official_share_volume(self) -> None:
         twse = load_script(
             "autoquant_skill_twse",
-            SKILLS
-            / "fetch-twse-ohlcv"
-            / "scripts"
-            / "fetch_twse_daily.py",
+            SKILLS / "fetch-twse-ohlcv" / "scripts" / "fetch_twse_daily.py",
         )
         payload = {
             "stat": "OK",
@@ -2162,10 +2079,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     ) -> None:
         twse = load_script(
             "autoquant_skill_twse_failure",
-            SKILLS
-            / "fetch-twse-ohlcv"
-            / "scripts"
-            / "fetch_twse_daily.py",
+            SKILLS / "fetch-twse-ohlcv" / "scripts" / "fetch_twse_daily.py",
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -2216,14 +2130,18 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                 "--terms",
                 "fixture research retrieval",
             ]
-            with mock.patch.object(
-                twse.urllib.request,
-                "urlopen",
-                side_effect=[blocked() for _ in range(5)],
-            ), mock.patch.object(twse.time, "sleep"), mock.patch.object(
-                sys,
-                "argv",
-                argv,
+            with (
+                mock.patch.object(
+                    twse.urllib.request,
+                    "urlopen",
+                    side_effect=[blocked() for _ in range(5)],
+                ),
+                mock.patch.object(twse.time, "sleep"),
+                mock.patch.object(
+                    sys,
+                    "argv",
+                    argv,
+                ),
             ):
                 with self.assertRaisesRegex(
                     RuntimeError,
@@ -2245,9 +2163,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             self.assertFalse((output / "dataset-package.json").exists())
             receipt_root = output / "request-attempts" / "2330" / "2025-01"
             receipt = json.loads(
-                (receipt_root / "request-attempts.json").read_text(
-                    encoding="utf-8"
-                )
+                (receipt_root / "request-attempts.json").read_text(encoding="utf-8")
             )
             self.assertEqual(receipt["status"], "failed")
             self.assertEqual(len(receipt["attempts"]), 5)
@@ -2265,10 +2181,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_twse_http_200_security_page_is_preserved(self) -> None:
         twse = load_script(
             "autoquant_skill_twse_html_failure",
-            SKILLS
-            / "fetch-twse-ohlcv"
-            / "scripts"
-            / "fetch_twse_daily.py",
+            SKILLS / "fetch-twse-ohlcv" / "scripts" / "fetch_twse_daily.py",
         )
 
         class SecurityPage:
@@ -2292,11 +2205,14 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
 
         with tempfile.TemporaryDirectory() as directory:
             attempts = Path(directory) / "attempts"
-            with mock.patch.object(
-                twse.urllib.request,
-                "urlopen",
-                side_effect=[SecurityPage() for _ in range(5)],
-            ), mock.patch.object(twse.time, "sleep"):
+            with (
+                mock.patch.object(
+                    twse.urllib.request,
+                    "urlopen",
+                    side_effect=[SecurityPage() for _ in range(5)],
+                ),
+                mock.patch.object(twse.time, "sleep"),
+            ):
                 with self.assertRaisesRegex(
                     RuntimeError,
                     "security page blocked",
@@ -2306,9 +2222,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
                         attempt_directory=attempts,
                     )
             receipt = json.loads(
-                (attempts / "request-attempts.json").read_text(
-                    encoding="utf-8"
-                )
+                (attempts / "request-attempts.json").read_text(encoding="utf-8")
             )
             self.assertEqual(receipt["status"], "failed")
             self.assertEqual(receipt["attempts"][0]["response"]["status"], 200)
@@ -2321,10 +2235,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_finmind_preserves_raw_twd_and_checks_traded_money(self) -> None:
         finmind = load_script(
             "autoquant_skill_finmind",
-            SKILLS
-            / "fetch-finmind-ohlcv"
-            / "scripts"
-            / "fetch_finmind_daily.py",
+            SKILLS / "fetch-finmind-ohlcv" / "scripts" / "fetch_finmind_daily.py",
         )
         payload = {
             "msg": "success",
@@ -2371,10 +2282,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_nasdaq_display_history_parses_prices_and_shares(self) -> None:
         nasdaq = load_script(
             "autoquant_skill_nasdaq",
-            SKILLS
-            / "fetch-nasdaq-ohlcv"
-            / "scripts"
-            / "fetch_nasdaq_daily.py",
+            SKILLS / "fetch-nasdaq-ohlcv" / "scripts" / "fetch_nasdaq_daily.py",
         )
         payload = {
             "data": {
@@ -2430,14 +2338,11 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_us_provider_guidance_uses_aligned_panels_for_fixed_labs(
         self,
     ) -> None:
-        nasdaq_skill = (
-            SKILLS / "fetch-nasdaq-ohlcv" / "SKILL.md"
-        ).read_text(encoding="utf-8")
+        nasdaq_skill = (SKILLS / "fetch-nasdaq-ohlcv" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
         us_reference = (
-            SKILLS
-            / "acquire-market-ohlcv"
-            / "references"
-            / "us-equities.md"
+            SKILLS / "acquire-market-ohlcv" / "references" / "us-equities.md"
         ).read_text(encoding="utf-8")
 
         self.assertIn("--panel aligned", nasdaq_skill)
@@ -2452,10 +2357,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     ) -> None:
         naver = load_script(
             "autoquant_skill_naver",
-            SKILLS
-            / "fetch-naver-ohlcv"
-            / "scripts"
-            / "fetch_naver_daily.py",
+            SKILLS / "fetch-naver-ohlcv" / "scripts" / "fetch_naver_daily.py",
         )
         raw = (
             "[['날짜','시가','고가','저가','종가','거래량','외국인소진율'],"
@@ -2481,10 +2383,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_naver_omits_only_exact_non_trading_placeholders(self) -> None:
         naver = load_script(
             "autoquant_skill_naver_placeholders",
-            SKILLS
-            / "fetch-naver-ohlcv"
-            / "scripts"
-            / "fetch_naver_daily.py",
+            SKILLS / "fetch-naver-ohlcv" / "scripts" / "fetch_naver_daily.py",
         )
         headers = ["날짜", "시가", "고가", "저가", "종가", "거래량"]
         table = [
@@ -2534,10 +2433,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_naver_normalizes_only_one_krw_rounded_bounds(self) -> None:
         naver = load_script(
             "autoquant_skill_naver_rounding",
-            SKILLS
-            / "fetch-naver-ohlcv"
-            / "scripts"
-            / "fetch_naver_daily.py",
+            SKILLS / "fetch-naver-ohlcv" / "scripts" / "fetch_naver_daily.py",
         )
         table = [
             ["날짜", "시가", "고가", "저가", "종가", "거래량"],
@@ -2578,10 +2474,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_daum_page_preserves_raw_krw_and_checks_traded_value(self) -> None:
         daum = load_script(
             "autoquant_skill_daum",
-            SKILLS
-            / "fetch-daum-ohlcv"
-            / "scripts"
-            / "fetch_daum_daily.py",
+            SKILLS / "fetch-daum-ohlcv" / "scripts" / "fetch_daum_daily.py",
         )
         payload = {
             "code": 200,
@@ -2634,10 +2527,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_daum_value_volume_scope_mismatch_is_diagnostic_only(self) -> None:
         daum = load_script(
             "autoquant_skill_daum_diagnostic",
-            SKILLS
-            / "fetch-daum-ohlcv"
-            / "scripts"
-            / "fetch_daum_daily.py",
+            SKILLS / "fetch-daum-ohlcv" / "scripts" / "fetch_daum_daily.py",
         )
         records = [
             {
@@ -2670,16 +2560,10 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
         self.assertEqual(frame["date"].tolist(), ["2026-07-28", "2026-07-29"])
         self.assertEqual(audit["valueVolumeRowsChecked"], 2)
         self.assertEqual(audit["valueVolumeAnomalyRows"], 1)
-        self.assertEqual(
-            audit["valueVolumeAnomalies"][0]["relation"], "below-low"
-        )
-        self.assertEqual(
-            audit["valueVolumeAnomalies"][0]["date"], "2026-07-29"
-        )
+        self.assertEqual(audit["valueVolumeAnomalies"][0]["relation"], "below-low")
+        self.assertEqual(audit["valueVolumeAnomalies"][0]["date"], "2026-07-29")
         self.assertAlmostEqual(
-            audit["valueVolumeAnomalies"][0][
-                "relativeDistanceFromNearestBound"
-            ],
+            audit["valueVolumeAnomalies"][0]["relativeDistanceFromNearestBound"],
             11_000 / 201_000,
         )
 
@@ -2696,10 +2580,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_vndirect_price_scale_and_invalid_bounds_are_audited(self) -> None:
         vndirect = load_script(
             "autoquant_skill_vndirect",
-            SKILLS
-            / "fetch-vndirect-ohlcv"
-            / "scripts"
-            / "fetch_vndirect_daily.py",
+            SKILLS / "fetch-vndirect-ohlcv" / "scripts" / "fetch_vndirect_daily.py",
         )
         asset = {
             "symbol": "VCB",
@@ -2760,14 +2641,11 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_euronext_official_csv_preserves_share_volume(self) -> None:
         euronext = load_script(
             "autoquant_skill_euronext",
-            SKILLS
-            / "fetch-euronext-ohlcv"
-            / "scripts"
-            / "fetch_euronext_daily.py",
+            SKILLS / "fetch-euronext-ohlcv" / "scripts" / "fetch_euronext_daily.py",
         )
         raw = (
-            "\ufeff\"Historical Data\"\n"
-            "\"From 2026-07-28 to 2026-07-29\"\n"
+            '\ufeff"Historical Data"\n'
+            '"From 2026-07-28 to 2026-07-29"\n'
             "FR0000121014\n"
             "Date;Open;High;Low;Last;Close;Number of Shares;"
             "Number of Trades;Turnover;vwap\n"
@@ -2791,10 +2669,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_nikkei_recent_table_resolves_year_and_preserves_volume(self) -> None:
         nikkei = load_script(
             "autoquant_skill_nikkei",
-            SKILLS
-            / "fetch-nikkei-ohlcv"
-            / "scripts"
-            / "fetch_nikkei_daily.py",
+            SKILLS / "fetch-nikkei-ohlcv" / "scripts" / "fetch_nikkei_daily.py",
         )
         raw = """
         <html><div class="l-miH02_date">2026年1月5日（月）</div>
@@ -2824,10 +2699,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_sina_recent_kline_preserves_raw_prices_and_shares(self) -> None:
         sina = load_script(
             "autoquant_skill_sina",
-            SKILLS
-            / "fetch-sina-ohlcv"
-            / "scripts"
-            / "fetch_sina_daily.py",
+            SKILLS / "fetch-sina-ohlcv" / "scripts" / "fetch_sina_daily.py",
         )
         payload = {
             "result": {
@@ -2866,10 +2738,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_sohu_jsonp_converts_lots_and_checks_traded_value(self) -> None:
         sohu = load_script(
             "autoquant_skill_sohu",
-            SKILLS
-            / "fetch-sohu-ohlcv"
-            / "scripts"
-            / "fetch_sohu_daily.py",
+            SKILLS / "fetch-sohu-ohlcv" / "scripts" / "fetch_sohu_daily.py",
         )
         payload = [
             {
@@ -2905,9 +2774,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
             }
         ]
         raw = (
-            "historySearchHandler("
-            + json.dumps(payload, ensure_ascii=False)
-            + ")\n"
+            "historySearchHandler(" + json.dumps(payload, ensure_ascii=False) + ")\n"
         ).encode("gb18030")
         frame, audit = sohu.parse_payload(
             "cn_920019",
@@ -2924,10 +2791,7 @@ def compute_factor(panel: pd.DataFrame) -> pd.Series:
     def test_package_audit_reconciles_a_confined_daily_panel(self) -> None:
         package_audit = load_script(
             "autoquant_skill_package",
-            SKILLS
-            / "package-autoquant-ohlcv"
-            / "scripts"
-            / "audit_ohlcv_package.py",
+            SKILLS / "package-autoquant-ohlcv" / "scripts" / "audit_ohlcv_package.py",
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -229,9 +229,10 @@ def _parse_workspace_manifest(
                 f"{path}/projects_directory",
             )
         )
-        if isinstance(raw.get("projects_directory"), str) and "\x00" in raw[
-            "projects_directory"
-        ]:
+        if (
+            isinstance(raw.get("projects_directory"), str)
+            and "\x00" in raw["projects_directory"]
+        ):
             issues.append(
                 _issue(
                     f"{path}/projects_directory",
@@ -362,7 +363,13 @@ def _confined_path(root: Path, relative: str, issue_path: str) -> Path:
         target.relative_to(root.resolve())
     except ValueError:
         raise AutoQuantValidationError(
-            [_issue(issue_path, "path.escape", f"Path escapes its owner root: {relative}")]
+            [
+                _issue(
+                    issue_path,
+                    "path.escape",
+                    f"Path escapes its owner root: {relative}",
+                )
+            ]
         ) from None
     return target
 
@@ -410,9 +417,7 @@ def load_workspace(
         )
         configured = Path(manifest.projects_directory).expanduser()
         projects_dir = (
-            configured
-            if configured.is_absolute()
-            else root / configured
+            configured if configured.is_absolute() else root / configured
         ).absolute()
         if projects_dir.is_symlink():
             raise AutoQuantValidationError(
@@ -455,7 +460,9 @@ def load_workspace(
     )
 
 
-def load_project(directory: str | Path, *, expected_id: str | None = None) -> ProjectContext:
+def load_project(
+    directory: str | Path, *, expected_id: str | None = None
+) -> ProjectContext:
     raw_root = Path(directory).expanduser().absolute()
     if raw_root.is_symlink():
         raise AutoQuantValidationError(
@@ -496,8 +503,7 @@ def load_project(directory: str | Path, *, expected_id: str | None = None) -> Pr
             _issue(
                 framework_needs_path,
                 "project.framework-needs",
-                f"Missing Project Workbench-needs file: "
-                f"{framework_needs_path}",
+                f"Missing Project Workbench-needs file: {framework_needs_path}",
             )
         )
     for key, relative in manifest.directories.items():
@@ -1066,9 +1072,7 @@ def create_or_intake_project(
     preserved_research = research_path.read_bytes()
     preserved_framework = framework_path.read_bytes()
 
-    with tempfile.TemporaryDirectory(
-        prefix="autoquant-intake-scaffold-"
-    ) as directory:
+    with tempfile.TemporaryDirectory(prefix="autoquant-intake-scaffold-") as directory:
         temporary_root = Path(directory)
         expected_workspace = initialize_workspace(temporary_root / "expected")
         expected = create_project(
@@ -1119,9 +1123,7 @@ def create_or_intake_project(
                 ]
             )
 
-        replacement_workspace = initialize_workspace(
-            temporary_root / "replacement"
-        )
+        replacement_workspace = initialize_workspace(temporary_root / "replacement")
         replacement = create_project(
             replacement_workspace.root_dir,
             project_id,
@@ -1130,12 +1132,10 @@ def create_or_intake_project(
             template=template,
             template_intake=template_intake,
         )
-        (
-            replacement.root_dir / replacement.manifest.research_program
-        ).write_bytes(preserved_research)
-        (replacement.root_dir / FRAMEWORK_NEEDS).write_bytes(
-            preserved_framework
+        (replacement.root_dir / replacement.manifest.research_program).write_bytes(
+            preserved_research
         )
+        (replacement.root_dir / FRAMEWORK_NEEDS).write_bytes(preserved_framework)
         load_project(replacement.root_dir, expected_id=project_id)
 
         backup = workspace.projects_dir / (

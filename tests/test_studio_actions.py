@@ -147,8 +147,10 @@ class StudioActionsTests(unittest.TestCase):
         if json_type:
             merged["Content-Type"] = "application/json"
         merged.update(headers or {})
-        payload = raw_body if raw_body is not None else (
-            json.dumps(body).encode() if body is not None else None
+        payload = (
+            raw_body
+            if raw_body is not None
+            else (json.dumps(body).encode() if body is not None else None)
         )
         connection = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
         try:
@@ -187,7 +189,13 @@ class StudioActionsTests(unittest.TestCase):
         }
         return self._request(server, "POST", "/api/v1/actions", body)
 
-    def _wait(self, server, job_id: str, *, until=("succeeded", "failed", "cancelled", "timed-out")):
+    def _wait(
+        self,
+        server,
+        job_id: str,
+        *,
+        until=("succeeded", "failed", "cancelled", "timed-out"),
+    ):
         deadline = time.time() + 20
         while time.time() < deadline:
             status, payload = self._request(
@@ -230,7 +238,11 @@ class StudioActionsTests(unittest.TestCase):
                 self.assertEqual(payload["error"]["code"], "studio.read-only")
             status, health = self._request(server, "GET", "/api/v1/health")
             self.assertEqual(health["mode"], "read-only")
-            for path in ("/api/v1/snapshot", "/api/v1/workspace", "/api/v1/project?id=factor-project"):
+            for path in (
+                "/api/v1/snapshot",
+                "/api/v1/workspace",
+                "/api/v1/project?id=factor-project",
+            ):
                 status, snapshot = self._request(server, "GET", path)
                 self.assertEqual(status, 200)
                 self.assertNotIn("actions", snapshot)
@@ -246,9 +258,18 @@ class StudioActionsTests(unittest.TestCase):
             workspace, _, _ = self._setup(directory)
             result = subprocess.run(
                 [
-                    sys.executable, "-m", "autoquant", "studio", "serve",
-                    str(workspace.root_dir), "--host", "0.0.0.0", "--port", "0",
-                    "--no-open", "--allow-actions",
+                    sys.executable,
+                    "-m",
+                    "autoquant",
+                    "studio",
+                    "serve",
+                    str(workspace.root_dir),
+                    "--host",
+                    "0.0.0.0",
+                    "--port",
+                    "0",
+                    "--no-open",
+                    "--allow-actions",
                 ],
                 capture_output=True,
                 text=True,
@@ -289,24 +310,42 @@ class StudioActionsTests(unittest.TestCase):
             spawn = FakeSpawn()
             server = self._serve(workspace, spawn=spawn)
             token = server.actions.token
-            for path in ("/api/v1/snapshot", "/api/v1/workspace", "/api/v1/project?id=factor-project"):
+            for path in (
+                "/api/v1/snapshot",
+                "/api/v1/workspace",
+                "/api/v1/project?id=factor-project",
+            ):
                 status, payload = self._request(server, "GET", path)
                 self.assertEqual(status, 200)
                 self.assertEqual(payload["actions"]["enabled"], True)
                 self.assertEqual(payload["actions"]["token"], token)
                 self.assertEqual(payload["actions"]["tokenHeader"], "X-Studio-Token")
-            self.assertEqual(self._request(server, "GET", "/api/v1/health")[1]["mode"], "local-actions")
+            self.assertEqual(
+                self._request(server, "GET", "/api/v1/health")[1]["mode"],
+                "local-actions",
+            )
             port = server.server_port
 
             # Host allowlist applies to GET and POST, including a missing Host.
-            for host in ("evil.example", f"127.0.0.1:{port + 1}", f"localhost:{port + 1}", "127.0.0.1"):
+            for host in (
+                "evil.example",
+                f"127.0.0.1:{port + 1}",
+                f"localhost:{port + 1}",
+                "127.0.0.1",
+            ):
                 for method in ("GET", "POST"):
                     status, payload = self._request(
-                        server, method, "/api/v1/snapshot",
+                        server,
+                        method,
+                        "/api/v1/snapshot",
                         {} if method == "POST" else None,
                         headers={"Host": host},
                     )
-                    self.assertEqual((status, payload["error"]["code"]), (403, "studio.host"), (host, method))
+                    self.assertEqual(
+                        (status, payload["error"]["code"]),
+                        (403, "studio.host"),
+                        (host, method),
+                    )
             for host in (f"localhost:{port}", f"[::1]:{port}", f"127.0.0.1:{port}"):
                 status, _ = self._request(
                     server, "GET", "/api/v1/health", headers={"Host": host}
@@ -323,10 +362,14 @@ class StudioActionsTests(unittest.TestCase):
             cases = {
                 "no token": dict(token=False),
                 "wrong token": dict(headers={"X-Studio-Token": "nope"}),
-                "form content type": dict(headers={"Content-Type": "application/x-www-form-urlencoded"}),
+                "form content type": dict(
+                    headers={"Content-Type": "application/x-www-form-urlencoded"}
+                ),
                 "text plain": dict(headers={"Content-Type": "text/plain"}),
                 "foreign origin": dict(headers={"Origin": "http://evil.example"}),
-                "other port origin": dict(headers={"Origin": f"http://127.0.0.1:{port + 1}"}),
+                "other port origin": dict(
+                    headers={"Origin": f"http://127.0.0.1:{port + 1}"}
+                ),
                 "cross-site": dict(headers={"Sec-Fetch-Site": "cross-site"}),
                 "same-site": dict(headers={"Sec-Fetch-Site": "same-site"}),
             }
@@ -346,9 +389,13 @@ class StudioActionsTests(unittest.TestCase):
                 self.assertEqual(payload["error"]["code"], expected[name], name)
             status, payload = self._request(server, "OPTIONS", url, json_type=False)
             self.assertEqual(status, 405)
-            status, payload = self._request(server, "GET", "/api/v1/actions", token=False)
+            status, payload = self._request(
+                server, "GET", "/api/v1/actions", token=False
+            )
             self.assertEqual((status, payload["error"]["code"]), (403, "studio.token"))
-            status, payload = self._request(server, "GET", "/api/v1/jobs/job-x", token=False)
+            status, payload = self._request(
+                server, "GET", "/api/v1/jobs/job-x", token=False
+            )
             self.assertEqual(status, 403)
             self.assertEqual(spawn.calls, [])
             # Correct token with same origin passes.
@@ -363,7 +410,9 @@ class StudioActionsTests(unittest.TestCase):
                 self.assertEqual(status, 200, headers)
             # Unknown POST paths stay read-only; no CORS headers appear.
             status, payload = self._request(server, "POST", "/api/v1/snapshot", {})
-            self.assertEqual((status, payload["error"]["code"]), (405, "studio.read-only"))
+            self.assertEqual(
+                (status, payload["error"]["code"]), (405, "studio.read-only")
+            )
             connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
             connection.request("GET", "/api/v1/snapshot")
             response = connection.getresponse()
@@ -379,7 +428,9 @@ class StudioActionsTests(unittest.TestCase):
             status, payload = self._request(
                 server, "POST", "/api/v1/actions/preview", raw_body=b"{not json"
             )
-            self.assertEqual((status, payload["error"]["code"]), (400, "studio.bad-request"))
+            self.assertEqual(
+                (status, payload["error"]["code"]), (400, "studio.bad-request")
+            )
             status, payload = self._request(
                 server, "POST", "/api/v1/actions/preview", raw_body=b"x" * (70 * 1024)
             )
@@ -399,12 +450,26 @@ class StudioActionsTests(unittest.TestCase):
             url = "/api/v1/actions/preview"
             sid = session.manifest["id"]
             status, payload = self._request(
-                server, "POST", url, {**self._params(session), "actionId": "holdout.run"}
+                server,
+                "POST",
+                url,
+                {**self._params(session), "actionId": "holdout.run"},
             )
-            self.assertEqual((status, payload["error"]["code"]), (404, "studio.unknown-action"))
-            for action_id in ("report.publish", "session.complete", "candidate.delete", "", None):
+            self.assertEqual(
+                (status, payload["error"]["code"]), (404, "studio.unknown-action")
+            )
+            for action_id in (
+                "report.publish",
+                "session.complete",
+                "candidate.delete",
+                "",
+                None,
+            ):
                 status, payload = self._request(
-                    server, "POST", url, {**self._params(session), "actionId": action_id}
+                    server,
+                    "POST",
+                    url,
+                    {**self._params(session), "actionId": action_id},
                 )
                 self.assertEqual(status, 404, action_id)
             bad_params = [
@@ -429,10 +494,23 @@ class StudioActionsTests(unittest.TestCase):
                 self.assertEqual(payload["error"]["code"], "validation.failed")
             # Path-like ids never reach Core: pattern and membership both refuse.
             outside = str(Path(directory).resolve())
-            for evil in ("../x", "..\\..\\x", outside, "C:\\Windows", "/etc/passwd", "s/../..", "a b"):
+            for evil in (
+                "../x",
+                "..\\..\\x",
+                outside,
+                "C:\\Windows",
+                "/etc/passwd",
+                "s/../..",
+                "a b",
+            ):
                 status, payload = self._request(
-                    server, "POST", url,
-                    {**self._params(session), "params": {"session": evil, "hypothesis": HYPOTHESIS}},
+                    server,
+                    "POST",
+                    url,
+                    {
+                        **self._params(session),
+                        "params": {"session": evil, "hypothesis": HYPOTHESIS},
+                    },
                 )
                 self.assertEqual(status, 422, evil)
             for evil in ("../factor-project", outside, "nope", "C:\\x", 5, None):
@@ -441,8 +519,13 @@ class StudioActionsTests(unittest.TestCase):
                 )
                 self.assertEqual(status, 422, evil)
             status, payload = self._request(
-                server, "POST", url,
-                {**self._params(session), "params": {"session": "ghost-0001", "hypothesis": HYPOTHESIS}},
+                server,
+                "POST",
+                url,
+                {
+                    **self._params(session),
+                    "params": {"session": "ghost-0001", "hypothesis": HYPOTHESIS},
+                },
             )
             self.assertEqual(status, 422)
             self.assertEqual(spawn.calls, [])
@@ -454,10 +537,20 @@ class StudioActionsTests(unittest.TestCase):
             inside = root / "staging" / "a.json"
             inside.parent.mkdir()
             inside.write_text("{}")
-            self.assertEqual(confine_workspace_path(root, "staging/a.json", "p"), inside.resolve())
+            self.assertEqual(
+                confine_workspace_path(root, "staging/a.json", "p"), inside.resolve()
+            )
             outside = Path(directory).resolve() / "outside.json"
             outside.write_text("{}")
-            attempts = ["../outside.json", "staging/../../outside.json", str(outside), "C:\\Windows\\win.ini", "/etc/passwd", "", "a\nb"]
+            attempts = [
+                "../outside.json",
+                "staging/../../outside.json",
+                str(outside),
+                "C:\\Windows\\win.ini",
+                "/etc/passwd",
+                "",
+                "a\nb",
+            ]
             link = root / "link"
             try:
                 link.symlink_to(outside.parent, target_is_directory=True)
@@ -479,9 +572,19 @@ class StudioActionsTests(unittest.TestCase):
             self.assertEqual(
                 preview["argv"],
                 [
-                    sys.executable, "-m", "autoquant", "experiment", "evaluate",
-                    str(workspace.root_dir.resolve()), "--project", "factor-project",
-                    "--session", session.manifest["id"], "--hypothesis", HYPOTHESIS, "--json",
+                    sys.executable,
+                    "-m",
+                    "autoquant",
+                    "experiment",
+                    "evaluate",
+                    str(workspace.root_dir.resolve()),
+                    "--project",
+                    "factor-project",
+                    "--session",
+                    session.manifest["id"],
+                    "--hypothesis",
+                    HYPOTHESIS,
+                    "--json",
                 ],
             )
             self.assertTrue(preview["commandHash"].startswith("sha256:"))
@@ -492,7 +595,9 @@ class StudioActionsTests(unittest.TestCase):
             self.assertTrue(preview["requiresSecondConfirm"])
             self.assertEqual(preview, self._preview(server, session))
             self.assertEqual(spawn.calls, [])
-            status, catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)
+            status, catalog = self._request(
+                server, "GET", "/api/v1/actions", json_type=False
+            )
             self.assertEqual(status, 200)
             action = catalog["data"]["actions"][0]
             self.assertEqual(action["id"], "experiment.evaluate")
@@ -550,18 +655,29 @@ class StudioActionsTests(unittest.TestCase):
             ]
             for override, status, code in cases:
                 got, payload = self._request(server, "POST", url, {**base, **override})
-                self.assertEqual((got, payload["error"]["code"]), (status, code), override)
+                self.assertEqual(
+                    (got, payload["error"]["code"]), (status, code), override
+                )
             missing = {k: v for k, v in base.items() if k != "confirm"}
             got, payload = self._request(server, "POST", url, missing)
             self.assertEqual(got, 400)
             # A changed hypothesis changes the argv and therefore the hash.
-            changed = {**base, "params": {**base["params"], "hypothesis": HYPOTHESIS + " v2"}}
+            changed = {
+                **base,
+                "params": {**base["params"], "hypothesis": HYPOTHESIS + " v2"},
+            }
             got, payload = self._request(server, "POST", url, changed)
-            self.assertEqual((got, payload["error"]["code"]), (409, "studio.stale-preview"))
+            self.assertEqual(
+                (got, payload["error"]["code"]), (409, "studio.stale-preview")
+            )
             # State change between preview and create invalidates the hash.
-            (session.worktree_project.root_dir / "factors/candidate.py").write_text("SCORE = 3.0\n")
+            (session.worktree_project.root_dir / "factors/candidate.py").write_text(
+                "SCORE = 3.0\n"
+            )
             got, payload = self._request(server, "POST", url, base)
-            self.assertEqual((got, payload["error"]["code"]), (409, "studio.stale-preview"))
+            self.assertEqual(
+                (got, payload["error"]["code"]), (409, "studio.stale-preview")
+            )
             self.assertEqual(spawn.calls, [])
 
     def test_blocked_preconditions_stale_unchanged_and_closed(self) -> None:
@@ -572,30 +688,47 @@ class StudioActionsTests(unittest.TestCase):
             url = "/api/v1/actions/preview"
             # Unchanged candidate.
             status, payload = self._request(server, "POST", url, self._params(session))
-            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"))
+            self.assertEqual(
+                (status, payload["error"]["code"]), (409, "studio.blocked")
+            )
             self.assertIn("does not differ", payload["error"]["message"])
-            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
+            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[
+                1
+            ]
             entry = catalog["data"]["actions"][0]["targets"][0]["sessions"][0]
             self.assertFalse(entry["available"])
             self.assertIn("does not differ", entry["blockedBy"])
             # Changed candidate becomes available.
-            (session.worktree_project.root_dir / "factors/candidate.py").write_text("SCORE = 2.0\n")
-            self.assertEqual(self._request(server, "POST", url, self._params(session))[0], 200)
+            (session.worktree_project.root_dir / "factors/candidate.py").write_text(
+                "SCORE = 2.0\n"
+            )
+            self.assertEqual(
+                self._request(server, "POST", url, self._params(session))[0], 200
+            )
             # Stale: a fixed file inside the Session worktree was modified.
             judge = session.worktree_project.root_dir / "judges/evaluate.py"
             judge.write_text(judge.read_text() + "\n# tampered\n")
             status, payload = self._request(server, "POST", url, self._params(session))
-            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"))
+            self.assertEqual(
+                (status, payload["error"]["code"]), (409, "studio.blocked")
+            )
             self.assertIn("stale", payload["error"]["message"])
             entry = self._request(server, "GET", "/api/v1/actions", json_type=False)[1][
-                "data"]["actions"][0]["targets"][0]["sessions"][0]
+                "data"
+            ]["actions"][0]["targets"][0]["sessions"][0]
             self.assertFalse(entry["available"])
             judge.write_text(judge.read_text().replace("\n# tampered\n", ""))
             # Closed Session.
             closed = SimpleNamespace(id=session.manifest["id"], status="completed")
-            with mock.patch.object(studio_actions, "list_sessions", return_value=[closed]):
-                status, payload = self._request(server, "POST", url, self._params(session))
-            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"))
+            with mock.patch.object(
+                studio_actions, "list_sessions", return_value=[closed]
+            ):
+                status, payload = self._request(
+                    server, "POST", url, self._params(session)
+                )
+            self.assertEqual(
+                (status, payload["error"]["code"]), (409, "studio.blocked")
+            )
             self.assertIn("not active", payload["error"]["message"])
             self.assertEqual(spawn.calls, [])
 
@@ -617,8 +750,13 @@ class StudioActionsTests(unittest.TestCase):
             self.assertEqual(runner.active_job("factor-project"), job_id)
             # A different Project is independent.
             runner.create(
-                action_id="experiment.evaluate", project="other", argv=["x"],
-                display="x", command_hash="h", timeout=5, cwd=str(workspace.root_dir),
+                action_id="experiment.evaluate",
+                project="other",
+                argv=["x"],
+                display="x",
+                command_hash="h",
+                timeout=5,
+                cwd=str(workspace.root_dir),
             )
             self.assertEqual(len(spawn.calls), 2)
             for handle in spawn.handles:
@@ -677,11 +815,17 @@ class StudioActionsTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertEqual(cancelled["data"]["status"], "cancelled")
             self.assertTrue(spawn.handles[0].killed)
-            status, again = self._request(server, "POST", f"/api/v1/jobs/{job_id}/cancel", {})
+            status, again = self._request(
+                server, "POST", f"/api/v1/jobs/{job_id}/cancel", {}
+            )
             self.assertEqual(again["data"]["status"], "cancelled")
-            status, payload = self._request(server, "POST", "/api/v1/jobs/job-nope/cancel", {})
+            status, payload = self._request(
+                server, "POST", "/api/v1/jobs/job-nope/cancel", {}
+            )
             self.assertEqual(status, 404)
-            status, listing = self._request(server, "GET", "/api/v1/jobs", json_type=False)
+            status, listing = self._request(
+                server, "GET", "/api/v1/jobs", json_type=False
+            )
             self.assertEqual(listing["data"]["jobs"][0]["jobId"], job_id)
 
     def test_real_cancel_kills_the_whole_process_tree(self) -> None:
@@ -736,7 +880,14 @@ class StudioActionsTests(unittest.TestCase):
         }
         with mock.patch.dict(os.environ, planted):
             clean = scrubbed_environment()
-        for name in ("AQ_TEST_API_TOKEN", "AQ_TEST_SECRET", "AQ_TEST_KEY", "AQ_TEST_PASSWORD", "UV_TEST_TOKEN", "AQ_UNLISTED"):
+        for name in (
+            "AQ_TEST_API_TOKEN",
+            "AQ_TEST_SECRET",
+            "AQ_TEST_KEY",
+            "AQ_TEST_PASSWORD",
+            "UV_TEST_TOKEN",
+            "AQ_UNLISTED",
+        ):
             self.assertNotIn(name, clean)
         self.assertEqual(clean["UV_CACHE_DIR"], "D:/tmp/uv")
         self.assertEqual(clean["PYTHONUTF8"], "1")
@@ -749,7 +900,15 @@ class StudioActionsTests(unittest.TestCase):
                 status, payload = self._create(server, session, preview)
                 self._wait(server, payload["data"]["jobId"])
             env = spawn.calls[0][1]
-            self.assertFalse([n for n in env if "TOKEN" in n.upper() or "SECRET" in n.upper() or "KEY" in n.upper()])
+            self.assertFalse(
+                [
+                    n
+                    for n in env
+                    if "TOKEN" in n.upper()
+                    or "SECRET" in n.upper()
+                    or "KEY" in n.upper()
+                ]
+            )
             self.assertNotIn(server.actions.token, env.values())
 
     # 9. audit ----------------------------------------------------------------
@@ -768,16 +927,24 @@ class StudioActionsTests(unittest.TestCase):
                 job = self._wait(server, payload["data"]["jobId"])
                 self.assertEqual(job["status"], "succeeded")
                 self.assertEqual(
-                    job["createdRefs"], {"experimentId": "exp-0001-abc", "runId": "run-xyz"}
+                    job["createdRefs"],
+                    {"experimentId": "exp-0001-abc", "runId": "run-xyz"},
                 )
-                self.assertEqual(job["result"]["data"]["experiment"]["id"], "exp-0001-abc")
+                self.assertEqual(
+                    job["result"]["data"]["experiment"]["id"], "exp-0001-abc"
+                )
             log = workspace.root_dir.resolve() / ".autoquant" / "studio-actions.jsonl"
             text = log.read_text(encoding="utf-8")
             self.assertNotIn(server.actions.token, text)
             lines = [json.loads(line) for line in text.splitlines()]
             self.assertEqual(
                 [(line["event"], line["jobId"]) for line in lines],
-                [("started", ids[0]), ("finished", ids[0]), ("started", ids[1]), ("finished", ids[1])],
+                [
+                    ("started", ids[0]),
+                    ("finished", ids[0]),
+                    ("started", ids[1]),
+                    ("finished", ids[1]),
+                ],
             )
             started, finished = lines[0], lines[1]
             self.assertEqual(started["schemaVersion"], 1)
@@ -793,7 +960,9 @@ class StudioActionsTests(unittest.TestCase):
             # Append-only across a fresh server: earlier lines are preserved.
             server2 = self._serve(workspace, spawn=FakeSpawn())
             server2.actions.audit.append({"event": "probe"})
-            self.assertEqual(log.read_text(encoding="utf-8").splitlines()[:4], text.splitlines())
+            self.assertEqual(
+                log.read_text(encoding="utf-8").splitlines()[:4], text.splitlines()
+            )
 
     def test_rejected_requests_leave_no_audit_line(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -801,7 +970,9 @@ class StudioActionsTests(unittest.TestCase):
             server = self._serve(workspace, spawn=FakeSpawn())
             self._request(server, "POST", "/api/v1/actions", self._params(session))
             self._preview(server, session)
-            self.assertFalse((workspace.root_dir / ".autoquant" / "studio-actions.jsonl").exists())
+            self.assertFalse(
+                (workspace.root_dir / ".autoquant" / "studio-actions.jsonl").exists()
+            )
 
     # 11. end to end ----------------------------------------------------------
 
@@ -820,24 +991,34 @@ class StudioActionsTests(unittest.TestCase):
             self.assertEqual(job["status"], "succeeded", job)
             refs = job["createdRefs"]
             self.assertTrue(refs["experimentId"].startswith("exp-"))
-            after = next(p for p in build_studio_snapshot(workspace.root_dir)["projects"])
+            after = next(
+                p for p in build_studio_snapshot(workspace.root_dir)["projects"]
+            )
             self.assertEqual(after["counts"]["runs"], before["counts"]["runs"] + 1)
             self.assertIn(refs["runId"], [run["id"] for run in after["runs"]])
             integrity = after["sessions"][0]["selectionIntegrity"]
             self.assertEqual(integrity["candidateTrials"], 1)
             # The next preview counts the second trial.
-            (session.worktree_project.root_dir / "factors/candidate.py").write_text("SCORE = 2.5\n")
+            (session.worktree_project.root_dir / "factors/candidate.py").write_text(
+                "SCORE = 2.5\n"
+            )
             second = self._preview(server, session)["trial"]
             self.assertEqual((second["n"], second["m"]), (2, 3))
             log = workspace.root_dir.resolve() / ".autoquant" / "studio-actions.jsonl"
             finished = [json.loads(l) for l in log.read_text().splitlines()][-1]
             self.assertEqual(finished["createdRefs"]["runId"], refs["runId"])
 
-
     # session.start / session.check / candidate.save / GET candidate -----------
 
-    def _post(self, server, action_id, params, *, path="/api/v1/actions/preview", **extra):
-        body = {"actionId": action_id, "project": "factor-project", "params": params, **extra}
+    def _post(
+        self, server, action_id, params, *, path="/api/v1/actions/preview", **extra
+    ):
+        body = {
+            "actionId": action_id,
+            "project": "factor-project",
+            "params": params,
+            **extra,
+        }
         return self._request(server, "POST", path, body)
 
     def _sid(self, session) -> str:
@@ -848,16 +1029,21 @@ class StudioActionsTests(unittest.TestCase):
 
     def _save(self, server, session, source, base, **extra):
         return self._post(
-            server, "candidate.save",
+            server,
+            "candidate.save",
             {"session": self._sid(session), "source": source, "baseSha256": base},
-            path="/api/v1/actions", confirm=True, **extra,
+            path="/api/v1/actions",
+            confirm=True,
+            **extra,
         )
 
     def _get_candidate(self, session, server, **kw):
         return self._request(
-            server, "GET",
+            server,
+            "GET",
             f"/api/v1/candidate?project=factor-project&session={self._sid(session)}",
-            json_type=False, **kw,
+            json_type=False,
+            **kw,
         )
 
     def test_session_start_preview_second_confirm_and_trial_count(self) -> None:
@@ -865,7 +1051,12 @@ class StudioActionsTests(unittest.TestCase):
             workspace, project = make_project(directory)
             create_study(project, study_definition())
             start_json = json.dumps(
-                {"ok": True, "data": {"session": {"id": "session-x", "baseline": {"runId": "run-b"}}}}
+                {
+                    "ok": True,
+                    "data": {
+                        "session": {"id": "session-x", "baseline": {"runId": "run-b"}}
+                    },
+                }
             ).encode()
             spawn = FakeSpawn(out=start_json)
             server = self._serve(workspace, spawn=spawn)
@@ -876,18 +1067,40 @@ class StudioActionsTests(unittest.TestCase):
             self.assertEqual(
                 data["argv"],
                 [
-                    sys.executable, "-m", "autoquant", "session", "start",
-                    str(workspace.root_dir.resolve()), "--project", "factor-project",
-                    "--study", "factor-quality", "--json",
+                    sys.executable,
+                    "-m",
+                    "autoquant",
+                    "session",
+                    "start",
+                    str(workspace.root_dir.resolve()),
+                    "--project",
+                    "factor-project",
+                    "--study",
+                    "factor-quality",
+                    "--json",
                 ],
             )
             self.assertTrue(data["requiresSecondConfirm"])
             self.assertEqual(data["trial"]["currentFamilyTrials"], 0)
             self.assertIsNone(data["trial"]["familyId"])
             self.assertIn("opens a trial family", data["trial"]["notice"])
-            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
+            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[
+                1
+            ]
             ids = [item["id"] for item in catalog["data"]["actions"]]
-            self.assertEqual(ids, ["experiment.evaluate", "session.start", "session.check", "candidate.save", "strategy.build", "project.create", "project.intake", "data.check"])
+            self.assertEqual(
+                ids,
+                [
+                    "experiment.evaluate",
+                    "session.start",
+                    "session.check",
+                    "candidate.save",
+                    "strategy.build",
+                    "project.create",
+                    "project.intake",
+                    "data.check",
+                ],
+            )
             start = catalog["data"]["actions"][1]
             self.assertEqual(
                 start["targets"][0]["studies"],
@@ -895,15 +1108,30 @@ class StudioActionsTests(unittest.TestCase):
             )
             self.assertTrue(start["requiresSecondConfirm"])
             base = {"confirm": True, "commandHash": data["commandHash"]}
-            status, payload = self._post(server, "session.start", params, path="/api/v1/actions", **base)
-            self.assertEqual((status, payload["error"]["code"]), (400, "studio.second-confirm-required"))
             status, payload = self._post(
-                server, "session.start", params, path="/api/v1/actions", secondConfirm=True, **base
+                server, "session.start", params, path="/api/v1/actions", **base
+            )
+            self.assertEqual(
+                (status, payload["error"]["code"]),
+                (400, "studio.second-confirm-required"),
+            )
+            status, payload = self._post(
+                server,
+                "session.start",
+                params,
+                path="/api/v1/actions",
+                secondConfirm=True,
+                **base,
             )
             self.assertEqual(status, 202, payload)
             job = self._wait(server, payload["data"]["jobId"])
-            self.assertEqual(job["createdRefs"], {"sessionId": "session-x", "runId": "run-b"})
-            self.assertEqual([stage["id"] for stage in job["stages"]], ["preflight", "baseline-run", "session-created"])
+            self.assertEqual(
+                job["createdRefs"], {"sessionId": "session-x", "runId": "run-b"}
+            )
+            self.assertEqual(
+                [stage["id"] for stage in job["stages"]],
+                ["preflight", "baseline-run", "session-created"],
+            )
             self.assertEqual(len(spawn.calls), 1)
 
     def test_session_start_blocked_and_trial_count_after_baseline(self) -> None:
@@ -911,13 +1139,19 @@ class StudioActionsTests(unittest.TestCase):
             workspace, project, session = self._setup(directory, change=False)
             spawn = FakeSpawn()
             server = self._serve(workspace, spawn=spawn)
-            status, payload = self._post(server, "session.start", {"study": "factor-quality"})
-            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"))
+            status, payload = self._post(
+                server, "session.start", {"study": "factor-quality"}
+            )
+            self.assertEqual(
+                (status, payload["error"]["code"]), (409, "studio.blocked")
+            )
             self.assertEqual(
                 payload["error"]["message"],
                 f"Blocked: Study factor-quality already has active Session {self._sid(session)}",
             )
-            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
+            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[
+                1
+            ]
             entry = catalog["data"]["actions"][1]["targets"][0]["studies"][0]
             self.assertFalse(entry["available"])
             self.assertIn("already has active Session", entry["blockedBy"])
@@ -933,30 +1167,49 @@ class StudioActionsTests(unittest.TestCase):
             spawn = FakeSpawn()
             server = self._serve(workspace, spawn=spawn)
             for params in (
-                {}, {"study": ""}, {"study": 5}, {"study": "../x"}, {"study": "Factor"},
-                {"study": "a" * 65}, {"study": "--help"}, {"study": "factor-quality", "extra": 1},
+                {},
+                {"study": ""},
+                {"study": 5},
+                {"study": "../x"},
+                {"study": "Factor"},
+                {"study": "a" * 65},
+                {"study": "--help"},
+                {"study": "factor-quality", "extra": 1},
                 {"study": "factor-quality", "request": ""},
                 {"study": "factor-quality", "request": 3},
                 {"study": "factor-quality", "request": "a\nb"},
                 "string",
             ):
                 status, payload = self._post(server, "session.start", params)
-                self.assertEqual((status, payload["error"]["code"]), (422, "validation.failed"), params)
+                self.assertEqual(
+                    (status, payload["error"]["code"]),
+                    (422, "validation.failed"),
+                    params,
+                )
             status, payload = self._post(server, "session.start", {"study": "ghost"})
             self.assertEqual(status, 422)
             self.assertEqual(payload["error"]["issues"][0]["code"], "study.missing")
             outside = Path(directory).resolve() / "outside.json"
             outside.write_text("{}")
-            for evil in ("../outside.json", str(outside), "C:\\Windows\\win.ini", "missing.json"):
+            for evil in (
+                "../outside.json",
+                str(outside),
+                "C:\\Windows\\win.ini",
+                "missing.json",
+            ):
                 status, payload = self._post(
-                    server, "session.start", {"study": "factor-quality", "request": evil}
+                    server,
+                    "session.start",
+                    {"study": "factor-quality", "request": evil},
                 )
                 self.assertEqual(status, 422, evil)
             inside = workspace.root_dir.resolve() / "staging" / "request.json"
             inside.parent.mkdir(exist_ok=True)
             inside.write_text("{}")
             status, payload = self._post(
-                server, "session.start", {"study": "factor-quality", "request": "staging/request.json"}
+                server,
+                "session.start",
+                {"study": "factor-quality", "request": "staging/request.json"},
             )
             self.assertEqual(status, 200, payload)
             argv = payload["data"]["argv"]
@@ -966,26 +1219,45 @@ class StudioActionsTests(unittest.TestCase):
     def test_session_check_preview_blocked_and_job(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace, _, session = self._setup(directory, change=False)
-            check_json = json.dumps({"ok": True, "data": {"id": "check-1", "status": "passed"}}).encode()
+            check_json = json.dumps(
+                {"ok": True, "data": {"id": "check-1", "status": "passed"}}
+            ).encode()
             spawn = FakeSpawn(out=check_json)
             server = self._serve(workspace, spawn=spawn)
             params = {"session": self._sid(session)}
             status, payload = self._post(server, "session.check", params)
-            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"))
-            self.assertIn("does not differ from the leader", payload["error"]["message"])
-            for params_bad in ({}, {"session": "../x"}, {"session": self._sid(session), "extra": 1}, {"session": 5}):
-                self.assertEqual(self._post(server, "session.check", params_bad)[0], 422, params_bad)
+            self.assertEqual(
+                (status, payload["error"]["code"]), (409, "studio.blocked")
+            )
+            self.assertIn(
+                "does not differ from the leader", payload["error"]["message"]
+            )
+            for params_bad in (
+                {},
+                {"session": "../x"},
+                {"session": self._sid(session), "extra": 1},
+                {"session": 5},
+            ):
+                self.assertEqual(
+                    self._post(server, "session.check", params_bad)[0], 422, params_bad
+                )
             self._candidate_path(session).write_text("SCORE = 2.0\n")
             status, preview = self._post(server, "session.check", params)
             self.assertEqual(status, 200, preview)
             data = preview["data"]
             self.assertEqual(data["argv"][3:5], ["session", "check"])
-            self.assertEqual(data["argv"][-3:], ["--session", self._sid(session), "--json"])
+            self.assertEqual(
+                data["argv"][-3:], ["--session", self._sid(session), "--json"]
+            )
             self.assertIsNone(data["trial"])
             self.assertFalse(data["requiresSecondConfirm"])
             status, payload = self._post(
-                server, "session.check", params, path="/api/v1/actions",
-                confirm=True, commandHash=data["commandHash"],
+                server,
+                "session.check",
+                params,
+                path="/api/v1/actions",
+                confirm=True,
+                commandHash=data["commandHash"],
             )
             self.assertEqual(status, 202, payload)
             job = self._wait(server, payload["data"]["jobId"])
@@ -1010,7 +1282,10 @@ class StudioActionsTests(unittest.TestCase):
             self.assertFalse(data["editable"])
             self.assertIn("--allow-actions", data["blockedReason"])
             self.assertTrue(data["blockedReason"].startswith("Blocked: "))
-            self.assertTrue(data["path"].endswith("worktree/factor-project/factors/candidate.py"), data["path"])
+            self.assertTrue(
+                data["path"].endswith("worktree/factor-project/factors/candidate.py"),
+                data["path"],
+            )
             self.assertFalse(Path(data["path"]).is_absolute())
             for query in (
                 "project=nope&session=" + self._sid(session),
@@ -1020,12 +1295,23 @@ class StudioActionsTests(unittest.TestCase):
                 "",
             ):
                 status, payload = self._request(
-                    server, "GET", "/api/v1/candidate?" + query, json_type=False, token=False
+                    server,
+                    "GET",
+                    "/api/v1/candidate?" + query,
+                    json_type=False,
+                    token=False,
                 )
-                self.assertEqual((status, payload["error"]["code"]), (422, "validation.failed"), query)
+                self.assertEqual(
+                    (status, payload["error"]["code"]),
+                    (422, "validation.failed"),
+                    query,
+                )
             status, _ = self._request(
-                server, "POST", "/api/v1/actions",
-                {"actionId": "candidate.save"}, token=False,
+                server,
+                "POST",
+                "/api/v1/actions",
+                {"actionId": "candidate.save"},
+                token=False,
             )
             self.assertEqual(status, 405)
             self.assertFalse((workspace.root_dir / ".autoquant").exists())
@@ -1038,10 +1324,14 @@ class StudioActionsTests(unittest.TestCase):
             self.assertEqual(status, 200, payload)
             self.assertTrue(payload["data"]["editable"])
             self.assertIsNone(payload["data"]["blockedReason"])
-            status, payload = self._get_candidate(session, server, token=False, headers={"Host": "evil.example"})
+            status, payload = self._get_candidate(
+                session, server, token=False, headers={"Host": "evil.example"}
+            )
             self.assertEqual((status, payload["error"]["code"]), (403, "studio.host"))
             closed = SimpleNamespace(id=self._sid(session), status="completed")
-            with mock.patch.object(studio_actions, "list_sessions", return_value=[closed]):
+            with mock.patch.object(
+                studio_actions, "list_sessions", return_value=[closed]
+            ):
                 status, payload = self._get_candidate(session, server, token=False)
             self.assertEqual(status, 200)
             self.assertFalse(payload["data"]["editable"])
@@ -1059,14 +1349,17 @@ class StudioActionsTests(unittest.TestCase):
             marker = "SECRET_MARKER_41"
             source = f"# {marker}\r\nSCORE = 3.5\r\n# caf\u00e9"
             status, preview = self._post(
-                server, "candidate.save",
+                server,
+                "candidate.save",
                 {"session": self._sid(session), "source": source, "baseSha256": sha},
             )
             self.assertEqual(status, 200, preview)
             self.assertFalse(preview["data"]["requiresSecondConfirm"])
             self.assertTrue(preview["data"]["file"]["changed"])
             self.assertNotIn(marker, json.dumps(preview))
-            self.assertEqual(self._candidate_path(session).read_bytes(), b"SCORE = 2.0\n")
+            self.assertEqual(
+                self._candidate_path(session).read_bytes(), b"SCORE = 2.0\n"
+            )
             status, payload = self._save(server, session, source, sha)
             self.assertEqual(status, 200, payload)
             data = payload["data"]
@@ -1076,19 +1369,34 @@ class StudioActionsTests(unittest.TestCase):
             self.assertEqual(data["bytes"], len(encoded))
             self.assertEqual(data["previousSha256"], sha)
             self.assertTrue(data["changed"])
-            self.assertEqual(data["path"], self._get_candidate(session, server, token=False)[1]["data"]["path"])
-            self.assertEqual(list(self._candidate_path(session).parent.glob("*.tmp")), [])
+            self.assertEqual(
+                data["path"],
+                self._get_candidate(session, server, token=False)[1]["data"]["path"],
+            )
+            self.assertEqual(
+                list(self._candidate_path(session).parent.glob("*.tmp")), []
+            )
             # The saved file is still inside the editable closure: Session stays valid.
-            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
-            save_action = next(a for a in catalog["data"]["actions"] if a["id"] == "candidate.save")
-            self.assertEqual(save_action["targets"][0]["sessions"][0]["available"], True)
-            self.assertEqual(save_action["params"]["baseSha256"]["pattern"], "^[0-9a-f]{64}$")
+            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[
+                1
+            ]
+            save_action = next(
+                a for a in catalog["data"]["actions"] if a["id"] == "candidate.save"
+            )
+            self.assertEqual(
+                save_action["targets"][0]["sessions"][0]["available"], True
+            )
+            self.assertEqual(
+                save_action["params"]["baseSha256"]["pattern"], "^[0-9a-f]{64}$"
+            )
             self.assertFalse(save_action["requiresSecondConfirm"])
             # Same bytes again: unchanged, nothing rewritten.
             status, again = self._save(server, session, source, data["sha256"])
             self.assertEqual(status, 200)
             self.assertFalse(again["data"]["changed"])
-            log = (workspace.root_dir.resolve() / ".autoquant" / "studio-actions.jsonl").read_text(encoding="utf-8")
+            log = (
+                workspace.root_dir.resolve() / ".autoquant" / "studio-actions.jsonl"
+            ).read_text(encoding="utf-8")
             self.assertNotIn(marker, log)
             self.assertNotIn("SCORE", log)
             records = [json.loads(line) for line in log.splitlines()]
@@ -1110,11 +1418,17 @@ class StudioActionsTests(unittest.TestCase):
             sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
             self._candidate_path(session).write_text("SCORE = 9.0\n")
             status, payload = self._save(server, session, "SCORE = 4.0\n", sha)
-            self.assertEqual((status, payload["error"]["code"]), (409, "studio.conflict"))
-            self.assertEqual(payload["error"]["issues"][0]["code"], "candidate.conflict")
+            self.assertEqual(
+                (status, payload["error"]["code"]), (409, "studio.conflict")
+            )
+            self.assertEqual(
+                payload["error"]["issues"][0]["code"], "candidate.conflict"
+            )
             self.assertIn("reload before saving", payload["error"]["message"])
             self.assertEqual(self._candidate_path(session).read_text(), "SCORE = 9.0\n")
-            self.assertFalse((workspace.root_dir / ".autoquant" / "studio-actions.jsonl").exists())
+            self.assertFalse(
+                (workspace.root_dir / ".autoquant" / "studio-actions.jsonl").exists()
+            )
 
     def test_candidate_save_parameter_schema_rejections(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1139,18 +1453,38 @@ class StudioActionsTests(unittest.TestCase):
                 "string params": "x",
             }
             for label, params in cases.items():
-                status, payload = self._post(server, "candidate.save", params, path="/api/v1/actions", confirm=True)
-                self.assertEqual((status, payload["error"]["code"]), (422, "validation.failed"), label)
+                status, payload = self._post(
+                    server,
+                    "candidate.save",
+                    params,
+                    path="/api/v1/actions",
+                    confirm=True,
+                )
+                self.assertEqual(
+                    (status, payload["error"]["code"]),
+                    (422, "validation.failed"),
+                    label,
+                )
             status, payload = self._post(
-                server, "candidate.save", {**good, "session": "ghost-1"}, path="/api/v1/actions", confirm=True
+                server,
+                "candidate.save",
+                {**good, "session": "ghost-1"},
+                path="/api/v1/actions",
+                confirm=True,
             )
             self.assertEqual(status, 422)
             self.assertEqual(payload["error"]["issues"][0]["code"], "session.missing")
             for body in ({}, {"confirm": False}):
-                status, payload = self._post(server, "candidate.save", good, path="/api/v1/actions", **body)
-                self.assertEqual((status, payload["error"]["code"]), (400, "studio.confirm-required"))
+                status, payload = self._post(
+                    server, "candidate.save", good, path="/api/v1/actions", **body
+                )
+                self.assertEqual(
+                    (status, payload["error"]["code"]), (400, "studio.confirm-required")
+                )
             exact = {**good, "source": "x" * 200_000}
-            status, _ = self._post(server, "candidate.save", exact, path="/api/v1/actions", confirm=True)
+            status, _ = self._post(
+                server, "candidate.save", exact, path="/api/v1/actions", confirm=True
+            )
             self.assertEqual(status, 200)
             self.assertEqual(self._candidate_path(session).read_bytes(), b"x" * 200_000)
 
@@ -1165,20 +1499,36 @@ class StudioActionsTests(unittest.TestCase):
             judge = session.worktree_project.root_dir / "judges/evaluate.py"
             judge.write_text(judge.read_text() + "\n# tampered\n")
             status, payload = self._save(server, session, "x = 1\n", sha)
-            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"))
-            self.assertIn(f"Blocked: Session {sid} is stale; run aq session show to see why", payload["error"]["message"])
-            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[1]
-            save_action = next(a for a in catalog["data"]["actions"] if a["id"] == "candidate.save")
+            self.assertEqual(
+                (status, payload["error"]["code"]), (409, "studio.blocked")
+            )
+            self.assertIn(
+                f"Blocked: Session {sid} is stale; run aq session show to see why",
+                payload["error"]["message"],
+            )
+            catalog = self._request(server, "GET", "/api/v1/actions", json_type=False)[
+                1
+            ]
+            save_action = next(
+                a for a in catalog["data"]["actions"] if a["id"] == "candidate.save"
+            )
             entry = save_action["targets"][0]["sessions"][0]
             self.assertFalse(entry["available"])
             self.assertIn("is stale", entry["blockedBy"])
-            self.assertFalse(self._get_candidate(session, server, token=False)[1]["data"]["editable"])
+            self.assertFalse(
+                self._get_candidate(session, server, token=False)[1]["data"]["editable"]
+            )
             judge.write_text(judge.read_text().replace("\n# tampered\n", ""))
             # Closed Session.
             closed = SimpleNamespace(id=sid, status="completed")
-            with mock.patch.object(studio_actions, "list_sessions", return_value=[closed]):
+            with mock.patch.object(
+                studio_actions, "list_sessions", return_value=[closed]
+            ):
                 status, payload = self._save(server, session, "x = 1\n", sha)
-            self.assertEqual((status, payload["error"]["message"]), (409, f"Blocked: Session {sid} is completed, not active"))
+            self.assertEqual(
+                (status, payload["error"]["message"]),
+                (409, f"Blocked: Session {sid} is completed, not active"),
+            )
             # Outside the editable closure.
             real_load = studio_actions.load_session
 
@@ -1191,7 +1541,9 @@ class StudioActionsTests(unittest.TestCase):
 
             with mock.patch.object(studio_actions, "load_session", narrowed):
                 with mock.patch.object(
-                    studio_actions, "session_snapshot", return_value={"authority": {"valid": True, "issues": []}}
+                    studio_actions,
+                    "session_snapshot",
+                    return_value={"authority": {"valid": True, "issues": []}},
                 ):
                     status, payload = self._save(server, session, "x = 1\n", sha)
             self.assertEqual(status, 409)
@@ -1239,12 +1591,22 @@ class StudioActionsTests(unittest.TestCase):
             workspace, _, session = self._setup(directory)
             server = self._serve(workspace)
             sha = self._get_candidate(session, server, token=False)[1]["data"]["sha256"]
-            with mock.patch.object(studio_actions.os, "replace", side_effect=OSError("disk full")):
+            with mock.patch.object(
+                studio_actions.os, "replace", side_effect=OSError("disk full")
+            ):
                 status, payload = self._save(server, session, "SCORE = 8.0\n", sha)
-            self.assertEqual((status, payload["error"]["code"]), (500, "studio.write-failed"))
-            self.assertEqual(self._candidate_path(session).read_bytes(), b"SCORE = 2.0\n")
-            self.assertEqual(list(self._candidate_path(session).parent.glob("*.tmp")), [])
-            log = (workspace.root_dir.resolve() / ".autoquant" / "studio-actions.jsonl").read_text()
+            self.assertEqual(
+                (status, payload["error"]["code"]), (500, "studio.write-failed")
+            )
+            self.assertEqual(
+                self._candidate_path(session).read_bytes(), b"SCORE = 2.0\n"
+            )
+            self.assertEqual(
+                list(self._candidate_path(session).parent.glob("*.tmp")), []
+            )
+            log = (
+                workspace.root_dir.resolve() / ".autoquant" / "studio-actions.jsonl"
+            ).read_text()
             self.assertEqual(json.loads(log.splitlines()[-1])["status"], "failed")
             self.assertIsNone(server.actions.runner.active_job("factor-project"))
             # The slot is free and a retry succeeds.
@@ -1266,12 +1628,12 @@ class StudioActionsTests(unittest.TestCase):
                 path.write_bytes(original)
                 self.skipTest("symlinks are not available")
             status, payload = self._save(server, session, "SCORE = 7.0\n", sha)
-            self.assertEqual((status, payload["error"]["code"]), (409, "studio.blocked"), payload)
+            self.assertEqual(
+                (status, payload["error"]["code"]), (409, "studio.blocked"), payload
+            )
             self.assertIn("symlink", payload["error"]["message"])
             self.assertEqual(outside.read_text(), "SCORE = 0.0\n")
-            self.assertEqual(
-                self._get_candidate(session, server, token=False)[0], 404
-            )
+            self.assertEqual(self._get_candidate(session, server, token=False)[0], 404)
             path.unlink()
             path.write_bytes(original)
 
@@ -1299,56 +1661,104 @@ class StudioActionsTests(unittest.TestCase):
                 # Core rejects a junctioned directory before the candidate check.
                 self.assertIn(status, (409, 422), payload)
                 self.assertFalse(payload["ok"])
-                self.assertEqual((outside / "candidate.py").read_text(), "SCORE = 0.0\n")
+                self.assertEqual(
+                    (outside / "candidate.py").read_text(), "SCORE = 0.0\n"
+                )
             finally:
                 if factors.exists():
                     os.rmdir(factors)
                 backup.rename(factors)
 
-
     def test_idea_project_create_preview_security_and_exact_argv(self) -> None:
         from autoquant.workspace import initialize_workspace
+
         with tempfile.TemporaryDirectory() as directory:
             workspace = initialize_workspace(Path(directory) / "workspace")
             spawn = FakeSpawn()
             server = self._serve(workspace, spawn=spawn)
-            body = {"actionId": "project.create", "project": "my-idea", "params": {
-                "id": "my-idea", "name": "A quote ' stays literal", "description": HYPOTHESIS,
-                "template": "ohlcv-factor-lab"}}
+            body = {
+                "actionId": "project.create",
+                "project": "my-idea",
+                "params": {
+                    "id": "my-idea",
+                    "name": "A quote ' stays literal",
+                    "description": HYPOTHESIS,
+                    "template": "ohlcv-factor-lab",
+                },
+            }
             _, catalog = self._request(server, "GET", "/api/v1/actions")
-            self.assertIn("project.create", [a["id"] for a in catalog["data"]["actions"]])
-            status, _ = self._request(server, "POST", "/api/v1/actions/preview", body, token=False)
+            self.assertIn(
+                "project.create", [a["id"] for a in catalog["data"]["actions"]]
+            )
+            status, _ = self._request(
+                server, "POST", "/api/v1/actions/preview", body, token=False
+            )
             self.assertEqual(status, 403)
-            status, payload = self._request(server, "POST", "/api/v1/actions/preview", body)
+            status, payload = self._request(
+                server, "POST", "/api/v1/actions/preview", body
+            )
             self.assertEqual(status, 200, payload)
             preview = payload["data"]
             self.assertEqual(preview["argv"][3:5], ["project", "create"])
             self.assertIn(body["params"]["name"], preview["argv"])
             self.assertFalse((workspace.root_dir / "projects/my-idea").exists())
-            status, _ = self._request(server, "POST", "/api/v1/actions", {**body, "confirm": True, "commandHash": "stale"})
+            status, _ = self._request(
+                server,
+                "POST",
+                "/api/v1/actions",
+                {**body, "confirm": True, "commandHash": "stale"},
+            )
             self.assertEqual(status, 409)
-            status, launched = self._request(server, "POST", "/api/v1/actions", {**body, "confirm": True, "commandHash": preview["commandHash"]})
+            status, launched = self._request(
+                server,
+                "POST",
+                "/api/v1/actions",
+                {**body, "confirm": True, "commandHash": preview["commandHash"]},
+            )
             self.assertEqual(status, 202, launched)
             server.actions.runner.get(launched["data"]["jobId"]).done.wait(5)
             self.assertEqual(spawn.calls[0][0], preview["argv"])
 
-    def test_idea_create_rejects_traversal_options_unknown_fields_and_templates(self) -> None:
+    def test_idea_create_rejects_traversal_options_unknown_fields_and_templates(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace, _, _ = self._setup(directory)
             server = self._serve(workspace, spawn=FakeSpawn())
-            good = {"id": "new-idea", "name": "Idea", "description": HYPOTHESIS, "template": "ohlcv-factor-lab"}
-            for override in ({"id": "../escape"}, {"id": "--help"}, {"name": "--help"},
-                             {"template": "ohlcv-research-desk"}, {"shell": "echo bad"}, {"description": "a\nb"}):
-                status, body = self._request(server, "POST", "/api/v1/actions/preview", {
-                    "actionId": "project.create", "params": {**good, **override}})
+            good = {
+                "id": "new-idea",
+                "name": "Idea",
+                "description": HYPOTHESIS,
+                "template": "ohlcv-factor-lab",
+            }
+            for override in (
+                {"id": "../escape"},
+                {"id": "--help"},
+                {"name": "--help"},
+                {"template": "ohlcv-research-desk"},
+                {"shell": "echo bad"},
+                {"description": "a\nb"},
+            ):
+                status, body = self._request(
+                    server,
+                    "POST",
+                    "/api/v1/actions/preview",
+                    {"actionId": "project.create", "params": {**good, **override}},
+                )
                 self.assertEqual(status, 422, body)
 
     def test_idea_dataset_discovery_and_stale_data_confirmation(self) -> None:
         from tests.intake_helpers import write_intake_inputs
         from autoquant.workspace import initialize_workspace
+
         with tempfile.TemporaryDirectory() as directory:
             workspace = initialize_workspace(Path(directory) / "workspace")
-            create_project(workspace.root_dir, "new-idea", description=HYPOTHESIS, template="ohlcv-factor-lab")
+            create_project(
+                workspace.root_dir,
+                "new-idea",
+                description=HYPOTHESIS,
+                template="ohlcv-factor-lab",
+            )
             server = self._serve(workspace, spawn=FakeSpawn())
             status, empty = self._request(server, "GET", "/api/v1/idea-datasets")
             self.assertEqual(status, 200)
@@ -1359,38 +1769,82 @@ class StudioActionsTests(unittest.TestCase):
             _, package = write_intake_inputs(staging, observations=180)
             status, choices = self._request(server, "GET", "/api/v1/idea-datasets")
             self.assertEqual(len(choices["data"]["datasets"]), 1, choices)
-            params = {"dataset": package.relative_to(workspace.root_dir).as_posix(), "horizon": 1, "predictionAssets": ["AAPL", "MSFT"]}
-            body = {"actionId": "project.intake", "project": "new-idea", "params": params}
-            status, result = self._request(server, "POST", "/api/v1/actions/preview", body)
+            params = {
+                "dataset": package.relative_to(workspace.root_dir).as_posix(),
+                "horizon": 1,
+                "predictionAssets": ["AAPL", "MSFT"],
+            }
+            body = {
+                "actionId": "project.intake",
+                "project": "new-idea",
+                "params": params,
+            }
+            status, result = self._request(
+                server, "POST", "/api/v1/actions/preview", body
+            )
             self.assertEqual(status, 200, result)
             self.assertEqual(result["data"]["request"]["question"], HYPOTHESIS)
             self.assertEqual(result["data"]["request"]["source"]["system"], "local")
-            self.assertFalse((workspace.root_dir / ".autoquant/idea-inputs/new-idea.json").exists())
+            self.assertFalse(
+                (workspace.root_dir / ".autoquant/idea-inputs/new-idea.json").exists()
+            )
             with (package.parent / "AAPL.csv").open("a") as file:
                 file.write("\n")
-            status, _ = self._request(server, "POST", "/api/v1/actions", {**body, "confirm": True, "commandHash": result["data"]["commandHash"]})
+            status, _ = self._request(
+                server,
+                "POST",
+                "/api/v1/actions",
+                {**body, "confirm": True, "commandHash": result["data"]["commandHash"]},
+            )
             self.assertEqual(status, 409)
             for path in ("../outside.json", str(Path(directory) / "outside.json")):
-                status, _ = self._request(server, "POST", "/api/v1/actions/preview", {**body, "params": {**params, "dataset": path}})
+                status, _ = self._request(
+                    server,
+                    "POST",
+                    "/api/v1/actions/preview",
+                    {**body, "params": {**params, "dataset": path}},
+                )
                 self.assertEqual(status, 422)
 
-    def test_idea_intake_freezes_the_chosen_quantile_count_through_the_cli(self) -> None:
+    def test_idea_intake_freezes_the_chosen_quantile_count_through_the_cli(
+        self,
+    ) -> None:
         from tests.intake_helpers import INTAKE_ASSETS, write_intake_inputs
         from autoquant.workspace import initialize_workspace
+
         with tempfile.TemporaryDirectory() as directory:
             workspace = initialize_workspace(Path(directory) / "workspace")
-            create_project(workspace.root_dir, "new-idea", description=HYPOTHESIS, template="ohlcv-factor-lab")
+            create_project(
+                workspace.root_dir,
+                "new-idea",
+                description=HYPOTHESIS,
+                template="ohlcv-factor-lab",
+            )
             spawn = FakeSpawn()
             server = self._serve(workspace, spawn=spawn)
             staging = workspace.root_dir / "staging"
             staging.mkdir()
-            _, package = write_intake_inputs(staging, observations=180, request_assets=INTAKE_ASSETS)
+            _, package = write_intake_inputs(
+                staging, observations=180, request_assets=INTAKE_ASSETS
+            )
             dataset = package.relative_to(workspace.root_dir).as_posix()
-            params = {"dataset": dataset, "horizon": 1, "predictionAssets": list(INTAKE_ASSETS)}
+            params = {
+                "dataset": dataset,
+                "horizon": 1,
+                "predictionAssets": list(INTAKE_ASSETS),
+            }
 
             def preview(extra: dict):
-                return self._request(server, "POST", "/api/v1/actions/preview",
-                                     {"actionId": "project.intake", "project": "new-idea", "params": {**params, **extra}})
+                return self._request(
+                    server,
+                    "POST",
+                    "/api/v1/actions/preview",
+                    {
+                        "actionId": "project.intake",
+                        "project": "new-idea",
+                        "params": {**params, **extra},
+                    },
+                )
 
             status, plain = preview({})
             self.assertEqual(status, 200, plain)
@@ -1398,38 +1852,80 @@ class StudioActionsTests(unittest.TestCase):
             status, five = preview({"quantiles": 5})
             self.assertEqual(status, 200, five)
             argv = five["data"]["argv"]
-            self.assertEqual(argv[argv.index("--quantiles"):argv.index("--quantiles") + 2], ["--quantiles", "5"])
+            self.assertEqual(
+                argv[argv.index("--quantiles") : argv.index("--quantiles") + 2],
+                ["--quantiles", "5"],
+            )
             self.assertEqual(argv[-1], "--json")
-            self.assertNotEqual(five["data"]["commandHash"], plain["data"]["commandHash"])
+            self.assertNotEqual(
+                five["data"]["commandHash"], plain["data"]["commandHash"]
+            )
             self.assertEqual(five["data"]["params"]["quantiles"], 5)
 
             for bad in (4, 0, "5", None, True, 10):
                 status, refused = preview({"quantiles": bad})
                 self.assertEqual(status, 422, (bad, refused))
-            status, small = preview({"quantiles": 5, "predictionAssets": list(INTAKE_ASSETS[:4])})
+            status, small = preview(
+                {"quantiles": 5, "predictionAssets": list(INTAKE_ASSETS[:4])}
+            )
             self.assertEqual(status, 422, small)
-            self.assertIn("5 quantiles require at least 5 prediction assets", json.dumps(small))
+            self.assertIn(
+                "5 quantiles require at least 5 prediction assets", json.dumps(small)
+            )
             status, listed = self._request(server, "GET", "/api/v1/actions")
-            intake = next(action for action in listed["data"]["actions"] if action["id"] == "project.intake")
-            self.assertEqual(intake["params"]["quantiles"], {"type": "integer", "enum": [3, 5, 10]})
+            intake = next(
+                action
+                for action in listed["data"]["actions"]
+                if action["id"] == "project.intake"
+            )
+            self.assertEqual(
+                intake["params"]["quantiles"], {"type": "integer", "enum": [3, 5, 10]}
+            )
 
-            body = {"actionId": "project.intake", "project": "new-idea", "params": {**params, "quantiles": 5}}
-            status, launched = self._request(server, "POST", "/api/v1/actions", {
-                **body, "confirm": True, "secondConfirm": True, "commandHash": five["data"]["commandHash"]})
+            body = {
+                "actionId": "project.intake",
+                "project": "new-idea",
+                "params": {**params, "quantiles": 5},
+            }
+            status, launched = self._request(
+                server,
+                "POST",
+                "/api/v1/actions",
+                {
+                    **body,
+                    "confirm": True,
+                    "secondConfirm": True,
+                    "commandHash": five["data"]["commandHash"],
+                },
+            )
             self.assertEqual(status, 202, launched)
             server.actions.runner.get(launched["data"]["jobId"]).done.wait(5)
             self.assertEqual(spawn.calls[0][0], five["data"]["argv"])
             # Run the exact previewed command; the frozen Study must carry the count `study create --quantiles` writes.
             # The Studio job lease leaves .autoquant/studio-research.lock in the Project and Core's pristine-scaffold
             # check counts it as work, so remove it to isolate the previewed argv (see plans/studio-readonly-gaps.md).
-            (workspace.root_dir / "projects/new-idea/.autoquant/studio-research.lock").unlink()
-            done = subprocess.run(argv, cwd=workspace.root_dir, capture_output=True, text=True, check=False)
+            (
+                workspace.root_dir / "projects/new-idea/.autoquant/studio-research.lock"
+            ).unlink()
+            done = subprocess.run(
+                argv,
+                cwd=workspace.root_dir,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
             self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
-            study = json.loads((workspace.root_dir / "projects/new-idea/studies/ohlcv-factor-quality/study.json").read_text(encoding="utf-8"))
+            study = json.loads(
+                (
+                    workspace.root_dir
+                    / "projects/new-idea/studies/ohlcv-factor-quality/study.json"
+                ).read_text(encoding="utf-8")
+            )
             self.assertEqual(study["judge"]["quantiles"], 5)
 
     def test_idea_dataset_rejects_asset_escape(self) -> None:
         from tests.intake_helpers import write_intake_inputs
+
         with tempfile.TemporaryDirectory() as directory:
             workspace, _, _ = self._setup(directory)
             staging = workspace.root_dir / "staging"
@@ -1442,36 +1938,65 @@ class StudioActionsTests(unittest.TestCase):
             status, listing = self._request(server, "GET", "/api/v1/idea-datasets")
             self.assertEqual(status, 200)
             self.assertEqual(listing["data"]["datasets"], [])
-            self.assertIn("package directory", listing["data"]["unavailable"][0]["reason"])
+            self.assertIn(
+                "package directory", listing["data"]["unavailable"][0]["reason"]
+            )
 
     def test_idea_first_candidate_compare_and_swap_then_run_freeze(self) -> None:
         from autoquant.intake import prepare_project_intake
         from autoquant.workspace import initialize_workspace
         from tests.intake_helpers import write_intake_inputs
+
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             request, package = write_intake_inputs(root, observations=180)
             prepared = prepare_project_intake(request, package, "ohlcv-factor-lab")
             workspace = initialize_workspace(root / "workspace")
-            project = create_project(workspace.root_dir, "new-idea", template=prepared.template, template_intake=prepared)
+            project = create_project(
+                workspace.root_dir,
+                "new-idea",
+                template=prepared.template,
+                template_intake=prepared,
+            )
             server = self._serve(workspace)
-            status, result = self._request(server, "GET", "/api/v1/candidate?project=new-idea&session=initial")
+            status, result = self._request(
+                server, "GET", "/api/v1/candidate?project=new-idea&session=initial"
+            )
             self.assertEqual(status, 200, result)
             path = project.root_dir / "factors/candidate.py"
             source = path.read_text() + "\n# Authored first candidate\n"
-            body = {"actionId": "candidate.save", "project": "new-idea", "confirm": True,
-                    "params": {"session": "initial", "source": source, "baseSha256": result["data"]["sha256"]}}
+            body = {
+                "actionId": "candidate.save",
+                "project": "new-idea",
+                "confirm": True,
+                "params": {
+                    "session": "initial",
+                    "source": source,
+                    "baseSha256": result["data"]["sha256"],
+                },
+            }
             status, saved = self._request(server, "POST", "/api/v1/actions", body)
             self.assertEqual(status, 200, saved)
             self.assertEqual(path.read_text(), source)
             status, _ = self._request(server, "POST", "/api/v1/actions", body)
             self.assertEqual(status, 409)
-            with mock.patch("autoquant.studio_ideas.list_runs", return_value=[object()]):
-                status, _ = self._request(server, "GET", "/api/v1/candidate?project=new-idea&session=initial")
+            with mock.patch(
+                "autoquant.studio_ideas.list_runs", return_value=[object()]
+            ):
+                status, _ = self._request(
+                    server, "GET", "/api/v1/candidate?project=new-idea&session=initial"
+                )
                 self.assertEqual(status, 409)
-            records = [json.loads(line) for line in (workspace.root_dir / ".autoquant/studio-actions.jsonl").read_text().splitlines()]
+            records = [
+                json.loads(line)
+                for line in (workspace.root_dir / ".autoquant/studio-actions.jsonl")
+                .read_text()
+                .splitlines()
+            ]
             self.assertIn("hypothesisSha256", records[-1])
-            self.assertEqual(records[-1]["sourceSha256"], hashlib.sha256(source.encode()).hexdigest())
+            self.assertEqual(
+                records[-1]["sourceSha256"], hashlib.sha256(source.encode()).hexdigest()
+            )
 
     def test_idea_started_audit_binds_original_and_trial_hypotheses(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1483,27 +2008,79 @@ class StudioActionsTests(unittest.TestCase):
             self.assertEqual(result[0], 202, result)
             self._wait(server, result[1]["data"]["jobId"])
             # Existing helper returns the HTTP envelope; audit is durable independently of UI state.
-            records = [json.loads(line) for line in (workspace.root_dir / ".autoquant/studio-actions.jsonl").read_text().splitlines()]
+            records = [
+                json.loads(line)
+                for line in (workspace.root_dir / ".autoquant/studio-actions.jsonl")
+                .read_text()
+                .splitlines()
+            ]
             started = next(row for row in records if row["event"] == "started")
-            self.assertEqual(started["hypothesisSha256"], hashlib.sha256(project.manifest.description.encode()).hexdigest())
+            self.assertEqual(
+                started["hypothesisSha256"],
+                hashlib.sha256(project.manifest.description.encode()).hexdigest(),
+            )
             self.assertEqual(started["trialHypothesis"], HYPOTHESIS)
-            self.assertEqual(started["trialHypothesisSha256"], hashlib.sha256(HYPOTHESIS.encode()).hexdigest())
+            self.assertEqual(
+                started["trialHypothesisSha256"],
+                hashlib.sha256(HYPOTHESIS.encode()).hexdigest(),
+            )
 
 
 class LibraryRecoveryTests(unittest.TestCase):
     def test_library_uses_lane_metric_and_never_borrows_an_older_success(self):
         from autoquant.studio_library import library_projection
+
         with tempfile.TemporaryDirectory() as directory:
-            project = SimpleNamespace(root_dir=Path(directory), manifest=SimpleNamespace(id="fixture", description="Frozen question", directories={"factors": "factors"}))
-            snapshot = {"studies": [
-                {"id": "factor", "subjectKind": "factor", "primaryMetric": "validation_mean_ic"},
-                {"id": "portfolio", "subjectKind": "factor", "primaryMetric": "validation_net_sharpe"},
-            ], "runs": [{"id": "failed-new", "studyId": "factor", "startedAt": "2026-11-01", "status": "failed"}],
-                "factorExplorer": {"run": {"id": "old-success"}, "summary": {"validation": {"meanRankIc": 999}},
-                                   "quantilePath": {"cumulative": {"points": [{"split": "validation", "spread": 999}]}}}}
-            with mock.patch("autoquant.studio_library.load_run"), \
-                 mock.patch("autoquant.studio_library.build_research_family", return_value=SimpleNamespace(projection={"totalExecutions": 2})), \
-                 mock.patch("autoquant.studio_library.build_selection_adjustment", return_value={"passes": True}):
+            project = SimpleNamespace(
+                root_dir=Path(directory),
+                manifest=SimpleNamespace(
+                    id="fixture",
+                    description="Frozen question",
+                    directories={"factors": "factors"},
+                ),
+            )
+            snapshot = {
+                "studies": [
+                    {
+                        "id": "factor",
+                        "subjectKind": "factor",
+                        "primaryMetric": "validation_mean_ic",
+                    },
+                    {
+                        "id": "portfolio",
+                        "subjectKind": "factor",
+                        "primaryMetric": "validation_net_sharpe",
+                    },
+                ],
+                "runs": [
+                    {
+                        "id": "failed-new",
+                        "studyId": "factor",
+                        "startedAt": "2026-11-01",
+                        "status": "failed",
+                    }
+                ],
+                "factorExplorer": {
+                    "run": {"id": "old-success"},
+                    "summary": {"validation": {"meanRankIc": 999}},
+                    "quantilePath": {
+                        "cumulative": {
+                            "points": [{"split": "validation", "spread": 999}]
+                        }
+                    },
+                },
+            }
+            with (
+                mock.patch("autoquant.studio_library.load_run"),
+                mock.patch(
+                    "autoquant.studio_library.build_research_family",
+                    return_value=SimpleNamespace(projection={"totalExecutions": 2}),
+                ),
+                mock.patch(
+                    "autoquant.studio_library.build_selection_adjustment",
+                    return_value={"passes": True},
+                ),
+            ):
                 data = library_projection(project, snapshot, directory)
             self.assertEqual(data["factor"]["studyId"], "factor")
             self.assertEqual(data["factor"]["verdict"], "Could not be tested")
@@ -1515,10 +2092,16 @@ class LibraryRecoveryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "factors").mkdir()
-            (root / "factors/candidate.py").write_text("def compute_factor(panel):\n    return panel.close\n", encoding="utf-8")
-            project = SimpleNamespace(root_dir=root, manifest=SimpleNamespace(id="fixture"))
+            (root / "factors/candidate.py").write_text(
+                "def compute_factor(panel):\n    return panel.close\n", encoding="utf-8"
+            )
+            project = SimpleNamespace(
+                root_dir=root, manifest=SimpleNamespace(id="fixture")
+            )
             for service in (None, mock.Mock()):
-                data = studio_actions.candidate_view(project, "canonical", root, service)
+                data = studio_actions.candidate_view(
+                    project, "canonical", root, service
+                )
                 self.assertFalse(data["editable"])
                 self.assertIn("return panel.close", data["source"])
                 self.assertIn("start a Session", data["blockedReason"])
@@ -1526,11 +2109,19 @@ class LibraryRecoveryTests(unittest.TestCase):
     def test_stale_session_allows_fresh_start_but_valid_active_session_blocks(self):
         service = object.__new__(studio_actions.ActionService)
         item = SimpleNamespace(id="retained", status="active", study_id="factor")
-        study = SimpleNamespace(definition=SimpleNamespace(editable={"paths": ["factors/candidate.py"]}))
-        with mock.patch.object(studio_actions, "list_sessions", return_value=[item]), \
-             mock.patch.object(studio_actions, "load_session"), \
-             mock.patch.object(studio_actions, "load_study", return_value=study), \
-             mock.patch.object(studio_actions, "session_snapshot", return_value={"authority": {"valid": False}}) as snapshot:
+        study = SimpleNamespace(
+            definition=SimpleNamespace(editable={"paths": ["factors/candidate.py"]})
+        )
+        with (
+            mock.patch.object(studio_actions, "list_sessions", return_value=[item]),
+            mock.patch.object(studio_actions, "load_session"),
+            mock.patch.object(studio_actions, "load_study", return_value=study),
+            mock.patch.object(
+                studio_actions,
+                "session_snapshot",
+                return_value={"authority": {"valid": False}},
+            ) as snapshot,
+        ):
             service._start_block(mock.Mock(), "factor")
             snapshot.return_value = {"authority": {"valid": True}}
             with self.assertRaisesRegex(ActionError, "already has active Session"):
@@ -1538,6 +2129,7 @@ class LibraryRecoveryTests(unittest.TestCase):
 
     def test_library_sampling_gates_before_selection_and_keeps_endpoints(self):
         from autoquant.studio_library import _points
+
         points = [{"split": "validation", "spread": i} for i in range(100)]
         hidden = points + [{"split": "test", "spread": 9999}] * 100
         actual = _points(hidden, "spread", False)

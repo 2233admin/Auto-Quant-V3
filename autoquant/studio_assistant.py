@@ -4,6 +4,7 @@ This is operational state, never research evidence. Provider credentials are
 neither read nor persisted here. Research execution is disabled until a real
 candidate-process isolation boundary is available.
 """
+
 from __future__ import annotations
 
 import difflib
@@ -28,11 +29,16 @@ from .holdouts import has_holdout_binding
 from .studio_actions import ActionError, _PopenHandle, scrubbed_environment
 
 READS = {
-    "orient": ("orient",), "project.list": ("project", "list"),
-    "study.list": ("study", "list"), "study.inspect": ("study", "inspect"),
-    "run.list": ("run", "list"), "run.show": ("run", "show"),
-    "run.factor": ("run", "factor"), "run.portfolio": ("run", "portfolio"),
-    "session.list": ("session", "list"), "session.show": ("session", "show"),
+    "orient": ("orient",),
+    "project.list": ("project", "list"),
+    "study.list": ("study", "list"),
+    "study.inspect": ("study", "inspect"),
+    "run.list": ("run", "list"),
+    "run.show": ("run", "show"),
+    "run.factor": ("run", "factor"),
+    "run.portfolio": ("run", "portfolio"),
+    "session.list": ("session", "list"),
+    "session.show": ("session", "show"),
     "session.compare": ("session", "compare"),
     "candidate.show": ("candidate", "show"),
 }
@@ -60,18 +66,35 @@ def refuse(code: str, message: str, status: int = 409) -> ActionError:
 def clean_result(value: Any) -> Any:
     """Do not forward holdout projections or executable next-action advice."""
     if isinstance(value, dict):
-        return {key: clean_result(item) for key, item in value.items()
-                if key not in {"externalHoldout", "holdout", "holdouts",
-                               "nextActions", "nextAction"}}
+        return {
+            key: clean_result(item)
+            for key, item in value.items()
+            if key
+            not in {
+                "externalHoldout",
+                "holdout",
+                "holdouts",
+                "nextActions",
+                "nextAction",
+            }
+        }
     if isinstance(value, list):
         return [clean_result(item) for item in value]
     return value
 
 
 class AssistantService:
-    def __init__(self, actions, *, provider_runner=None, provider_discovery=None,
-                 query_runner=None, execution_check=None):
+    def __init__(
+        self,
+        actions,
+        *,
+        provider_runner=None,
+        provider_discovery=None,
+        query_runner=None,
+        execution_check=None,
+    ):
         from .studio_assistant_providers import discover_providers, run_provider
+
         self.actions = actions
         self.root = actions.root
         self.directory = self.root / ".autoquant" / "assistant"
@@ -93,14 +116,17 @@ class AssistantService:
     def _safe_path(self, path: Path) -> None:
         if not path.is_relative_to(self.root):
             raise refuse("path", "Conversation path escaped Workspace", 400)
-        for part in [self.root, *reversed(path.relative_to(self.root).parents),
-                     path.relative_to(self.root)]:
+        for part in [
+            self.root,
+            *reversed(path.relative_to(self.root).parents),
+            path.relative_to(self.root),
+        ]:
             target = part if part.is_absolute() else self.root / part
             if target.exists() or target.is_symlink():
                 info = target.lstat()
                 if stat.S_ISLNK(info.st_mode) or (
-                    getattr(info, "st_file_attributes", 0) &
-                    getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+                    getattr(info, "st_file_attributes", 0)
+                    & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
                 ):
                     raise refuse("path", "Conversation paths cannot use links", 400)
 
@@ -156,19 +182,25 @@ class AssistantService:
 
     @staticmethod
     def _event(state: dict, kind: str, data: dict) -> None:
-        state["events"].append({"id": len(state["events"]) + 1,
-                                "type": kind, "at": now(), "data": data})
+        state["events"].append(
+            {"id": len(state["events"]) + 1, "type": kind, "at": now(), "data": data}
+        )
         state["updatedAt"] = now()
 
     def _guard(self, project_id: Any):
         project = self.actions._project(project_id)
         if has_holdout_binding(project):
-            raise refuse("holdout", "Sealed holdout Projects are unavailable to Assistant", 403)
+            raise refuse(
+                "holdout", "Sealed holdout Projects are unavailable to Assistant", 403
+            )
         return project
 
     def provider_specs(self):
         with self._lock:
-            if self._provider_cache is None or time.monotonic() - self._provider_cache[0] > 30:
+            if (
+                self._provider_cache is None
+                or time.monotonic() - self._provider_cache[0] > 30
+            ):
                 self._provider_cache = (time.monotonic(), self._providers())
             return self._provider_cache[1]
 
@@ -186,21 +218,37 @@ class AssistantService:
             for _, path in sorted(candidates, reverse=True)[:200]:
                 try:
                     state = self.view(path.stem)
-                    sessions.append({key: state[key] for key in (
-                        "id", "title", "provider", "project", "status",
-                        "trialBudget", "usedTrials", "updatedAt")})
+                    sessions.append(
+                        {
+                            key: state[key]
+                            for key in (
+                                "id",
+                                "title",
+                                "provider",
+                                "project",
+                                "status",
+                                "trialBudget",
+                                "usedTrials",
+                                "updatedAt",
+                            )
+                        }
+                    )
                 except (ActionError, OSError, ValueError):
                     continue
         sessions.sort(key=lambda s: s["updatedAt"], reverse=True)
-        return {"providers": self.provider_specs(), "sessions": sessions,
-                "executionBlockedReason": ISOLATION_REASON}
+        return {
+            "providers": self.provider_specs(),
+            "sessions": sessions,
+            "executionBlockedReason": ISOLATION_REASON,
+        }
 
     def create(self, body: dict) -> dict:
         provider = body.get("provider")
         spec = next((p for p in self.provider_specs() if p["id"] == provider), None)
         if spec is None or not spec["available"]:
-            raise refuse("provider-unavailable",
-                         (spec or {}).get("reason") or "Unknown provider")
+            raise refuse(
+                "provider-unavailable", (spec or {}).get("reason") or "Unknown provider"
+            )
         budget = body.get("trialBudget", 0)
         if type(budget) is not int or not 0 <= budget <= 100:
             raise refuse("budget", "trialBudget must be an integer from 0 to 100", 400)
@@ -208,15 +256,36 @@ class AssistantService:
         if project is not None:
             self._guard(project)
         context = body.get("context") or {}
-        if not isinstance(context, dict) or set(context) - {"study", "run", "page", "project"}:
+        if not isinstance(context, dict) or set(context) - {
+            "study",
+            "run",
+            "page",
+            "project",
+        }:
             raise refuse("context", "Invalid object context", 400)
-        context = {key: value for key, value in context.items()
-                   if key != "project" and isinstance(value, str) and IDENTIFIER.fullmatch(value)}
+        context = {
+            key: value
+            for key, value in context.items()
+            if key != "project"
+            and isinstance(value, str)
+            and IDENTIFIER.fullmatch(value)
+        }
         identity = str(uuid.uuid4())
-        state = {"id": identity, "title": "New chat", "provider": provider,
-                 "project": project, "context": context, "trialBudget": budget,
-                 "usedTrials": 0, "status": "idle", "messages": [], "events": [],
-                 "pendingAction": None, "createdAt": now(), "updatedAt": now()}
+        state = {
+            "id": identity,
+            "title": "New chat",
+            "provider": provider,
+            "project": project,
+            "context": context,
+            "trialBudget": budget,
+            "usedTrials": 0,
+            "status": "idle",
+            "messages": [],
+            "events": [],
+            "pendingAction": None,
+            "createdAt": now(),
+            "updatedAt": now(),
+        }
         with self._lock:
             path = self._path(identity)
             self.directory.mkdir(parents=True, exist_ok=True)
@@ -246,16 +315,26 @@ class AssistantService:
 
     def view(self, session_id: str) -> dict:
         with self._state(session_id) as state:
-            if state["status"] in {"running", "awaiting-confirmation"} and session_id not in self._active and not self._turn_exists(session_id):
+            if (
+                state["status"] in {"running", "awaiting-confirmation"}
+                and session_id not in self._active
+                and not self._turn_exists(session_id)
+            ):
                 state["status"] = "error"
                 state["pendingAction"] = None
-                state["error"] = {"message": "Studio restarted. The previous turn was interrupted; no trials were refunded."}
+                state["error"] = {
+                    "message": "Studio restarted. The previous turn was interrupted; no trials were refunded."
+                }
                 self._event(state, "error", state["error"])
             return json.loads(json.dumps(state))
 
     def message(self, body: dict) -> dict:
         identity, content = body.get("sessionId"), body.get("content")
-        if not isinstance(content, str) or not content.strip() or len(content) > MAX_PROMPT:
+        if (
+            not isinstance(content, str)
+            or not content.strip()
+            or len(content) > MAX_PROMPT
+        ):
             raise refuse("message", "Message must contain 1–16000 characters", 400)
         with self._lock:
             if self._closed:
@@ -268,24 +347,42 @@ class AssistantService:
             try:
                 with self._state(identity) as state:
                     if len(state["messages"]) >= 200:
-                        raise refuse("message-limit", "Start a new chat after 100 turns")
+                        raise refuse(
+                            "message-limit", "Start a new chat after 100 turns"
+                        )
                     if state["project"]:
                         self._guard(state["project"])
                     stop = threading.Event()
                     state["status"] = "running"
                     state["pendingAction"] = None
                     state["error"] = None
-                    state["messages"].append({"id": str(uuid.uuid4()), "role": "user",
-                                              "content": content.strip(), "at": now()})
+                    state["messages"].append(
+                        {
+                            "id": str(uuid.uuid4()),
+                            "role": "user",
+                            "content": content.strip(),
+                            "at": now(),
+                        }
+                    )
                     if state["title"] == "New chat":
                         state["title"] = content.strip()[:72]
-                    state["messages"].append({"id": str(uuid.uuid4()), "role": "assistant",
-                                              "content": "", "at": now()})
+                    state["messages"].append(
+                        {
+                            "id": str(uuid.uuid4()),
+                            "role": "assistant",
+                            "content": "",
+                            "at": now(),
+                        }
+                    )
                     self._event(state, "turn.started", {"provider": state["provider"]})
                 self._active[identity] = stop
                 self._leases[identity] = lease
-                worker = threading.Thread(target=self._turn, args=(identity, stop),
-                                          daemon=True, name="aq-assistant")
+                worker = threading.Thread(
+                    target=self._turn,
+                    args=(identity, stop),
+                    daemon=True,
+                    name="aq-assistant",
+                )
                 self._threads[identity] = worker
                 worker.start()
             except Exception:
@@ -304,7 +401,9 @@ class AssistantService:
                     return
                 message = state["messages"][-1]
                 if len(message["content"]) + len(text) > 256000:
-                    raise refuse("output-limit", "Assistant response exceeds output limit")
+                    raise refuse(
+                        "output-limit", "Assistant response exceeds output limit"
+                    )
                 message["content"] += text
             self._event(state, kind, data)
         if kind == "provider.session":
@@ -323,23 +422,37 @@ class AssistantService:
                 "Ordinary supported writes are authorized by the user's request. "
                 "Research trials require Studio confirmation and a fixed hard budget. "
                 "Candidate execution may be unavailable; disclose the reason. "
-                "Use the user's language. Context identifiers: " +
-                json.dumps({"project": state["project"], **state["context"]}) +
-                "\nRecent conversation (older content may be omitted):\n" + "\n".join(
+                "Use the user's language. Context identifiers: "
+                + json.dumps({"project": state["project"], **state["context"]})
+                + "\nRecent conversation (older content may be omitted):\n"
+                + "\n".join(
                     message["role"] + ": " + message["content"]
-                    for message in state["messages"][-21:-1])[-64000:])
-            config = {"mcpServers": {"aq": {
-                "command": sys.executable,
-                "args": ["-m", "autoquant.studio_assistant_bridge"],
-                "env": {"AQ_STUDIO_URL": self.origin or "",
-                        "AQ_STUDIO_TOKEN": self.actions.token,
-                        "AQ_ASSISTANT_SESSION": identity,
-                        "AQ_ASSISTANT_BRIDGE_TOKEN": bridge}}}}
+                    for message in state["messages"][-21:-1]
+                )[-64000:]
+            )
+            config = {
+                "mcpServers": {
+                    "aq": {
+                        "command": sys.executable,
+                        "args": ["-m", "autoquant.studio_assistant_bridge"],
+                        "env": {
+                            "AQ_STUDIO_URL": self.origin or "",
+                            "AQ_STUDIO_TOKEN": self.actions.token,
+                            "AQ_ASSISTANT_SESSION": identity,
+                            "AQ_ASSISTANT_BRIDGE_TOKEN": bridge,
+                        },
+                    }
+                }
+            }
             self._run_provider(
-                state["provider"], prompt, str(self.root),
+                state["provider"],
+                prompt,
+                str(self.root),
                 lambda kind, data: self.emit(identity, kind, data),
                 lambda name, args: self.tool(identity, args),
-                stop, config)
+                stop,
+                config,
+            )
             with self._state(identity) as current:
                 current["status"] = "cancelled" if stop.is_set() else "idle"
                 current["pendingAction"] = None
@@ -348,8 +461,10 @@ class AssistantService:
             with self._state(identity) as current:
                 current["status"] = "cancelled" if stop.is_set() else "error"
                 current["pendingAction"] = None
-                current["error"] = {"message": str(error)[:2000],
-                                    "code": getattr(error, "code", "assistant.failed")}
+                current["error"] = {
+                    "message": str(error)[:2000],
+                    "code": getattr(error, "code", "assistant.failed"),
+                }
                 self._event(current, "error", current["error"])
         finally:
             with self._lock:
@@ -386,29 +501,50 @@ class AssistantService:
     def bridge_tool(self, body: dict) -> Any:
         identity, token = body.get("sessionId"), body.get("bridgeToken")
         expected = self._bridges.get(identity)
-        if identity not in self._ready or not expected or not isinstance(token, str) or not hmac.compare_digest(token, expected):
+        if (
+            identity not in self._ready
+            or not expected
+            or not isinstance(token, str)
+            or not hmac.compare_digest(token, expected)
+        ):
             raise refuse("bridge-token", "Invalid or expired tool capability", 403)
         return self.tool(identity, body.get("arguments"))
 
     def _query(self, argv: list[str], stop: threading.Event, source=None) -> Any:
-        options = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP |
-                    getattr(subprocess, "CREATE_NO_WINDOW", 0)}
-                   if os.name == "nt" else {"start_new_session": True})
+        options = (
+            {
+                "creationflags": subprocess.CREATE_NEW_PROCESS_GROUP
+                | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            }
+            if os.name == "nt"
+            else {"start_new_session": True}
+        )
         process = subprocess.Popen(
-            argv, shell=False, cwd=str(self.root), env=scrubbed_environment(),
+            argv,
+            shell=False,
+            cwd=str(self.root),
+            env=scrubbed_environment(),
             stdin=subprocess.PIPE if source is not None else subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, **options)
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            **options,
+        )
         began = time.monotonic()
         first = True
         try:
             while True:
                 if stop.is_set() or time.monotonic() - began > 30:
-                    raise refuse("cancelled" if stop.is_set() else "timeout",
-                                 "aq query cancelled or timed out")
+                    raise refuse(
+                        "cancelled" if stop.is_set() else "timeout",
+                        "aq query cancelled or timed out",
+                    )
                 try:
                     output, _ = process.communicate(
-                        input=source.encode("utf-8") if first and source is not None else None,
-                        timeout=0.1)
+                        input=source.encode("utf-8")
+                        if first and source is not None
+                        else None,
+                        timeout=0.1,
+                    )
                     break
                 except subprocess.TimeoutExpired:
                     first = False
@@ -416,7 +552,9 @@ class AssistantService:
                 raise refuse("output-limit", "aq response exceeds 1MB")
             result = json.loads(output)
             if process.returncode or result.get("ok") is not True:
-                raise refuse("aq-failed", str(result.get("error", "aq command failed"))[:2000])
+                raise refuse(
+                    "aq-failed", str(result.get("error", "aq command failed"))[:2000]
+                )
             return clean_result(result.get("data"))
         finally:
             _PopenHandle(process).kill_tree()
@@ -433,13 +571,19 @@ class AssistantService:
         if not isinstance(params, dict) or not isinstance(operation, str):
             raise refuse("tool", "Invalid operation or params", 400)
         if operation == "catalog":
-            return {"queries": list(READS), "writes": ["candidate.save", "project.create"],
-                    "parameters": {"queries": "project id; optional study/run/session id; bounded points/trials",
-                                   "candidate.save": "project, session (or initial), source, baseSha256",
-                                   "action.run": "actionId, project, params; project.create params: id (lowercase slug), name, description (8+ chars), template (blank or ohlcv-factor-lab); session.start params: study; session.check/evaluate params: session and optional hypothesis"},
-                    "actions": sorted(EXECUTION_ACTIONS),
-                    "trialBudget": state["trialBudget"], "usedTrials": state["usedTrials"],
-                    "executionBlockedReason": ISOLATION_REASON}
+            return {
+                "queries": list(READS),
+                "writes": ["candidate.save", "project.create"],
+                "parameters": {
+                    "queries": "project id; optional study/run/session id; bounded points/trials",
+                    "candidate.save": "project, session (or initial), source, baseSha256",
+                    "action.run": "actionId, project, params; project.create params: id (lowercase slug), name, description (8+ chars), template (blank or ohlcv-factor-lab); session.start params: study; session.check/evaluate params: session and optional hypothesis",
+                },
+                "actions": sorted(EXECUTION_ACTIONS),
+                "trialBudget": state["trialBudget"],
+                "usedTrials": state["usedTrials"],
+                "executionBlockedReason": ISOLATION_REASON,
+            }
         if operation == "action.run":
             return self._action(identity, state, params, stop)
         if operation not in READS and operation != "candidate.save":
@@ -449,8 +593,13 @@ class AssistantService:
             allowed |= {"source", "baseSha256"}
         if set(params) - allowed:
             raise refuse("params", "Unexpected operation parameter", 400)
-        argv = [sys.executable, "-m", "autoquant.cli",
-                *(READS.get(operation) or ("candidate", "save")), str(self.root)]
+        argv = [
+            sys.executable,
+            "-m",
+            "autoquant.cli",
+            *(READS.get(operation) or ("candidate", "save")),
+            str(self.root),
+        ]
         project_id = params.get("project", state["project"])
         if operation != "project.list":
             self._guard(project_id)
@@ -473,17 +622,35 @@ class AssistantService:
         if operation == "candidate.save":
             source, base = params.get("source"), params.get("baseSha256")
             if not isinstance(source, str) or not 1 <= len(source.encode()) <= 200000:
-                raise refuse("source", "Candidate source must contain 1–200000 bytes", 400)
+                raise refuse(
+                    "source", "Candidate source must contain 1–200000 bytes", 400
+                )
             if not isinstance(base, str) or not re.fullmatch("[0-9a-f]{64}", base):
                 raise refuse("source", "Exact baseSha256 is required", 400)
-            previous = self.tool(identity, {"operation": "candidate.show", "params": {
-                key: value for key, value in params.items()
-                if key in {"project", "session"}}})
-            diff = "".join(difflib.unified_diff(
-                previous["source"].splitlines(True), source.splitlines(True),
-                fromfile="candidate.py (before)", tofile="candidate.py (proposed)"))
-            self.emit(identity, "candidate.diff", {"diff": diff,
-                      "baseSha256": base, "project": project_id})
+            previous = self.tool(
+                identity,
+                {
+                    "operation": "candidate.show",
+                    "params": {
+                        key: value
+                        for key, value in params.items()
+                        if key in {"project", "session"}
+                    },
+                },
+            )
+            diff = "".join(
+                difflib.unified_diff(
+                    previous["source"].splitlines(True),
+                    source.splitlines(True),
+                    fromfile="candidate.py (before)",
+                    tofile="candidate.py (proposed)",
+                )
+            )
+            self.emit(
+                identity,
+                "candidate.diff",
+                {"diff": diff, "baseSha256": base, "project": project_id},
+            )
             argv += ["--base-sha256", base, "--source-stdin"]
         argv += ["--json"]
         self.emit(identity, "tool.started", {"operation": operation, "argv": argv})
@@ -491,16 +658,22 @@ class AssistantService:
         if operation == "project.list":
             # The CLI envelope can describe other Workspace objects. Return
             # only caller-visible unsealed Project ids and names.
-            result = {"projects": [
-                {"id": project.manifest.id, "name": project.manifest.name}
-                for project in self.actions._load_projects().values()
-                if not has_holdout_binding(project)]}
+            result = {
+                "projects": [
+                    {"id": project.manifest.id, "name": project.manifest.name}
+                    for project in self.actions._load_projects().values()
+                    if not has_holdout_binding(project)
+                ]
+            }
         elif project_id:
             self._guard(project_id)
         self.emit(identity, "tool.completed", {"operation": operation})
         if isinstance(params.get("run"), str):
-            self.emit(identity, "artifact", {"project": project_id,
-                      "createdRefs": {"runId": params["run"]}})
+            self.emit(
+                identity,
+                "artifact",
+                {"project": project_id, "createdRefs": {"runId": params["run"]}},
+            )
         return result
 
     def _action(self, identity, state, params, stop):
@@ -509,8 +682,11 @@ class AssistantService:
         action_id = params.get("actionId")
         if action_id not in EXECUTION_ACTIONS | {"project.create"}:
             raise refuse("operation", "Action is not allowlisted", 403)
-        body = {"actionId": action_id, "project": params.get("project", state["project"]),
-                "params": params.get("params", {})}
+        body = {
+            "actionId": action_id,
+            "project": params.get("project", state["project"]),
+            "params": params.get("params", {}),
+        }
         if action_id != "project.create":
             project = self._guard(body["project"])
             if state["project"] and state["project"] != body["project"]:
@@ -522,17 +698,29 @@ class AssistantService:
         if action_id in EXECUTION_ACTIONS:
             pending_id = str(uuid.uuid4())
             with self._state(identity) as current:
-                if action_id in TRIAL_ACTIONS and current["usedTrials"] >= current["trialBudget"]:
+                if (
+                    action_id in TRIAL_ACTIONS
+                    and current["usedTrials"] >= current["trialBudget"]
+                ):
                     raise refuse("budget-exhausted", "Trial budget exhausted")
                 if current["pendingAction"] is not None:
                     raise refuse("busy", "Another action is awaiting confirmation")
-                current["pendingAction"] = {"id": pending_id, "preview": preview,
-                                            "accepted": None}
+                current["pendingAction"] = {
+                    "id": pending_id,
+                    "preview": preview,
+                    "accepted": None,
+                }
                 current["status"] = "awaiting-confirmation"
-                self._event(current, "action.pending", {
-                    "id": pending_id, "preview": preview,
-                    "trialNumber": current["usedTrials"] + 1,
-                    "trialBudget": current["trialBudget"]})
+                self._event(
+                    current,
+                    "action.pending",
+                    {
+                        "id": pending_id,
+                        "preview": preview,
+                        "trialNumber": current["usedTrials"] + 1,
+                        "trialBudget": current["trialBudget"],
+                    },
+                )
             deadline = time.monotonic() + CONFIRMATION_TIMEOUT_SECONDS
             while not stop.wait(0.1):
                 current = self.view(identity)
@@ -554,13 +742,28 @@ class AssistantService:
                     current["usedTrials"] += 1
                 current["pendingAction"] = None
                 current["status"] = "running"
-                self._event(current, "trial.reserved" if action_id in TRIAL_ACTIONS else "action.confirmed", {
-                    "usedTrials": current["usedTrials"], "trialBudget": current["trialBudget"]})
-        body.update(confirm=True, commandHash=preview.get("commandHash"),
-                    secondConfirm=True)
-        self.emit(identity, "tool.started", {"operation": action_id,
-                                             "argv": preview.get("argv"),
-                                             "display": preview.get("display")})
+                self._event(
+                    current,
+                    "trial.reserved"
+                    if action_id in TRIAL_ACTIONS
+                    else "action.confirmed",
+                    {
+                        "usedTrials": current["usedTrials"],
+                        "trialBudget": current["trialBudget"],
+                    },
+                )
+        body.update(
+            confirm=True, commandHash=preview.get("commandHash"), secondConfirm=True
+        )
+        self.emit(
+            identity,
+            "tool.started",
+            {
+                "operation": action_id,
+                "argv": preview.get("argv"),
+                "display": preview.get("display"),
+            },
+        )
         if stop.is_set():
             raise refuse("cancelled", "Action cancelled before launch")
         created = self.actions.create(body)
@@ -575,9 +778,14 @@ class AssistantService:
         else:
             result = created
         if isinstance(result, dict) and result.get("createdRefs"):
-            self.emit(identity, "artifact", {"project": body.get("project"),
-                      "createdRefs": result["createdRefs"]})
-        self.emit(identity, "tool.completed", {"operation": action_id, "result": result})
+            self.emit(
+                identity,
+                "artifact",
+                {"project": body.get("project"), "createdRefs": result["createdRefs"]},
+            )
+        self.emit(
+            identity, "tool.completed", {"operation": action_id, "result": result}
+        )
         return clean_result(result)
 
     def _release_pending(self, identity, pending_id, outcome):
@@ -589,7 +797,9 @@ class AssistantService:
                 current["pendingAction"] = None
             if current["status"] == "awaiting-confirmation":
                 current["status"] = "running"
-            self._event(current, "action.released", {"id": pending_id, "outcome": outcome})
+            self._event(
+                current, "action.released", {"id": pending_id, "outcome": outcome}
+            )
 
     def confirm(self, body: dict) -> dict:
         identity = body.get("sessionId")
@@ -603,7 +813,10 @@ class AssistantService:
                 preview = pending["preview"]
                 if body.get("commandHash") != preview.get("commandHash"):
                     raise refuse("stale-confirmation", "The command preview changed")
-                if preview.get("requiresSecondConfirm") and body.get("secondConfirm") is not True:
+                if (
+                    preview.get("requiresSecondConfirm")
+                    and body.get("secondConfirm") is not True
+                ):
                     raise refuse("confirmation", "Second confirmation is required", 400)
             pending["accepted"] = body["accepted"]
         return self.view(identity)

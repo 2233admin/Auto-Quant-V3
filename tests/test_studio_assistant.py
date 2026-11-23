@@ -1,4 +1,5 @@
 """Bounded fake-provider proofs; no inference or research evaluation."""
+
 from __future__ import annotations
 
 import threading
@@ -22,7 +23,9 @@ class FakeActions:
         self.projects = {
             key: SimpleNamespace(
                 manifest=SimpleNamespace(id=key, name=key),
-                root_dir=root / key, sealed=key == "sealed")
+                root_dir=root / key,
+                sealed=key == "sealed",
+            )
             for key in ("ordinary", "sealed")
         }
         self.created = []
@@ -38,10 +41,13 @@ class FakeActions:
         return self.projects[identity]
 
     def preview(self, body):
-        return {"display": "aq session start ordinary",
-                "argv": ["aq", "session", "start", "ordinary"],
-                "commandHash": "fixed", "requiresSecondConfirm": True,
-                "trial": {"n": 1, "m": 1}}
+        return {
+            "display": "aq session start ordinary",
+            "argv": ["aq", "session", "start", "ordinary"],
+            "commandHash": "fixed",
+            "requiresSecondConfirm": True,
+            "trial": {"n": 1, "m": 1},
+        }
 
     def create(self, body):
         self.created.append(body)
@@ -57,12 +63,17 @@ class AssistantTests(unittest.TestCase):
         self.actions = FakeActions(self.root)
         self.guard = patch(
             "autoquant.studio_assistant.has_holdout_binding",
-            side_effect=lambda project: project.sealed)
+            side_effect=lambda project: project.sealed,
+        )
         self.guard.start()
         self.providers = lambda: [
             {"id": "claude", "label": "Claude", "available": True, "reason": None},
-            {"id": "codex", "label": "Codex", "available": False,
-             "reason": "Tool closure unverified"},
+            {
+                "id": "codex",
+                "label": "Codex",
+                "available": False,
+                "reason": "Tool closure unverified",
+            },
         ]
         self.services = []
 
@@ -80,20 +91,25 @@ class AssistantTests(unittest.TestCase):
         def default_run(provider, prompt, cwd, emit, tool, cancel, bridge):
             emit("assistant.delta", {"text": "Hello "})
             emit("assistant.delta", {"text": "world"})
+
         service = AssistantService(
-            self.actions, provider_runner=run or default_run,
+            self.actions,
+            provider_runner=run or default_run,
             provider_discovery=self.providers,
             query_runner=lambda argv, cancel, source=None: {
-                "source": "old\n", "sha256": "a" * 64,
-                "externalHoldout": {"secret": "sealed"}},
-            **options)
+                "source": "old\n",
+                "sha256": "a" * 64,
+                "externalHoldout": {"secret": "sealed"},
+            },
+            **options,
+        )
         self.services.append(service)
         return service
 
     def chat(self, service, **options):
-        return service.create({
-            "provider": "claude", "project": "ordinary",
-            "trialBudget": 1, **options})
+        return service.create(
+            {"provider": "claude", "project": "ordinary", "trialBudget": 1, **options}
+        )
 
     def await_state(self, service, identity, statuses):
         deadline = time.monotonic() + 3
@@ -132,10 +148,17 @@ class AssistantTests(unittest.TestCase):
             self.chat(self.service(), project="sealed")
 
     def test_recursive_projection_scrubbing(self):
-        self.assertEqual({"nested": [{"value": 4}]}, clean_result({
-            "externalHoldout": {"secret": 1},
-            "nested": [{"holdout": {"secret": 2}, "nextActions": [], "value": 4}],
-        }))
+        self.assertEqual(
+            {"nested": [{"value": 4}]},
+            clean_result(
+                {
+                    "externalHoldout": {"secret": 1},
+                    "nested": [
+                        {"holdout": {"secret": 2}, "nextActions": [], "value": 4}
+                    ],
+                }
+            ),
+        )
 
     def test_cancellation_and_cross_instance_turn_lease(self):
         entered = threading.Event()
@@ -143,6 +166,7 @@ class AssistantTests(unittest.TestCase):
         def run(provider, prompt, cwd, emit, tool, stop, bridge):
             entered.set()
             stop.wait(3)
+
         service = self.service(run)
         chat = self.chat(service)
         service.message({"sessionId": chat["id"], "content": "Start"})
@@ -165,7 +189,10 @@ class AssistantTests(unittest.TestCase):
                 with self.assertRaises(ActionError):
                     tool("aq", arguments)
             result = tool("aq", {"operation": "project.list", "params": {}})
-            self.assertEqual([{"id": "ordinary", "name": "ordinary"}], result["projects"])
+            self.assertEqual(
+                [{"id": "ordinary", "name": "ordinary"}], result["projects"]
+            )
+
         service = self.service(run)
         chat = self.chat(service)
         service.message({"sessionId": chat["id"], "content": "List"})
@@ -174,9 +201,17 @@ class AssistantTests(unittest.TestCase):
 
     def test_candidate_execution_denied_without_isolation(self):
         def run(provider, prompt, cwd, emit, tool, stop, bridge):
-            tool("aq", {"operation": "action.run",
-                        "params": {"actionId": "session.start",
-                                   "params": {"study": "factor"}}})
+            tool(
+                "aq",
+                {
+                    "operation": "action.run",
+                    "params": {
+                        "actionId": "session.start",
+                        "params": {"study": "factor"},
+                    },
+                },
+            )
+
         service = self.service(run)
         chat = self.chat(service)
         service.message({"sessionId": chat["id"], "content": "Evaluate"})
@@ -190,8 +225,10 @@ class AssistantTests(unittest.TestCase):
         chat must not keep showing the dead action, and a new proposal in the
         same turn must reach confirmation again instead of failing as busy."""
         seen = {}
-        call = {"operation": "action.run",
-                "params": {"actionId": "session.start", "params": {"study": "factor"}}}
+        call = {
+            "operation": "action.run",
+            "params": {"actionId": "session.start", "params": {"study": "factor"}},
+        }
 
         def run(provider, prompt, cwd, emit, tool, stop, bridge):
             try:
@@ -203,6 +240,7 @@ class AssistantTests(unittest.TestCase):
                 tool("aq", call)
             except ActionError as error:
                 seen["second"] = error.code
+
         service = self.service(run, execution_check=lambda project: None)
         chat = self.chat(service)
         service.message({"sessionId": chat["id"], "content": "Evaluate"})
@@ -217,8 +255,13 @@ class AssistantTests(unittest.TestCase):
         second = self.await_state(service, chat["id"], {"awaiting-confirmation"})
         self.assertIsNone(second["pendingAction"]["accepted"])
         self.assertNotEqual(state["pendingAction"]["id"], second["pendingAction"]["id"])
-        service.confirm({"sessionId": chat["id"], "actionId": second["pendingAction"]["id"],
-                         "accepted": False})
+        service.confirm(
+            {
+                "sessionId": chat["id"],
+                "actionId": second["pendingAction"]["id"],
+                "accepted": False,
+            }
+        )
         final = self.await_state(service, chat["id"], {"idle", "error"})
         self.assertEqual("idle", final["status"])
         self.assertEqual(0, final["usedTrials"])
@@ -228,7 +271,9 @@ class AssistantTests(unittest.TestCase):
     def test_declined_confirmation_is_released_for_the_rest_of_the_turn(self):
         code = self._refused_proposal_releases_confirmation(
             lambda service, identity, action: service.confirm(
-                {"sessionId": identity, "actionId": action, "accepted": False}))
+                {"sessionId": identity, "actionId": action, "accepted": False}
+            )
+        )
         self.assertEqual("assistant.declined", code)
 
     def test_expired_confirmation_is_released_for_the_rest_of_the_turn(self):
@@ -239,8 +284,10 @@ class AssistantTests(unittest.TestCase):
                 if not calls:
                     calls.append(action)  # let the first one expire
                 else:
-                    service.confirm({"sessionId": identity, "actionId": action,
-                                     "accepted": False})
+                    service.confirm(
+                        {"sessionId": identity, "actionId": action, "accepted": False}
+                    )
+
             code = self._refused_proposal_releases_confirmation(answer)
         self.assertEqual("assistant.confirmation-timeout", code)
 
@@ -248,9 +295,17 @@ class AssistantTests(unittest.TestCase):
         self.actions.fail = fail
 
         def run(provider, prompt, cwd, emit, tool, stop, bridge):
-            tool("aq", {"operation": "action.run",
-                        "params": {"actionId": "session.start",
-                                   "params": {"study": "factor"}}})
+            tool(
+                "aq",
+                {
+                    "operation": "action.run",
+                    "params": {
+                        "actionId": "session.start",
+                        "params": {"study": "factor"},
+                    },
+                },
+            )
+
         service = self.service(run, execution_check=lambda project: None)
         chat = self.chat(service)
         service.message({"sessionId": chat["id"], "content": "Evaluate"})
@@ -258,12 +313,24 @@ class AssistantTests(unittest.TestCase):
         pending = state["pendingAction"]
         self.assertEqual([], self.actions.created)
         with self.assertRaises(ActionError):
-            service.confirm({"sessionId": chat["id"], "actionId": pending["id"],
-                             "accepted": True, "commandHash": "stale",
-                             "secondConfirm": True})
-        service.confirm({"sessionId": chat["id"], "actionId": pending["id"],
-                         "accepted": True, "commandHash": "fixed",
-                         "secondConfirm": True})
+            service.confirm(
+                {
+                    "sessionId": chat["id"],
+                    "actionId": pending["id"],
+                    "accepted": True,
+                    "commandHash": "stale",
+                    "secondConfirm": True,
+                }
+            )
+        service.confirm(
+            {
+                "sessionId": chat["id"],
+                "actionId": pending["id"],
+                "accepted": True,
+                "commandHash": "fixed",
+                "secondConfirm": True,
+            }
+        )
         state = self.await_state(service, chat["id"], {"idle", "error"})
         self.assertEqual(1, state["usedTrials"])
         self.assertEqual(1, len(self.actions.created))
@@ -287,8 +354,13 @@ class AssistantTests(unittest.TestCase):
         service = self.service()
         chat = self.chat(service)
         with self.assertRaises(ActionError):
-            service.bridge_tool({"sessionId": chat["id"], "bridgeToken": "wrong",
-                                 "arguments": {"operation": "catalog", "params": {}}})
+            service.bridge_tool(
+                {
+                    "sessionId": chat["id"],
+                    "bridgeToken": "wrong",
+                    "arguments": {"operation": "catalog", "params": {}},
+                }
+            )
         self.assertNotIn("bridgeToken", service.view(chat["id"]))
 
     def test_bridge_is_disabled_until_provider_tool_closure_passes(self):
@@ -296,14 +368,21 @@ class AssistantTests(unittest.TestCase):
         chat = self.chat(service)
         service._bridges[chat["id"]] = "known"
         with self.assertRaises(ActionError):
-            service.bridge_tool({"sessionId": chat["id"], "bridgeToken": "known",
-                                 "arguments": {"operation": "catalog", "params": {}}})
+            service.bridge_tool(
+                {
+                    "sessionId": chat["id"],
+                    "bridgeToken": "known",
+                    "arguments": {"operation": "catalog", "params": {}},
+                }
+            )
 
     def test_close_cancels_turn_and_refuses_new_work(self):
         entered = threading.Event()
+
         def run(provider, prompt, cwd, emit, tool, stop, bridge):
             entered.set()
             stop.wait(3)
+
         service = self.service(run)
         chat = self.chat(service)
         service.message({"sessionId": chat["id"], "content": "Start"})
@@ -321,10 +400,15 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual(chat["id"], service.view(chat["id"])["id"])
 
     def test_mcp_unknown_tool_cannot_call_http(self):
-        result = dispatch({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-                           "params": {"name": "shell", "arguments": {}}})
+        result = dispatch(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {"name": "shell", "arguments": {}},
+            }
+        )
         self.assertTrue(result["result"]["isError"])
-
 
 
 class AssistantHTTPTests(unittest.TestCase):
@@ -333,47 +417,81 @@ class AssistantHTTPTests(unittest.TestCase):
         import json
         from autoquant.studio import create_studio_server
         from tests.study_helpers import make_project
+
         with tempfile.TemporaryDirectory(prefix="aq-assistant-http-") as directory:
             workspace, project = make_project(directory)
-            server = create_studio_server(workspace.root_dir, port=0, allow_actions=True)
+            server = create_studio_server(
+                workspace.root_dir, port=0, allow_actions=True
+            )
             service = server.actions.assistant
             service._providers = lambda: [
-                {"id": "claude", "label": "Claude", "available": True, "reason": None}]
-            service._run_provider = lambda provider, prompt, cwd, emit, tool, cancel, bridge: emit(
-                "assistant.delta", {"text": "Verified fake HTTP turn"})
+                {"id": "claude", "label": "Claude", "available": True, "reason": None}
+            ]
+            service._run_provider = (
+                lambda provider, prompt, cwd, emit, tool, cancel, bridge: emit(
+                    "assistant.delta", {"text": "Verified fake HTTP turn"}
+                )
+            )
             worker = threading.Thread(target=server.serve_forever, daemon=True)
             worker.start()
 
             def request(method, path, body=None, authorized=True):
-                connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=5)
+                connection = http.client.HTTPConnection(
+                    "127.0.0.1", server.server_port, timeout=5
+                )
                 headers = {"Content-Type": "application/json"}
                 if authorized:
                     headers["X-Studio-Token"] = server.actions.token
-                connection.request(method, path,
-                                   json.dumps(body) if body is not None else None, headers)
+                connection.request(
+                    method,
+                    path,
+                    json.dumps(body) if body is not None else None,
+                    headers,
+                )
                 response = connection.getresponse()
                 payload = json.loads(response.read())
                 connection.close()
                 return response.status, payload
 
             try:
-                self.assertEqual(403, request("GET", "/api/v1/assistant", authorized=False)[0])
+                self.assertEqual(
+                    403, request("GET", "/api/v1/assistant", authorized=False)[0]
+                )
                 self.assertEqual(200, request("GET", "/api/v1/assistant")[0])
-                status, payload = request("POST", "/api/v1/assistant/sessions", {
-                    "provider": "claude", "project": project.manifest.id, "trialBudget": 2})
+                status, payload = request(
+                    "POST",
+                    "/api/v1/assistant/sessions",
+                    {
+                        "provider": "claude",
+                        "project": project.manifest.id,
+                        "trialBudget": 2,
+                    },
+                )
                 self.assertEqual(200, status, payload)
                 identity = payload["data"]["id"]
-                self.assertEqual(202, request("POST", "/api/v1/assistant/message", {
-                    "sessionId": identity, "content": "Explain"})[0])
+                self.assertEqual(
+                    202,
+                    request(
+                        "POST",
+                        "/api/v1/assistant/message",
+                        {"sessionId": identity, "content": "Explain"},
+                    )[0],
+                )
                 deadline = time.monotonic() + 3
                 while time.monotonic() < deadline:
-                    status, payload = request("GET", "/api/v1/assistant/session?id=" + identity)
+                    status, payload = request(
+                        "GET", "/api/v1/assistant/session?id=" + identity
+                    )
                     if payload["data"]["status"] == "idle":
                         break
                     time.sleep(0.01)
-                self.assertEqual("Verified fake HTTP turn",
-                                 payload["data"]["messages"][-1]["content"])
-                self.assertEqual(400, request("POST", "/api/v1/assistant/message", [1, 2])[0])
+                self.assertEqual(
+                    "Verified fake HTTP turn",
+                    payload["data"]["messages"][-1]["content"],
+                )
+                self.assertEqual(
+                    400, request("POST", "/api/v1/assistant/message", [1, 2])[0]
+                )
             finally:
                 server.shutdown()
                 server.server_close()
@@ -386,22 +504,34 @@ class CandidateCommandTests(unittest.TestCase):
         from autoquant.sessions import start_session
         from autoquant.studies import create_study
         from tests.study_helpers import make_project, study_definition
+
         with tempfile.TemporaryDirectory(prefix="aq-candidate-lock-") as directory:
             workspace, project = make_project(directory)
             create_study(project, study_definition())
             session = start_session(project, "factor-quality")
-            server = create_studio_server(workspace.root_dir, port=0, allow_actions=True)
+            server = create_studio_server(
+                workspace.root_dir, port=0, allow_actions=True
+            )
             try:
-                previous = candidate_access(str(workspace.root_dir), project.manifest.id,
-                                            session.manifest["id"])
+                previous = candidate_access(
+                    str(workspace.root_dir), project.manifest.id, session.manifest["id"]
+                )
                 with server.actions.runner.hold(project.manifest.id):
                     with self.assertRaisesRegex(ActionError, "Another Studio"):
-                        candidate_access(str(workspace.root_dir), project.manifest.id,
-                                         session.manifest["id"], source=previous["source"] + "\n",
-                                         base_sha256=previous["sha256"])
-                saved = candidate_access(str(workspace.root_dir), project.manifest.id,
-                                         session.manifest["id"], source=previous["source"] + "\n",
-                                         base_sha256=previous["sha256"])
+                        candidate_access(
+                            str(workspace.root_dir),
+                            project.manifest.id,
+                            session.manifest["id"],
+                            source=previous["source"] + "\n",
+                            base_sha256=previous["sha256"],
+                        )
+                saved = candidate_access(
+                    str(workspace.root_dir),
+                    project.manifest.id,
+                    session.manifest["id"],
+                    source=previous["source"] + "\n",
+                    base_sha256=previous["sha256"],
+                )
                 self.assertTrue(saved["changed"])
             finally:
                 server.server_close()
@@ -415,27 +545,63 @@ class CandidateCommandTests(unittest.TestCase):
         from autoquant.sessions import start_session
         from autoquant.studies import create_study
         from tests.study_helpers import make_project, study_definition
+
         with tempfile.TemporaryDirectory(prefix="aq-candidate-cli-") as directory:
             workspace, project = make_project(directory)
             create_study(project, study_definition())
             session = start_session(project, "factor-quality")
-            prefix = [str(workspace.root_dir), "--project", project.manifest.id,
-                      "--session", session.manifest["id"], "--json"]
+            prefix = [
+                str(workspace.root_dir),
+                "--project",
+                project.manifest.id,
+                "--session",
+                session.manifest["id"],
+                "--json",
+            ]
             with patch("sys.stdout", new_callable=io.StringIO) as output:
                 self.assertEqual(0, main(["candidate", "show", *prefix]))
                 previous = json.loads(output.getvalue())["data"]
             source = previous["source"] + "\n# Candidate CLI test\n"
-            with patch("sys.stdin", SimpleNamespace(buffer=io.BytesIO(source.encode()))), \
-                 patch("sys.stdout", new_callable=io.StringIO) as output:
-                self.assertEqual(0, main(["candidate", "save", *prefix,
-                                         "--base-sha256", previous["sha256"], "--source-stdin"]))
+            with (
+                patch("sys.stdin", SimpleNamespace(buffer=io.BytesIO(source.encode()))),
+                patch("sys.stdout", new_callable=io.StringIO) as output,
+            ):
+                self.assertEqual(
+                    0,
+                    main(
+                        [
+                            "candidate",
+                            "save",
+                            *prefix,
+                            "--base-sha256",
+                            previous["sha256"],
+                            "--source-stdin",
+                        ]
+                    ),
+                )
                 saved = json.loads(output.getvalue())["data"]
-            self.assertEqual(hashlib.sha256(source.encode()).hexdigest(), saved["sha256"])
-            with patch("sys.stdin", SimpleNamespace(buffer=io.BytesIO(source.encode()))), \
-                 patch("sys.stdout", new_callable=io.StringIO) as output:
-                self.assertEqual(1, main(["candidate", "save", *prefix,
-                                         "--base-sha256", previous["sha256"], "--source-stdin"]))
+            self.assertEqual(
+                hashlib.sha256(source.encode()).hexdigest(), saved["sha256"]
+            )
+            with (
+                patch("sys.stdin", SimpleNamespace(buffer=io.BytesIO(source.encode()))),
+                patch("sys.stdout", new_callable=io.StringIO) as output,
+            ):
+                self.assertEqual(
+                    1,
+                    main(
+                        [
+                            "candidate",
+                            "save",
+                            *prefix,
+                            "--base-sha256",
+                            previous["sha256"],
+                            "--source-stdin",
+                        ]
+                    ),
+                )
                 self.assertFalse(json.loads(output.getvalue())["ok"])
+
 
 if __name__ == "__main__":
     unittest.main()

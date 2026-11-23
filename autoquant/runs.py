@@ -113,11 +113,7 @@ def run_failure_disposition(result: dict[str, Any]) -> str | None:
     if result.get("status") != "failed":
         return None
     value = result.get("failureDisposition")
-    return (
-        value
-        if value in FAILURE_DISPOSITIONS
-        else DEFAULT_FAILURE_DISPOSITION
-    )
+    return value if value in FAILURE_DISPOSITIONS else DEFAULT_FAILURE_DISPOSITION
 
 
 def _write_json(path: Path, value: Any) -> None:
@@ -262,7 +258,9 @@ def _validate_json_value(value: Any, path: str) -> list[ValidationIssue]:
             issues.extend(_validate_json_value(item, f"{path}/{key}"))
         return issues
     issues.append(
-        _issue(path, "judge.json-value", f"Unsupported JSON value: {type(value).__name__}")
+        _issue(
+            path, "judge.json-value", f"Unsupported JSON value: {type(value).__name__}"
+        )
     )
     return issues
 
@@ -288,7 +286,11 @@ def _artifact_files(root: Path) -> list[str]:
     for path in sorted(root.rglob("*")):
         if path.is_symlink():
             raise AutoQuantValidationError(
-                [_issue(path, "path.symlink", "Judge artifacts cannot contain symlinks")]
+                [
+                    _issue(
+                        path, "path.symlink", "Judge artifacts cannot contain symlinks"
+                    )
+                ]
             )
         if path.is_file():
             files.append(path.relative_to(root).as_posix())
@@ -304,7 +306,11 @@ def parse_judge_output(
         raw = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
         raise AutoQuantValidationError(
-            [_issue(path, "judge.output-missing", "Judge did not write its output JSON")]
+            [
+                _issue(
+                    path, "judge.output-missing", "Judge did not write its output JSON"
+                )
+            ]
         ) from None
     except json.JSONDecodeError as error:
         raise AutoQuantValidationError(
@@ -392,7 +398,9 @@ def parse_judge_output(
         for index, item in enumerate(artifacts_raw):
             item_path = f"{path}/artifacts/{index}"
             if not isinstance(item, dict):
-                issues.append(_issue(item_path, "schema.type", "Artifact must be an object"))
+                issues.append(
+                    _issue(item_path, "schema.type", "Artifact must be an object")
+                )
                 continue
             issues.extend(
                 _strict_keys(item, {"kind", "path", "description"}, item_path)
@@ -402,15 +410,27 @@ def parse_judge_output(
             description = item.get("description")
             if not isinstance(kind, str) or not kind.strip():
                 issues.append(
-                    _issue(f"{item_path}/kind", "schema.string", "Artifact kind must be non-empty")
+                    _issue(
+                        f"{item_path}/kind",
+                        "schema.string",
+                        "Artifact kind must be non-empty",
+                    )
                 )
             if not isinstance(description, str):
                 issues.append(
-                    _issue(f"{item_path}/description", "schema.string", "Artifact description must be a string")
+                    _issue(
+                        f"{item_path}/description",
+                        "schema.string",
+                        "Artifact description must be a string",
+                    )
                 )
             if not isinstance(relative, str) or not relative:
                 issues.append(
-                    _issue(f"{item_path}/path", "schema.path", "Artifact path must be relative")
+                    _issue(
+                        f"{item_path}/path",
+                        "schema.path",
+                        "Artifact path must be relative",
+                    )
                 )
                 continue
             candidate = PurePosixPath(relative)
@@ -421,7 +441,11 @@ def parse_judge_output(
                 or relative in {".", ".."}
             ):
                 issues.append(
-                    _issue(f"{item_path}/path", "schema.path", "Artifact path must be confined")
+                    _issue(
+                        f"{item_path}/path",
+                        "schema.path",
+                        "Artifact path must be confined",
+                    )
                 )
                 continue
             artifact_path = artifacts_root / relative
@@ -462,20 +486,35 @@ def parse_judge_output(
         for index, item in enumerate(errors_raw):
             item_path = f"{path}/errors/{index}"
             if not isinstance(item, dict):
-                issues.append(_issue(item_path, "schema.type", "Error must be an object"))
+                issues.append(
+                    _issue(item_path, "schema.type", "Error must be an object")
+                )
                 continue
             issues.extend(_strict_keys(item, {"code", "message"}, item_path))
             code = item.get("code")
             message = item.get("message")
             if not isinstance(code, str) or not code.strip():
                 issues.append(
-                    _issue(f"{item_path}/code", "schema.string", "Error code must be non-empty")
+                    _issue(
+                        f"{item_path}/code",
+                        "schema.string",
+                        "Error code must be non-empty",
+                    )
                 )
             if not isinstance(message, str) or not message.strip():
                 issues.append(
-                    _issue(f"{item_path}/message", "schema.string", "Error message must be non-empty")
+                    _issue(
+                        f"{item_path}/message",
+                        "schema.string",
+                        "Error message must be non-empty",
+                    )
                 )
-            if isinstance(code, str) and code.strip() and isinstance(message, str) and message.strip():
+            if (
+                isinstance(code, str)
+                and code.strip()
+                and isinstance(message, str)
+                and message.strip()
+            ):
                 errors.append({"code": code, "message": message})
     if status == "succeeded" and errors:
         issues.append(
@@ -502,8 +541,10 @@ def parse_judge_output(
                 "Successful Judge output cannot declare a failure disposition",
             )
         )
-    if status == "failed" and failure_disposition is not None and (
-        failure_disposition not in FAILURE_DISPOSITIONS
+    if (
+        status == "failed"
+        and failure_disposition is not None
+        and (failure_disposition not in FAILURE_DISPOSITIONS)
     ):
         issues.append(
             _issue(
@@ -712,9 +753,7 @@ def _run_judge(
                 }
             )
         except OSError as error:
-            execution_errors.append(
-                {"code": "judge.spawn", "message": str(error)}
-            )
+            execution_errors.append({"code": "judge.spawn", "message": str(error)})
         duration_ms = int((time.monotonic() - started) * 1000)
 
     (run_staging / "stdout.txt").write_text(stdout, encoding="utf-8")
@@ -875,9 +914,7 @@ def execute_study(
             )
     harness = harness_identity()
     evaluation_role = (
-        HOLDOUT_EVALUATION_ROLE
-        if holdout_authorized
-        else RESEARCH_EVALUATION_ROLE
+        HOLDOUT_EVALUATION_ROLE if holdout_authorized else RESEARCH_EVALUATION_ROLE
     )
     run_input_hash = hash_json(
         {
@@ -1031,9 +1068,7 @@ def execute_study(
             result["upstreamEvidence"] = {
                 **upstream,
                 "hash": study.upstream_evidence_hash,
-                "inputRoot": (
-                    f"inputs/upstream-evidence/{upstream['run_id']}"
-                ),
+                "inputRoot": (f"inputs/upstream-evidence/{upstream['run_id']}"),
             }
         _write_json(temporary / RUN_RESULT, result)
         files = _all_file_hashes(temporary)
@@ -1278,10 +1313,7 @@ def _validate_run_result(
             _strict_keys(
                 dataset,
                 dataset_required
-                | (
-                    dataset.keys()
-                    & {"paths", "sourceHashes", "intervalSurface"}
-                ),
+                | (dataset.keys() & {"paths", "sourceHashes", "intervalSurface"}),
                 f"{path}/dataset",
             )
         )
@@ -1318,16 +1350,20 @@ def _validate_run_result(
                 )
             )
         if source_hashes is not None:
-            if not isinstance(source_hashes, dict) or not all(
-                isinstance(relative, str)
-                and relative
-                and "\\" not in relative
-                and not PurePosixPath(relative).is_absolute()
-                and ".." not in PurePosixPath(relative).parts
-                and isinstance(content_hash, str)
-                and SHA256.fullmatch(content_hash)
-                for relative, content_hash in source_hashes.items()
-            ) or not source_hashes:
+            if (
+                not isinstance(source_hashes, dict)
+                or not all(
+                    isinstance(relative, str)
+                    and relative
+                    and "\\" not in relative
+                    and not PurePosixPath(relative).is_absolute()
+                    and ".." not in PurePosixPath(relative).parts
+                    and isinstance(content_hash, str)
+                    and SHA256.fullmatch(content_hash)
+                    for relative, content_hash in source_hashes.items()
+                )
+                or not source_hashes
+            ):
                 issues.append(
                     _issue(
                         f"{path}/dataset/sourceHashes",
@@ -1349,9 +1385,7 @@ def _validate_run_result(
                 try:
                     expected = canonical_interval_surface(
                         surface,
-                        schema_version=(
-                            3 if "calendar" in surface else 2
-                        ),
+                        schema_version=(3 if "calendar" in surface else 2),
                     )
                     if surface != expected:
                         issues.append(
@@ -1394,8 +1428,7 @@ def _validate_run_result(
                 not isinstance(dependency_paths, list)
                 or not dependency_paths
                 or not all(
-                    isinstance(pattern, str) and pattern
-                    for pattern in dependency_paths
+                    isinstance(pattern, str) and pattern for pattern in dependency_paths
                 )
             ):
                 issues.append(
@@ -1631,7 +1664,9 @@ def _validate_run_result(
         issues.extend(_validate_json_value(metrics, f"{path}/metrics"))
     objective = result.get("objective")
     primary_metric = objective.get("metric") if isinstance(objective, dict) else None
-    primary_value = metrics.get(primary_metric) if isinstance(primary_metric, str) else None
+    primary_value = (
+        metrics.get(primary_metric) if isinstance(primary_metric, str) else None
+    )
     if status == "succeeded" and (
         not isinstance(primary_value, (int, float))
         or isinstance(primary_value, bool)
@@ -1652,11 +1687,19 @@ def _validate_run_result(
     errors = result.get("errors")
     if status == "succeeded" and isinstance(errors, list) and errors:
         issues.append(
-            _issue(f"{path}/errors", "run.success-errors", "Successful RunResult cannot contain errors")
+            _issue(
+                f"{path}/errors",
+                "run.success-errors",
+                "Successful RunResult cannot contain errors",
+            )
         )
     if status == "failed" and isinstance(errors, list) and not errors:
         issues.append(
-            _issue(f"{path}/errors", "run.failure-errors", "Failed RunResult must explain an error")
+            _issue(
+                f"{path}/errors",
+                "run.failure-errors",
+                "Failed RunResult must explain an error",
+            )
         )
     if issues:
         raise AutoQuantValidationError(issues)
@@ -1713,9 +1756,7 @@ def load_run(project: ProjectContext, run_id: str) -> RunContext:
     )
 
 
-def list_runs(
-    project: ProjectContext, study_id: str | None = None
-) -> list[RunSummary]:
+def list_runs(project: ProjectContext, study_id: str | None = None) -> list[RunSummary]:
     return list(
         _memoized(
             ("runs", str(project.root_dir), study_id),
@@ -1724,12 +1765,14 @@ def list_runs(
     )
 
 
-
 def _load_run_uncached(project: ProjectContext, run_id: str) -> RunContext:
-    if not run_id.startswith("run-") or "/" in run_id or "\\" in run_id or ".." in run_id:
-        raise AutoQuantValidationError(
-            [_issue(run_id, "run.id", "Invalid Run id")]
-        )
+    if (
+        not run_id.startswith("run-")
+        or "/" in run_id
+        or "\\" in run_id
+        or ".." in run_id
+    ):
+        raise AutoQuantValidationError([_issue(run_id, "run.id", "Invalid Run id")])
     root = confined_path(_runs_root(project), run_id, f"run/{run_id}")
     if root.is_symlink() or not root.is_dir():
         raise AutoQuantValidationError(
@@ -1926,9 +1969,7 @@ JUDGE_OUTPUT_JSON_SCHEMA: dict[str, Any] = {
     "properties": {
         "schema_version": {"const": JUDGE_OUTPUT_VERSION},
         "status": {"enum": ["succeeded", "failed"]},
-        "failure_disposition": {
-            "enum": ["scientific-limit", "repair-required"]
-        },
+        "failure_disposition": {"enum": ["scientific-limit", "repair-required"]},
         "summary": {"type": "string", "minLength": 1},
         "metrics": {"type": "object"},
         "artifacts": {
@@ -1991,9 +2032,7 @@ RUN_RESULT_JSON_SCHEMA: dict[str, Any] = {
         "schemaVersion": {"const": RUN_SCHEMA_VERSION},
         "id": {"type": "string", "pattern": "^run-"},
         "status": {"enum": ["succeeded", "failed"]},
-        "failureDisposition": {
-            "enum": ["scientific-limit", "repair-required"]
-        },
+        "failureDisposition": {"enum": ["scientific-limit", "repair-required"]},
         "summary": {"type": "string", "minLength": 1},
         "startedAt": {"type": "string", "format": "date-time"},
         "completedAt": {"type": "string", "format": "date-time"},
@@ -2077,22 +2116,14 @@ RUN_RESULT_JSON_SCHEMA: dict[str, Any] = {
                                     "minItems": 1,
                                     "uniqueItems": True,
                                     "items": {
-                                        "enum": list(
-                                            SUPPORTED_FEATURE_INTERVALS
-                                        )
+                                        "enum": list(SUPPORTED_FEATURE_INTERVALS)
                                     },
                                 },
-                                "timestampSemantics": {
-                                    "const": "bar-close"
-                                },
-                                "marketClock": {
-                                    "const": "continuous"
-                                },
+                                "timestampSemantics": {"const": "bar-close"},
+                                "marketClock": {"const": "continuous"},
                                 "timezone": {"const": "UTC"},
                                 "anchor": {"const": "00:00"},
-                                "aggregationMethod": {
-                                    "const": AGGREGATION_METHOD
-                                },
+                                "aggregationMethod": {"const": AGGREGATION_METHOD},
                             },
                         },
                         {
@@ -2117,25 +2148,13 @@ RUN_RESULT_JSON_SCHEMA: dict[str, Any] = {
                                     "type": "array",
                                     "minItems": 1,
                                     "uniqueItems": True,
-                                    "items": {
-                                        "enum": list(SUPPORTED_INTERVALS)
-                                    },
+                                    "items": {"enum": list(SUPPORTED_INTERVALS)},
                                 },
-                                "timestampSemantics": {
-                                    "const": "bar-close"
-                                },
-                                "marketClock": {
-                                    "enum": ["continuous", "session"]
-                                },
-                                "calendar": {
-                                    "enum": ["24/7", "XNYS"]
-                                },
-                                "timezone": {
-                                    "enum": ["UTC", "America/New_York"]
-                                },
-                                "anchor": {
-                                    "enum": ["00:00", "market-open"]
-                                },
+                                "timestampSemantics": {"const": "bar-close"},
+                                "marketClock": {"enum": ["continuous", "session"]},
+                                "calendar": {"enum": ["24/7", "XNYS"]},
+                                "timezone": {"enum": ["UTC", "America/New_York"]},
+                                "anchor": {"enum": ["00:00", "market-open"]},
                                 "aggregationMethod": {
                                     "enum": [
                                         CONTINUOUS_AGGREGATION_METHOD,

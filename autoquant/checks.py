@@ -42,9 +42,7 @@ CHECK_OUTPUT = "raw-output.json"
 CHECK_RESULT = "result.json"
 CHECK_MANIFEST = "manifest.json"
 CHECK_KIND = "autoquant-candidate-check"
-CHECK_ID = re.compile(
-    r"^check-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$"
-)
+CHECK_ID = re.compile(r"^check-[0-9]{8}T[0-9]{12}Z-[0-9a-f]{12}$")
 CHECK_NAME = re.compile(r"^[a-z][a-z0-9_.-]*$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 CHECK_STATUSES = {"passed", "failed"}
@@ -159,7 +157,9 @@ def _relative_pattern(
         or "\\" in value
         or raw in {"", "."}
     ):
-        issues.append(_issue(path, "path.confined", "Path must be confined and relative"))
+        issues.append(
+            _issue(path, "path.confined", "Path must be confined and relative")
+        )
         return ""
     return value
 
@@ -184,7 +184,9 @@ def load_candidate_preflight(
         issues.append(_issue(path, "schema.kind", f"Expected kind '{PREFLIGHT_KIND}'"))
     runner = raw.get("runner")
     if not isinstance(runner, dict):
-        issues.append(_issue(f"{path}/runner", "schema.type", "runner must be an object"))
+        issues.append(
+            _issue(f"{path}/runner", "schema.type", "runner must be an object")
+        )
         runner = {}
     runner_required = {
         "kind",
@@ -313,8 +315,7 @@ def load_candidate_preflight(
                     path,
                     "preflight.judge-overlap",
                     "Operational preflight sources must remain outside the "
-                    "formal Judge closure: "
-                    + ", ".join(judge_overlap),
+                    "formal Judge closure: " + ", ".join(judge_overlap),
                 )
             ]
         )
@@ -361,24 +362,34 @@ def _validate_check_output(value: dict[str, Any], path: Path | str) -> None:
     for index, row in enumerate(normalized_rows):
         row_path = f"{path}/checks/{index}"
         if not isinstance(row, dict):
-            issues.append(_issue(row_path, "schema.type", "Check row must be an object"))
+            issues.append(
+                _issue(row_path, "schema.type", "Check row must be an object")
+            )
             continue
         issues.extend(_strict_keys(row, {"id", "status", "message"}, row_path))
         check_id = row.get("id")
         if not isinstance(check_id, str) or not CHECK_NAME.fullmatch(check_id):
             issues.append(_issue(f"{row_path}/id", "schema.id", "Invalid check id"))
         elif check_id in seen:
-            issues.append(_issue(f"{row_path}/id", "schema.unique", "Duplicate check id"))
+            issues.append(
+                _issue(f"{row_path}/id", "schema.unique", "Duplicate check id")
+            )
         else:
             seen.add(check_id)
         if row.get("status") not in CHECK_STATUSES:
-            issues.append(_issue(f"{row_path}/status", "schema.choice", "Invalid status"))
+            issues.append(
+                _issue(f"{row_path}/status", "schema.choice", "Invalid status")
+            )
         if not isinstance(row.get("message"), str) or not row.get("message"):
-            issues.append(_issue(f"{row_path}/message", "schema.string", "Invalid message"))
+            issues.append(
+                _issue(f"{row_path}/message", "schema.string", "Invalid message")
+            )
     errors = value.get("errors")
     normalized_errors = errors if isinstance(errors, list) else []
     if not isinstance(errors, list):
-        issues.append(_issue(f"{path}/errors", "schema.array", "errors must be an array"))
+        issues.append(
+            _issue(f"{path}/errors", "schema.array", "errors must be an array")
+        )
     for index, error in enumerate(normalized_errors):
         error_path = f"{path}/errors/{index}"
         if not isinstance(error, dict):
@@ -388,14 +399,20 @@ def _validate_check_output(value: dict[str, Any], path: Path | str) -> None:
         if not isinstance(error.get("code"), str) or not error.get("code"):
             issues.append(_issue(f"{error_path}/code", "schema.string", "Invalid code"))
         if not isinstance(error.get("message"), str) or not error.get("message"):
-            issues.append(_issue(f"{error_path}/message", "schema.string", "Invalid message"))
+            issues.append(
+                _issue(f"{error_path}/message", "schema.string", "Invalid message")
+            )
     failed_rows = any(
         isinstance(row, dict) and row.get("status") == "failed"
         for row in normalized_rows
     )
     if status == "passed" and (failed_rows or normalized_errors):
         issues.append(
-            _issue(path, "check.passed-inconsistent", "Passed output cannot contain failure")
+            _issue(
+                path,
+                "check.passed-inconsistent",
+                "Passed output cannot contain failure",
+            )
         )
     if status == "failed" and not failed_rows and not normalized_errors:
         issues.append(
@@ -443,7 +460,9 @@ def _run_preflight(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     output_path = staging / CHECK_OUTPUT
     runner = preflight.definition["runner"]
-    with tempfile.TemporaryDirectory(prefix=f"aq-check-{study.definition.id}-") as directory:
+    with tempfile.TemporaryDirectory(
+        prefix=f"aq-check-{study.definition.id}-"
+    ) as directory:
         execution_root = Path(directory) / "project"
         _materialize_check_workspace(project, study, preflight, execution_root)
         command = [
@@ -511,9 +530,7 @@ def _run_preflight(
                 }
             )
         except OSError as error:
-            process_errors.append(
-                {"code": "preflight.spawn", "message": str(error)}
-            )
+            process_errors.append({"code": "preflight.spawn", "message": str(error)})
         duration_ms = int((time.monotonic() - started) * 1000)
     (staging / "stdout.txt").write_text(stdout, encoding="utf-8")
     (staging / "stderr.txt").write_text(stderr, encoding="utf-8")
@@ -661,7 +678,11 @@ def _check_hashes(root: Path) -> dict[str, str]:
     for path in sorted(root.rglob("*")):
         if path.is_symlink():
             raise AutoQuantValidationError(
-                [_issue(path, "path.symlink", "Candidate Check cannot contain symlinks")]
+                [
+                    _issue(
+                        path, "path.symlink", "Candidate Check cannot contain symlinks"
+                    )
+                ]
             )
         if path.is_file() and path != root / CHECK_MANIFEST:
             hashes[path.relative_to(root).as_posix()] = hash_file(path)
@@ -759,10 +780,7 @@ def execute_candidate_check(
                 "outputIdentity": output_identity,
             }
         )
-        check_id = (
-            f"check-{started.strftime('%Y%m%dT%H%M%S%fZ')}-"
-            f"{check_hash[:12]}"
-        )
+        check_id = f"check-{started.strftime('%Y%m%dT%H%M%S%fZ')}-{check_hash[:12]}"
         target = checks_root / check_id
         if target.exists() or target.is_symlink():
             raise AutoQuantValidationError(
@@ -852,7 +870,10 @@ def _validate_check_result(
         "execution",
     }
     issues = _strict_keys(result, required, path)
-    if result.get("schemaVersion") != SCHEMA_VERSION or result.get("kind") != CHECK_KIND:
+    if (
+        result.get("schemaVersion") != SCHEMA_VERSION
+        or result.get("kind") != CHECK_KIND
+    ):
         issues.append(_issue(path, "check.version", "Invalid Candidate Check version"))
     if result.get("id") != check_id:
         issues.append(_issue(path, "check.identity", "Candidate Check id mismatch"))
@@ -873,7 +894,9 @@ def _validate_check_result(
         "promotionAuthority": "none",
         "tradingAuthority": "none",
     }:
-        issues.append(_issue(path, "check.authority", "Candidate Check has invalid authority"))
+        issues.append(
+            _issue(path, "check.authority", "Candidate Check has invalid authority")
+        )
     study = result.get("study")
     candidate = result.get("candidate")
     preflight = result.get("preflight")
@@ -914,12 +937,16 @@ def _validate_check_result(
                 )
     if isinstance(study, dict):
         if not isinstance(study.get("id"), str) or not study.get("id"):
-            issues.append(_issue(f"{path}/study/id", "schema.string", "Invalid Study id"))
+            issues.append(
+                _issue(f"{path}/study/id", "schema.string", "Invalid Study id")
+            )
         for key in ("inputHash", "datasetHash"):
             if not isinstance(study.get(key), str) or not SHA256.fullmatch(
                 study.get(key, "")
             ):
-                issues.append(_issue(f"{path}/study/{key}", "schema.hash", "Invalid hash"))
+                issues.append(
+                    _issue(f"{path}/study/{key}", "schema.hash", "Invalid hash")
+                )
     if isinstance(candidate, dict):
         for key in ("sourceHash", "leaderSourceHash"):
             if not isinstance(candidate.get(key), str) or not SHA256.fullmatch(
@@ -932,7 +959,9 @@ def _validate_check_result(
         if not isinstance(preflight.get("hash"), str) or not SHA256.fullmatch(
             preflight.get("hash", "")
         ):
-            issues.append(_issue(f"{path}/preflight/hash", "schema.hash", "Invalid hash"))
+            issues.append(
+                _issue(f"{path}/preflight/hash", "schema.hash", "Invalid hash")
+            )
         source_hashes = preflight.get("sourceHashes")
         if not isinstance(source_hashes, dict) or not source_hashes:
             issues.append(
@@ -956,10 +985,7 @@ def _validate_check_result(
                     "Invalid Preflight source hash inventory",
                 )
             )
-    if all(
-        isinstance(value, dict)
-        for value in (study, candidate, preflight, harness)
-    ):
+    if all(isinstance(value, dict) for value in (study, candidate, preflight, harness)):
         expected_input_hash = hash_json(
             {
                 "sessionId": session_id,
@@ -973,7 +999,9 @@ def _validate_check_result(
         )
         if result.get("inputHash") != expected_input_hash:
             issues.append(
-                _issue(path, "check.input-identity", "Candidate Check inputHash mismatch")
+                _issue(
+                    path, "check.input-identity", "Candidate Check inputHash mismatch"
+                )
             )
     output = {
         "schema_version": SCHEMA_VERSION,
@@ -1025,12 +1053,16 @@ def load_candidate_check(
         or manifest.get("status") not in CHECK_STATUSES
         or manifest.get("completed") is not True
     ):
-        issues.append(_issue(root / CHECK_MANIFEST, "check.manifest", "Invalid manifest"))
+        issues.append(
+            _issue(root / CHECK_MANIFEST, "check.manifest", "Invalid manifest")
+        )
     actual = _check_hashes(root)
     if manifest.get("files") != actual:
         issues.append(_issue(root, "check.tampered", "Candidate Check files changed"))
     if actual.get(CHECK_RESULT) != manifest.get("resultHash"):
-        issues.append(_issue(root, "check.result-hash", "Candidate Check result mismatch"))
+        issues.append(
+            _issue(root, "check.result-hash", "Candidate Check result mismatch")
+        )
     if issues:
         raise AutoQuantValidationError(issues)
     result = _read_json(root / CHECK_RESULT, "candidate-check-result")

@@ -34,14 +34,18 @@ MANAGED = {
 
 class ManagedSnapshotHostTests(unittest.TestCase):
     def test_marker_is_vendor_neutral_and_declared_in_schema(self) -> None:
-        self.assertEqual(MANAGED_SNAPSHOT_HOST, {"kind": "harness", "capability": "studio"})
+        self.assertEqual(
+            MANAGED_SNAPSHOT_HOST, {"kind": "harness", "capability": "studio"}
+        )
         self.assertIn("host", STUDIO_SNAPSHOT_JSON_SCHEMA["properties"])
         self.assertNotIn("host", STUDIO_SNAPSHOT_JSON_SCHEMA.get("required", []))
 
     def test_cli_passes_managed_state_and_allow_actions_through(self) -> None:
         captured: dict = {}
-        with patch.object(cli, "serve_studio", lambda *a, **k: captured.update(k)), \
-                patch.dict("os.environ", MANAGED, clear=False):
+        with (
+            patch.object(cli, "serve_studio", lambda *a, **k: captured.update(k)),
+            patch.dict("os.environ", MANAGED, clear=False),
+        ):
             code = cli.main(["studio", "serve", ".", "--no-open"])
         self.assertEqual(code, 0)
         self.assertEqual((captured["host"], captured["port"]), ("127.0.0.1", 8968))
@@ -54,7 +58,9 @@ class ManagedSnapshotHostTests(unittest.TestCase):
             workspace = initialize_workspace(Path(directory) / "ws", name="Host Desk")
             self.assertNotIn("host", build_studio_snapshot(workspace.root_dir))
             for managed in (False, True):
-                server = create_studio_server(workspace.root_dir, port=0, managed=managed)
+                server = create_studio_server(
+                    workspace.root_dir, port=0, managed=managed
+                )
                 thread = threading.Thread(target=server.serve_forever, daemon=True)
                 thread.start()
                 base = f"http://127.0.0.1:{server.server_port}"

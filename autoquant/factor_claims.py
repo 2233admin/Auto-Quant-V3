@@ -48,8 +48,7 @@ FACTOR_OUTCOME_CONTRACTS = {
     FORWARD_REALIZED_VOLATILITY_OUTCOME: {
         "label": "forward realized volatility",
         "targetSemantics": (
-            "sqrt-sum-squared-close-log-returns-t-plus-1-through-"
-            "t-plus-h-unannualized"
+            "sqrt-sum-squared-close-log-returns-t-plus-1-through-t-plus-h-unannualized"
         ),
         "scoreDirection": "higher-factor-predicts-higher-outcome",
         "annualization": "none",
@@ -83,11 +82,15 @@ def normalize_factor_policy(value: Any) -> dict[str, Any]:
 
     if value is None:
         return dict(DEFAULT_FACTOR_POLICY)
-    if not isinstance(value, dict) or not {
-        "claim",
-        "knownStyle",
-    }.issubset(value) or not set(value).issubset(
-        {"claim", "knownStyle", "outcome", "predictionAssets"}
+    if (
+        not isinstance(value, dict)
+        or not {
+            "claim",
+            "knownStyle",
+        }.issubset(value)
+        or not set(value).issubset(
+            {"claim", "knownStyle", "outcome", "predictionAssets"}
+        )
     ):
         raise AutoQuantValidationError(
             [
@@ -113,12 +116,8 @@ def normalize_factor_policy(value: Any) -> dict[str, Any]:
                 )
             ]
         )
-    if (
-        claim in {"decision-signal", "novel-factor"}
-        and known_style is not None
-    ) or (
-        claim == "known-style-validation"
-        and known_style not in KNOWN_FACTOR_STYLES
+    if (claim in {"decision-signal", "novel-factor"} and known_style is not None) or (
+        claim == "known-style-validation" and known_style not in KNOWN_FACTOR_STYLES
     ):
         raise AutoQuantValidationError(
             [
@@ -164,11 +163,7 @@ def normalize_factor_policy(value: Any) -> dict[str, Any]:
         "knownStyle": known_style,
         **({"outcome": outcome} if "outcome" in value else {}),
         **(
-            {
-                "predictionAssets": [
-                    asset.strip() for asset in prediction_assets
-                ]
-            }
+            {"predictionAssets": [asset.strip() for asset in prediction_assets]}
             if "predictionAssets" in value
             else {}
         ),
@@ -201,14 +196,10 @@ def factor_outcome_contract(value: dict[str, Any]) -> dict[str, Any]:
         "explicit": "outcome" in value,
         **FACTOR_OUTCOME_CONTRACTS[outcome],
         "portfolioAuthority": (
-            "qualification-gated"
-            if outcome == FORWARD_RETURN_OUTCOME
-            else "none"
+            "qualification-gated" if outcome == FORWARD_RETURN_OUTCOME else "none"
         ),
         "rlAuthority": (
-            "portfolio-evidence-gated"
-            if outcome == FORWARD_RETURN_OUTCOME
-            else "none"
+            "portfolio-evidence-gated" if outcome == FORWARD_RETURN_OUTCOME else "none"
         ),
         "tradingAuthority": "none",
     }
@@ -217,37 +208,21 @@ def factor_outcome_contract(value: dict[str, Any]) -> dict[str, Any]:
 def build_factor_claim(request: dict[str, Any] | None) -> dict[str, Any]:
     """Derive one content-addressed Factor claim from request authority."""
 
-    supplied = (
-        request.get("factorPolicy")
-        if isinstance(request, dict)
-        else None
-    )
+    supplied = request.get("factorPolicy") if isinstance(request, dict) else None
     normalized = normalize_factor_policy(supplied)
     policy = {
         "claim": normalized["claim"],
         "knownStyle": normalized["knownStyle"],
-        **(
-            {"outcome": normalized["outcome"]}
-            if "outcome" in normalized
-            else {}
-        ),
+        **({"outcome": normalized["outcome"]} if "outcome" in normalized else {}),
     }
     payload = {
         "schemaVersion": SCHEMA_VERSION,
         "kind": FACTOR_CLAIM_KIND,
         "source": {
-            "kind": (
-                "research-request"
-                if request is not None
-                else "template-default"
-            ),
-            "requestHash": (
-                hash_json(request) if request is not None else None
-            ),
+            "kind": ("research-request" if request is not None else "template-default"),
+            "requestHash": (hash_json(request) if request is not None else None),
             "factorPolicy": (
-                "caller-supplied"
-                if supplied is not None
-                else "reference-default"
+                "caller-supplied" if supplied is not None else "reference-default"
             ),
         },
         **policy,
@@ -268,9 +243,7 @@ def known_style_candidate_source(
     """Return an inspectable exact-style candidate for one fixed request."""
 
     policy = normalize_factor_policy(
-        request.get("factorPolicy")
-        if isinstance(request, dict)
-        else None
+        request.get("factorPolicy") if isinstance(request, dict) else None
     )
     if policy["claim"] != "known-style-validation":
         return None
@@ -395,13 +368,14 @@ def validate_factor_claim(
     if value.get("schemaVersion") != SCHEMA_VERSION:
         issues.append(_issue(f"{path}/schemaVersion", "schema.version", "Expected V1"))
     if value.get("kind") != FACTOR_CLAIM_KIND:
-        issues.append(_issue(f"{path}/kind", "factor-claim.kind", "Invalid Factor claim kind"))
+        issues.append(
+            _issue(f"{path}/kind", "factor-claim.kind", "Invalid Factor claim kind")
+        )
     if (
         not isinstance(source, dict)
         or set(source) != {"kind", "requestHash", "factorPolicy"}
         or source.get("kind") not in {"research-request", "template-default"}
-        or source.get("factorPolicy")
-        not in {"caller-supplied", "reference-default"}
+        or source.get("factorPolicy") not in {"caller-supplied", "reference-default"}
         or (
             source.get("kind") == "research-request"
             and (
@@ -415,18 +389,16 @@ def validate_factor_claim(
         )
     ):
         issues.append(
-            _issue(f"{path}/source", "factor-claim.source", "Invalid Factor claim source")
+            _issue(
+                f"{path}/source", "factor-claim.source", "Invalid Factor claim source"
+            )
         )
     try:
         policy = normalize_factor_policy(
             {
                 "claim": value.get("claim"),
                 "knownStyle": value.get("knownStyle"),
-                **(
-                    {"outcome": value.get("outcome")}
-                    if "outcome" in value
-                    else {}
-                ),
+                **({"outcome": value.get("outcome")} if "outcome" in value else {}),
             }
         )
     except AutoQuantValidationError as error:
@@ -434,11 +406,7 @@ def validate_factor_claim(
         policy = {
             "claim": value.get("claim"),
             "knownStyle": value.get("knownStyle"),
-            **(
-                {"outcome": value.get("outcome")}
-                if "outcome" in value
-                else {}
-            ),
+            **({"outcome": value.get("outcome")} if "outcome" in value else {}),
         }
     if (
         value.get("selectionAuthority") != "validation-only"
@@ -453,10 +421,7 @@ def validate_factor_claim(
                 "Factor claim cannot alter selection or trading authority",
             )
         )
-    payload = {
-        key: value.get(key)
-        for key in required - {"id"}
-    }
+    payload = {key: value.get(key) for key in required - {"id"}}
     if "outcome" in value:
         payload["outcome"] = value.get("outcome")
     expected_id = f"factor-claim-{hash_json(payload)[:16]}"

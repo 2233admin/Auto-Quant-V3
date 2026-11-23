@@ -44,14 +44,10 @@ def factor_diagnostics(
                 },
                 "styleNeutralCandidate": {
                     "meanRankIc": (
-                        0.12
-                        if stage == "factor-qualification-positive"
-                        else -0.08
+                        0.12 if stage == "factor-qualification-positive" else -0.08
                     ),
                     "hacTStatistic": (
-                        2.2
-                        if stage == "factor-qualification-positive"
-                        else -1.4
+                        2.2 if stage == "factor-qualification-positive" else -1.4
                     ),
                 },
             },
@@ -78,9 +74,7 @@ def factor_diagnostics(
                     "id": "base_momentum",
                     "label": "Base momentum",
                     "hypothesis": "Base momentum persists for one bar.",
-                    "validation": {
-                        "nearestPeerResidual": {"meanRankIc": 0.02}
-                    },
+                    "validation": {"nearestPeerResidual": {"meanRankIc": 0.02}},
                 },
                 {
                     "id": "slow_trend",
@@ -89,17 +83,13 @@ def factor_diagnostics(
                         "Completed higher-interval trend persists at the next "
                         "base close."
                     ),
-                    "validation": {
-                        "nearestPeerResidual": {"meanRankIc": 0.14}
-                    },
+                    "validation": {"nearestPeerResidual": {"meanRankIc": 0.14}},
                 },
                 {
                     "id": "noisy_daily",
                     "label": "Daily reversal",
                     "hypothesis": "Daily reversal predicts the next base bar.",
-                    "validation": {
-                        "nearestPeerResidual": {"meanRankIc": -0.03}
-                    },
+                    "validation": {"nearestPeerResidual": {"meanRankIc": -0.03}},
                 },
             ],
             "testAudit": {"strongest": "must-not-enter-agenda"},
@@ -125,11 +115,7 @@ def portfolio_diagnostics(
                 "factorRankIc": 0.12,
                 "gross": {"sharpe": 0.8},
                 "net": {
-                    "sharpe": (
-                        0.35
-                        if stage == "post-cost-edge-positive"
-                        else -0.1
-                    )
+                    "sharpe": (0.35 if stage == "post-cost-edge-positive" else -0.1)
                 },
             },
             "test": {"net": {"sharpe": 999.0}},
@@ -162,21 +148,15 @@ def rl_diagnostics(
                 "adaptiveTransmission": {
                     "meanTrialGrossActiveReturn": 0.03,
                     "meanTrialNetActiveReturn": (
-                        0.02
-                        if stage == "adaptive-value-positive"
-                        else -0.01
+                        0.02 if stage == "adaptive-value-positive" else -0.01
                     ),
                     "meanSharpeAdvantageVsSelectedBaseline": (
-                        0.2
-                        if stage == "adaptive-value-positive"
-                        else -0.1
+                        0.2 if stage == "adaptive-value-positive" else -0.1
                     ),
                 },
                 "stability": {
                     "positiveNetTrialRate": (
-                        0.75
-                        if stage == "adaptive-value-positive"
-                        else 0.33
+                        0.75 if stage == "adaptive-value-positive" else 0.33
                     )
                 },
             },
@@ -210,9 +190,7 @@ class EvidenceDrivenResearchAgendaTests(unittest.TestCase):
         self.assertFalse(agenda["authority"]["testEntersPrioritization"])
 
         changed_test = copy.deepcopy(diagnostics)
-        changed_test["factorQualification"]["test"]["candidate"][
-            "meanRankIc"
-        ] = -999.0
+        changed_test["factorQualification"]["test"]["candidate"]["meanRankIc"] = -999.0
         changed_test["factorComponents"]["testAudit"] = {"arbitrary": True}
         self.assertEqual(
             agenda,
@@ -272,9 +250,7 @@ class EvidenceDrivenResearchAgendaTests(unittest.TestCase):
         self.assertNotIn("test", context_move["evidenceRefs"][0]["path"])
 
         temporal = copy.deepcopy(diagnostics)
-        temporal["factorComponents"]["evaluationMode"] = (
-            "single-asset-temporal"
-        )
+        temporal["factorComponents"]["evaluationMode"] = "single-asset-temporal"
         temporal_agenda = factor_research_agenda(
             temporal,
             ["factors/**"],
@@ -453,15 +429,9 @@ class EvidenceDrivenResearchAgendaTests(unittest.TestCase):
 
     def test_rl_recipes_only_target_the_causal_encoder(self) -> None:
         recipes = {
-            "adaptive-book-selection-negative": (
-                "rl-improve-causal-state-capture"
-            ),
-            "implementation-cost-destroys-edge": (
-                "rl-increase-switch-persistence"
-            ),
-            "risk-adjusted-adaptive-value-absent": (
-                "rl-control-active-risk"
-            ),
+            "adaptive-book-selection-negative": ("rl-improve-causal-state-capture"),
+            "implementation-cost-destroys-edge": ("rl-increase-switch-persistence"),
+            "risk-adjusted-adaptive-value-absent": ("rl-control-active-risk"),
             "seed-fold-unstable": "rl-simplify-train-only-learning",
         }
         for stage, expected in recipes.items():

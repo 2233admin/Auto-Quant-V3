@@ -167,9 +167,7 @@ class FactorPopulationTests(unittest.TestCase):
         raw_decision = request(prediction_assets=UNIVERSE[:4])
         for asset in raw_decision["assets"]:
             asset["positionRole"] = (
-                "context-only"
-                if asset["symbol"] == "CONTEXT"
-                else "long-only"
+                "context-only" if asset["symbol"] == "CONTEXT" else "long-only"
             )
         decision_request = validate_research_request(raw_decision)
         decision_population = resolve_prediction_population(
@@ -191,9 +189,7 @@ class FactorPopulationTests(unittest.TestCase):
                 mismatched,
             )
 
-        novel_request = validate_research_request(
-            request(claim="novel-factor")
-        )
+        novel_request = validate_research_request(request(claim="novel-factor"))
         novel_population = resolve_prediction_population(
             UNIVERSE,
             build_factor_claim(novel_request),

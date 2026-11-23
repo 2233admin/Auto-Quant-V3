@@ -20,10 +20,8 @@ def _issue(path: Path | str, code: str, message: str) -> ValidationIssue:
     return ValidationIssue(str(path), code, message)
 
 
-
 def _fail(path: Path | str, code: str, message: str) -> None:
     raise AutoQuantValidationError([_issue(path, code, message)])
-
 
 
 def _finite(value: Any, path: Path | str) -> float:
@@ -36,12 +34,10 @@ def _finite(value: Any, path: Path | str) -> float:
     return number
 
 
-
 def _optional_finite(value: Any, path: Path | str) -> float | None:
     if value is None or value == "":
         return None
     return _finite(value, path)
-
 
 
 def _session_date(value: Any, path: Path | str) -> str:
@@ -68,12 +64,10 @@ def _session_date(value: Any, path: Path | str) -> str:
     return value
 
 
-
 @dataclass(frozen=True)
 class ParsedDaily:
     dates: list[str]
     rows: list[dict[str, Any]]
-
 
 
 def _split_for(timestamp: str, splits: dict[str, Any], names: list[str]) -> str:
@@ -85,7 +79,6 @@ def _split_for(timestamp: str, splits: dict[str, Any], names: list[str]) -> str:
         "portfolio.split-membership",
         "Daily timestamp does not belong to exactly one fixed split",
     )
-
 
 
 def _sample_indices(
@@ -124,6 +117,3 @@ def _sample_indices(
                 if len(selected) < limit
             )
     return sorted(selected)
-
-
-

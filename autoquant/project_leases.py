@@ -1,4 +1,5 @@
 """Crash-released local file leases shared by Studio and candidate writers."""
+
 from __future__ import annotations
 
 import os
@@ -13,14 +14,17 @@ class LeaseBusy(OSError):
 def _confine(path: Path, root: Path) -> None:
     if not path.is_absolute() or not path.is_relative_to(root):
         raise OSError("Lease path escaped its root")
-    parts = [root, *(root / parent for parent in reversed(path.relative_to(root).parents)),
-             path]
+    parts = [
+        root,
+        *(root / parent for parent in reversed(path.relative_to(root).parents)),
+        path,
+    ]
     for part in parts:
         if part.exists() or part.is_symlink():
             info = part.lstat()
             if stat.S_ISLNK(info.st_mode) or (
-                getattr(info, "st_file_attributes", 0) &
-                getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+                getattr(info, "st_file_attributes", 0)
+                & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
             ):
                 raise OSError("Lease paths cannot use links or reparse points")
 
@@ -37,9 +41,11 @@ class FileLease:
             stream.seek(0)
             if os.name == "nt":
                 import msvcrt
+
                 msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
             else:
                 import fcntl
+
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
         finally:
             stream.close()
@@ -65,9 +71,11 @@ def acquire_file_lease(path: Path, root: Path) -> FileLease:
         stream.seek(0)
         if os.name == "nt":
             import msvcrt
+
             msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
         else:
             import fcntl
+
             fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
     except (OSError, IOError) as error:
         stream.close()

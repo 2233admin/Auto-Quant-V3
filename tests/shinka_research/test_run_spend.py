@@ -42,7 +42,9 @@ from types import SimpleNamespace
 
 import pytest
 
-pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
+pytest.importorskip(
+    "shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)"
+)
 import shinka.core.async_runner as async_runner
 import shinka.llm.llm as llm_module
 from shinka.core import EvolutionConfig, ShinkaEvolveRunner

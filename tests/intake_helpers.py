@@ -52,9 +52,7 @@ def write_intake_inputs(
             + 0.0020 * np.cos(time / (11.0 + number * 0.7))
         )
         close = (90.0 + number * 25.0) * np.exp(np.cumsum(log_returns))
-        open_price = close * np.exp(
-            -0.0015 * np.sin(time / (3.0 + number))
-        )
+        open_price = close * np.exp(-0.0015 * np.sin(time / (3.0 + number)))
         spread = 0.004 + 0.001 * np.cos(time / (7.0 + number))
         frame = pd.DataFrame(
             {
@@ -66,9 +64,7 @@ def write_intake_inputs(
                 "volume": (
                     1_000_000.0
                     * (1.0 + number * 0.15)
-                    * np.exp(
-                        0.35 * np.sin(time / (8.0 + number) + number)
-                    )
+                    * np.exp(0.35 * np.sin(time / (8.0 + number) + number))
                 ),
             }
         )
@@ -138,11 +134,7 @@ def write_intake_inputs(
             if portfolio_policy is not None
             else {}
         ),
-        **(
-            {"horizonPolicy": horizon_policy}
-            if horizon_policy is not None
-            else {}
-        ),
+        **({"horizonPolicy": horizon_policy} if horizon_policy is not None else {}),
         **(
             {"factorPolicy": normalized_factor_policy}
             if normalized_factor_policy is not None
@@ -268,11 +260,7 @@ def write_multi_interval_inputs(
             },
         ],
         "direction": "long",
-        **(
-            {"horizonPolicy": horizon_policy}
-            if horizon_policy is not None
-            else {}
-        ),
+        **({"horizonPolicy": horizon_policy} if horizon_policy is not None else {}),
         "horizon": "one day to four weeks",
         "hypotheses": [
             "Completed daily and intraday trends may add causal information."
@@ -309,9 +297,7 @@ def write_observed_intraday_inputs(
         periods=observations,
         freq="1h",
     )
-    gold_timestamps = complete[
-        np.arange(observations) % 17 != 0
-    ]
+    gold_timestamps = complete[np.arange(observations) % 17 != 0]
     assets = (
         (
             "GC=F",
@@ -348,8 +334,7 @@ def write_observed_intraday_inputs(
         frame = pd.DataFrame(
             {
                 "timestamp": [
-                    value.isoformat().replace("+00:00", "Z")
-                    for value in timestamps
+                    value.isoformat().replace("+00:00", "Z") for value in timestamps
                 ],
                 "open": open_price,
                 "high": np.maximum(open_price, close) * (1.0 + spread),
@@ -357,15 +342,12 @@ def write_observed_intraday_inputs(
                 "close": close,
                 "volume": (
                     1000.0 + 100.0 * np.sin(time / 7.0)
-                    if volume_semantics
-                    == "provider-reported-nonnegative"
+                    if volume_semantics == "provider-reported-nonnegative"
                     else np.zeros(len(time))
                 ),
             }
         )
-        filename = (
-            "GC%3DF.csv" if symbol == "GC=F" else f"{symbol}.csv"
-        )
+        filename = "GC%3DF.csv" if symbol == "GC=F" else f"{symbol}.csv"
         frame.to_csv(source / filename, index=False)
         entries.append(
             {
@@ -443,9 +425,7 @@ def write_observed_intraday_inputs(
         "hypotheses": [
             "Causal dollar index context may improve temporal gold evidence."
         ],
-        "constraints": [
-            "Do not fill closures or infer contract-chain authority."
-        ],
+        "constraints": ["Do not fill closures or infer contract-chain authority."],
         "deliverables": ["Temporal Factor evidence"],
         "source": {
             "system": "openalice",
@@ -484,17 +464,14 @@ def write_cross_market_daily_inputs(
     time = np.arange(observations, dtype=float)
 
     context_log_returns = (
-        0.00015
-        + 0.0080 * np.sin(time / 7.0)
-        + 0.0040 * np.cos(time / 3.0)
+        0.00015 + 0.0080 * np.sin(time / 7.0) + 0.0040 * np.cos(time / 3.0)
     )
     context_close = 100.0 * np.exp(np.cumsum(context_log_returns))
 
     target_log_returns = np.zeros(observations, dtype=float)
     target_log_returns[1] = 0.0001
-    target_log_returns[2:] = (
-        0.70 * context_log_returns[:-2]
-        + 0.00015 * np.sin(time[2:] / 5.0)
+    target_log_returns[2:] = 0.70 * context_log_returns[:-2] + 0.00015 * np.sin(
+        time[2:] / 5.0
     )
     target_close = 2_500.0 * np.exp(np.cumsum(target_log_returns))
 
@@ -666,11 +643,7 @@ def write_session_interval_inputs(
     }.get(base_interval)
     if interval_delta is None:
         raise ValueError("test XNYS fixture supports 15m or 1h bases")
-    feature_intervals = (
-        ["1h", "3h", "1d"]
-        if base_interval == "15m"
-        else ["3h", "1d"]
-    )
+    feature_intervals = ["1h", "3h", "1d"] if base_interval == "15m" else ["3h", "1d"]
     source = root / f"external-xnys-{base_interval}-data"
     source.mkdir()
     calendar = xcals.get_calendar(
@@ -700,8 +673,7 @@ def write_session_interval_inputs(
         frame = pd.DataFrame(
             {
                 "timestamp": [
-                    stamp.isoformat().replace("+00:00", "Z")
-                    for stamp in timestamps
+                    stamp.isoformat().replace("+00:00", "Z") for stamp in timestamps
                 ],
                 "open": open_price,
                 "high": np.maximum(open_price, close) * (1.0 + spread),
@@ -773,11 +745,7 @@ def write_session_interval_inputs(
             if portfolio_policy is not None
             else {}
         ),
-        **(
-            {"horizonPolicy": horizon_policy}
-            if horizon_policy is not None
-            else {}
-        ),
+        **({"horizonPolicy": horizon_policy} if horizon_policy is not None else {}),
         "horizon": "one day to four weeks",
         "hypotheses": ["Completed session trends may add causal information."],
         "constraints": [

@@ -25,7 +25,9 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)")
+pytest.importorskip(
+    "shinka", reason="needs the ShinkaEvolve engine (uv sync --extra shinka-engine)"
+)
 import shinka.core.async_runner as async_runner
 from shinka.core import EvolutionConfig, ShinkaEvolveRunner
 from shinka.database import DatabaseConfig, ProgramDatabase

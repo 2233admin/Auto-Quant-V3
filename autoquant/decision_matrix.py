@@ -128,8 +128,7 @@ def _factor_horizon_key(
         or not isinstance(diagnostics, list)
         or not diagnostics
         or any(
-            not isinstance(item, int) or isinstance(item, bool)
-            for item in diagnostics
+            not isinstance(item, int) or isinstance(item, bool) for item in diagnostics
         )
     ):
         return None
@@ -1024,17 +1023,12 @@ def _metric_specs(run: RunContext) -> tuple[str, list[MetricSpec], str]:
     ):
         specs, primary = _rl_specs()
         return "rl-policy", specs, primary
-    if all(
-        isinstance(metrics.get(key), dict)
-        for key in ("validation", "test")
-    ):
+    if all(isinstance(metrics.get(key), dict) for key in ("validation", "test")):
         specs, primary = _factor_specs()
         return "factor", specs, primary
     objective = run.result["objective"]
     metric = objective["metric"]
-    preference = (
-        "higher" if objective["direction"] == "maximize" else "lower"
-    )
+    preference = "higher" if objective["direction"] == "maximize" else "lower"
     return (
         "generic",
         [
@@ -1075,15 +1069,9 @@ def _descriptor_comparison(
     spec: MetricSpec,
 ) -> str:
     relation = _comparison(value, baseline, spec.preference)
-    if (
-        spec.split == "test"
-        and relation in {"better", "worse", "same"}
-    ):
+    if spec.split == "test" and relation in {"better", "worse", "same"}:
         return f"audit-{relation}"
-    if (
-        not spec.selection_eligible
-        and relation in {"better", "worse", "same"}
-    ):
+    if not spec.selection_eligible and relation in {"better", "worse", "same"}:
         return f"display-{relation}"
     return relation
 
@@ -1143,13 +1131,10 @@ def _select_experiments(
         if leader is not None:
             tail_count = trial_limit - 1
             selected = (
-                [leader]
-                if tail_count == 0
-                else [leader, *selected[-tail_count:]]
+                [leader] if tail_count == 0 else [leader, *selected[-tail_count:]]
             )
     deduplicated = {
-        int(record["experiment"].result["sequence"]): record
-        for record in selected
+        int(record["experiment"].result["sequence"]): record for record in selected
     }
     return [deduplicated[key] for key in sorted(deduplicated)]
 
@@ -1171,8 +1156,7 @@ def _trial(
         for spec in specs
     }
     baseline_metrics = {
-        spec.key: spec.extractor(baseline.result["metrics"])
-        for spec in specs
+        spec.key: spec.extractor(baseline.result["metrics"]) for spec in specs
     }
     primary_metric = baseline.result["objective"]["metric"]
     primary_value = (
@@ -1233,9 +1217,7 @@ def load_session_decision_matrix(
     if (
         not isinstance(trial_limit, int)
         or isinstance(trial_limit, bool)
-        or not MIN_COMPARISON_TRIALS
-        <= trial_limit
-        <= MAX_COMPARISON_TRIALS
+        or not MIN_COMPARISON_TRIALS <= trial_limit <= MAX_COMPARISON_TRIALS
     ):
         raise AutoQuantValidationError(
             [
@@ -1316,24 +1298,16 @@ def load_session_decision_matrix(
         for trial in trials
         if trial["status"] == "succeeded" and trial not in eligible
     ]
-    leader = next(
-        trial for trial in trials if trial["isCurrentLeader"]
-    )
+    leader = next(trial for trial in trials if trial["isCurrentLeader"])
     leader_relations = leader["vsBaseline"]
     improved = [
-        spec.key
-        for spec in selection_specs
-        if leader_relations[spec.key] == "better"
+        spec.key for spec in selection_specs if leader_relations[spec.key] == "better"
     ]
     regressed = [
-        spec.key
-        for spec in selection_specs
-        if leader_relations[spec.key] == "worse"
+        spec.key for spec in selection_specs if leader_relations[spec.key] == "worse"
     ]
     unchanged = [
-        spec.key
-        for spec in selection_specs
-        if leader_relations[spec.key] == "same"
+        spec.key for spec in selection_specs if leader_relations[spec.key] == "same"
     ]
     unavailable = [
         spec.key
@@ -1373,16 +1347,11 @@ def load_session_decision_matrix(
             "baselineAnchored": True,
             "leaderAnchored": True,
         },
-        "metrics": [
-            spec.descriptor(primary_key)
-            for spec in specs
-        ],
+        "metrics": [spec.descriptor(primary_key) for spec in specs],
         "trials": trials,
         "tradeoffs": {
             "scope": "displayed-successful-trials",
-            "selectionEligibleMetricKeys": [
-                spec.key for spec in selection_specs
-            ],
+            "selectionEligibleMetricKeys": [spec.key for spec in selection_specs],
             "testExcluded": True,
             "contextExcluded": True,
             "nonDominatedRunIds": frontier,
@@ -1424,9 +1393,7 @@ SESSION_DECISION_MATRIX_JSON_SCHEMA: dict[str, Any] = {
         "kind": {"const": SESSION_DECISION_MATRIX_KIND},
         "session": {"type": "object"},
         "fixedIdentity": {"type": "object"},
-        "metricFamily": {
-            "enum": ["factor", "portfolio", "rl-policy", "generic"]
-        },
+        "metricFamily": {"enum": ["factor", "portfolio", "rl-policy", "generic"]},
         "objective": {"type": "object"},
         "selectionIntegrity": SELECTION_INTEGRITY_JSON_SCHEMA,
         "scope": {

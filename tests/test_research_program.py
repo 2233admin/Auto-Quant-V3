@@ -179,17 +179,13 @@ class MultiStudyResearchProgramTests(unittest.TestCase):
                 OHLCV_STUDY_ID,
                 request=request,
             )
-            candidate = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(
                 "from __future__ import annotations\n\n"
                 "import pandas as pd\n\n"
                 "def compute_factor(panel: pd.DataFrame) -> pd.Series:\n"
-                "    return panel.groupby(\"asset\", sort=False)"
-                "[\"close\"].pct_change(1, fill_method=None)\n",
+                '    return panel.groupby("asset", sort=False)'
+                '["close"].pct_change(1, fill_method=None)\n',
                 encoding="utf-8",
             )
             experiment = evaluate_experiment(
@@ -262,17 +258,13 @@ class MultiStudyResearchProgramTests(unittest.TestCase):
             )
             session = start_session(project, OHLCV_STUDY_ID)
             baseline_id = session.manifest["baseline"]["runId"]
-            candidate = (
-                session.worktree_project.root_dir
-                / "factors"
-                / "candidate.py"
-            )
+            candidate = session.worktree_project.root_dir / "factors" / "candidate.py"
             candidate.write_text(
                 "from __future__ import annotations\n\n"
                 "import pandas as pd\n\n"
                 "def compute_factor(panel: pd.DataFrame) -> pd.Series:\n"
-                "    return -panel.groupby(\"asset\", sort=False)"
-                "[\"close\"].pct_change(10, fill_method=None)\n",
+                '    return -panel.groupby("asset", sort=False)'
+                '["close"].pct_change(10, fill_method=None)\n',
                 encoding="utf-8",
             )
             rejected = evaluate_experiment(
@@ -406,12 +398,10 @@ class MultiStudyResearchProgramTests(unittest.TestCase):
             self.assertTrue(
                 all(
                     contract["kind"] == "panel-v2"
-                    and contract["input"]
-                    == "long-form-observed-universe"
+                    and contract["input"] == "long-form-observed-universe"
                     and contract["cross_asset_context"]
                     == "same-or-prior-timestamp-explicit-candidate"
-                    and contract["causality_audit"]
-                    == "whole-panel-timestamp-prefix"
+                    and contract["causality_audit"] == "whole-panel-timestamp-prefix"
                     for contract in factor_contracts
                 )
             )
@@ -442,7 +432,9 @@ class MultiStudyResearchProgramTests(unittest.TestCase):
                 ["baseline-ready", "baseline-ready", "baseline-ready"],
             )
             self.assertTrue(
-                all(lane["latestRun"]["value"] is not None for lane in baseline["lanes"])
+                all(
+                    lane["latestRun"]["value"] is not None for lane in baseline["lanes"]
+                )
             )
             self.assertEqual(
                 baseline["progression"]["stage"],
@@ -523,9 +515,7 @@ class MultiStudyResearchProgramTests(unittest.TestCase):
                 load_study(project, RL_STUDY_ID).dataset_hash,
             )
             manifest = json.loads(
-                (project.root_dir / "research-program.json").read_text(
-                    encoding="utf-8"
-                )
+                (project.root_dir / "research-program.json").read_text(encoding="utf-8")
             )
             self.assertEqual(manifest["template"], "ohlcv-research-desk")
 
@@ -651,9 +641,7 @@ class MultiStudyResearchProgramTests(unittest.TestCase):
                 "strategyViability": {
                     "diagnosis": {
                         "stage": "post-cost-edge-positive",
-                        "iterationFocus": (
-                            "robustness-capacity-and-external-holdout"
-                        ),
+                        "iterationFocus": ("robustness-capacity-and-external-holdout"),
                         "explanation": "Post-cost portfolio evidence is positive.",
                     }
                 }
