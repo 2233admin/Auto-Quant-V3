@@ -39,6 +39,45 @@ single process, and compares the persistent failures with the registry:
 `--log FILE` parses an existing `unittest -v` log instead of running the suite;
 `--no-rerun` skips the isolation rerun.
 
+## Watching a long run
+
+The full suite takes 26 to 34 minutes on `ubuntu-latest` and has hit the 45 minute
+timeout of the CI `regression` job twice (issue #39), so the script shows what it is
+doing instead of printing only at the end:
+
+- Live output: everything unittest writes is echoed as it happens, in the first
+  pass and in the rerun. `test_x (...) ... ` appears when a test starts and `ok`,
+  `FAIL` or `ERROR` when it ends, so a job cancelled by the timeout still shows the
+  test it was in. Failure tracebacks appear at the end of each pass. Stdout and
+  stderr of the child are read separately, so text a test prints to stdout can
+  land a few lines away from the test's result line.
+- Hang dump: the suite runs through `scripts/unittest_watchdog.py`, a wrapper
+  around `python -m unittest` that takes the same arguments, discovery and exit
+  codes. When no test starts or finishes for `--watchdog SECONDS` (default 300;
+  `0` turns it off), Python's `faulthandler` dumps the stacks of all threads to
+  stderr (`Timeout (0:05:00)!` followed by `File "...", line N in test_x`), and
+  again every period while the run stays stuck. The dump interrupts the stuck
+  test's half-written result line. It only reports; the test and the run go on.
+  The countdown restarts between tests too, so a hang in discovery or in a class
+  or module fixture is caught as well.
+- Slow tests: a test that takes `--slow SECONDS` (default 30) or more is marked
+  with a `[slow 41.2s] test_x (...)` line after its result. The summary after the
+  verdict lists up to 15 of them, slowest first; rerun entries carry a `(rerun)`
+  suffix. unittest's own `--durations` needs Python 3.12 and CI runs 3.11, so the
+  wrapper measures from `startTest` to `stopTest` (test body, `setUp` and
+  `tearDown`; class and module fixtures are not counted). A log parsed with `--log` lists
+  only the markers it already contains.
+- Defaults come from the environment variables `AUTOQUANT_TEST_WATCHDOG_SECONDS`
+  and `AUTOQUANT_TEST_SLOW_SECONDS`; the flags win.
+
+To diagnose a CI timeout, read the end of the `regression` log: the last
+`test_x (...) ... ` fragment names the test that was running, and the last
+`Timeout (...)!` dump shows where it was stuck.
+
+`tests/test_check_known_failures.py` covers this behaviour with a small fake
+suite: live output, the stack dump, the slow-test summary, and the unchanged exit
+codes and known-failure semantics.
+
 ## Rules
 
 - Do not add an entry to make a change pass. A new failure is fixed, or the
