@@ -56,8 +56,8 @@ outside it.
 AutoQuant requires Python 3.11 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-git clone git@github.com:TraderAlice/Auto-Quant-V2.git
-cd Auto-Quant-V2
+git clone git@github.com:2233admin/Auto-Quant-V3.git
+cd Auto-Quant-V3
 uv sync --frozen
 
 uv run aq --version
@@ -122,7 +122,7 @@ proprietary DSL. CSV works in the base environment; Parquet and Feather use
 ## Repository structure
 
 ```text
-Auto-Quant-V2/
+Auto-Quant-V3/
 ├── autoquant-workspace.json  # checked-in root Workspace
 ├── autoquant/                # Core, CLI, templates, Skills, and Studio
 ├── projects/                 # sample plus ordinary research Projects
