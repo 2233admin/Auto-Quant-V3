@@ -1,6 +1,6 @@
-# AutoQuant V2 contributor guide
+# AutoQuant V3 contributor guide
 
-AutoQuant V2 is a pre-alpha, Agent-native quantitative research workbench. Its
+AutoQuant V3 is a pre-alpha, Agent-native quantitative research workbench. Its
 job is to turn quantitative research into a file-backed, versioned, testable
 workflow that coding Agents can operate and humans can inspect.
 
@@ -10,9 +10,9 @@ Session orchestration, communication, provenance, and live trading are optional
 surrounding capabilities; they do not define AutoQuant Core.
 
 Domain correctness, reproducible evidence, Agent operability, and a coherent
-project model take priority over backward compatibility while V2 is taking
+project model take priority over backward compatibility while V3 is taking
 shape. Auto-Quant Classic files were retired from the current tree; Git history
-is their archive and current code must not load or reinterpret them under V2
+is their archive and current code must not load or reinterpret them under V3
 semantics.
 
 Use Python 3.11 and `uv` for repository code and scripts. Keep projects

@@ -1,4 +1,4 @@
-# AutoQuant V2 work plans
+# AutoQuant V3 work plans
 
 This file is the repository-level index of planned and completed engineering
 work. Detailed plans live in `plans/`; long-lived system intent and current
