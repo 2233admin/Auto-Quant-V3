@@ -1,4 +1,4 @@
-# AutoQuant V2 architecture
+# AutoQuant V3 architecture
 
 Status: active, pre-alpha.
 
@@ -8,7 +8,7 @@ the status page records what has been proven at the current milestone.
 
 ## Purpose
 
-AutoQuant V2 is an Agent-native quantitative research workbench. It converts
+AutoQuant V3 is an Agent-native quantitative research workbench. It converts
 quantitative work into a file-backed, versioned, testable workflow that a
 coding Agent can discover, execute, verify, resume, and hand to another Agent
 or human.
@@ -21,7 +21,7 @@ Harness itself.
 The shipped repository now materializes that model directly:
 
 ```text
-Auto-Quant-V2/                     # Workspace root and Git history
+Auto-Quant-V3/                     # Workspace root and Git history
 ├── harness.json                   # optional host capability discovery
 ├── autoquant-workspace.json       # checked-in discovery/default
 ├── autoquant/                     # Harness runtime, schemas, CLI, Studio
@@ -55,7 +55,7 @@ dependency installation, or changes to standalone CLI behavior.
 
 ## Current implementation state
 
-The V2 foundation now implements:
+The V3 foundation now implements:
 
 - a repository-root checked-in `autoquant-workspace.json`, one complete
   three-lane sample Project, and strict `autoquant.json` manifests;
@@ -342,7 +342,7 @@ location. Git history remains its archive. See
 - one quantitative Core contract shared by standalone and hosted operation;
 - Agent orientation and bounded quantitative operations;
 - workbench version identity. Checkout changes remain ordinary visible Git
-  work; V2 does not own automatic Workspace migration or compatibility
+  work; V3 does not own automatic Workspace migration or compatibility
   reconciliation.
 
 ### Workspace and Harness own

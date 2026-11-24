@@ -27,8 +27,8 @@ The repository clone is already a long-lived Workspace with one ordinary
 teaching Project:
 
 ```bash
-git clone git@github.com:TraderAlice/Auto-Quant-V2.git
-cd Auto-Quant-V2
+git clone git@github.com:2233admin/Auto-Quant-V3.git
+cd Auto-Quant-V3
 uv sync --frozen
 
 uv run aq --version
