@@ -1,4 +1,4 @@
-# AutoQuant V2 Project format
+# AutoQuant V3 Project format
 
 Status: V1 Workspace and Project manifests implemented.
 
@@ -14,7 +14,7 @@ quantitative semantics. See [[docs/design/agent-native-quant-workbench]].
 The repository clone is the canonical shipped Workspace:
 
 ```text
-Auto-Quant-V2/
+Auto-Quant-V3/
 ├── autoquant-workspace.json
 ├── autoquant/
 └── projects/
@@ -1372,7 +1372,7 @@ composition and verification are in `autoquant/dossiers.py`.
 ## Repository boundary
 
 The source repository is also the default Workspace Template. It contains the
-standardized V2 Harness, reference construction templates, internal
+standardized V3 Harness, reference construction templates, internal
 Git-managed `projects/`, and one ordinary sample Project. New caller research
 is created as a sibling Project and its durable source, Study, Run, Report,
 and Dossier state may enter the Workspace Git history. Project-local
